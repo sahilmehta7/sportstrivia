@@ -1,457 +1,608 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo } from "react";
+import { useForm, useFieldArray } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
-import { X, Plus, CheckCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { X, Plus, CheckCircle } from "lucide-react";
+import { questionSchema, answerSchema } from "@/lib/validations/question.schema";
+import { Difficulty, QuestionType } from "@prisma/client";
 
-interface Answer {
-  id?: string;
-  answerText: string;
-  answerImageUrl?: string;
-  answerVideoUrl?: string;
-  answerAudioUrl?: string;
-  isCorrect: boolean;
-  displayOrder: number;
-}
+const questionFormSchema = questionSchema.extend({
+  answers: z
+    .array(
+      answerSchema.extend({
+        id: z.string().cuid().optional(),
+      })
+    )
+    .min(2, "At least 2 answers required"),
+});
+
+type QuestionFormValues = z.infer<typeof questionFormSchema>;
 
 interface QuestionEditorProps {
   initialData?: any;
   topics: any[];
-  onSave: (data: any) => Promise<void>;
+  onSave: (data: QuestionFormValues) => Promise<void>;
   onCancel: () => void;
   saving?: boolean;
 }
 
-export function QuestionEditor({ 
-  initialData, 
-  topics, 
-  onSave, 
-  onCancel, 
-  saving = false 
+export function QuestionEditor({
+  initialData,
+  topics,
+  onSave,
+  onCancel,
+  saving = false,
 }: QuestionEditorProps) {
-  const [formData, setFormData] = useState({
-    type: initialData?.type || "MULTIPLE_CHOICE",
-    topicId: initialData?.topicId || "",
-    difficulty: initialData?.difficulty || "MEDIUM",
-    questionText: initialData?.questionText || "",
-    questionImageUrl: initialData?.questionImageUrl || "",
-    questionVideoUrl: initialData?.questionVideoUrl || "",
-    questionAudioUrl: initialData?.questionAudioUrl || "",
-    hint: initialData?.hint || "",
-    explanation: initialData?.explanation || "",
-    explanationImageUrl: initialData?.explanationImageUrl || "",
-    explanationVideoUrl: initialData?.explanationVideoUrl || "",
-    randomizeAnswerOrder: initialData?.randomizeAnswerOrder || false,
-    timeLimit: initialData?.timeLimit?.toString() || "",
-  });
-
-  const [answers, setAnswers] = useState<Answer[]>(
-    initialData?.answers?.map((a: any, idx: number) => ({
-      id: a.id,
-      answerText: a.answerText || "",
-      answerImageUrl: a.answerImageUrl || "",
-      answerVideoUrl: a.answerVideoUrl || "",
-      answerAudioUrl: a.answerAudioUrl || "",
-      isCorrect: a.isCorrect || false,
-      displayOrder: a.displayOrder ?? idx,
-    })) || [
+  const defaultAnswers =
+    initialData?.answers?.map((answer: any, index: number) => ({
+      id: answer.id,
+      answerText: answer.answerText ?? "",
+      answerImageUrl: answer.answerImageUrl ?? "",
+      answerVideoUrl: answer.answerVideoUrl ?? "",
+      answerAudioUrl: answer.answerAudioUrl ?? "",
+      isCorrect: answer.isCorrect ?? index === 0,
+      displayOrder: answer.displayOrder ?? index,
+    })) ??
+    [
       { answerText: "", isCorrect: true, displayOrder: 0 },
       { answerText: "", isCorrect: false, displayOrder: 1 },
       { answerText: "", isCorrect: false, displayOrder: 2 },
       { answerText: "", isCorrect: false, displayOrder: 3 },
-    ]
-  );
+    ];
 
-  const updateField = (field: string, value: any) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-  };
+  const form = useForm<QuestionFormValues>({
+    resolver: zodResolver(questionFormSchema),
+    defaultValues: {
+      type: initialData?.type ?? QuestionType.MULTIPLE_CHOICE,
+      topicId: initialData?.topicId ?? "",
+      difficulty: initialData?.difficulty ?? Difficulty.MEDIUM,
+      questionText: initialData?.questionText ?? "",
+      questionImageUrl: initialData?.questionImageUrl ?? "",
+      questionVideoUrl: initialData?.questionVideoUrl ?? "",
+      questionAudioUrl: initialData?.questionAudioUrl ?? "",
+      hint: initialData?.hint ?? "",
+      explanation: initialData?.explanation ?? "",
+      explanationImageUrl: initialData?.explanationImageUrl ?? "",
+      explanationVideoUrl: initialData?.explanationVideoUrl ?? "",
+      randomizeAnswerOrder: initialData?.randomizeAnswerOrder ?? false,
+      timeLimit:
+        typeof initialData?.timeLimit === "number" ? Number(initialData?.timeLimit) : undefined,
+      answers: defaultAnswers,
+    },
+  });
 
-  const updateAnswer = (index: number, field: string, value: any) => {
-    setAnswers(prev => {
-      const newAnswers = [...prev];
-      newAnswers[index] = { ...newAnswers[index], [field]: value };
-      
-      // If marking as correct, unmark others
-      if (field === "isCorrect" && value === true) {
-        newAnswers.forEach((a, i) => {
-          if (i !== index) a.isCorrect = false;
-        });
-      }
-      
-      return newAnswers;
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: "answers",
+  });
+
+  const answers = form.watch("answers");
+  const correctAnswerIndex = answers.findIndex((answer) => answer.isCorrect);
+
+  const answersErrorMessage = useMemo(() => {
+    const error = form.formState.errors.answers as any;
+    if (!error) return undefined;
+    if (Array.isArray(error)) {
+      return error.find((item) => item?.message)?.message;
+    }
+    return error?.message ?? error?.root?.message ?? error?._errors?.[0];
+  }, [form.formState.errors.answers]);
+
+  useEffect(() => {
+    if (answers.length === 0) {
+      append({
+        answerText: "",
+        isCorrect: true,
+        displayOrder: 0,
+      });
+    }
+  }, [answers.length, append]);
+
+  const handleAddAnswer = () => {
+    append({
+      answerText: "",
+      isCorrect: false,
+      displayOrder: fields.length,
     });
   };
 
-  const addAnswer = () => {
-    setAnswers(prev => [
-      ...prev,
-      {
-        answerText: "",
-        isCorrect: false,
-        displayOrder: prev.length,
-      },
-    ]);
-  };
+  const handleRemoveAnswer = (index: number) => {
+    if (fields.length <= 2) return;
+    remove(index);
 
-  const removeAnswer = (index: number) => {
-    if (answers.length <= 2) return; // Keep at least 2 answers
-    setAnswers(prev => prev.filter((_, i) => i !== index));
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    // Validation
-    const correctAnswers = answers.filter(a => a.isCorrect);
-    if (correctAnswers.length !== 1) {
-      alert("Exactly one answer must be marked as correct");
-      return;
+    const remainingAnswers = form.getValues("answers");
+    if (remainingAnswers.every((answer) => !answer.isCorrect) && remainingAnswers.length > 0) {
+      form.setValue("answers.0.isCorrect", true, { shouldDirty: true, shouldValidate: true });
     }
-
-    if (answers.some(a => !a.answerText.trim())) {
-      alert("All answers must have text");
-      return;
-    }
-
-    const data = {
-      type: formData.type,
-      topicId: formData.topicId,
-      difficulty: formData.difficulty,
-      questionText: formData.questionText,
-      questionImageUrl: formData.questionImageUrl || undefined,
-      questionVideoUrl: formData.questionVideoUrl || undefined,
-      questionAudioUrl: formData.questionAudioUrl || undefined,
-      hint: formData.hint || undefined,
-      explanation: formData.explanation || undefined,
-      explanationImageUrl: formData.explanationImageUrl || undefined,
-      explanationVideoUrl: formData.explanationVideoUrl || undefined,
-      randomizeAnswerOrder: formData.randomizeAnswerOrder,
-      timeLimit: formData.timeLimit ? parseInt(formData.timeLimit) : undefined,
-      answers: answers.map((a, idx) => ({
-        ...(a.id && { id: a.id }),
-        answerText: a.answerText,
-        answerImageUrl: a.answerImageUrl || undefined,
-        answerVideoUrl: a.answerVideoUrl || undefined,
-        answerAudioUrl: a.answerAudioUrl || undefined,
-        isCorrect: a.isCorrect,
-        displayOrder: idx,
-      })),
-    };
-
-    await onSave(data);
   };
 
-  const correctAnswerIndex = answers.findIndex(a => a.isCorrect);
+  const handleMarkCorrect = (index: number) => {
+    answers.forEach((_, answerIndex) => {
+      form.setValue(`answers.${answerIndex}.isCorrect`, answerIndex === index, {
+        shouldDirty: true,
+        shouldValidate: true,
+      });
+    });
+  };
+
+  const submitQuestion = form.handleSubmit(async (values) => {
+    form.clearErrors("root");
+
+    const normalizedAnswers = values.answers.map((answer, index) => ({
+      ...answer,
+      displayOrder: index,
+    }));
+
+    try {
+      await onSave({ ...values, answers: normalizedAnswers });
+    } catch (error: any) {
+      form.setError("root", {
+        message: error?.message || "Failed to save question. Please try again.",
+      });
+    }
+  });
+
+  const rootError = form.formState.errors.root?.message;
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      {/* Question Details */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Question Details</CardTitle>
-          <CardDescription>Basic question information</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-3">
-            <div className="space-y-2">
-              <Label htmlFor="type">Question Type *</Label>
-              <Select value={formData.type} onValueChange={(value) => updateField("type", value)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="MULTIPLE_CHOICE">Multiple Choice</SelectItem>
-                  <SelectItem value="FILL_BLANK">Fill in the Blank</SelectItem>
-                  <SelectItem value="FLASHCARD">Flashcard</SelectItem>
-                  <SelectItem value="IMAGE_BASED">Image Based</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+    <Form {...form}>
+      <form onSubmit={submitQuestion} className="space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Question Details</CardTitle>
+            <CardDescription>Basic question information</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid gap-4 md:grid-cols-3">
+              <FormField
+                control={form.control}
+                name="type"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Question Type *</FormLabel>
+                    <Select value={field.value} onValueChange={field.onChange}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value={QuestionType.MULTIPLE_CHOICE}>Multiple Choice</SelectItem>
+                        <SelectItem value={QuestionType.FILL_BLANK}>Fill in the Blank</SelectItem>
+                        <SelectItem value={QuestionType.FLASHCARD}>Flashcard</SelectItem>
+                        <SelectItem value={QuestionType.IMAGE_BASED}>Image Based</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-            <div className="space-y-2">
-              <Label htmlFor="topicId">Topic *</Label>
-              <Select value={formData.topicId} onValueChange={(value) => updateField("topicId", value)} required>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select topic" />
-                </SelectTrigger>
-                <SelectContent>
-                  {topics.map((topic) => (
-                    <SelectItem key={topic.id} value={topic.id}>
-                      {"  ".repeat(topic.level)}{topic.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+              <FormField
+                control={form.control}
+                name="topicId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Topic *</FormLabel>
+                    <Select value={field.value} onValueChange={field.onChange}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select topic" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {topics.map((topic) => (
+                          <SelectItem key={topic.id} value={topic.id}>
+                            {`${"— ".repeat(topic.level ?? 0)}${topic.name}`}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-            <div className="space-y-2">
-              <Label htmlFor="difficulty">Difficulty *</Label>
-              <Select value={formData.difficulty} onValueChange={(value) => updateField("difficulty", value)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="EASY">Easy</SelectItem>
-                  <SelectItem value="MEDIUM">Medium</SelectItem>
-                  <SelectItem value="HARD">Hard</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="questionText">Question Text *</Label>
-            <Textarea
-              id="questionText"
-              value={formData.questionText}
-              onChange={(e) => updateField("questionText", e.target.value)}
-              placeholder="Enter your question here..."
-              rows={3}
-              required
-            />
-          </div>
-
-          <div className="grid gap-4 md:grid-cols-3">
-            <div className="space-y-2">
-              <Label htmlFor="questionImageUrl">Image URL</Label>
-              <Input
-                id="questionImageUrl"
-                type="url"
-                value={formData.questionImageUrl}
-                onChange={(e) => updateField("questionImageUrl", e.target.value)}
-                placeholder="https://..."
+              <FormField
+                control={form.control}
+                name="difficulty"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Difficulty *</FormLabel>
+                    <Select value={field.value} onValueChange={field.onChange}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value={Difficulty.EASY}>Easy</SelectItem>
+                        <SelectItem value={Difficulty.MEDIUM}>Medium</SelectItem>
+                        <SelectItem value={Difficulty.HARD}>Hard</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="questionVideoUrl">Video URL</Label>
-              <Input
-                id="questionVideoUrl"
-                type="url"
-                value={formData.questionVideoUrl}
-                onChange={(e) => updateField("questionVideoUrl", e.target.value)}
-                placeholder="https://..."
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="questionAudioUrl">Audio URL</Label>
-              <Input
-                id="questionAudioUrl"
-                type="url"
-                value={formData.questionAudioUrl}
-                onChange={(e) => updateField("questionAudioUrl", e.target.value)}
-                placeholder="https://..."
-              />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Answers */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Answer Options</CardTitle>
-          <CardDescription>
-            At least 2 answers required. Mark exactly one as correct.
-            {correctAnswerIndex >= 0 && (
-              <Badge variant="default" className="ml-2">
-                Answer {String.fromCharCode(65 + correctAnswerIndex)} is correct
-              </Badge>
-            )}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {answers.map((answer, index) => (
-            <div key={index} className="border rounded-lg p-4 space-y-3">
-              <div className="flex items-center justify-between">
-                <Label className="text-base font-semibold">
-                  Answer {String.fromCharCode(65 + index)}
-                </Label>
-                <div className="flex items-center gap-2">
-                  <div className="flex items-center gap-2">
-                    <Switch
-                      checked={answer.isCorrect}
-                      onCheckedChange={(checked) => updateAnswer(index, "isCorrect", checked)}
+            <FormField
+              control={form.control}
+              name="questionText"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Question Text *</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      {...field}
+                      placeholder="Enter your question here..."
+                      rows={3}
                     />
-                    <Label className="text-sm">
-                      {answer.isCorrect ? (
-                        <span className="text-green-600 flex items-center gap-1">
-                          <CheckCircle className="h-4 w-4" />
-                          Correct
-                        </span>
-                      ) : (
-                        "Mark as correct"
-                      )}
-                    </Label>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <div className="grid gap-4 md:grid-cols-3">
+              <FormField
+                control={form.control}
+                name="questionImageUrl"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Image URL</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        type="url"
+                        placeholder="https://..."
+                        value={field.value ?? ""}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="questionVideoUrl"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Video URL</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        type="url"
+                        placeholder="https://..."
+                        value={field.value ?? ""}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="questionAudioUrl"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Audio URL</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        type="url"
+                        placeholder="https://..."
+                        value={field.value ?? ""}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Answer Options</CardTitle>
+            <CardDescription>
+              At least 2 answers required. Mark exactly one as correct.
+              {correctAnswerIndex >= 0 && (
+                <Badge variant="default" className="ml-2">
+                  Answer {String.fromCharCode(65 + correctAnswerIndex)} is correct
+                </Badge>
+              )}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {fields.map((field, index) => (
+              <div key={field.id} className="space-y-3 rounded-lg border p-4">
+                <div className="flex items-center justify-between">
+                  <FormLabel className="text-base font-semibold">
+                    Answer {String.fromCharCode(65 + index)}
+                  </FormLabel>
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2">
+                      <Switch
+                        checked={answers[index]?.isCorrect ?? false}
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            handleMarkCorrect(index);
+                          }
+                        }}
+                      />
+                      <span className="text-sm">
+                        {answers[index]?.isCorrect ? (
+                          <span className="flex items-center gap-1 text-green-600">
+                            <CheckCircle className="h-4 w-4" />
+                            Correct
+                          </span>
+                        ) : (
+                          "Mark as correct"
+                        )}
+                      </span>
+                    </div>
+                    {fields.length > 2 && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleRemoveAnswer(index)}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    )}
                   </div>
-                  {answers.length > 2 && (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => removeAnswer(index)}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
+                </div>
+
+                <FormField
+                  control={form.control}
+                  name={`answers.${index}.answerText`}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormControl>
+                        <Input {...field} placeholder="Answer text..." />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
                   )}
+                />
+
+                <div className="grid gap-3 md:grid-cols-3">
+                  <FormField
+                    control={form.control}
+                    name={`answers.${index}.answerImageUrl`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormControl>
+                          <Input
+                            {...field}
+                            type="url"
+                            placeholder="Image URL (optional)"
+                            value={field.value ?? ""}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name={`answers.${index}.answerVideoUrl`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormControl>
+                          <Input
+                            {...field}
+                            type="url"
+                            placeholder="Video URL (optional)"
+                            value={field.value ?? ""}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name={`answers.${index}.answerAudioUrl`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormControl>
+                          <Input
+                            {...field}
+                            type="url"
+                            placeholder="Audio URL (optional)"
+                            value={field.value ?? ""}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 </div>
               </div>
+            ))}
 
-              <div className="space-y-2">
-                <Input
-                  value={answer.answerText}
-                  onChange={(e) => updateAnswer(index, "answerText", e.target.value)}
-                  placeholder="Answer text..."
-                  required
-                />
-              </div>
+            {answersErrorMessage && (
+              <p className="text-sm font-medium text-destructive">{answersErrorMessage}</p>
+            )}
 
-              <div className="grid gap-3 md:grid-cols-3">
-                <Input
-                  type="url"
-                  value={answer.answerImageUrl || ""}
-                  onChange={(e) => updateAnswer(index, "answerImageUrl", e.target.value)}
-                  placeholder="Image URL (optional)"
-                />
-                <Input
-                  type="url"
-                  value={answer.answerVideoUrl || ""}
-                  onChange={(e) => updateAnswer(index, "answerVideoUrl", e.target.value)}
-                  placeholder="Video URL (optional)"
-                />
-                <Input
-                  type="url"
-                  value={answer.answerAudioUrl || ""}
-                  onChange={(e) => updateAnswer(index, "answerAudioUrl", e.target.value)}
-                  placeholder="Audio URL (optional)"
-                />
-              </div>
+            <Button type="button" variant="outline" onClick={handleAddAnswer} className="w-full">
+              <Plus className="mr-2 h-4 w-4" />
+              Add Answer Option
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Hints &amp; Explanation</CardTitle>
+            <CardDescription>Help users learn from the question</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <FormField
+              control={form.control}
+              name="hint"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Hint (Optional)</FormLabel>
+                  <FormControl>
+                    <Textarea {...field} rows={2} placeholder="A helpful hint for users..." />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="explanation"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Explanation (Optional)</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      {...field}
+                      rows={3}
+                      placeholder="Explain the correct answer..."
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <FormField
+                control={form.control}
+                name="explanationImageUrl"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Explanation Image URL</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        type="url"
+                        placeholder="https://..."
+                        value={field.value ?? ""}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="explanationVideoUrl"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Explanation Video URL</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        type="url"
+                        placeholder="https://..."
+                        value={field.value ?? ""}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
-          ))}
+          </CardContent>
+        </Card>
 
-          <Button
-            type="button"
-            variant="outline"
-            onClick={addAnswer}
-            className="w-full"
-          >
-            <Plus className="mr-2 h-4 w-4" />
-            Add Answer Option
+        <Card>
+          <CardHeader>
+            <CardTitle>Advanced Settings</CardTitle>
+            <CardDescription>Optional question-specific configuration</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <FormField
+              control={form.control}
+              name="randomizeAnswerOrder"
+              render={({ field }) => (
+                <FormItem className="flex items-center justify-between rounded-lg border p-4">
+                  <div>
+                    <FormLabel>Randomize Answer Order</FormLabel>
+                    <CardDescription>Shuffle answer options for each quiz attempt.</CardDescription>
+                  </div>
+                  <FormControl>
+                    <Switch checked={field.value} onCheckedChange={field.onChange} />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="timeLimit"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Time Limit (seconds)</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      min={1}
+                      value={field.value ?? ""}
+                      onChange={(event) =>
+                        field.onChange(
+                          event.target.value === "" ? undefined : Number(event.target.value)
+                        )
+                      }
+                      placeholder="Optional - overrides quiz-level timing"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </CardContent>
+        </Card>
+
+        {rootError && (
+          <p className="text-sm font-medium text-destructive" role="alert">
+            {rootError}
+          </p>
+        )}
+
+        <div className="flex justify-end gap-4">
+          <Button type="button" variant="outline" onClick={onCancel}>
+            Cancel
           </Button>
-
-          <div className="flex items-center justify-between pt-2">
-            <div className="space-y-0.5">
-              <Label>Randomize Answer Order</Label>
-              <p className="text-sm text-muted-foreground">
-                Shuffle answer options for each quiz attempt
-              </p>
-            </div>
-            <Switch
-              checked={formData.randomizeAnswerOrder}
-              onCheckedChange={(checked) => updateField("randomizeAnswerOrder", checked)}
-            />
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Help & Explanation */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Hints & Explanation</CardTitle>
-          <CardDescription>Help users learn from the question</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="hint">Hint (Optional)</Label>
-            <Textarea
-              id="hint"
-              value={formData.hint}
-              onChange={(e) => updateField("hint", e.target.value)}
-              placeholder="A helpful hint for users..."
-              rows={2}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="explanation">Explanation (Optional)</Label>
-            <Textarea
-              id="explanation"
-              value={formData.explanation}
-              onChange={(e) => updateField("explanation", e.target.value)}
-              placeholder="Explain the correct answer..."
-              rows={3}
-            />
-          </div>
-
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="explanationImageUrl">Explanation Image URL</Label>
-              <Input
-                id="explanationImageUrl"
-                type="url"
-                value={formData.explanationImageUrl}
-                onChange={(e) => updateField("explanationImageUrl", e.target.value)}
-                placeholder="https://..."
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="explanationVideoUrl">Explanation Video URL</Label>
-              <Input
-                id="explanationVideoUrl"
-                type="url"
-                value={formData.explanationVideoUrl}
-                onChange={(e) => updateField("explanationVideoUrl", e.target.value)}
-                placeholder="https://..."
-              />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Advanced Settings */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Advanced Settings</CardTitle>
-          <CardDescription>Optional question-specific configuration</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="timeLimit">Time Limit (seconds)</Label>
-            <Input
-              id="timeLimit"
-              type="number"
-              min="1"
-              value={formData.timeLimit}
-              onChange={(e) => updateField("timeLimit", e.target.value)}
-              placeholder="Optional - overrides quiz-level timing"
-            />
-            <p className="text-xs text-muted-foreground">
-              Leave empty to use quiz-level timing
-            </p>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Actions */}
-      <div className="flex justify-end gap-4">
-        <Button type="button" variant="outline" onClick={onCancel}>
-          Cancel
-        </Button>
-        <Button type="submit" disabled={saving}>
-          {saving ? "Saving..." : initialData ? "Update Question" : "Create Question"}
-        </Button>
-      </div>
-    </form>
+          <Button type="submit" disabled={saving}>
+            {saving ? "Saving..." : initialData ? "Update Question" : "Create Question"}
+          </Button>
+        </div>
+      </form>
+    </Form>
   );
 }
 
