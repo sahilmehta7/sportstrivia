@@ -23,21 +23,13 @@ export async function POST(request: NextRequest) {
       where: { id: quizId },
       include: {
         questionPool: {
-          include: {
-            question: {
-              include: {
-                answers: true,
-                topic: true,
-              },
-            },
+          select: {
+            questionId: true,
+            order: true,
           },
           orderBy: { order: "asc" },
         },
-        topicConfigs: {
-          include: {
-            topic: true,
-          },
-        },
+        topicConfigs: true,
       },
     });
 
@@ -60,13 +52,11 @@ export async function POST(request: NextRequest) {
     }
 
     // Select questions based on selection mode
-    let selectedQuestions: any[] = [];
     let selectedQuestionIds: string[] = [];
 
     if (quiz.questionSelectionMode === "FIXED") {
       // Use all questions in order
-      selectedQuestions = quiz.questionPool.map((qp) => qp.question);
-      selectedQuestionIds = selectedQuestions.map((q) => q.id);
+      selectedQuestionIds = quiz.questionPool.map((qp) => qp.questionId);
     } else if (quiz.questionSelectionMode === "TOPIC_RANDOM") {
       // Select random questions from configured topics
       // Use Promise.all to fetch questions from all topics in parallel
@@ -81,19 +71,15 @@ export async function POST(request: NextRequest) {
               topicId: { in: topicIds },
               difficulty: config.difficulty,
             },
-            include: {
-              answers: true,
-              topic: true,
-            },
             take: config.questionCount,
             orderBy: { id: "asc" }, // Will be randomized in production with Prisma extension
+            select: { id: true },
           });
         })
       );
 
       // Flatten the results
-      selectedQuestions = questionsByTopic.flat();
-      selectedQuestionIds = selectedQuestions.map((q) => q.id);
+      selectedQuestionIds = questionsByTopic.flat().map((q) => q.id);
     } else if (quiz.questionSelectionMode === "POOL_RANDOM") {
       // Select random questions from quiz pool
       const poolSize = quiz.questionPool.length;
@@ -101,15 +87,18 @@ export async function POST(request: NextRequest) {
 
       // Shuffle and select
       const shuffled = quiz.questionPool.sort(() => Math.random() - 0.5);
-      selectedQuestions = shuffled
+      selectedQuestionIds = shuffled
         .slice(0, selectCount)
-        .map((qp) => qp.question);
-      selectedQuestionIds = selectedQuestions.map((q) => q.id);
+        .map((qp) => qp.questionId);
     }
 
     // Randomize question order if configured
     if (quiz.randomizeQuestionOrder) {
-      selectedQuestions = selectedQuestions.sort(() => Math.random() - 0.5);
+      selectedQuestionIds = selectedQuestionIds.sort(() => Math.random() - 0.5);
+    }
+
+    if (selectedQuestionIds.length === 0) {
+      throw new BadRequestError("Quiz has no questions available");
     }
 
     // Create quiz attempt
@@ -118,7 +107,7 @@ export async function POST(request: NextRequest) {
         userId: user.id,
         quizId: quiz.id,
         selectedQuestionIds,
-        totalQuestions: selectedQuestions.length,
+        totalQuestions: selectedQuestionIds.length,
         isPracticeMode,
       },
       include: {
@@ -137,31 +126,6 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // Prepare questions for response (remove correct answer info)
-    const questionsForResponse = selectedQuestions.map((q) => ({
-      id: q.id,
-      questionText: q.questionText,
-      questionImageUrl: q.questionImageUrl,
-      questionVideoUrl: q.questionVideoUrl,
-      questionAudioUrl: q.questionAudioUrl,
-      hint: quiz.showHints ? q.hint : null,
-      timeLimit: q.timeLimit,
-      randomizeAnswerOrder: q.randomizeAnswerOrder,
-      answers: q.answers
-        .sort((a: any, b: any) => 
-          q.randomizeAnswerOrder 
-            ? Math.random() - 0.5 
-            : a.displayOrder - b.displayOrder
-        )
-        .map((a: any) => ({
-          id: a.id,
-          answerText: a.answerText,
-          answerImageUrl: a.answerImageUrl,
-          answerVideoUrl: a.answerVideoUrl,
-          answerAudioUrl: a.answerAudioUrl,
-        })),
-    }));
-
     return successResponse({
       attempt: {
         id: attempt.id,
@@ -171,10 +135,9 @@ export async function POST(request: NextRequest) {
         isPracticeMode: attempt.isPracticeMode,
       },
       quiz: attempt.quiz,
-      questions: questionsForResponse,
+      totalQuestions: attempt.totalQuestions,
     }, 201);
   } catch (error) {
     return handleError(error);
   }
 }
-

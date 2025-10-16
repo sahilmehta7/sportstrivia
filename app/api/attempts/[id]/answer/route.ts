@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireAuth } from "@/lib/auth-helpers";
-import { handleError, successResponse, NotFoundError } from "@/lib/errors";
+import { handleError, successResponse, NotFoundError, BadRequestError } from "@/lib/errors";
 import { z } from "zod";
 
 const submitAnswerSchema = z.object({
@@ -44,9 +44,8 @@ export async function PUT(
       throw new Error("Quiz attempt already completed");
     }
 
-    // Check if question is part of this attempt
     if (!attempt.selectedQuestionIds.includes(questionId)) {
-      throw new Error("Question not part of this quiz attempt");
+      throw new BadRequestError("Question not part of this quiz attempt");
     }
 
     // Check if answer already exists for this question
@@ -112,4 +111,16 @@ export async function PUT(
     return handleError(error);
   }
 }
+    // Ensure answers are provided in order
+    const answeredCount = await prisma.userAnswer.count({
+      where: { attemptId: id },
+    });
 
+    const expectedQuestionId = attempt.selectedQuestionIds[answeredCount];
+    if (!expectedQuestionId) {
+      throw new BadRequestError("No more questions available in this attempt");
+    }
+
+    if (expectedQuestionId !== questionId) {
+      throw new BadRequestError("This question is not available yet");
+    }

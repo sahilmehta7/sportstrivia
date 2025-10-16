@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireAuth } from "@/lib/auth-helpers";
 import { handleError, successResponse, NotFoundError, ForbiddenError, BadRequestError } from "@/lib/errors";
+import { checkAndAwardBadges } from "@/lib/services/badge.service";
 
 // POST /api/attempts/[id]/complete - Complete quiz attempt and calculate score
 export async function POST(
@@ -39,90 +40,148 @@ export async function POST(
       throw new BadRequestError("Quiz attempt already completed");
     }
 
-    // Calculate score
-    let totalPoints = 0;
-    let earnedPoints = 0;
-    let correctAnswers = 0;
+    const orderedAnswers = [...attempt.userAnswers].sort(
+      (a, b) => a.createdAt.getTime() - b.createdAt.getTime()
+    );
 
-    // Get question pool to get point values
     const questionPool = await prisma.quizQuestionPool.findMany({
       where: {
         quizId: attempt.quizId,
         questionId: { in: attempt.selectedQuestionIds },
       },
+      select: {
+        questionId: true,
+        points: true,
+      },
     });
 
-    const questionPoints = new Map(
+    const questionPoints = new Map<string, number>(
       questionPool.map((qp) => [qp.questionId, qp.points])
     );
 
-    for (const userAnswer of attempt.userAnswers) {
-      const points = questionPoints.get(userAnswer.questionId) || 1;
-      totalPoints += points;
+    const defaultBasePoints = 100;
+    const streakBonusIncrement = 10;
 
-      if (userAnswer.isCorrect) {
-        correctAnswers++;
-        earnedPoints += points;
+    let totalPoints = 0;
+    let totalTimeSpent = 0;
+    let correctAnswers = 0;
+    let currentStreak = 0;
+    let longestStreak = 0;
 
-        // Add time bonus if enabled
-        if (attempt.quiz.timeBonusEnabled) {
-          const questionTimeLimit =
-            userAnswer.question.timeLimit || attempt.quiz.timePerQuestion || 60;
-          const timeSaved = questionTimeLimit - userAnswer.timeSpent;
-          if (timeSaved > 0) {
-            earnedPoints += timeSaved * attempt.quiz.bonusPointsPerSecond;
-          }
+    const answerScoreData: {
+      id: string;
+      basePoints: number;
+      timeBonus: number;
+      streakBonus: number;
+      totalPoints: number;
+    }[] = [];
+
+    for (const userAnswer of orderedAnswers) {
+      const questionBasePoints = questionPoints.get(userAnswer.questionId) ?? defaultBasePoints;
+      const questionTimeLimit =
+        userAnswer.question.timeLimit ?? attempt.quiz.timePerQuestion ?? 60;
+
+      totalTimeSpent += userAnswer.timeSpent;
+
+      let basePoints = 0;
+      let timeBonus = 0;
+      let streakBonus = 0;
+      let totalForQuestion = 0;
+
+      if (userAnswer.isCorrect && !userAnswer.wasSkipped) {
+        basePoints = questionBasePoints;
+
+        if (attempt.quiz.timeBonusEnabled && attempt.quiz.bonusPointsPerSecond > 0) {
+          const timeSaved = Math.max(0, questionTimeLimit - userAnswer.timeSpent);
+          timeBonus = Math.max(
+            0,
+            Math.ceil(timeSaved * attempt.quiz.bonusPointsPerSecond)
+          );
         }
-      } else if (
-        !userAnswer.wasSkipped &&
-        attempt.quiz.negativeMarkingEnabled
-      ) {
-        // Deduct penalty for wrong answers
-        const penalty = points * (attempt.quiz.penaltyPercentage / 100);
-        earnedPoints -= penalty;
+
+        currentStreak += 1;
+        if (currentStreak > 1) {
+          streakBonus = (currentStreak - 1) * streakBonusIncrement;
+        }
+        longestStreak = Math.max(longestStreak, currentStreak);
+
+        totalForQuestion = basePoints + timeBonus + streakBonus;
+        correctAnswers += 1;
+      } else {
+        currentStreak = 0;
       }
+
+      totalPoints += totalForQuestion;
+
+      answerScoreData.push({
+        id: userAnswer.id,
+        basePoints,
+        timeBonus,
+        streakBonus,
+        totalPoints: totalForQuestion,
+      });
     }
 
-    // Ensure score is not negative
-    earnedPoints = Math.max(0, earnedPoints);
+    const answeredCount = orderedAnswers.length;
+    const averageResponseTime =
+      answeredCount > 0 ? totalTimeSpent / answeredCount : 0;
 
-    // Calculate percentage score
-    const scorePercentage = totalPoints > 0 ? (earnedPoints / totalPoints) * 100 : 0;
+    const totalQuestions = attempt.totalQuestions || answeredCount;
+    const scorePercentage =
+      totalQuestions > 0 ? (correctAnswers / totalQuestions) * 100 : 0;
     const passed = scorePercentage >= attempt.quiz.passingScore;
 
-    // Update attempt
-    const completedAttempt = await prisma.quizAttempt.update({
-      where: { id },
-      data: {
-        score: scorePercentage,
-        correctAnswers,
-        passed,
-        completedAt: new Date(),
-      },
-      include: {
-        quiz: {
-          select: {
-            id: true,
-            title: true,
-            slug: true,
-            passingScore: true,
+    const completedAttempt = await prisma.$transaction(async (tx) => {
+      for (const answer of answerScoreData) {
+        await tx.userAnswer.update({
+          where: { id: answer.id },
+          data: {
+            basePoints: answer.basePoints,
+            timeBonus: answer.timeBonus,
+            streakBonus: answer.streakBonus,
+            totalPoints: answer.totalPoints,
           },
+        });
+      }
+
+      return tx.quizAttempt.update({
+        where: { id },
+        data: {
+          score: scorePercentage,
+          correctAnswers,
+          passed,
+          completedAt: new Date(),
+          totalPoints,
+          longestStreak,
+          averageResponseTime,
+          totalTimeSpent,
         },
-        userAnswers: {
-          include: {
-            question: {
-              select: {
-                id: true,
-                questionText: true,
-                explanation: true,
-                explanationImageUrl: true,
-                explanationVideoUrl: true,
-              },
+        include: {
+          quiz: {
+            select: {
+              id: true,
+              title: true,
+              slug: true,
+              passingScore: true,
             },
-            answer: true,
+          },
+          userAnswers: {
+            include: {
+              question: {
+                select: {
+                  id: true,
+                  questionText: true,
+                  explanation: true,
+                  explanationImageUrl: true,
+                  explanationVideoUrl: true,
+                  timeLimit: true,
+                },
+              },
+              answer: true,
+            },
           },
         },
-      },
+      });
     });
 
     // Update user statistics
@@ -162,6 +221,10 @@ export async function POST(
         totalQuestions: completedAttempt.totalQuestions,
         correctAnswers: completedAttempt.correctAnswers,
         passed: completedAttempt.passed,
+        totalPoints: completedAttempt.totalPoints,
+        longestStreak: completedAttempt.longestStreak,
+        averageResponseTime: completedAttempt.averageResponseTime,
+        totalTimeSpent: completedAttempt.totalTimeSpent,
         startedAt: completedAttempt.startedAt,
         completedAt: completedAttempt.completedAt,
         isPracticeMode: completedAttempt.isPracticeMode,
@@ -175,13 +238,24 @@ export async function POST(
         isCorrect: ua.isCorrect,
         wasSkipped: ua.wasSkipped,
         timeSpent: ua.timeSpent,
+        basePoints: ua.basePoints,
+        timeBonus: ua.timeBonus,
+        streakBonus: ua.streakBonus,
+        totalPoints: ua.totalPoints,
+        timeLimit: ua.question.timeLimit ?? attempt.quiz.timePerQuestion ?? 60,
         explanation: ua.question.explanation,
         explanationImageUrl: ua.question.explanationImageUrl,
         explanationVideoUrl: ua.question.explanationVideoUrl,
       })),
     };
 
-    return successResponse(results);
+    // Check and award badges
+    const awardedBadges = await checkAndAwardBadges(user.id);
+
+    return successResponse({
+      ...results,
+      awardedBadges,
+    });
   } catch (error) {
     return handleError(error);
   }
@@ -392,4 +466,3 @@ async function updateQuizLeaderboard(
     }
   });
 }
-

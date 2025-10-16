@@ -19,7 +19,11 @@ interface QuizPlayClientProps {
 interface AttemptQuestion {
   id: string;
   questionText: string;
+  questionImageUrl?: string | null;
+  questionVideoUrl?: string | null;
+  questionAudioUrl?: string | null;
   hint?: string | null;
+  timeLimit?: number | null;
   answers: {
     id: string;
     answerText: string;
@@ -27,7 +31,6 @@ interface AttemptQuestion {
     answerVideoUrl?: string | null;
     answerAudioUrl?: string | null;
   }[];
-  timeLimit?: number | null;
 }
 
 interface QuizConfig {
@@ -43,48 +46,26 @@ interface QuestionFeedback {
 }
 
 export function QuizPlayClient({ quizId, quizTitle, quizSlug }: QuizPlayClientProps) {
-  const { toast } = useToast();
   const router = useRouter();
+  const { toast } = useToast();
+
   const [status, setStatus] = useState<"loading" | "in-progress" | "results" | "error">("loading");
   const [attemptId, setAttemptId] = useState<string | null>(null);
-  const [questions, setQuestions] = useState<AttemptQuestion[]>([]);
   const [quizConfig, setQuizConfig] = useState<QuizConfig>({});
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [timeLeft, setTimeLeft] = useState(0);
+  const [totalQuestions, setTotalQuestions] = useState<number>(0);
+  const [position, setPosition] = useState<number>(0);
+  const [currentQuestion, setCurrentQuestion] = useState<AttemptQuestion | null>(null);
   const [feedback, setFeedback] = useState<QuestionFeedback | null>(null);
   const [results, setResults] = useState<any>(null);
+  const [timeLeft, setTimeLeft] = useState<number>(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
-  const advanceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [isLoadingQuestion, setIsLoadingQuestion] = useState(false);
   const [isCompleting, startCompletion] = useTransition();
 
-  const currentQuestion = questions[currentIndex];
-  const totalQuestions = questions.length;
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const advanceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const getTimeLimitForQuestion = useCallback(
-    (index: number) => {
-      const question = questions[index];
-      if (!question) return 60;
-      if (typeof question.timeLimit === "number" && question.timeLimit > 0) {
-        return question.timeLimit;
-      }
-      if (quizConfig.timePerQuestion && quizConfig.timePerQuestion > 0) {
-        return quizConfig.timePerQuestion;
-      }
-      return 60;
-    },
-    [questions, quizConfig.timePerQuestion]
-  );
-
-  const resetTimerForQuestion = useCallback(
-    (index: number) => {
-      const limit = getTimeLimitForQuestion(index);
-      setTimeLeft(limit);
-    },
-    [getTimeLimitForQuestion]
-  );
-
-  const clearExistingTimer = () => {
+  const clearTimer = () => {
     if (timerRef.current) {
       clearInterval(timerRef.current);
       timerRef.current = null;
@@ -98,67 +79,133 @@ export function QuizPlayClient({ quizId, quizTitle, quizSlug }: QuizPlayClientPr
     }
   };
 
-  useEffect(() => {
-    const startAttempt = async () => {
-      try {
-        const response = await fetch("/api/attempts", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ quizId }),
-        });
+  const computeTimeLimit = useCallback(
+    (question?: AttemptQuestion | null) => {
+      if (!question) {
+        return 60;
+      }
+      if (typeof question.timeLimit === "number" && question.timeLimit > 0) {
+        return question.timeLimit;
+      }
+      if (quizConfig.timePerQuestion && quizConfig.timePerQuestion > 0) {
+        return quizConfig.timePerQuestion;
+      }
+      return 60;
+    },
+    [quizConfig.timePerQuestion]
+  );
 
+  const resetTimerForQuestion = useCallback(
+    (question?: AttemptQuestion | null) => {
+      const limit = computeTimeLimit(question);
+      setTimeLeft(limit);
+    },
+    [computeTimeLimit]
+  );
+
+  const fetchNextQuestion = useCallback(
+    async (attemptIdentifier?: string) => {
+      const activeAttemptId = attemptIdentifier ?? attemptId;
+      if (!activeAttemptId) return;
+
+      setIsLoadingQuestion(true);
+      try {
+        const response = await fetch(`/api/attempts/${activeAttemptId}/next`);
         const result = await response.json();
 
-        if (response.status === 401) {
-          router.push(`/auth/signin?callbackUrl=${encodeURIComponent(`/quizzes/${quizSlug}/play`)}`);
+        if (!response.ok) {
+          throw new Error(result.error || "Failed to load next question");
+        }
+
+        const { nextQuestion, position: nextPosition, total } = result.data;
+        setTotalQuestions(total);
+        setPosition(nextPosition);
+
+        if (!nextQuestion) {
+          // No more questions, complete attempt
+          startCompletion(async () => {
+            await completeAttempt(activeAttemptId);
+          });
           return;
         }
 
-        if (!response.ok) {
-          throw new Error(result.error || "Failed to start quiz");
-        }
-
-        const { attempt, quiz, questions: attemptQuestions } = result.data;
-        setAttemptId(attempt.id);
-        setQuizConfig({
-          timePerQuestion: quiz.timePerQuestion,
-          showHints: quiz.showHints,
-        });
-        setQuestions(attemptQuestions);
-        setStatus("in-progress");
-        setCurrentIndex(0);
+        setCurrentQuestion(nextQuestion);
         setFeedback(null);
-        setResults(null);
-        resetTimerForQuestion(0);
+        resetTimerForQuestion(nextQuestion);
+        setStatus("in-progress");
       } catch (error: any) {
         toast({
-          title: "Unable to start quiz",
+          title: "Unable to load question",
           description: error?.message || "An unexpected error occurred.",
           variant: "destructive",
         });
         setStatus("error");
+      } finally {
+        setIsLoadingQuestion(false);
       }
-    };
+    },
+    [attemptId, resetTimerForQuestion, startCompletion, toast]
+  );
 
+  const startAttempt = useCallback(async () => {
+    setStatus("loading");
+    try {
+      const response = await fetch("/api/attempts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ quizId }),
+      });
+
+      const result = await response.json();
+
+      if (response.status === 401) {
+        router.push(`/auth/signin?callbackUrl=${encodeURIComponent(`/quizzes/${quizSlug}/play`)}`);
+        return;
+      }
+
+      if (!response.ok) {
+        throw new Error(result.error || "Failed to start quiz");
+      }
+
+      const { attempt, quiz, totalQuestions: total } = result.data;
+      setAttemptId(attempt.id);
+      setQuizConfig({
+        timePerQuestion: quiz.timePerQuestion,
+        showHints: quiz.showHints,
+      });
+      setTotalQuestions(total);
+
+      await fetchNextQuestion(attempt.id);
+    } catch (error: any) {
+      toast({
+        title: "Unable to start quiz",
+        description: error?.message || "An unexpected error occurred.",
+        variant: "destructive",
+      });
+      setStatus("error");
+    }
+  }, [fetchNextQuestion, quizId, quizSlug, router, toast]);
+
+  useEffect(() => {
     startAttempt();
 
     return () => {
-      clearExistingTimer();
+      clearTimer();
       clearAdvanceTimeout();
     };
-  }, [quizId, quizSlug, resetTimerForQuestion, router, toast]);
+  }, [startAttempt]);
 
   useEffect(() => {
-    clearExistingTimer();
+    clearTimer();
 
-    if (status !== "in-progress" || feedback || !currentQuestion) {
+    if (status !== "in-progress" || !currentQuestion || feedback) {
       return;
     }
 
     timerRef.current = setInterval(() => {
       setTimeLeft((prev) => {
         if (prev <= 1) {
-          clearExistingTimer();
+          clearTimer();
           void handleAnswer(null, true);
           return 0;
         }
@@ -167,117 +214,124 @@ export function QuizPlayClient({ quizId, quizTitle, quizSlug }: QuizPlayClientPr
     }, 1000);
 
     return () => {
-      clearExistingTimer();
+      clearTimer();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [status, currentIndex, currentQuestion, feedback]);
+  }, [status, currentQuestion, feedback]);
 
-  useEffect(() => {
-    if (status === "in-progress") {
-      resetTimerForQuestion(currentIndex);
-    }
-  }, [currentIndex, resetTimerForQuestion, status]);
+  const completeAttempt = useCallback(
+    async (attemptIdentifier?: string) => {
+      const activeAttemptId = attemptIdentifier ?? attemptId;
+      if (!activeAttemptId) return;
 
-  const currentTimeLimit = useMemo(() => getTimeLimitForQuestion(currentIndex), [
-    currentIndex,
-    getTimeLimitForQuestion,
-  ]);
+      try {
+        const response = await fetch(`/api/attempts/${activeAttemptId}/complete`, {
+          method: "POST",
+        });
 
-  const handleAnswer = async (answerId: string | null, fromTimer = false) => {
-    if (
-      status !== "in-progress" ||
-      !currentQuestion ||
-      !attemptId ||
-      feedback ||
-      isSubmitting
-    ) {
-      return;
-    }
+        const result = await response.json();
 
-    setIsSubmitting(true);
-    clearExistingTimer();
-
-    try {
-      const timeSpent = currentTimeLimit - timeLeft;
-      const response = await fetch(`/api/attempts/${attemptId}/answer`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          questionId: currentQuestion.id,
-          answerId,
-          timeSpent: Math.max(timeSpent, 0),
-        }),
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || "Unable to submit answer");
-      }
-
-      const payload = result.data;
-
-      setFeedback({
-        isCorrect: payload.isCorrect,
-        wasSkipped: payload.wasSkipped,
-        message: payload.message,
-        selectedAnswerId: answerId,
-      });
-
-      const isLastQuestion = currentIndex === totalQuestions - 1;
-
-      clearAdvanceTimeout();
-      advanceTimeoutRef.current = setTimeout(() => {
-        if (isLastQuestion) {
-          startCompletion(async () => {
-            await completeAttempt();
-          });
-        } else {
-          setCurrentIndex((prev) => prev + 1);
-          setFeedback(null);
+        if (!response.ok) {
+          throw new Error(result.error || "Failed to complete quiz");
         }
-      }, isLastQuestion ? 600 : 1200);
-    } catch (error: any) {
-      toast({
-        title: "Submission failed",
-        description: error?.message || "We couldn't record your answer.",
-        variant: "destructive",
-      });
 
-      if (!feedback) {
-        resetTimerForQuestion(currentIndex);
+        setResults(result.data);
+        setStatus("results");
+        setFeedback(null);
+        setCurrentQuestion(null);
+      } catch (error: any) {
+        toast({
+          title: "Unable to complete quiz",
+          description: error?.message || "An unexpected error occurred.",
+          variant: "destructive",
+        });
+        setStatus("error");
       }
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+    },
+    [attemptId, toast]
+  );
 
-  const completeAttempt = useCallback(async () => {
-    if (!attemptId) return;
-
-    try {
-      const response = await fetch(`/api/attempts/${attemptId}/complete`, {
-        method: "POST",
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || "Failed to complete quiz");
+  const handleAnswer = useCallback(
+    async (answerId: string | null, fromTimer = false) => {
+      if (
+        status !== "in-progress" ||
+        !attemptId ||
+        !currentQuestion ||
+        feedback ||
+        isSubmitting
+      ) {
+        return;
       }
 
-      setResults(result.data);
-      setStatus("results");
-      setFeedback(null);
-    } catch (error: any) {
-      toast({
-        title: "Unable to complete quiz",
-        description: error?.message || "Something went wrong while finalising the quiz.",
-        variant: "destructive",
-      });
-      setStatus("error");
-    }
-  }, [attemptId, toast]);
+      setIsSubmitting(true);
+      clearTimer();
+
+      try {
+        const timeLimit = computeTimeLimit(currentQuestion);
+        const timeSpent = Math.max(timeLimit - timeLeft, 0);
+        const response = await fetch(`/api/attempts/${attemptId}/answer`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            questionId: currentQuestion.id,
+            answerId,
+            timeSpent,
+          }),
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+          throw new Error(result.error || "Unable to submit answer");
+        }
+
+        const isLastQuestion = position >= totalQuestions - 1;
+
+        setFeedback({
+          isCorrect: result.data.isCorrect,
+          wasSkipped: result.data.wasSkipped,
+          message: result.data.message,
+          selectedAnswerId: answerId,
+        });
+
+        clearAdvanceTimeout();
+        advanceTimeoutRef.current = setTimeout(() => {
+          if (isLastQuestion) {
+            startCompletion(async () => {
+              await completeAttempt();
+            });
+          } else {
+            void fetchNextQuestion();
+          }
+        }, fromTimer ? 600 : 1200);
+      } catch (error: any) {
+        toast({
+          title: "Submission failed",
+          description: error?.message || "We couldn't record your answer.",
+          variant: "destructive",
+        });
+        resetTimerForQuestion(currentQuestion);
+      } finally {
+        setIsSubmitting(false);
+      }
+    },
+    [
+      attemptId,
+      completeAttempt,
+      computeTimeLimit,
+      currentQuestion,
+      fetchNextQuestion,
+      feedback,
+      isSubmitting,
+      position,
+      resetTimerForQuestion,
+      startCompletion,
+      status,
+      timeLeft,
+      toast,
+      totalQuestions,
+    ]
+  );
 
   const formattedTimeLeft = useMemo(() => {
     const minutes = Math.floor(timeLeft / 60);
@@ -333,6 +387,24 @@ export function QuizPlayClient({ quizId, quizTitle, quizSlug }: QuizPlayClientPr
             <Badge variant={results.attempt.passed ? "default" : "destructive"}>
               {results.attempt.passed ? "Passed" : "Did not pass"}
             </Badge>
+            <div className="grid gap-2 text-sm text-muted-foreground sm:grid-cols-2">
+              <div className="rounded-md border border-muted-foreground/20 bg-muted/40 px-3 py-2">
+                <p className="font-semibold text-foreground">Total Points</p>
+                <p>{results.attempt.totalPoints}</p>
+              </div>
+              <div className="rounded-md border border-muted-foreground/20 bg-muted/40 px-3 py-2">
+                <p className="font-semibold text-foreground">Longest Streak</p>
+                <p>{results.attempt.longestStreak} correct</p>
+              </div>
+              <div className="rounded-md border border-muted-foreground/20 bg-muted/40 px-3 py-2">
+                <p className="font-semibold text-foreground">Avg. Response Time</p>
+                <p>{results.attempt.averageResponseTime.toFixed(1)} sec</p>
+              </div>
+              <div className="rounded-md border border-muted-foreground/20 bg-muted/40 px-3 py-2">
+                <p className="font-semibold text-foreground">Total Time Spent</p>
+                <p>{results.attempt.totalTimeSpent} sec</p>
+              </div>
+            </div>
             <div className="flex gap-2">
               <Button onClick={() => router.push(`/quizzes/${quizSlug}`)}>Back to quiz</Button>
               <Button variant="outline" onClick={() => router.push("/quizzes")}>
@@ -373,6 +445,25 @@ export function QuizPlayClient({ quizId, quizTitle, quizSlug }: QuizPlayClientPr
                     {answer.explanation}
                   </p>
                 )}
+                <div className="mt-3 grid gap-2 text-xs text-muted-foreground sm:grid-cols-2">
+                  <div>
+                    <span className="font-medium text-foreground">Points:</span> {answer.totalPoints}
+                    {answer.totalPoints > 0 && (
+                      <span>
+                        {" "}
+                        (base {answer.basePoints}
+                        {answer.timeBonus ? ", time " + answer.timeBonus : ""}
+                        {answer.streakBonus ? ", streak " + answer.streakBonus : ""})
+                      </span>
+                    )}
+                  </div>
+                  <div>
+                    <span className="font-medium text-foreground">Time:</span> {answer.timeSpent}s
+                    {typeof answer.timeLimit === "number" && (
+                      <span> / {answer.timeLimit}s</span>
+                    )}
+                  </div>
+                </div>
               </div>
             ))}
           </CardContent>
@@ -381,8 +472,13 @@ export function QuizPlayClient({ quizId, quizTitle, quizSlug }: QuizPlayClientPr
     );
   }
 
-  if (!currentQuestion) {
-    return null;
+  if (isLoadingQuestion || !currentQuestion) {
+    return (
+      <div className="flex min-h-[50vh] flex-col items-center justify-center gap-4">
+        <LoadingSpinner size="lg" />
+        <p className="text-sm text-muted-foreground">Loading next question…</p>
+      </div>
+    );
   }
 
   return (
@@ -391,7 +487,7 @@ export function QuizPlayClient({ quizId, quizTitle, quizSlug }: QuizPlayClientPr
         <div>
           <h1 className="text-2xl font-semibold">{quizTitle}</h1>
           <p className="text-sm text-muted-foreground">
-            Question {currentIndex + 1} of {totalQuestions}
+            Question {position + 1} of {totalQuestions}
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -453,7 +549,7 @@ export function QuizPlayClient({ quizId, quizTitle, quizSlug }: QuizPlayClientPr
         </CardContent>
       </Card>
 
-      <div className="flex justify-between">
+      <div className="flex justify-between items-center">
         <Button variant="outline" onClick={() => router.push(`/quizzes/${quizSlug}`)}>
           Quit quiz
         </Button>
@@ -471,4 +567,3 @@ export function QuizPlayClient({ quizId, quizTitle, quizSlug }: QuizPlayClientPr
     </div>
   );
 }
-

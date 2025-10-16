@@ -334,6 +334,10 @@ model QuizAttempt {
   totalQuestions      Int       @default(0)
   correctAnswers      Int       @default(0)
   passed              Boolean   @default(false)
+  totalPoints         Int       @default(0)
+  longestStreak       Int       @default(0)
+  averageResponseTime Float     @default(0)
+  totalTimeSpent      Int       @default(0)
   
   // Practice mode
   isPracticeMode      Boolean   @default(false)
@@ -369,6 +373,10 @@ model UserAnswer {
   attempt  QuizAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
   question Question    @relation(fields: [questionId], references: [id])
   answer   Answer?     @relation(fields: [answerId], references: [id])
+  basePoints  Int      @default(0)
+  timeBonus   Int      @default(0)
+  streakBonus Int      @default(0)
+  totalPoints Int      @default(0)
 
   @@index([attemptId])
   @@index([questionId])
@@ -639,4 +647,3 @@ enum MediaType {
   VIDEO
   AUDIO
 }
-
