@@ -36,8 +36,10 @@ export async function createNotification(
     data: {
       userId,
       type,
-      title: messages[type],
-      message: JSON.stringify(data),
+      content: JSON.stringify({
+        title: messages[type],
+        ...data,
+      }),
       read: false,
     },
   });
@@ -66,8 +68,10 @@ export async function createBatchNotifications(
     data: userIds.map((userId) => ({
       userId,
       type,
-      title: messages[type],
-      message: JSON.stringify(data),
+      content: JSON.stringify({
+        title: messages[type],
+        ...data,
+      }),
       read: false,
     })),
   });

@@ -26,8 +26,8 @@ export const BADGE_CRITERIA = {
     },
   },
   PERFECT_SCORE: {
-    name: "Perfect Score",
-    description: "Achieve 100% on any quiz",
+    name: "Perfect Round",
+    description: "Achieve a perfect score on any quiz",
     check: async (userId: string) => {
       const perfectAttempt = await prisma.quizAttempt.findFirst({
         where: { userId, score: 100, completedAt: { not: null } },
@@ -102,11 +102,70 @@ export const BADGE_CRITERIA = {
     },
   },
   SPEEDSTER: {
-    name: "Speedster",
-    description: "Complete a quiz 20% faster than average",
+    name: "Lightning Fast",
+    description: "Answer a question correctly in under 2 seconds",
     check: async (userId: string) => {
-      // This would require tracking average completion times
-      // For now, return false - implement later with more data
+      const fastAnswer = await prisma.userAnswer.findFirst({
+        where: {
+          attempt: {
+            userId,
+            completedAt: { not: null },
+            isPracticeMode: false,
+          },
+          isCorrect: true,
+          wasSkipped: false,
+          timeSpent: { lte: 2 },
+        },
+      });
+      return !!fastAnswer;
+    },
+  },
+  COMEBACK_KID: {
+    name: "Comeback Kid",
+    description: "Recover from two incorrect answers and still pass a quiz",
+    check: async (userId: string) => {
+      const attempts = await prisma.quizAttempt.findMany({
+        where: {
+          userId,
+          isPracticeMode: false,
+          completedAt: { not: null },
+          passed: true,
+        },
+        orderBy: { completedAt: "desc" },
+        take: 5,
+        select: { id: true },
+      });
+
+      for (const attempt of attempts) {
+        const answers = await prisma.userAnswer.findMany({
+          where: { attemptId: attempt.id },
+          orderBy: { createdAt: "asc" },
+          select: { isCorrect: true, wasSkipped: true },
+        });
+
+        let incorrectCount = 0;
+        let recovered = false;
+
+        for (let i = 0; i < answers.length; i++) {
+          const answer = answers[i];
+          if (!answer.isCorrect && !answer.wasSkipped) {
+            incorrectCount++;
+          }
+
+          if (incorrectCount >= 2) {
+            const remaining = answers.slice(i + 1);
+            if (remaining.some((ans) => ans.isCorrect && !ans.wasSkipped)) {
+              recovered = true;
+              break;
+            }
+          }
+        }
+
+        if (incorrectCount >= 2 && recovered) {
+          return true;
+        }
+      }
+
       return false;
     },
   },
@@ -149,7 +208,7 @@ export async function checkAndAwardBadges(userId: string): Promise<string[]> {
         },
       });
 
-      awardedBadges.push(badge.name);
+      awardedBadges.push(criteria?.name ?? badge.name);
 
       // Create notification
       await createNotification(userId, "BADGE_EARNED", {
@@ -190,4 +249,3 @@ export async function getUserBadgeProgress(userId: string) {
 
   return progress;
 }
-

@@ -24,6 +24,8 @@ model User {
   bio           String?
   favoriteTeams String[]
   role          UserRole  @default(USER)
+  totalPoints   Int       @default(0)
+  experienceTier ExperienceTier @default(ROOKIE)
   
   // Streak tracking
   currentStreak Int       @default(0)
@@ -416,6 +418,8 @@ model QuizLeaderboard {
   
   bestScore  Float
   bestTime   Int      // Best time in seconds
+  bestPoints Int      @default(0)
+  averageResponseTime Float @default(0)
   attempts   Int      @default(1)
   rank       Int      @default(999999) // Placeholder rank, updated by leaderboard calculation
   
@@ -427,8 +431,8 @@ model QuizLeaderboard {
 
   @@unique([quizId, userId])
   @@unique([quizId, rank]) // Ensure each rank is unique per quiz
-  // Covering index for leaderboard queries: ORDER BY bestScore DESC, bestTime ASC
-  @@index([quizId, bestScore(sort: Desc), bestTime(sort: Asc)])
+  // Covering index for leaderboard queries: ORDER BY bestPoints DESC, averageResponseTime ASC
+  @@index([quizId, bestPoints(sort: Desc), averageResponseTime(sort: Asc)])
   @@index([userId])
 }
 
@@ -587,6 +591,13 @@ model Media {
 enum UserRole {
   USER
   ADMIN
+}
+
+enum ExperienceTier {
+  ROOKIE
+  STARTER
+  ALL_STAR
+  LEGEND
 }
 
 enum Difficulty {

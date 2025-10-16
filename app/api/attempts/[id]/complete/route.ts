@@ -2,6 +2,8 @@ import { NextRequest } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireAuth } from "@/lib/auth-helpers";
 import { handleError, successResponse, NotFoundError, ForbiddenError, BadRequestError } from "@/lib/errors";
+import { applyProgression, type TierProgress } from "@/lib/services/progression.service";
+import type { Prisma } from "@prisma/client";
 import { checkAndAwardBadges } from "@/lib/services/badge.service";
 
 // POST /api/attempts/[id]/complete - Complete quiz attempt and calculate score
@@ -185,15 +187,26 @@ export async function POST(
     });
 
     // Update user statistics
-    await updateUserStatistics(user.id, attempt.quizId, completedAttempt);
+    const progression = await updateUserStatistics(
+      user.id,
+      attempt.quizId,
+      completedAttempt,
+      totalPoints
+    );
 
     // Update quiz leaderboard if not practice mode
     if (!attempt.isPracticeMode) {
+      const totalElapsedSeconds = Math.floor(
+        (new Date().getTime() - attempt.startedAt.getTime()) / 1000
+      );
+
       await updateQuizLeaderboard(
         user.id,
         attempt.quizId,
         scorePercentage,
-        Math.floor((new Date().getTime() - attempt.startedAt.getTime()) / 1000)
+        totalPoints,
+        averageResponseTime,
+        totalElapsedSeconds
       );
     }
 
@@ -255,6 +268,7 @@ export async function POST(
     return successResponse({
       ...results,
       awardedBadges,
+      progression,
     });
   } catch (error) {
     return handleError(error);
@@ -265,52 +279,54 @@ export async function POST(
 async function updateUserStatistics(
   userId: string,
   quizId: string,
-  attempt: any
-) {
+  attempt: any,
+  pointsEarned: number
+): Promise<TierProgress> {
   // Update user streak
   const user = await prisma.user.findUnique({
     where: { id: userId },
+    select: {
+      currentStreak: true,
+      longestStreak: true,
+      lastActiveDate: true,
+      totalPoints: true,
+      experienceTier: true,
+    },
   });
 
-  if (user) {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
 
-    const lastActive = user.lastActiveDate
-      ? new Date(user.lastActiveDate)
-      : null;
-    
+  const lastActive = user?.lastActiveDate ? new Date(user.lastActiveDate) : null;
+  if (lastActive) {
+    lastActive.setHours(0, 0, 0, 0);
+  }
+
+  let newStreak = user?.currentStreak ?? 0;
+  let newLongestStreak = user?.longestStreak ?? 0;
+
+  if (!lastActive || lastActive.getTime() !== today.getTime()) {
     if (lastActive) {
-      lastActive.setHours(0, 0, 0, 0);
-    }
+      const yesterday = new Date(today);
+      yesterday.setDate(yesterday.getDate() - 1);
 
-    let newStreak = user.currentStreak;
-
-    if (!lastActive || lastActive.getTime() !== today.getTime()) {
-      // Check if it's a consecutive day
-      if (lastActive) {
-        const yesterday = new Date(today);
-        yesterday.setDate(yesterday.getDate() - 1);
-
-        if (lastActive.getTime() === yesterday.getTime()) {
-          newStreak++;
-        } else {
-          newStreak = 1;
-        }
+      if (lastActive.getTime() === yesterday.getTime()) {
+        newStreak += 1;
       } else {
         newStreak = 1;
       }
-
-      await prisma.user.update({
-        where: { id: userId },
-        data: {
-          currentStreak: newStreak,
-          longestStreak: Math.max(user.longestStreak, newStreak),
-          lastActiveDate: new Date(),
-        },
-      });
+    } else {
+      newStreak = 1;
     }
   }
+
+  newLongestStreak = Math.max(newLongestStreak, newStreak);
+
+  const userUpdateOverrides: Prisma.UserUpdateInput = {
+    currentStreak: newStreak,
+    longestStreak: newLongestStreak,
+    lastActiveDate: new Date(),
+  };
 
   // Fetch all questions in batch
   const questionIds = attempt.userAnswers.map((ua) => ua.questionId);
@@ -392,6 +408,20 @@ async function updateUserStatistics(
 
   // Execute all updates and creates in parallel
   await Promise.all([...updates, ...creates]);
+
+  const progression = await applyProgression(
+    userId,
+    pointsEarned,
+    userUpdateOverrides,
+    user
+      ? {
+          totalPoints: user.totalPoints ?? 0,
+          experienceTier: user.experienceTier,
+        }
+      : undefined
+  );
+
+  return progression;
 }
 
 // Helper function to update quiz leaderboard
@@ -399,7 +429,9 @@ async function updateQuizLeaderboard(
   userId: string,
   quizId: string,
   score: number,
-  time: number
+  points: number,
+  averageResponseTime: number,
+  totalTime: number
 ) {
   const existing = await prisma.quizLeaderboard.findUnique({
     where: {
@@ -411,31 +443,32 @@ async function updateQuizLeaderboard(
   });
 
   if (existing) {
-    // Update if this is a better score
-    if (score > existing.bestScore || (score === existing.bestScore && time < existing.bestTime)) {
-      await prisma.quizLeaderboard.update({
-        where: { id: existing.id },
-        data: {
-          bestScore: Math.max(score, existing.bestScore),
-          bestTime: score > existing.bestScore ? time : Math.min(time, existing.bestTime),
-          attempts: { increment: 1 },
-        },
-      });
-    } else {
-      await prisma.quizLeaderboard.update({
-        where: { id: existing.id },
-        data: {
-          attempts: { increment: 1 },
-        },
-      });
-    }
+    const isBetterAttempt =
+      points > existing.bestPoints ||
+      (points === existing.bestPoints &&
+        (existing.averageResponseTime === 0 || averageResponseTime < existing.averageResponseTime));
+
+    await prisma.quizLeaderboard.update({
+      where: { id: existing.id },
+      data: {
+        bestScore: Math.max(score, existing.bestScore),
+        bestTime: existing.bestTime === 0 ? totalTime : Math.min(totalTime, existing.bestTime),
+        bestPoints: isBetterAttempt ? points : Math.max(points, existing.bestPoints),
+        averageResponseTime: isBetterAttempt
+          ? averageResponseTime
+          : existing.averageResponseTime || averageResponseTime,
+        attempts: { increment: 1 },
+      },
+    });
   } else {
     await prisma.quizLeaderboard.create({
       data: {
         quizId,
         userId,
         bestScore: score,
-        bestTime: time,
+        bestTime: totalTime,
+        bestPoints: points,
+        averageResponseTime,
         attempts: 1,
       },
     });
@@ -453,7 +486,11 @@ async function updateQuizLeaderboard(
     // Step 2: Fetch sorted leaderboard and assign correct ranks
     const leaderboard = await tx.quizLeaderboard.findMany({
       where: { quizId },
-      orderBy: [{ bestScore: "desc" }, { bestTime: "asc" }],
+      orderBy: [
+        { bestPoints: "desc" },
+        { averageResponseTime: "asc" },
+        { bestScore: "desc" },
+      ],
       select: { id: true },
     });
 

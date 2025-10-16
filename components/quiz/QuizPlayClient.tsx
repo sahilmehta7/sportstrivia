@@ -61,6 +61,8 @@ export function QuizPlayClient({ quizId, quizTitle, quizSlug }: QuizPlayClientPr
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoadingQuestion, setIsLoadingQuestion] = useState(false);
   const [isCompleting, startCompletion] = useTransition();
+  const [isSharing, setIsSharing] = useState(false);
+  const [shareStatus, setShareStatus] = useState<"idle" | "success" | "error">("idle");
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const advanceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -194,6 +196,63 @@ export function QuizPlayClient({ quizId, quizTitle, quizSlug }: QuizPlayClientPr
       clearAdvanceTimeout();
     };
   }, [startAttempt]);
+
+  const handleRematch = useCallback(() => {
+    setStatus("loading");
+    setResults(null);
+    setFeedback(null);
+    setAttemptId(null);
+    setPosition(0);
+    setTotalQuestions(0);
+    startAttempt();
+  }, [startAttempt]);
+
+  const handleShare = useCallback(async () => {
+    if (!results?.attempt) return;
+    const shareText = `I just scored ${results.attempt.totalPoints} pts in ${quizTitle}! Can you beat me?`;
+    const quizUrl = typeof window !== "undefined" ? `${window.location.origin}/quizzes/${quizSlug}` : "";
+
+    try {
+      setIsSharing(true);
+      setShareStatus("idle");
+
+      if (typeof navigator !== "undefined" && navigator.share) {
+        await navigator.share({
+          title: quizTitle,
+          text: shareText,
+          url: quizUrl,
+        });
+        setShareStatus("success");
+      } else if (typeof navigator !== "undefined" && navigator.clipboard) {
+        await navigator.clipboard.writeText(`${shareText} ${quizUrl}`.trim());
+        setShareStatus("success");
+        toast({
+          title: "Score copied!",
+          description: "Share it with friends and challenge their best time.",
+        });
+      } else {
+        throw new Error("Sharing is not supported on this device");
+      }
+    } catch (error) {
+      setShareStatus("error");
+      const message = error instanceof Error ? error.message : "Unable to share your score";
+      toast({
+        title: "Share failed",
+        description: message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsSharing(false);
+    }
+  }, [quizSlug, quizTitle, results, toast]);
+
+  const handleBrowseQuizzes = useCallback(() => {
+    router.push("/quizzes");
+  }, [router]);
+
+  const handleViewQuiz = useCallback(() => {
+    router.push(`/quizzes/${quizSlug}`);
+  }, [router, quizSlug]);
 
   useEffect(() => {
     clearTimer();
@@ -369,6 +428,20 @@ export function QuizPlayClient({ quizId, quizTitle, quizSlug }: QuizPlayClientPr
   }
 
   if (status === "results" && results) {
+    const awardedBadges: string[] = results.awardedBadges ?? [];
+    const progression = results.progression as
+      | {
+          tier: string;
+          tierLabel: string;
+          totalPoints: number;
+          leveledUp: boolean;
+          nextTier: string | null;
+          nextTierLabel: string | null;
+          pointsToNext: number | null;
+          progressPercent: number;
+        }
+      | undefined;
+
     return (
       <div className="mx-auto grid max-w-4xl gap-6 py-8">
         <Card>
@@ -405,12 +478,79 @@ export function QuizPlayClient({ quizId, quizTitle, quizSlug }: QuizPlayClientPr
                 <p>{results.attempt.totalTimeSpent} sec</p>
               </div>
             </div>
-            <div className="flex gap-2">
-              <Button onClick={() => router.push(`/quizzes/${quizSlug}`)}>Back to quiz</Button>
-              <Button variant="outline" onClick={() => router.push("/quizzes")}>
+            {progression && (
+              <div className="space-y-3 rounded-md border border-primary/30 bg-primary/5 px-4 py-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div>
+                    <p className="text-sm font-semibold text-foreground">Current Tier</p>
+                    <p className="text-lg font-bold">{progression.tierLabel}</p>
+                  </div>
+                  <Badge>{progression.tierLabel}</Badge>
+                </div>
+                <div className="text-sm text-muted-foreground">
+                  Career points:{" "}
+                  <span className="font-semibold text-foreground">{progression.totalPoints}</span>
+                </div>
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between text-xs text-muted-foreground">
+                    <span>
+                      Progress to {progression.nextTierLabel ?? progression.tierLabel}
+                    </span>
+                    <span>{progression.progressPercent}%</span>
+                  </div>
+                  <div className="h-2 w-full rounded-full bg-muted">
+                    <div
+                      className="h-2 rounded-full bg-primary transition-all"
+                      style={{ width: `${progression.progressPercent}%` }}
+                    />
+                  </div>
+                  {progression.pointsToNext !== null && (
+                    <p className="text-xs text-muted-foreground">
+                      {progression.pointsToNext} points until {progression.nextTierLabel}
+                    </p>
+                  )}
+                  {progression.leveledUp && (
+                    <p className="text-xs font-semibold text-primary">
+                      Level up! You&apos;ve reached the {progression.tierLabel} tier.
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
+            {awardedBadges.length > 0 && (
+              <div className="space-y-2 rounded-md border border-emerald-400/40 bg-emerald-400/10 px-4 py-3">
+                <p className="text-sm font-semibold text-foreground">New badges unlocked</p>
+                <div className="flex flex-wrap gap-2">
+                  {awardedBadges.map((badge) => (
+                    <Badge key={badge} variant="secondary">
+                      {badge}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            )}
+            <div className="flex flex-wrap gap-2">
+              <Button onClick={handleViewQuiz}>Back to quiz</Button>
+              <Button variant="outline" onClick={handleBrowseQuizzes}>
                 Browse more quizzes
               </Button>
+              <Button variant="secondary" onClick={handleRematch}>
+                Rematch
+              </Button>
+              <Button variant="outline" onClick={handleShare} disabled={isSharing}>
+                {isSharing ? "Sharing..." : "Share score"}
+              </Button>
             </div>
+            {shareStatus === "success" && (
+              <p className="text-xs text-emerald-500">
+                Shared! Challenge your friends to climb the leaderboard.
+              </p>
+            )}
+            {shareStatus === "error" && (
+              <p className="text-xs text-destructive">
+                We couldn&apos;t share automatically—try copying the link manually.
+              </p>
+            )}
           </CardContent>
         </Card>
 

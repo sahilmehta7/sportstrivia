@@ -26,7 +26,11 @@ export async function GET(
     // Get quiz leaderboard (already exists in QuizLeaderboard table)
     const leaderboard = await prisma.quizLeaderboard.findMany({
       where: { quizId: id },
-      orderBy: [{ bestScore: "desc" }, { bestTime: "asc" }],
+      orderBy: [
+        { bestPoints: "desc" },
+        { averageResponseTime: "asc" },
+        { bestScore: "desc" },
+      ],
       take: limit,
       include: {
         user: {
@@ -71,6 +75,8 @@ export async function GET(
         userImage: entry.user.image,
         bestScore: entry.bestScore,
         bestTime: entry.bestTime,
+        bestPoints: entry.bestPoints,
+        averageResponseTime: entry.averageResponseTime,
         attempts: entry.attempts,
         rank: entry.rank,
       })),
@@ -81,6 +87,8 @@ export async function GET(
             userImage: userEntry.user.image,
             bestScore: userEntry.bestScore,
             bestTime: userEntry.bestTime,
+            bestPoints: userEntry.bestPoints,
+            averageResponseTime: userEntry.averageResponseTime,
             attempts: userEntry.attempts,
             rank: userEntry.rank,
           }
@@ -90,4 +98,3 @@ export async function GET(
     return handleError(error);
   }
 }
-

@@ -41,6 +41,8 @@ export interface LeaderboardEntry {
   userName: string | null;
   userImage: string | null;
   score: number;
+  totalPoints?: number;
+  averageResponseTime?: number;
   rank: number;
   attempts?: number;
   [key: string]: any;
@@ -71,12 +73,12 @@ export async function buildGlobalLeaderboard(
   const results = await prisma.quizAttempt.groupBy({
     by: ["userId"],
     where: whereClause,
-    _sum: { score: true },
-    _avg: { score: true },
+    _sum: { totalPoints: true, score: true },
+    _avg: { averageResponseTime: true },
     _count: { id: true },
     orderBy: [
-      { _sum: { score: "desc" } },
-      { _avg: { score: "desc" } },
+      { _sum: { totalPoints: "desc" } },
+      { _avg: { averageResponseTime: "asc" } },
     ],
     take: limit,
   });
@@ -105,7 +107,8 @@ export async function buildGlobalLeaderboard(
       userName: user?.name || null,
       userImage: user?.image || null,
       score: result._sum.score || 0,
-      averageScore: result._avg.score || 0,
+      totalPoints: result._sum.totalPoints || 0,
+      averageResponseTime: result._avg.averageResponseTime || 0,
       attempts: result._count.id,
       rank: index + 1,
     };
@@ -194,4 +197,3 @@ export async function buildTopicLeaderboard(
     };
   });
 }
-

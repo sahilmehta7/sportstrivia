@@ -53,12 +53,12 @@ export async function GET(request: NextRequest) {
     const results = await prisma.quizAttempt.groupBy({
       by: ["userId"],
       where: whereClause,
-      _sum: { score: true },
-      _avg: { score: true },
+      _sum: { totalPoints: true, score: true },
+      _avg: { averageResponseTime: true },
       _count: { id: true },
       orderBy: [
-        { _sum: { score: "desc" } },
-        { _avg: { score: "desc" } },
+        { _sum: { totalPoints: "desc" } },
+        { _avg: { averageResponseTime: "asc" } },
       ],
       take: limit,
     });
@@ -83,7 +83,8 @@ export async function GET(request: NextRequest) {
         userName: userData?.name || null,
         userImage: userData?.image || null,
         score: result._sum.score || 0,
-        averageScore: result._avg.score || 0,
+        totalPoints: result._sum.totalPoints || 0,
+        averageResponseTime: result._avg.averageResponseTime || 0,
         attempts: result._count.id,
         currentStreak: userData?.currentStreak || 0,
         rank: index + 1,
@@ -100,4 +101,3 @@ export async function GET(request: NextRequest) {
     return handleError(error);
   }
 }
-
