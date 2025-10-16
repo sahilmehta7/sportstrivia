@@ -7,11 +7,10 @@ import { Swords } from "lucide-react";
 
 interface ChallengeButtonProps {
   quizId: string;
-  quizTitle: string;
   disabled?: boolean;
 }
 
-export function ChallengeButton({ quizId, quizTitle, disabled }: ChallengeButtonProps) {
+export function ChallengeButton({ quizId, disabled }: ChallengeButtonProps) {
   const [showModal, setShowModal] = useState(false);
 
   return (

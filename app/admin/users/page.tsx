@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, type FormEvent } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import Image from "next/image";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -348,10 +349,12 @@ export default function UsersPage() {
                       <TableCell>
                         <div className="flex items-center gap-3">
                           {user.image ? (
-                            <img
+                            <Image
                               src={user.image}
                               alt={user.name || "User"}
-                              className="h-8 w-8 rounded-full"
+                              width={32}
+                              height={32}
+                              className="h-8 w-8 rounded-full object-cover"
                             />
                           ) : (
                             <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted">

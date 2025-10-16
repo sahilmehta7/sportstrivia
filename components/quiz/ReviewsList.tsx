@@ -62,6 +62,7 @@ export function ReviewsList({
         setPage(nextPage);
       }
     } catch (error) {
+      console.error("Failed to load more reviews:", error);
       toast({
         title: "Error",
         description: "Failed to load more reviews",
@@ -91,6 +92,7 @@ export function ReviewsList({
         description: "Your review has been deleted",
       });
     } catch (error) {
+      console.error("Failed to delete review:", error);
       // Revert on error
       toast({
         title: "Error",
@@ -169,4 +171,3 @@ export function ReviewsList({
     </>
   );
 }
-

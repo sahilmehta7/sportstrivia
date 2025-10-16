@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -38,7 +38,7 @@ interface NavigationItem {
 
 interface AdminShellProps {
   navigation: NavigationItem[];
-  children: React.ReactNode;
+  children: ReactNode;
 }
 
 export function AdminShell({ navigation, children }: AdminShellProps) {

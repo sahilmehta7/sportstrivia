@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -33,11 +33,7 @@ export default function NotificationsPage() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
 
-  useEffect(() => {
-    loadNotifications();
-  }, []);
-
-  const loadNotifications = async () => {
+  const loadNotifications = useCallback(async () => {
     setLoading(true);
     try {
       const response = await fetch("/api/notifications?limit=50");
@@ -56,7 +52,11 @@ export default function NotificationsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
+
+  useEffect(() => {
+    void loadNotifications();
+  }, [loadNotifications]);
 
   const markAsRead = async (notificationId: string) => {
     try {
@@ -70,7 +70,8 @@ export default function NotificationsPage() {
         )
       );
       setUnreadCount(Math.max(0, unreadCount - 1));
-    } catch (error: any) {
+    } catch (error) {
+      console.error("Failed to mark notification as read:", error);
       toast({
         title: "Error",
         description: "Failed to mark as read",
@@ -92,7 +93,8 @@ export default function NotificationsPage() {
         title: "Success",
         description: "All notifications marked as read",
       });
-    } catch (error: any) {
+    } catch (error) {
+      console.error("Failed to mark all notifications as read:", error);
       toast({
         title: "Error",
         description: "Failed to mark all as read",
@@ -108,7 +110,8 @@ export default function NotificationsPage() {
       });
 
       setNotifications(notifications.filter((n) => n.id !== notificationId));
-    } catch (error: any) {
+    } catch (error) {
+      console.error("Failed to delete notification:", error);
       toast({
         title: "Error",
         description: "Failed to delete notification",
@@ -289,4 +292,3 @@ export default function NotificationsPage() {
     </main>
   );
 }
-

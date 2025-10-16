@@ -10,7 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { UserAvatar } from "@/components/shared/UserAvatar";
-import { Trophy, Target, Clock, Award } from "lucide-react";
+import { Trophy, Target, Award } from "lucide-react";
 import Link from "next/link";
 
 interface ChallengeResultsModalProps {
@@ -99,7 +99,7 @@ export function ChallengeResultsModal({
           {winner === "tie" && (
             <Card className="bg-gradient-to-br from-blue-500/10 to-purple-500/10 border-blue-500/20">
               <CardContent className="pt-6 text-center">
-                <p className="text-2xl font-bold">It's a Tie! 🤝</p>
+                <p className="text-2xl font-bold">It&apos;s a Tie! 🤝</p>
                 <p className="text-sm text-muted-foreground mt-1">
                   Both players scored exactly the same!
                 </p>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -22,13 +22,7 @@ export function MainNavigation() {
   const { data: session } = useSession();
   const [unreadCount, setUnreadCount] = useState(0);
 
-  useEffect(() => {
-    if (session?.user) {
-      fetchUnreadCount();
-    }
-  }, [session]);
-
-  const fetchUnreadCount = async () => {
+  const fetchUnreadCount = useCallback(async () => {
     try {
       const response = await fetch("/api/notifications?unreadOnly=true&limit=1");
       const result = await response.json();
@@ -38,7 +32,13 @@ export function MainNavigation() {
     } catch (error) {
       console.error("Failed to fetch notifications:", error);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    if (session?.user) {
+      void fetchUnreadCount();
+    }
+  }, [fetchUnreadCount, session?.user]);
 
   const navLinks = [
     { href: "/quizzes", label: "Quizzes", icon: Trophy },
@@ -51,7 +51,7 @@ export function MainNavigation() {
 
   if (!session?.user) {
     return (
-      <nav className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <nav className={cn("border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60") }>
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4">
           <Link href="/" className="text-xl font-bold">
             Sports Trivia
@@ -67,7 +67,7 @@ export function MainNavigation() {
   }
 
   return (
-    <nav className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <nav className={cn("sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60") }>
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4">
         {/* Logo */}
         <Link href="/" className="text-xl font-bold">
@@ -158,4 +158,3 @@ export function MainNavigation() {
     </nav>
   );
 }
-

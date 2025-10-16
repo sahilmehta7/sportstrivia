@@ -134,6 +134,10 @@ export async function POST(request: NextRequest) {
       throw new BadRequestError("An active challenge already exists for this quiz");
     }
 
+    // Calculate expiration time
+    const expiresAt = new Date();
+    expiresAt.setHours(expiresAt.getHours() + expiresInHours);
+
     // Create challenge
     const challenge = await prisma.challenge.create({
       data: {
@@ -141,6 +145,7 @@ export async function POST(request: NextRequest) {
         challengedId,
         quizId,
         status: ChallengeStatus.PENDING,
+        expiresAt,
       },
       include: challengeInclude,
     });

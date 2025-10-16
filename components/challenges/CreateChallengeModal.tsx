@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, type FormEvent } from "react";
 import {
   Dialog,
   DialogContent,
@@ -64,13 +64,7 @@ export function CreateChallengeModal({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (isOpen) {
-      loadData();
-    }
-  }, [isOpen]);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     setLoading(true);
     try {
       const [friendsRes, quizzesRes] = await Promise.all([
@@ -88,6 +82,7 @@ export function CreateChallengeModal({
         setQuizzes(quizzesData.data?.quizzes || []);
       }
     } catch (error) {
+      console.error("Failed to load challenge data:", error);
       toast({
         title: "Error",
         description: "Failed to load data",
@@ -96,10 +91,16 @@ export function CreateChallengeModal({
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  useEffect(() => {
+    if (isOpen) {
+      void loadData();
+    }
+  }, [isOpen, loadData]);
+
+  const handleSubmit = async (event: FormEvent) => {
+    event.preventDefault();
 
     if (!selectedFriendId || !selectedQuizId) {
       toast({
@@ -255,4 +256,3 @@ export function CreateChallengeModal({
     </Dialog>
   );
 }
-

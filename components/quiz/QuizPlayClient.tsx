@@ -149,7 +149,7 @@ export function QuizPlayClient({ quizId, quizTitle, quizSlug }: QuizPlayClientPr
         setIsLoadingQuestion(false);
       }
     },
-    [attemptId, resetTimerForQuestion, startCompletion, toast]
+    [attemptId, completeAttempt, resetTimerForQuestion, startCompletion, toast]
   );
 
   const startAttempt = useCallback(async () => {

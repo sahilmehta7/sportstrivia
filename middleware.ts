@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-export function middleware(request: NextRequest) {
+export function middleware(_request: NextRequest) {
   // For now, we'll allow all routes to pass through
   // Auth will be handled at the API route level using getServerSession
   // This is a common pattern in NextAuth v5 with App Router

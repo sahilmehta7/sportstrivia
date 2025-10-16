@@ -32,6 +32,7 @@ export function UserAvatar({ src, alt = "User", size = "md", className }: UserAv
       )}
     >
       {src ? (
+        // eslint-disable-next-line @next/next/no-img-element
         <img
           src={src}
           alt={alt}

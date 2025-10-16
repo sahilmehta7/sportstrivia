@@ -88,8 +88,8 @@ function SortableQuestionRow({
   onUpdatePoints,
 }: {
   question: PoolQuestion;
-  onRemove: (poolId: string, questionId: string) => void;
-  onUpdatePoints: (poolId: string, points: number) => void;
+  onRemove: (_poolId: string, _questionId: string) => void;
+  onUpdatePoints: (_poolId: string, _points: number) => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: question.poolId,
@@ -255,10 +255,13 @@ export function QuizQuestionManager({
     }
   };
 
-  const handleRemoveQuestion = async (poolId: string, questionId: string) => {
+  const handleRemoveQuestion = async (poolId: string, _questionId: string) => {
+    // Optimistic update
+    setPoolQuestions((prev) => prev.filter((question) => question.poolId !== poolId));
+
     try {
       const response = await fetch(
-        `/api/admin/quizzes/${quiz.id}/questions?questionId=${questionId}`,
+        `/api/admin/quizzes/${quiz.id}/questions/${poolId}`,
         { method: "DELETE" }
       );
 
@@ -272,9 +275,9 @@ export function QuizQuestionManager({
         title: "Question removed",
         description: "Question has been removed from the quiz.",
       });
-
-      setPoolQuestions((prev) => prev.filter((question) => question.poolId !== poolId));
     } catch (error: any) {
+      // Revert on error
+      setPoolQuestions(initialPoolQuestions);
       toast({
         title: "Error",
         description: error.message,
@@ -283,14 +286,40 @@ export function QuizQuestionManager({
     }
   };
 
-  const handleUpdatePoints = (poolId: string, points: number) => {
+  const handleUpdatePoints = async (poolId: string, points: number) => {
     if (Number.isNaN(points) || points <= 0) {
       return;
     }
 
+    // Optimistic update
     setPoolQuestions((prev) =>
       prev.map((question) => (question.poolId === poolId ? { ...question, points } : question))
     );
+
+    try {
+      const response = await fetch(
+        `/api/admin/quizzes/${quiz.id}/questions/${poolId}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ points }),
+        }
+      );
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || "Failed to update points");
+      }
+    } catch (error: any) {
+      // Revert on error
+      setPoolQuestions(initialPoolQuestions);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update points",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleSaveOrder = async () => {

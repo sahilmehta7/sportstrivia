@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { ChallengeCard } from "@/components/challenges/ChallengeCard";
 import { ChallengeResultsModal } from "@/components/challenges/ChallengeResultsModal";
@@ -40,12 +40,7 @@ export default function ChallengesPage() {
     null
   );
 
-  useEffect(() => {
-    loadChallenges();
-    loadCurrentUser();
-  }, []);
-
-  const loadCurrentUser = async () => {
+  const loadCurrentUser = useCallback(async () => {
     try {
       const response = await fetch("/api/users/me");
       const result = await response.json();
@@ -55,9 +50,9 @@ export default function ChallengesPage() {
     } catch (error) {
       console.error("Failed to load user:", error);
     }
-  };
+  }, []);
 
-  const loadChallenges = async () => {
+  const loadChallenges = useCallback(async () => {
     setLoading(true);
     try {
       const [activeRes, receivedRes, sentRes] = await Promise.all([
@@ -84,6 +79,7 @@ export default function ChallengesPage() {
         setSentChallenges(sentData.data?.challenges || []);
       }
     } catch (error) {
+      console.error("Failed to load challenges:", error);
       toast({
         title: "Error",
         description: "Failed to load challenges",
@@ -92,7 +88,12 @@ export default function ChallengesPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
+
+  useEffect(() => {
+    void loadChallenges();
+    void loadCurrentUser();
+  }, [loadChallenges, loadCurrentUser]);
 
   const handleAccept = async (challengeId: string) => {
     try {
@@ -301,4 +302,3 @@ export default function ChallengesPage() {
     </main>
   );
 }
-

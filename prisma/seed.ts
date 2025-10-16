@@ -6,7 +6,7 @@ async function main() {
   console.log("Starting database seeding...");
 
   // Create admin user
-  const admin = await prisma.user.upsert({
+  const _admin = await prisma.user.upsert({
     where: { email: "admin@sportstrivia.com" },
     update: {},
     create: {
@@ -89,7 +89,7 @@ async function main() {
     },
   });
 
-  const nba = await prisma.topic.upsert({
+  const _nba = await prisma.topic.upsert({
     where: { slug: "nba" },
     update: {},
     create: {
@@ -114,7 +114,7 @@ async function main() {
     },
   });
 
-  const championsTag = await prisma.quizTag.upsert({
+  const _championsTag = await prisma.quizTag.upsert({
     where: { slug: "champions" },
     update: {},
     create: {
@@ -251,7 +251,7 @@ async function main() {
   console.log("✓ Created sample questions and added to quiz");
 
   // Create badges
-  const firstQuizBadge = await prisma.badge.upsert({
+  const _firstQuizBadge = await prisma.badge.upsert({
     where: { name: "First Quiz Complete" },
     update: {},
     create: {
@@ -262,7 +262,7 @@ async function main() {
     },
   });
 
-  const perfectScoreBadge = await prisma.badge.upsert({
+  const _perfectScoreBadge = await prisma.badge.upsert({
     where: { name: "Perfect Score" },
     update: {},
     create: {
@@ -274,7 +274,7 @@ async function main() {
   });
 
   // Create remaining badges
-  const quizMasterBadge = await prisma.badge.upsert({
+  const _quizMasterBadge = await prisma.badge.upsert({
     where: { name: "Quiz Master" },
     update: {},
     create: {
@@ -318,7 +318,7 @@ async function main() {
     },
   });
 
-  const challengerBadge = await prisma.badge.upsert({
+  const _challengerBadge = await prisma.badge.upsert({
     where: { name: "Challenger" },
     update: {},
     create: {
@@ -329,7 +329,7 @@ async function main() {
     },
   });
 
-  const reviewerBadge = await prisma.badge.upsert({
+  const _reviewerBadge = await prisma.badge.upsert({
     where: { name: "Reviewer" },
     update: {},
     create: {
@@ -431,10 +431,10 @@ async function main() {
   console.log("✓ Awarded badges to users");
 
   // Create quiz attempts for users
-  const attempts = [];
+  const _attempts = [];
   
   // User attempts
-  const userAttempt1 = await prisma.quizAttempt.create({
+  const _userAttempt1 = await prisma.quizAttempt.create({
     data: {
       userId: user.id,
       quizId: sampleQuiz.id,
@@ -448,7 +448,7 @@ async function main() {
   });
 
   // User2 attempts
-  const user2Attempt1 = await prisma.quizAttempt.create({
+  const _user2Attempt1 = await prisma.quizAttempt.create({
     data: {
       userId: user2.id,
       quizId: sampleQuiz.id,
@@ -462,7 +462,7 @@ async function main() {
   });
 
   // User3 attempts
-  const user3Attempt1 = await prisma.quizAttempt.create({
+  const _user3Attempt1 = await prisma.quizAttempt.create({
     data: {
       userId: user3.id,
       quizId: sampleQuiz.id,

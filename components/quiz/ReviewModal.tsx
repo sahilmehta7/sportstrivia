@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, type FormEvent } from "react";
 import {
   Dialog,
   DialogContent,
@@ -51,8 +51,8 @@ export function ReviewModal({
     }
   }, [existingReview, isOpen]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (event: FormEvent) => {
+    event.preventDefault();
 
     if (rating === 0) {
       toast({
@@ -165,4 +165,3 @@ export function ReviewModal({
     </Dialog>
   );
 }
-

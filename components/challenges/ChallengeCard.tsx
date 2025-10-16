@@ -4,7 +4,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { UserAvatar } from "@/components/shared/UserAvatar";
-import { Trophy, Swords, Clock, CheckCircle2 } from "lucide-react";
+import { ExpirationTimer } from "./ExpirationTimer";
+import { Trophy, Swords, CheckCircle2 } from "lucide-react";
 import Link from "next/link";
 
 interface ChallengeCardProps {
@@ -17,6 +18,7 @@ interface ChallengeCardProps {
     challengerScore: number | null;
     challengedScore: number | null;
     status: string;
+    expiresAt?: string | null;
     createdAt: string;
   };
   currentUserId: string;
@@ -144,9 +146,13 @@ export function ChallengeCard({
 
           {/* Actions */}
           <div className="flex items-center justify-between pt-2 border-t">
-            <div className="flex items-center gap-1 text-xs text-muted-foreground">
-              <Clock className="h-3 w-3" />
-              <span>{formattedDate}</span>
+            <div className="flex items-center gap-2">
+              {challenge.status === "PENDING" && challenge.expiresAt && (
+                <ExpirationTimer expiresAt={challenge.expiresAt} />
+              )}
+              {(!challenge.expiresAt || challenge.status !== "PENDING") && (
+                <span className="text-xs text-muted-foreground">{formattedDate}</span>
+              )}
             </div>
 
             <div className="flex gap-2">

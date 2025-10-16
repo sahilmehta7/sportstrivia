@@ -18,8 +18,8 @@ interface Friend {
 
 interface FriendsListProps {
   friends: Friend[];
-  onChallenge?: (friendId: string) => void;
-  onRemove?: (friendshipId: string) => void;
+  onChallenge?: (_friendId: string) => void;
+  onRemove?: (_friendshipId: string) => void;
 }
 
 export function FriendsList({ friends, onChallenge, onRemove }: FriendsListProps) {

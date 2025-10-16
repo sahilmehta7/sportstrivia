@@ -211,10 +211,9 @@ export default async function QuizDetailPage({
             {isLoggedIn ? (
               <>
                 <StartQuizButton slug={quiz.slug} disabled={!isLive} />
-                <ChallengeButton 
-                  quizId={quiz.id} 
-                  quizTitle={quiz.title}
-                  disabled={!isLive} 
+                <ChallengeButton
+                  quizId={quiz.id}
+                  disabled={!isLive}
                 />
               </>
             ) : (

@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 
 interface StarRatingProps {
   value: number;
-  onChange?: (value: number) => void;
+  onChange?: (_value: number) => void;
   readonly?: boolean;
   size?: "sm" | "md" | "lg";
   maxStars?: number;
@@ -13,7 +13,7 @@ interface StarRatingProps {
 }
 
 export function StarRating({
-  value,
+  value: rating,
   onChange,
   readonly = false,
   size = "md",
@@ -37,8 +37,8 @@ export function StarRating({
       <div className="flex items-center gap-0.5">
         {Array.from({ length: maxStars }, (_, i) => {
           const starValue = i + 1;
-          const isFilled = starValue <= value;
-          const isPartiallyFilled = starValue - 0.5 === value;
+          const isFilled = starValue <= rating;
+          const isPartiallyFilled = starValue - 0.5 === rating;
 
           return (
             <button
@@ -67,7 +67,7 @@ export function StarRating({
       </div>
       {showValue && (
         <span className="ml-1 text-sm font-medium text-muted-foreground">
-          {value.toFixed(1)}
+          {rating.toFixed(1)}
         </span>
       )}
     </div>
