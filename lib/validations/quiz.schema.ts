@@ -13,25 +13,25 @@ export const quizSchema = z.object({
   descriptionImageUrl: z.string().url().optional().or(z.literal("")),
   descriptionVideoUrl: z.string().url().optional().or(z.literal("")),
   sport: z.string().optional(),
-  difficulty: z.nativeEnum(Difficulty).default(Difficulty.MEDIUM),
-  status: z.nativeEnum(QuizStatus).default(QuizStatus.DRAFT),
+  difficulty: z.nativeEnum(Difficulty).optional().default(Difficulty.MEDIUM),
+  status: z.nativeEnum(QuizStatus).optional().default(QuizStatus.DRAFT),
   
   // Quiz configuration
   duration: z.number().int().min(1).optional(),
   timePerQuestion: z.number().int().min(1).optional(),
-  passingScore: z.number().int().min(0).max(100).default(70),
+  passingScore: z.number().int().min(0).max(100).optional().default(70),
   
   // Question selection
-  questionSelectionMode: z.nativeEnum(QuestionSelectionMode).default(QuestionSelectionMode.FIXED),
+  questionSelectionMode: z.nativeEnum(QuestionSelectionMode).optional().default(QuestionSelectionMode.FIXED),
   questionCount: z.number().int().min(1).optional(),
-  randomizeQuestionOrder: z.boolean().default(false),
-  showHints: z.boolean().default(true),
+  randomizeQuestionOrder: z.boolean().optional().default(false),
+  showHints: z.boolean().optional().default(true),
   
   // Scoring
-  negativeMarkingEnabled: z.boolean().default(false),
-  penaltyPercentage: z.number().int().min(0).max(100).default(25),
-  timeBonusEnabled: z.boolean().default(false),
-  bonusPointsPerSecond: z.number().min(0).default(0),
+  negativeMarkingEnabled: z.boolean().optional().default(false),
+  penaltyPercentage: z.number().int().min(0).max(100).optional().default(25),
+  timeBonusEnabled: z.boolean().optional().default(false),
+  bonusPointsPerSecond: z.number().min(0).optional().default(0),
   
   // Scheduling
   startTime: z.string().datetime().optional().or(z.literal("")),
@@ -39,7 +39,7 @@ export const quizSchema = z.object({
   answersRevealTime: z.string().datetime().optional().or(z.literal("")),
   
   // Recurring
-  recurringType: z.nativeEnum(RecurringType).default(RecurringType.NONE),
+  recurringType: z.nativeEnum(RecurringType).optional().default(RecurringType.NONE),
   
   // SEO
   seoTitle: z.string().max(60).optional(),
@@ -47,8 +47,8 @@ export const quizSchema = z.object({
   seoKeywords: z.array(z.string()).optional(),
   
   // Visibility
-  isFeatured: z.boolean().default(false),
-  isPublished: z.boolean().default(false),
+  isFeatured: z.boolean().optional().default(false),
+  isPublished: z.boolean().optional().default(false),
 });
 
 export const quizUpdateSchema = quizSchema.partial();

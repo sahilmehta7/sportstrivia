@@ -35,7 +35,7 @@ export async function GET(
           },
         },
         quizAttempts: {
-          orderBy: { createdAt: "desc" },
+          orderBy: { startedAt: "desc" },
           take: 10,
           include: {
             quiz: {

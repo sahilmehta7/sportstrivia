@@ -73,7 +73,7 @@ export function QuestionEditor({
       { answerText: "", isCorrect: false, displayOrder: 3 },
     ];
 
-  const form = useForm<QuestionFormValues>({
+  const form = useForm({
     resolver: zodResolver(questionFormSchema),
     defaultValues: {
       type: initialData?.type ?? QuestionType.MULTIPLE_CHOICE,

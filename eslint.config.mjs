@@ -11,7 +11,7 @@ const compat = new FlatCompat({
   baseDirectory: __dirname,
 });
 
-export default [
+const config = [
   {
     ignores: [
       "**/node_modules/**",
@@ -34,5 +34,13 @@ export default [
       },
     },
   },
+  {
+    files: ["**/*.{ts,tsx,js,jsx}"],
+    rules: {
+      "react/react-in-jsx-scope": "off",
+      "react/jsx-uses-react": "off",
+    },
+  },
 ];
 
+export default config;

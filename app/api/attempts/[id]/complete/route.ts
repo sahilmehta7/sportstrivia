@@ -329,7 +329,7 @@ async function updateUserStatistics(
   };
 
   // Fetch all questions in batch
-  const questionIds = attempt.userAnswers.map((ua) => ua.questionId);
+  const questionIds = attempt.userAnswers.map((ua: { questionId: string }) => ua.questionId);
   const questions = await prisma.question.findMany({
     where: { id: { in: questionIds } },
     select: { id: true, topicId: true },

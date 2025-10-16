@@ -8,7 +8,6 @@ import { reportInclude } from "@/lib/dto/report-filters.dto";
 
 const updateReportSchema = z.object({
   status: z.nativeEnum(ReportStatus),
-  adminNotes: z.string().max(1000).optional(),
 });
 
 // GET /api/admin/reports/[id] - Get report details
@@ -44,7 +43,7 @@ export async function PATCH(
     await requireAdmin();
     const { id } = await params;
     const body = await request.json();
-    const { status, adminNotes } = updateReportSchema.parse(body);
+    const { status } = updateReportSchema.parse(body);
 
     const report = await prisma.questionReport.findUnique({
       where: { id },
@@ -58,8 +57,6 @@ export async function PATCH(
       where: { id },
       data: {
         status,
-        adminNotes,
-        reviewedAt: new Date(),
       },
       include: reportInclude,
     });

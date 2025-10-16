@@ -306,7 +306,7 @@ export default function TopicsPage() {
               onClick={handleDelete}
               disabled={
                 deleting ||
-                (topicToDelete && (
+                Boolean(topicToDelete && (
                   topicToDelete._count.questions > 0 ||
                   topicToDelete._count.children > 0 ||
                   topicToDelete._count.quizTopicConfigs > 0

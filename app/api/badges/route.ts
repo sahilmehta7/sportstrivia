@@ -8,11 +8,11 @@ export async function GET(request: NextRequest) {
     const badges = await prisma.badge.findMany({
       orderBy: { name: "asc" },
       include: {
-        _count: {
-          select: {
-            users: true, // Count how many users earned this badge
-          },
+      _count: {
+        select: {
+          userBadges: true, // Count how many users earned this badge
         },
+      },
       },
     });
 

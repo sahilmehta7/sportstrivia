@@ -43,7 +43,7 @@ export default function NewQuizPage() {
   const { toast } = useToast();
   const slugManuallyEditedRef = useRef(false);
 
-  const form = useForm<QuizInput>({
+  const form = useForm({
     resolver: zodResolver(quizSchema),
     defaultValues: {
       title: "",

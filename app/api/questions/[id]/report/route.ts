@@ -6,7 +6,7 @@ import { z } from "zod";
 import { ReportStatus } from "@prisma/client";
 
 const reportSchema = z.object({
-  category: z.enum(["INAPPROPRIATE", "INCORRECT", "OFFENSIVE", "DUPLICATE", "OTHER"]),
+  reason: z.enum(["INAPPROPRIATE", "INCORRECT", "OFFENSIVE", "DUPLICATE", "OTHER"]),
   description: z.string().min(10).max(1000),
 });
 
@@ -19,7 +19,7 @@ export async function POST(
     const user = await requireAuth();
     const { id: questionId } = await params;
     const body = await request.json();
-    const { category, description } = reportSchema.parse(body);
+    const { reason, description } = reportSchema.parse(body);
 
     // Verify question exists
     const question = await prisma.question.findUnique({
@@ -36,7 +36,7 @@ export async function POST(
         userId: user.id,
         questionId,
         status: {
-          in: [ReportStatus.PENDING, ReportStatus.REVIEWING],
+          in: [ReportStatus.PENDING, ReportStatus.REVIEWED],
         },
       },
     });
@@ -50,7 +50,7 @@ export async function POST(
       data: {
         userId: user.id,
         questionId,
-        category,
+        reason,
         description,
         status: ReportStatus.PENDING,
       },

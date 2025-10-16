@@ -22,6 +22,7 @@ export async function GET(
             slug: true,
             passingScore: true,
             answersRevealTime: true,
+            timePerQuestion: true,
           },
         },
         userAnswers: {
@@ -34,6 +35,7 @@ export async function GET(
                 explanation: true,
                 explanationImageUrl: true,
                 explanationVideoUrl: true,
+                timeLimit: true,
               },
             },
             answer: {
@@ -65,18 +67,28 @@ export async function GET(
         attempt.quiz.answersRevealTime <= now);
 
     // Get correct answers if they should be revealed
-    let correctAnswersMap = new Map();
+    const correctAnswersMap = new Map<string, { id: string; answerText: string; answerImageUrl: string | null }>();
     if (revealAnswers) {
-      for (const userAnswer of attempt.userAnswers) {
-        const question = await prisma.question.findUnique({
-          where: { id: userAnswer.questionId },
-          include: {
-            answers: true,
+      const questionIds = attempt.userAnswers.map((ua) => ua.questionId);
+      const questions = await prisma.question.findMany({
+        where: { id: { in: questionIds } },
+        include: {
+          answers: {
+            where: { isCorrect: true },
+            select: {
+              id: true,
+              answerText: true,
+              answerImageUrl: true,
+            },
           },
-        });
+        },
+      });
 
-        const correctAnswer = question?.answers.find((a) => a.isCorrect);
-        correctAnswersMap.set(userAnswer.questionId, correctAnswer);
+      for (const question of questions) {
+        const correctAnswer = question.answers[0];
+        if (correctAnswer) {
+          correctAnswersMap.set(question.id, correctAnswer);
+        }
       }
     }
 
@@ -88,6 +100,10 @@ export async function GET(
         totalQuestions: attempt.totalQuestions,
         correctAnswers: attempt.correctAnswers,
         passed: attempt.passed,
+        totalPoints: attempt.totalPoints,
+        longestStreak: attempt.longestStreak,
+        averageResponseTime: attempt.averageResponseTime,
+        totalTimeSpent: attempt.totalTimeSpent,
         startedAt: attempt.startedAt,
         completedAt: attempt.completedAt,
         isPracticeMode: attempt.isPracticeMode,
@@ -102,6 +118,11 @@ export async function GET(
         isCorrect: ua.isCorrect,
         wasSkipped: ua.wasSkipped,
         timeSpent: ua.timeSpent,
+        basePoints: ua.basePoints,
+        timeBonus: ua.timeBonus,
+        streakBonus: ua.streakBonus,
+        totalPoints: ua.totalPoints,
+        timeLimit: ua.question.timeLimit ?? attempt.quiz.timePerQuestion ?? 60,
         ...(revealAnswers && {
           correctAnswer: correctAnswersMap.get(ua.questionId),
           explanation: ua.question.explanation,
@@ -116,4 +137,3 @@ export async function GET(
     return handleError(error);
   }
 }
-

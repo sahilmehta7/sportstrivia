@@ -29,9 +29,9 @@ export async function GET(
 
     // Determine winner if both completed
     let winner = null;
-    if (challenge.challengerAttempt && challenge.challengedAttempt) {
-      const challengerScore = challenge.challengerAttempt.score || 0;
-      const challengedScore = challenge.challengedAttempt.score || 0;
+    if (challenge.challengerScore !== null && challenge.challengedScore !== null) {
+      const challengerScore = challenge.challengerScore || 0;
+      const challengedScore = challenge.challengedScore || 0;
 
       if (challengerScore > challengedScore) {
         winner = "challenger";

@@ -35,15 +35,6 @@ export async function POST(
       throw new BadRequestError("Challenge is no longer pending");
     }
 
-    // Check if challenge has expired
-    if (challenge.expiresAt && challenge.expiresAt < new Date()) {
-      await prisma.challenge.update({
-        where: { id },
-        data: { status: ChallengeStatus.EXPIRED },
-      });
-      throw new BadRequestError("Challenge has expired");
-    }
-
     // Accept challenge
     const updatedChallenge = await prisma.challenge.update({
       where: { id },
