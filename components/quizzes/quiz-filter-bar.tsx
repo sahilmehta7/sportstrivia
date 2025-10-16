@@ -32,7 +32,7 @@ const sortOptions = [
 ];
 
 const ratingOptions = [
-  { label: "All ratings", value: "" },
+  { label: "All ratings", value: "all" },
   { label: "4★ and up", value: "4" },
   { label: "3★ and up", value: "3" },
   { label: "2★ and up", value: "2" },
@@ -128,7 +128,7 @@ export function QuizFilterBar({
   };
 
   const handleRatingChange = (value: string) => {
-    updateQuery("minRating", value || undefined);
+    updateQuery("minRating", value === "all" ? undefined : value);
   };
 
   const resetFilters = () => {
@@ -201,14 +201,14 @@ export function QuizFilterBar({
           <label className="flex flex-col gap-2 text-sm font-medium text-muted-foreground">
             Sport
             <Select
-              value={filters.sport ?? ""}
-              onValueChange={(value) => updateQuery("sport", value || undefined)}
+              value={filters.sport ?? "all"}
+              onValueChange={(value) => updateQuery("sport", value === "all" ? undefined : value)}
             >
               <SelectTrigger>
                 <SelectValue placeholder="All sports" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All sports</SelectItem>
+                <SelectItem value="all">All sports</SelectItem>
                 {sports.map((sport) => (
                   <SelectItem key={sport} value={sport}>
                     {sport}
@@ -222,14 +222,14 @@ export function QuizFilterBar({
           <label className="flex flex-col gap-2 text-sm font-medium text-muted-foreground">
             Difficulty
             <Select
-              value={filters.difficulty ?? ""}
-              onValueChange={(value) => updateQuery("difficulty", value || undefined)}
+              value={filters.difficulty ?? "all"}
+              onValueChange={(value) => updateQuery("difficulty", value === "all" ? undefined : value)}
             >
               <SelectTrigger>
                 <SelectValue placeholder="All levels" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All levels</SelectItem>
+                <SelectItem value="all">All levels</SelectItem>
                 {difficulties.map((difficulty) => (
                   <SelectItem key={difficulty} value={difficulty}>
                     {difficultyLabels[difficulty]}
@@ -243,14 +243,14 @@ export function QuizFilterBar({
           <label className="flex flex-col gap-2 text-sm font-medium text-muted-foreground">
             Tag
             <Select
-              value={filters.tag ?? ""}
-              onValueChange={(value) => updateQuery("tag", value || undefined)}
+              value={filters.tag ?? "all"}
+              onValueChange={(value) => updateQuery("tag", value === "all" ? undefined : value)}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Any tag" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Any tag</SelectItem>
+                <SelectItem value="all">Any tag</SelectItem>
                 {tags.map((tag) => (
                   <SelectItem key={tag.slug} value={tag.slug}>
                     {tag.name}
@@ -264,14 +264,14 @@ export function QuizFilterBar({
           <label className="flex flex-col gap-2 text-sm font-medium text-muted-foreground">
             Topic
             <Select
-              value={filters.topic ?? ""}
-              onValueChange={(value) => updateQuery("topic", value || undefined)}
+              value={filters.topic ?? "all"}
+              onValueChange={(value) => updateQuery("topic", value === "all" ? undefined : value)}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Any topic" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Any topic</SelectItem>
+                <SelectItem value="all">Any topic</SelectItem>
                 {topics.map((topic) => (
                   <SelectItem key={topic.slug} value={topic.slug}>
                     {topic.name}
@@ -302,7 +302,7 @@ export function QuizFilterBar({
           <label className="flex flex-col gap-2 text-sm font-medium text-muted-foreground">
             Minimum rating
             <Select
-              value={filters.minRating ? filters.minRating.toString() : ""}
+              value={filters.minRating ? filters.minRating.toString() : "all"}
               onValueChange={handleRatingChange}
             >
               <SelectTrigger>

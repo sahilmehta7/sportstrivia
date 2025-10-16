@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { StartQuizButton } from "./start-quiz-button";
 
 interface QuizDetailPageProps {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 }
 
 function formatDuration(seconds?: number | null) {
@@ -47,8 +47,9 @@ function formatDateTime(date?: Date | null) {
 export async function generateMetadata({
   params,
 }: QuizDetailPageProps): Promise<Metadata> {
+  const { slug } = await params;
   const quiz = await prisma.quiz.findUnique({
-    where: { slug: params.slug },
+    where: { slug },
     select: {
       title: true,
       description: true,
@@ -109,10 +110,11 @@ export async function generateMetadata({
 export default async function QuizDetailPage({
   params,
 }: QuizDetailPageProps) {
+  const { slug } = await params;
   const [session, quiz] = await Promise.all([
     auth(),
     prisma.quiz.findUnique({
-      where: { slug: params.slug },
+      where: { slug },
       include: {
         tags: {
           select: {
