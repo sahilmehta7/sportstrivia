@@ -40,7 +40,7 @@ export function QuizCard({ quiz }: QuizCardProps) {
 
   return (
     <Card className="group overflow-hidden border-border/60 bg-gradient-to-b from-background/80 via-background/90 to-muted/40 transition-shadow hover:shadow-xl">
-      <Link href={`/quiz/${quiz.slug}`} className="block">
+      <Link href={`/quizzes/${quiz.slug}`} className="block">
         <CardHeader className="p-0">
           <div className="relative aspect-[16/9] w-full overflow-hidden bg-muted">
             {coverImage ? (

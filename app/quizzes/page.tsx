@@ -110,7 +110,7 @@ export default async function QuizzesPage({
   const itemList = listing.quizzes.map((quiz, index) => ({
     "@type": "ListItem",
     position: (listing.pagination.page - 1) * listing.pagination.limit + index + 1,
-    url: baseUrl ? `${baseUrl}/quiz/${quiz.slug}` : `/quiz/${quiz.slug}`,
+    url: baseUrl ? `${baseUrl}/quizzes/${quiz.slug}` : `/quizzes/${quiz.slug}`,
     name: quiz.title,
     image: quiz.descriptionImageUrl ?? undefined,
     description: quiz.description ?? undefined,

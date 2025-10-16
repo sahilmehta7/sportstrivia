@@ -106,7 +106,7 @@ export async function generateQuizSitemapEntries() {
   });
 
   return quizzes.map((quiz) => ({
-    url: `/quiz/${quiz.slug}`,
+    url: `/quizzes/${quiz.slug}`,
     lastModified: quiz.updatedAt,
     changeFrequency: "weekly" as const,
     priority: 0.8,
