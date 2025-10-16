@@ -53,7 +53,7 @@ export function QuizPlayClient({ quizId, quizTitle, quizSlug }: QuizPlayClientPr
   const [hasReviewed, setHasReviewed] = useState(false);
 
   const [status, setStatus] = useState<"loading" | "in-progress" | "results" | "error">("loading");
-  const [attemptId, setAttemptId] = useState<string | null>(null);
+  const attemptIdRef = useRef<string | null>(null);
   const [quizConfig, setQuizConfig] = useState<QuizConfig>({});
   const [totalQuestions, setTotalQuestions] = useState<number>(0);
   const [position, setPosition] = useState<number>(0);
@@ -110,7 +110,7 @@ export function QuizPlayClient({ quizId, quizTitle, quizSlug }: QuizPlayClientPr
 
   const completeAttempt = useCallback(
     async (attemptIdentifier?: string) => {
-      const activeAttemptId = attemptIdentifier ?? attemptId;
+      const activeAttemptId = attemptIdentifier ?? attemptIdRef.current;
       if (!activeAttemptId) return;
 
       try {
@@ -137,12 +137,12 @@ export function QuizPlayClient({ quizId, quizTitle, quizSlug }: QuizPlayClientPr
         setStatus("error");
       }
     },
-    [attemptId, toast]
+    [toast]
   );
 
   const fetchNextQuestion = useCallback(
     async (attemptIdentifier?: string) => {
-      const activeAttemptId = attemptIdentifier ?? attemptId;
+      const activeAttemptId = attemptIdentifier ?? attemptIdRef.current;
       if (!activeAttemptId) return;
 
       setIsLoadingQuestion(true);
@@ -181,7 +181,7 @@ export function QuizPlayClient({ quizId, quizTitle, quizSlug }: QuizPlayClientPr
         setIsLoadingQuestion(false);
       }
     },
-    [attemptId, completeAttempt, resetTimerForQuestion, startCompletion, toast]
+    [completeAttempt, resetTimerForQuestion, startCompletion, toast]
   );
 
   const startAttempt = useCallback(async () => {
@@ -205,7 +205,7 @@ export function QuizPlayClient({ quizId, quizTitle, quizSlug }: QuizPlayClientPr
       }
 
       const { attempt, quiz, totalQuestions: total } = result.data;
-      setAttemptId(attempt.id);
+      attemptIdRef.current = attempt.id;
       setQuizConfig({
         timePerQuestion: quiz.timePerQuestion,
         showHints: quiz.showHints,
@@ -236,7 +236,7 @@ export function QuizPlayClient({ quizId, quizTitle, quizSlug }: QuizPlayClientPr
     setStatus("loading");
     setResults(null);
     setFeedback(null);
-    setAttemptId(null);
+    attemptIdRef.current = null;
     setPosition(0);
     setTotalQuestions(0);
     startAttempt();
@@ -316,7 +316,7 @@ export function QuizPlayClient({ quizId, quizTitle, quizSlug }: QuizPlayClientPr
     async (answerId: string | null, fromTimer = false) => {
       if (
         status !== "in-progress" ||
-        !attemptId ||
+        !attemptIdRef.current ||
         !currentQuestion ||
         feedback ||
         isSubmitting
@@ -330,7 +330,7 @@ export function QuizPlayClient({ quizId, quizTitle, quizSlug }: QuizPlayClientPr
       try {
         const timeLimit = computeTimeLimit(currentQuestion);
         const timeSpent = Math.max(timeLimit - timeLeft, 0);
-        const response = await fetch(`/api/attempts/${attemptId}/answer`, {
+        const response = await fetch(`/api/attempts/${attemptIdRef.current}/answer`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -377,7 +377,6 @@ export function QuizPlayClient({ quizId, quizTitle, quizSlug }: QuizPlayClientPr
       }
     },
     [
-      attemptId,
       completeAttempt,
       computeTimeLimit,
       currentQuestion,

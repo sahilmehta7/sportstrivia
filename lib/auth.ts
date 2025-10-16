@@ -4,6 +4,17 @@ import { PrismaAdapter } from "@auth/prisma-adapter";
 import { prisma } from "./db";
 import { UserRole } from "@prisma/client";
 
+// Use NEXTAUTH_URL if set, otherwise construct from VERCEL_URL
+function getAuthUrl() {
+  if (process.env.NEXTAUTH_URL) {
+    return process.env.NEXTAUTH_URL;
+  }
+  if (process.env.VERCEL_URL) {
+    return `https://${process.env.VERCEL_URL}`;
+  }
+  return "http://localhost:3000";
+}
+
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(prisma),
   providers: [
@@ -33,14 +44,16 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       return session;
     },
     async redirect({ url, baseUrl }) {
-      // Use NEXTAUTH_URL if available (important for Vercel)
-      const base = process.env.NEXTAUTH_URL || baseUrl;
+      // Use the dynamically determined auth URL
+      const base = getAuthUrl();
       
       // Allows relative callback URLs
       if (url.startsWith("/")) return `${base}${url}`;
       // Allows callback URLs on the same origin
       try {
-        if (new URL(url).origin === new URL(base).origin) return url;
+        const urlOrigin = new URL(url).origin;
+        const baseOrigin = new URL(base).origin;
+        if (urlOrigin === baseOrigin) return url;
       } catch {
         // If URL parsing fails, return base
         return base;
@@ -71,4 +84,3 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     },
   },
 });
-
