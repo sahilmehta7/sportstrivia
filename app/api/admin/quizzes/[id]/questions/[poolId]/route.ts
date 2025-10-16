@@ -9,21 +9,21 @@ const updatePoolQuestionSchema = z.object({
   order: z.number().int().optional(),
 });
 
-// DELETE /api/admin/quizzes/[quizId]/questions/[poolId] - Remove question from pool
+// DELETE /api/admin/quizzes/[id]/questions/[poolId] - Remove question from pool
 export async function DELETE(
   _request: NextRequest,
-  { params }: { params: Promise<{ quizId: string; poolId: string }> }
+  { params }: { params: Promise<{ id: string; poolId: string }> }
 ) {
   try {
     await requireAdmin();
-    const { quizId, poolId } = await params;
+    const { id, poolId } = await params;
 
     // Verify pool entry exists and belongs to this quiz
     const poolEntry = await prisma.quizQuestionPool.findUnique({
       where: { id: poolId },
     });
 
-    if (!poolEntry || poolEntry.quizId !== quizId) {
+    if (!poolEntry || poolEntry.quizId !== id) {
       throw new NotFoundError("Question not found in this quiz");
     }
 
@@ -40,14 +40,14 @@ export async function DELETE(
   }
 }
 
-// PATCH /api/admin/quizzes/[quizId]/questions/[poolId] - Update question points/order
+// PATCH /api/admin/quizzes/[id]/questions/[poolId] - Update question points/order
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: Promise<{ quizId: string; poolId: string }> }
+  { params }: { params: Promise<{ id: string; poolId: string }> }
 ) {
   try {
     await requireAdmin();
-    const { quizId, poolId } = await params;
+    const { id, poolId } = await params;
     const body = await request.json();
     const { points, order } = updatePoolQuestionSchema.parse(body);
 
@@ -56,7 +56,7 @@ export async function PATCH(
       where: { id: poolId },
     });
 
-    if (!poolEntry || poolEntry.quizId !== quizId) {
+    if (!poolEntry || poolEntry.quizId !== id) {
       throw new NotFoundError("Question not found in this quiz");
     }
 
@@ -86,4 +86,3 @@ export async function PATCH(
     return handleError(error);
   }
 }
-
