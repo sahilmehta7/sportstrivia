@@ -108,6 +108,38 @@ export function QuizPlayClient({ quizId, quizTitle, quizSlug }: QuizPlayClientPr
     [computeTimeLimit]
   );
 
+  const completeAttempt = useCallback(
+    async (attemptIdentifier?: string) => {
+      const activeAttemptId = attemptIdentifier ?? attemptId;
+      if (!activeAttemptId) return;
+
+      try {
+        const response = await fetch(`/api/attempts/${activeAttemptId}/complete`, {
+          method: "POST",
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+          throw new Error(result.error || "Failed to complete quiz");
+        }
+
+        setResults(result.data);
+        setStatus("results");
+        setFeedback(null);
+        setCurrentQuestion(null);
+      } catch (error: any) {
+        toast({
+          title: "Unable to complete quiz",
+          description: error?.message || "An unexpected error occurred.",
+          variant: "destructive",
+        });
+        setStatus("error");
+      }
+    },
+    [attemptId, toast]
+  );
+
   const fetchNextQuestion = useCallback(
     async (attemptIdentifier?: string) => {
       const activeAttemptId = attemptIdentifier ?? attemptId;
@@ -280,39 +312,6 @@ export function QuizPlayClient({ quizId, quizTitle, quizSlug }: QuizPlayClientPr
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status, currentQuestion, feedback]);
-
-  const completeAttempt = useCallback(
-    async (attemptIdentifier?: string) => {
-      const activeAttemptId = attemptIdentifier ?? attemptId;
-      if (!activeAttemptId) return;
-
-      try {
-        const response = await fetch(`/api/attempts/${activeAttemptId}/complete`, {
-          method: "POST",
-        });
-
-        const result = await response.json();
-
-        if (!response.ok) {
-          throw new Error(result.error || "Failed to complete quiz");
-        }
-
-        setResults(result.data);
-        setStatus("results");
-        setFeedback(null);
-        setCurrentQuestion(null);
-      } catch (error: any) {
-        toast({
-          title: "Unable to complete quiz",
-          description: error?.message || "An unexpected error occurred.",
-          variant: "destructive",
-        });
-        setStatus("error");
-      }
-    },
-    [attemptId, toast]
-  );
-
   const handleAnswer = useCallback(
     async (answerId: string | null, fromTimer = false) => {
       if (

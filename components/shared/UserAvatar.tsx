@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { User } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -22,6 +23,13 @@ const iconSizes = {
   xl: "h-12 w-12",
 };
 
+const sizePixels = {
+  sm: 32,
+  md: 40,
+  lg: 64,
+  xl: 96,
+} as const;
+
 export function UserAvatar({ src, alt = "User", size = "md", className }: UserAvatarProps) {
   return (
     <div
@@ -32,10 +40,11 @@ export function UserAvatar({ src, alt = "User", size = "md", className }: UserAv
       )}
     >
       {src ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
+        <Image
           src={src}
           alt={alt}
+          width={sizePixels[size]}
+          height={sizePixels[size]}
           className="h-full w-full object-cover"
         />
       ) : (
@@ -44,4 +53,3 @@ export function UserAvatar({ src, alt = "User", size = "md", className }: UserAv
     </div>
   );
 }
-

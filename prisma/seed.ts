@@ -431,8 +431,7 @@ async function main() {
   console.log("✓ Awarded badges to users");
 
   // Create quiz attempts for users
-  const _attempts = [];
-  
+
   // User attempts
   const _userAttempt1 = await prisma.quizAttempt.create({
     data: {
@@ -663,4 +662,3 @@ main()
   .finally(async () => {
     await prisma.$disconnect();
   });
-

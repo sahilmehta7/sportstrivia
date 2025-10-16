@@ -29,9 +29,9 @@ interface FriendRequest {
 interface FriendRequestsProps {
   received: FriendRequest[];
   sent: FriendRequest[];
-  onAccept?: (_requestId: string) => void;
-  onDecline?: (_requestId: string) => void;
-  onCancel?: (_requestId: string) => void;
+  onAccept?: (requestId: string) => void;
+  onDecline?: (requestId: string) => void;
+  onCancel?: (requestId: string) => void;
 }
 
 export function FriendRequests({
