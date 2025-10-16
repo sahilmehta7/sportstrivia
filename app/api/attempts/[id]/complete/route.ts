@@ -367,21 +367,29 @@ async function updateQuizLeaderboard(
     });
   }
 
-  // Update rankings in batch
-  const leaderboard = await prisma.quizLeaderboard.findMany({
-    where: { quizId },
-    orderBy: [{ bestScore: "desc" }, { bestTime: "asc" }],
-    select: { id: true },
-  });
+  // Update rankings - must handle unique constraint on [quizId, rank]
+  // Strategy: First reset all ranks to placeholder values, then assign correct ranks
+  await prisma.$transaction(async (tx) => {
+    // Step 1: Reset all ranks to temporary values to avoid constraint conflicts
+    await tx.quizLeaderboard.updateMany({
+      where: { quizId },
+      data: { rank: 999999 },
+    });
 
-  // Use Promise.all for parallel updates
-  await Promise.all(
-    leaderboard.map((entry, i) =>
-      prisma.quizLeaderboard.update({
-        where: { id: entry.id },
+    // Step 2: Fetch sorted leaderboard and assign correct ranks
+    const leaderboard = await tx.quizLeaderboard.findMany({
+      where: { quizId },
+      orderBy: [{ bestScore: "desc" }, { bestTime: "asc" }],
+      select: { id: true },
+    });
+
+    // Step 3: Update each entry with its correct rank
+    for (let i = 0; i < leaderboard.length; i++) {
+      await tx.quizLeaderboard.update({
+        where: { id: leaderboard[i].id },
         data: { rank: i + 1 },
-      })
-    )
-  );
+      });
+    }
+  });
 }
 

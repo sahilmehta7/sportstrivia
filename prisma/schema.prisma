@@ -47,6 +47,7 @@ model User {
   topicStats    UserTopicStats[]
   reviews       QuizReview[]
   reports       QuestionReport[]
+  leaderboardEntries QuizLeaderboard[]
 
   @@index([email])
 }
@@ -247,8 +248,13 @@ model QuizQuestionPool {
   question Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
 
   @@unique([quizId, questionId])
+  // NOTE: Prisma doesn't support partial unique constraints (WHERE order IS NOT NULL)
+  // Application code must ensure unique [quizId, order] combinations for FIXED quizzes
+  // Consider database trigger: CREATE UNIQUE INDEX CONCURRENTLY quiz_question_order_unique 
+  // ON "QuizQuestionPool" (quiz_id, "order") WHERE "order" IS NOT NULL;
   @@index([quizId])
   @@index([questionId])
+  @@index([quizId, order])
 }
 
 // ============================================
@@ -403,16 +409,19 @@ model QuizLeaderboard {
   bestScore  Float
   bestTime   Int      // Best time in seconds
   attempts   Int      @default(1)
-  rank       Int?
+  rank       Int      @default(999999) // Placeholder rank, updated by leaderboard calculation
   
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
   quiz Quiz @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([quizId, userId])
-  @@index([quizId, bestScore])
-  @@index([quizId, rank])
+  @@unique([quizId, rank]) // Ensure each rank is unique per quiz
+  // Covering index for leaderboard queries: ORDER BY bestScore DESC, bestTime ASC
+  @@index([quizId, bestScore(sort: Desc), bestTime(sort: Asc)])
+  @@index([userId])
 }
 
 // ============================================

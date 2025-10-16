@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/auth-helpers";
 import { quizImportSchema } from "@/lib/validations/quiz.schema";
-import { handleError, successResponse, NotFoundError } from "@/lib/errors";
+import { handleError, successResponse, NotFoundError, BadRequestError } from "@/lib/errors";
 import { generateUniqueSlug } from "@/lib/services/slug.service";
 import { Prisma, Difficulty, QuestionType } from "@prisma/client";
 
@@ -160,13 +160,23 @@ export async function POST(request: NextRequest) {
       );
 
       // Create quiz question pool entries in batch
+      // Ensure no duplicate order values for FIXED mode (schema constraint workaround)
+      const poolEntries = createdQuestions.map((question, i) => ({
+        quizId: newQuiz.id,
+        questionId: question.id,
+        order: questions[i].order || i + 1,
+        points: 1,
+      }));
+
+      // Validate unique order values
+      const orderValues = poolEntries.map(e => e.order).filter(o => o !== null);
+      const uniqueOrders = new Set(orderValues);
+      if (orderValues.length !== uniqueOrders.size) {
+        throw new BadRequestError("Duplicate order values detected in question pool. Each question must have a unique order for FIXED mode quizzes.");
+      }
+
       await tx.quizQuestionPool.createMany({
-        data: createdQuestions.map((question, i) => ({
-          quizId: newQuiz.id,
-          questionId: question.id,
-          order: questions[i].order || i + 1,
-          points: 1,
-        })),
+        data: poolEntries,
       });
 
       // Return the complete quiz with questions
