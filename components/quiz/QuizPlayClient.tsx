@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { useToast } from "@/hooks/use-toast";
+import { ReviewModal } from "./ReviewModal";
 
 interface QuizPlayClientProps {
   quizId: string;
@@ -48,6 +49,8 @@ interface QuestionFeedback {
 export function QuizPlayClient({ quizId, quizTitle, quizSlug }: QuizPlayClientProps) {
   const router = useRouter();
   const { toast } = useToast();
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [hasReviewed, setHasReviewed] = useState(false);
 
   const [status, setStatus] = useState<"loading" | "in-progress" | "results" | "error">("loading");
   const [attemptId, setAttemptId] = useState<string | null>(null);
@@ -537,6 +540,11 @@ export function QuizPlayClient({ quizId, quizTitle, quizSlug }: QuizPlayClientPr
               <Button variant="secondary" onClick={handleRematch}>
                 Rematch
               </Button>
+              {!hasReviewed && (
+                <Button variant="default" onClick={() => setShowReviewModal(true)}>
+                  Rate this quiz
+                </Button>
+              )}
               <Button variant="outline" onClick={handleShare} disabled={isSharing}>
                 {isSharing ? "Sharing..." : "Share score"}
               </Button>
@@ -553,6 +561,17 @@ export function QuizPlayClient({ quizId, quizTitle, quizSlug }: QuizPlayClientPr
             )}
           </CardContent>
         </Card>
+
+        <ReviewModal
+          quizSlug={quizSlug}
+          quizTitle={quizTitle}
+          isOpen={showReviewModal}
+          onClose={() => setShowReviewModal(false)}
+          onSuccess={() => {
+            setHasReviewed(true);
+            setShowReviewModal(false);
+          }}
+        />
 
         <Card>
           <CardHeader>

@@ -638,7 +638,7 @@ export default function EditQuizPage({ params }: EditQuizPageProps) {
           <DialogHeader>
             <DialogTitle>Delete Quiz</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete "{formData.title}"? This will archive the quiz and it will no longer be visible to users.
+              Are you sure you want to delete &quot;{formData.title}&quot;? This will archive the quiz and it will no longer be visible to users.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>

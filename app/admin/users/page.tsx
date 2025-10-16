@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, type FormEvent } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { Button } from "@/components/ui/button";
@@ -90,11 +90,7 @@ export default function UsersPage() {
   const [userToDelete, setUserToDelete] = useState<User | null>(null);
   const [deleting, setDeleting] = useState(false);
 
-  useEffect(() => {
-    fetchUsers();
-  }, [searchParams]);
-
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     setLoading(true);
     try {
       const params = new URLSearchParams();
@@ -123,7 +119,11 @@ export default function UsersPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [role, search, searchParams, sortBy, toast]);
+
+  useEffect(() => {
+    void fetchUsers();
+  }, [fetchUsers, searchParams]);
 
   const updateQuery = (key: string, value: string | undefined) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -136,7 +136,7 @@ export default function UsersPage() {
     router.push(`/admin/users?${params.toString()}`);
   };
 
-  const handleSearchSubmit = (e: React.FormEvent) => {
+  const handleSearchSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     updateQuery("search", search || undefined);
   };
@@ -492,4 +492,3 @@ export default function UsersPage() {
     </div>
   );
 }
-

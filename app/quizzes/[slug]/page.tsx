@@ -9,6 +9,9 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { StartQuizButton } from "./start-quiz-button";
+import { ChallengeButton } from "./challenge-button";
+import { StarRating } from "@/components/ui/star-rating";
+import { ReviewsList } from "@/components/quiz/ReviewsList";
 
 interface QuizDetailPageProps {
   params: Promise<{ slug: string }>;
@@ -111,7 +114,7 @@ export default async function QuizDetailPage({
   params,
 }: QuizDetailPageProps) {
   const { slug } = await params;
-  const [session, quiz] = await Promise.all([
+  const [session, quiz, reviews] = await Promise.all([
     auth(),
     prisma.quiz.findUnique({
       where: { slug },
@@ -135,6 +138,20 @@ export default async function QuizDetailPage({
           },
         },
       },
+    }),
+    prisma.quizReview.findMany({
+      where: { quiz: { slug } },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            image: true,
+          },
+        },
+      },
+      orderBy: { createdAt: "desc" },
+      take: 10,
     }),
   ]);
 
@@ -192,7 +209,14 @@ export default async function QuizDetailPage({
 
           <div className="flex flex-wrap items-center gap-4">
             {isLoggedIn ? (
-              <StartQuizButton slug={quiz.slug} disabled={!isLive} />
+              <>
+                <StartQuizButton slug={quiz.slug} disabled={!isLive} />
+                <ChallengeButton 
+                  quizId={quiz.id} 
+                  quizTitle={quiz.title}
+                  disabled={!isLive} 
+                />
+              </>
             ) : (
               <Link href="/auth/signin">
                 <Button size="lg">Sign up to play</Button>
@@ -355,6 +379,45 @@ export default async function QuizDetailPage({
             </CardContent>
           </Card>
         </aside>
+      </section>
+
+      {/* Reviews Section */}
+      <section className="mx-auto max-w-5xl px-4 py-12">
+        <div className="space-y-6">
+          <div>
+            <h2 className="text-2xl font-bold tracking-tight">Reviews</h2>
+            {quiz._count.reviews > 0 ? (
+              <div className="mt-4 flex items-center gap-4">
+                <StarRating
+                  value={quiz.averageRating}
+                  readonly
+                  size="lg"
+                  showValue
+                />
+                <span className="text-sm text-muted-foreground">
+                  Based on {quiz._count.reviews}{" "}
+                  {quiz._count.reviews === 1 ? "review" : "reviews"}
+                </span>
+              </div>
+            ) : (
+              <p className="mt-2 text-sm text-muted-foreground">
+                No reviews yet. Be the first to review this quiz!
+              </p>
+            )}
+          </div>
+
+          <ReviewsList
+            quizSlug={quiz.slug}
+            quizTitle={quiz.title}
+            initialReviews={reviews.map((r) => ({
+              ...r,
+              createdAt: r.createdAt.toISOString(),
+            }))}
+            initialTotal={quiz._count.reviews}
+            initialPage={1}
+            currentUserId={session?.user?.id}
+          />
+        </div>
       </section>
     </main>
   );

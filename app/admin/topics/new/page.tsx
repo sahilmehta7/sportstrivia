@@ -188,7 +188,7 @@ export default function NewTopicPage() {
                 </SelectContent>
               </Select>
               <p className="text-xs text-muted-foreground">
-                Leave as "None" to create a top-level topic
+                Leave as &quot;None&quot; to create a top-level topic
               </p>
             </div>
           </CardContent>

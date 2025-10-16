@@ -1,7 +1,11 @@
+"use client";
+
+import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { UserAvatar } from "@/components/shared/UserAvatar";
 import { StreakIndicator } from "@/components/shared/StreakIndicator";
+import { CreateChallengeModal } from "@/components/challenges/CreateChallengeModal";
 import { Eye, Swords, UserMinus } from "lucide-react";
 import Link from "next/link";
 
@@ -25,8 +29,19 @@ export function FriendCard({
   onChallenge,
   onRemove,
 }: FriendCardProps) {
+  const [showChallengeModal, setShowChallengeModal] = useState(false);
+
+  const handleChallengeClick = () => {
+    if (onChallenge) {
+      onChallenge();
+    } else {
+      setShowChallengeModal(true);
+    }
+  };
+
   return (
-    <Card className="group overflow-hidden transition-shadow hover:shadow-md">
+    <>
+      <Card className="group overflow-hidden transition-shadow hover:shadow-md">
       <CardContent className="p-4">
         <div className="flex items-start gap-4">
           {/* Avatar */}
@@ -62,11 +77,9 @@ export function FriendCard({
                   <Eye className="h-4 w-4" />
                 </Button>
               </Link>
-              {onChallenge && (
-                <Button variant="ghost" size="sm" onClick={onChallenge}>
-                  <Swords className="h-4 w-4" />
-                </Button>
-              )}
+              <Button variant="ghost" size="sm" onClick={handleChallengeClick}>
+                <Swords className="h-4 w-4" />
+              </Button>
               {onRemove && (
                 <Button variant="ghost" size="sm" onClick={onRemove}>
                   <UserMinus className="h-4 w-4 text-destructive" />
@@ -77,5 +90,13 @@ export function FriendCard({
         </div>
       </CardContent>
     </Card>
+
+      <CreateChallengeModal
+        isOpen={showChallengeModal}
+        onClose={() => setShowChallengeModal(false)}
+        onSuccess={() => setShowChallengeModal(false)}
+        preselectedFriendId={friend.id}
+      />
+    </>
   );
 }

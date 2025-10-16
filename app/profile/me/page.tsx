@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { ProfileHeader } from "@/components/profile/ProfileHeader";
 import { StatsCard } from "@/components/profile/StatsCard";
@@ -32,11 +32,7 @@ export default function MyProfilePage() {
     favoriteTeams: "",
   });
 
-  useEffect(() => {
-    loadProfile();
-  }, []);
-
-  const loadProfile = async () => {
+  const loadProfile = useCallback(async () => {
     setLoading(true);
     try {
       const [profileRes, statsRes, badgesRes] = await Promise.all([
@@ -81,9 +77,13 @@ export default function MyProfilePage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  useEffect(() => {
+    void loadProfile();
+  }, [loadProfile]);
+
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setSaving(true);
 
@@ -115,6 +115,7 @@ export default function MyProfilePage() {
 
       setEditMode(false);
       loadProfile();
+      router.refresh();
     } catch (error: any) {
       toast({
         title: "Error",
@@ -290,4 +291,3 @@ export default function MyProfilePage() {
     </main>
   );
 }
-

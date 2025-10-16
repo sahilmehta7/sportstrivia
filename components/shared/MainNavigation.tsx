@@ -43,6 +43,7 @@ export function MainNavigation() {
   const navLinks = [
     { href: "/quizzes", label: "Quizzes", icon: Trophy },
     { href: "/leaderboard", label: "Leaderboard", icon: Trophy },
+    { href: "/challenges", label: "Challenges", icon: Users },
     { href: "/friends", label: "Friends", icon: Users },
   ];
 

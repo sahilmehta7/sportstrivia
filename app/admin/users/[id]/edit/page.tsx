@@ -398,7 +398,7 @@ export default function EditUserPage({ params }: EditUserPageProps) {
           <Card>
             <CardHeader>
               <CardTitle>Top Topics by Success Rate</CardTitle>
-              <CardDescription>User's best performing topics</CardDescription>
+              <CardDescription>User&apos;s best performing topics</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-2">

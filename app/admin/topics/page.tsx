@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { Fragment, useState, useEffect, useCallback } from "react";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Plus, Edit, Trash2, ChevronRight, ChevronDown } from "lucide-react";
@@ -141,7 +141,7 @@ export default function TopicsPage() {
     const isExpanded = expandedTopics.has(topic.id);
 
     return (
-      <React.Fragment key={topic.id}>
+      <Fragment key={topic.id}>
         <TableRow>
           <TableCell>
             <div className="flex items-center gap-2" style={{ paddingLeft: `${depth * 24}px` }}>
@@ -198,7 +198,7 @@ export default function TopicsPage() {
           </TableCell>
         </TableRow>
         {hasChildren && isExpanded && topic.children?.map((child) => renderTopicRow(child, depth + 1))}
-      </React.Fragment>
+      </Fragment>
     );
   };
 
@@ -267,7 +267,7 @@ export default function TopicsPage() {
           <DialogHeader>
             <DialogTitle>Delete Topic</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete "{topicToDelete?.name}"?
+              Are you sure you want to delete &quot;{topicToDelete?.name}&quot;?
               
               {topicToDelete && (
                 <div className="mt-4 space-y-2">

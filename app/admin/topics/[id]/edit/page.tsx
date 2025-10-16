@@ -298,7 +298,7 @@ export default function EditTopicPage({ params }: EditTopicPageProps) {
                 </SelectContent>
               </Select>
               <p className="text-xs text-muted-foreground">
-                Changing parent will update this topic's level and all descendants
+                Changing parent will update this topic&apos;s level and all descendants
               </p>
             </div>
           </CardContent>
@@ -374,7 +374,7 @@ export default function EditTopicPage({ params }: EditTopicPageProps) {
           <DialogHeader>
             <DialogTitle>Delete Topic</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete "{currentTopic?.name}"?
+              Are you sure you want to delete &quot;{currentTopic?.name}&quot;?
               {currentTopic && !canDelete && (
                 <div className="mt-4 space-y-2 text-destructive font-medium">
                   {currentTopic._count.questions > 0 && (

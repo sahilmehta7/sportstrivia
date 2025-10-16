@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { FriendsList } from "@/components/friends/FriendsList";
 import { FriendRequests } from "@/components/friends/FriendRequests";
@@ -20,11 +20,7 @@ export default function FriendsPage() {
   const [sentRequests, setSentRequests] = useState<any[]>([]);
   const [search, setSearch] = useState("");
 
-  useEffect(() => {
-    loadFriends();
-  }, []);
-
-  const loadFriends = async () => {
+  const loadFriends = useCallback(async () => {
     setLoading(true);
     try {
       const [friendsRes, receivedRes, sentRes] = await Promise.all([
@@ -51,7 +47,11 @@ export default function FriendsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
+
+  useEffect(() => {
+    void loadFriends();
+  }, [loadFriends]);
 
   const handleAccept = async (requestId: string) => {
     try {
@@ -222,4 +222,3 @@ export default function FriendsPage() {
     </main>
   );
 }
-
