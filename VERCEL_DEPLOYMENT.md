@@ -34,9 +34,13 @@ DIRECT_URL=postgresql://...
 
 #### Authentication (NextAuth)
 ```
-NEXTAUTH_URL=https://your-app.vercel.app
+NEXTAUTH_URL=https://sportstrivia.vercel.app
 NEXTAUTH_SECRET=your-nextauth-secret-here
 ```
+
+**⚠️ IMPORTANT:** `NEXTAUTH_URL` MUST include the full URL with `https://` protocol.
+- ✅ Correct: `https://sportstrivia.vercel.app`
+- ❌ Wrong: `sportstrivia.vercel.app` (will cause "Invalid URL" error)
 
 #### OAuth (Google)
 ```
