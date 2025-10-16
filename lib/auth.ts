@@ -33,11 +33,19 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       return session;
     },
     async redirect({ url, baseUrl }) {
+      // Use NEXTAUTH_URL if available (important for Vercel)
+      const base = process.env.NEXTAUTH_URL || baseUrl;
+      
       // Allows relative callback URLs
-      if (url.startsWith("/")) return `${baseUrl}${url}`;
+      if (url.startsWith("/")) return `${base}${url}`;
       // Allows callback URLs on the same origin
-      else if (new URL(url).origin === baseUrl) return url;
-      return baseUrl;
+      try {
+        if (new URL(url).origin === new URL(base).origin) return url;
+      } catch {
+        // If URL parsing fails, return base
+        return base;
+      }
+      return base;
     },
   },
   pages: {
@@ -47,7 +55,20 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   session: {
     strategy: "database",
   },
-  debug: process.env.NODE_ENV === "development",
+  debug: true, // Enable debug on Vercel to see logs
   trustHost: true,
+  cookies: {
+    sessionToken: {
+      name: process.env.NODE_ENV === "production" 
+        ? "__Secure-next-auth.session-token"
+        : "next-auth.session-token",
+      options: {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        secure: process.env.NODE_ENV === "production",
+      },
+    },
+  },
 });
 
