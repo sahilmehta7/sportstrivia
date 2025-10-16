@@ -64,8 +64,8 @@ export function QuizPlayClient({ quizId, quizTitle, quizSlug }: QuizPlayClientPr
   const [isSharing, setIsSharing] = useState(false);
   const [shareStatus, setShareStatus] = useState<"idle" | "success" | "error">("idle");
 
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
-  const advanceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const advanceTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const clearTimer = () => {
     if (timerRef.current) {
