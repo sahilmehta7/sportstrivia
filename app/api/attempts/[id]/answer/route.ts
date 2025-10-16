@@ -111,16 +111,3 @@ export async function PUT(
     return handleError(error);
   }
 }
-    // Ensure answers are provided in order
-    const answeredCount = await prisma.userAnswer.count({
-      where: { attemptId: id },
-    });
-
-    const expectedQuestionId = attempt.selectedQuestionIds[answeredCount];
-    if (!expectedQuestionId) {
-      throw new BadRequestError("No more questions available in this attempt");
-    }
-
-    if (expectedQuestionId !== questionId) {
-      throw new BadRequestError("This question is not available yet");
-    }

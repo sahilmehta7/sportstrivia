@@ -1,0 +1,12 @@
+node_modules
+.next
+.env*
+.git
+*.log
+.specstory
+docs/*.md
+*.test.ts
+*.test.tsx
+__tests__
+coverage
+

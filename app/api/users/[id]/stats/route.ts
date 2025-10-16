@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/db";
 import { handleError, successResponse, NotFoundError } from "@/lib/errors";
+import { buildPerformanceAnalytics } from "@/lib/services/analytics.service";
 
 // GET /api/users/[id]/stats - Get detailed user statistics
 export async function GET(
@@ -25,56 +26,7 @@ export async function GET(
       throw new NotFoundError("User not found");
     }
 
-    // Get quiz attempt stats
-    const [attemptStats, passedCount, topTopics, recentAttempts] = await Promise.all([
-      prisma.quizAttempt.aggregate({
-        where: {
-          userId: id,
-          completedAt: { not: null },
-        },
-        _avg: { score: true },
-        _count: true,
-      }),
-      prisma.quizAttempt.count({
-        where: {
-          userId: id,
-          passed: true,
-        },
-      }),
-      // Top topics by success rate
-      prisma.userTopicStats.findMany({
-        where: { userId: id },
-        orderBy: { successRate: "desc" },
-        take: 5,
-        include: {
-          topic: {
-            select: {
-              id: true,
-              name: true,
-              slug: true,
-            },
-          },
-        },
-      }),
-      // Recent quiz attempts
-      prisma.quizAttempt.findMany({
-        where: {
-          userId: id,
-          completedAt: { not: null },
-        },
-        orderBy: { completedAt: "desc" },
-        take: 10,
-        include: {
-          quiz: {
-            select: {
-              id: true,
-              title: true,
-              slug: true,
-            },
-          },
-        },
-      }),
-    ]);
+    const analytics = await buildPerformanceAnalytics(id);
 
     // Get leaderboard positions
     const leaderboardPositions = await prisma.quizLeaderboard.findMany({
@@ -94,20 +46,10 @@ export async function GET(
 
     return successResponse({
       user,
-      stats: {
-        totalAttempts: attemptStats._count,
-        averageScore: attemptStats._avg.score || 0,
-        passedQuizzes: passedCount,
-        passRate: attemptStats._count > 0 ? (passedCount / attemptStats._count) * 100 : 0,
-        currentStreak: user.currentStreak,
-        longestStreak: user.longestStreak,
-      },
-      topTopics,
-      recentAttempts,
+      analytics,
       leaderboardPositions,
     });
   } catch (error) {
     return handleError(error);
   }
 }
-

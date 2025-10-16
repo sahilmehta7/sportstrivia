@@ -1,3 +1,4 @@
+import React from "react";
 import { redirect } from "next/navigation";
 import { isAdmin } from "@/lib/auth-helpers";
 import { AdminShell } from "@/components/admin/AdminShell";
@@ -14,13 +15,13 @@ export default async function AdminLayout({
   }
 
   const navigation = [
-    { name: "Dashboard", href: "/admin/dashboard", icon: "LayoutDashboard" },
-    { name: "Quizzes", href: "/admin/quizzes", icon: "FileQuestion" },
-    { name: "Questions", href: "/admin/questions", icon: "HelpCircle" },
-    { name: "Topics", href: "/admin/topics", icon: "FolderTree" },
-    { name: "Users", href: "/admin/users", icon: "Users" },
-    { name: "Import", href: "/admin/import", icon: "Upload" },
-    { name: "Settings", href: "/admin/settings", icon: "Settings" },
+    { name: "Dashboard", href: "/admin/dashboard", icon: "LayoutDashboard" as const },
+    { name: "Quizzes", href: "/admin/quizzes", icon: "FileQuestion" as const },
+    { name: "Questions", href: "/admin/questions", icon: "HelpCircle" as const },
+    { name: "Topics", href: "/admin/topics", icon: "FolderTree" as const },
+    { name: "Users", href: "/admin/users", icon: "Users" as const },
+    { name: "Import", href: "/admin/import", icon: "Upload" as const },
+    { name: "Settings", href: "/admin/settings", icon: "Settings" as const },
   ];
 
   return <AdminShell navigation={navigation}>{children}</AdminShell>;

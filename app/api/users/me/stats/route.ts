@@ -4,7 +4,7 @@ import { requireAuth } from "@/lib/auth-helpers";
 import { handleError, successResponse } from "@/lib/errors";
 
 // GET /api/users/me/stats - Get current user's detailed statistics
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const user = await requireAuth();
 

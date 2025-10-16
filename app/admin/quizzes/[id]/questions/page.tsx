@@ -3,12 +3,13 @@ import { prisma } from "@/lib/db";
 import { QuizQuestionManager } from "@/components/admin/quizzes/QuizQuestionManager";
 
 interface PageProps {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
 export default async function QuizQuestionsPage({ params }: PageProps) {
+  const { id } = await params;
   const quiz = await prisma.quiz.findUnique({
-    where: { id: params.id },
+    where: { id },
     select: {
       id: true,
       title: true,
@@ -16,7 +17,10 @@ export default async function QuizQuestionsPage({ params }: PageProps) {
         orderBy: { order: "asc" },
         include: {
           question: {
-            include: {
+            select: {
+              id: true,
+              questionText: true,
+              difficulty: true,
               topic: {
                 select: {
                   id: true,
@@ -29,7 +33,6 @@ export default async function QuizQuestionsPage({ params }: PageProps) {
                   id: true,
                 },
               },
-              difficulty: true,
             },
           },
         },
@@ -53,7 +56,7 @@ export default async function QuizQuestionsPage({ params }: PageProps) {
   const poolQuestions = quiz.questionPool.map((entry) => ({
     poolId: entry.id,
     questionId: entry.questionId,
-    order: entry.order,
+    order: entry.order ?? 0,
     points: entry.points,
     question: {
       questionText: entry.question.questionText,

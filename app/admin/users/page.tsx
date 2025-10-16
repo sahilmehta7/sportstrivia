@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { Button } from "@/components/ui/button";
@@ -36,7 +36,6 @@ import {
   Shield,
   User as UserIcon,
   TrendingUp,
-  Calendar,
   Edit,
   Trash2,
 } from "lucide-react";

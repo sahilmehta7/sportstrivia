@@ -12,7 +12,7 @@ const updateProfileSchema = z.object({
 });
 
 // GET /api/users/me - Get current user's full profile
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const authUser = await requireAuth();
 

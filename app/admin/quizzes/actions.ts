@@ -43,7 +43,10 @@ export async function getAvailableQuestions({
     where,
     take: limit,
     orderBy: { createdAt: "desc" },
-    include: {
+    select: {
+      id: true,
+      questionText: true,
+      difficulty: true,
       topic: {
         select: {
           id: true,
@@ -56,7 +59,6 @@ export async function getAvailableQuestions({
           id: true,
         },
       },
-      difficulty: true,
     },
   });
 

@@ -11,21 +11,22 @@ import { Plus } from "lucide-react";
 import Link from "next/link";
 
 interface QuestionsPageProps {
-  searchParams?: Record<string, string | string[] | undefined>;
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
 }
 
 export default async function QuestionsPage({ searchParams }: QuestionsPageProps) {
-  const search = typeof searchParams?.search === "string" ? searchParams.search : "";
-  const topicFilter = typeof searchParams?.topicId === "string" ? searchParams.topicId : "";
+  const params = await searchParams;
+  const search = typeof params?.search === "string" ? params.search : "";
+  const topicFilter = typeof params?.topicId === "string" ? params.topicId : "";
   const difficultyFilter =
-    typeof searchParams?.difficulty === "string" ? searchParams.difficulty : "";
+    typeof params?.difficulty === "string" ? params.difficulty : "";
   const page = Math.max(
     1,
-    Number(typeof searchParams?.page === "string" ? searchParams.page : "1") || 1
+    Number(typeof params?.page === "string" ? params.page : "1") || 1
   );
   const limit = Math.max(
     1,
-    Number(typeof searchParams?.limit === "string" ? searchParams.limit : "20") || 20
+    Number(typeof params?.limit === "string" ? params.limit : "20") || 20
   );
   const skip = (page - 1) * limit;
 

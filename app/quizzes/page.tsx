@@ -87,11 +87,12 @@ function parsePublicFilters(searchParams: SearchParams): PublicQuizFilters {
 }
 
 export default async function QuizzesPage({
-  searchParams = {},
+  searchParams,
 }: {
-  searchParams?: SearchParams;
+  searchParams?: Promise<SearchParams>;
 }) {
-  const filters = parsePublicFilters(searchParams);
+  const params = await searchParams;
+  const filters = parsePublicFilters(params || {});
 
   const [listing, filterOptions] = await Promise.all([
     getPublicQuizList(filters),

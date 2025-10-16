@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Footer } from "@/components/shared/Footer";
 import { MainNavigation } from "@/components/shared/MainNavigation";
 import { SessionProvider } from "next-auth/react";
+import React from "react";
 
 const inter = Inter({ subsets: ["latin"] });
 
