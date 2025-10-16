@@ -192,7 +192,7 @@ export default async function QuizDetailPage({
 
           <div className="flex flex-wrap items-center gap-4">
             {isLoggedIn ? (
-              <StartQuizButton quizId={quiz.id} disabled={!isLive} />
+              <StartQuizButton slug={quiz.slug} disabled={!isLive} />
             ) : (
               <Link href="/auth/signin">
                 <Button size="lg">Sign up to play</Button>

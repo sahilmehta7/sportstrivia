@@ -101,13 +101,30 @@ async function fetchRelatedQuizzes(topicId: string): Promise<QuizSummary[]> {
     where: {
       isPublished: true,
       status: QuizStatus.PUBLISHED,
-      topicConfigs: {
-        some: {
-          topicId: {
-            in: topicIds,
+      OR: [
+        // Quizzes configured with this topic
+        {
+          topicConfigs: {
+            some: {
+              topicId: {
+                in: topicIds,
+              },
+            },
           },
         },
-      },
+        // Quizzes that have questions from this topic
+        {
+          questionPool: {
+            some: {
+              question: {
+                topicId: {
+                  in: topicIds,
+                },
+              },
+            },
+          },
+        },
+      ],
     },
     orderBy: {
       createdAt: "desc",
