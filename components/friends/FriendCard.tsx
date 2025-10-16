@@ -1,6 +1,5 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { UserAvatar } from "@/components/shared/UserAvatar";
 import { StreakIndicator } from "@/components/shared/StreakIndicator";
 import { Eye, Swords, UserMinus } from "lucide-react";

@@ -69,7 +69,7 @@ export async function PUT(
     // Update question and answers in a transaction
     const question = await prisma.$transaction(async (tx) => {
       // Update question
-      const updatedQuestion = await tx.question.update({
+      await tx.question.update({
         where: { id },
         data: {
           type: validatedData.type,
@@ -173,4 +173,3 @@ export async function DELETE(
     return handleError(error);
   }
 }
-

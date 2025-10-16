@@ -1,9 +1,7 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Award, Lock } from "lucide-react";
-import { cn } from "@/lib/utils";
 
 interface BadgeItem {
   badge: {
@@ -104,4 +102,3 @@ export function BadgeShowcase({ badges }: BadgeShowcaseProps) {
     </Card>
   );
 }
-

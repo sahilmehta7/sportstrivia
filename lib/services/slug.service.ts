@@ -58,25 +58,31 @@ async function getExistingSlugs(entity: SlugEntity): Promise<Set<string>> {
 
   switch (entity) {
     case "quiz":
-      const quizzes = await prisma.quiz.findMany({
-        select: { slug: true },
-      });
-      slugs = quizzes.map((q) => q.slug);
-      break;
+      {
+        const quizzes = await prisma.quiz.findMany({
+          select: { slug: true },
+        });
+        slugs = quizzes.map((q) => q.slug);
+        break;
+      }
 
     case "topic":
-      const topics = await prisma.topic.findMany({
-        select: { slug: true },
-      });
-      slugs = topics.map((t) => t.slug);
-      break;
+      {
+        const topics = await prisma.topic.findMany({
+          select: { slug: true },
+        });
+        slugs = topics.map((t) => t.slug);
+        break;
+      }
 
     case "tag":
-      const tags = await prisma.quizTag.findMany({
-        select: { slug: true },
-      });
-      slugs = tags.map((t) => t.slug);
-      break;
+      {
+        const tags = await prisma.quizTag.findMany({
+          select: { slug: true },
+        });
+        slugs = tags.map((t) => t.slug);
+        break;
+      }
 
     default:
       throw new Error(`Unknown entity type: ${entity}`);
@@ -175,28 +181,34 @@ export async function isSlugAvailable(
 
   switch (entity) {
     case "quiz":
-      const quiz = await prisma.quiz.findUnique({
-        where: { slug },
-        select: { id: true },
-      });
-      exists = quiz !== null && quiz.id !== excludeId;
-      break;
+      {
+        const quiz = await prisma.quiz.findUnique({
+          where: { slug },
+          select: { id: true },
+        });
+        exists = quiz !== null && quiz.id !== excludeId;
+        break;
+      }
 
     case "topic":
-      const topic = await prisma.topic.findUnique({
-        where: { slug },
-        select: { id: true },
-      });
-      exists = topic !== null && topic.id !== excludeId;
-      break;
+      {
+        const topic = await prisma.topic.findUnique({
+          where: { slug },
+          select: { id: true },
+        });
+        exists = topic !== null && topic.id !== excludeId;
+        break;
+      }
 
     case "tag":
-      const tag = await prisma.quizTag.findUnique({
-        where: { slug },
-        select: { id: true },
-      });
-      exists = tag !== null && tag.id !== excludeId;
-      break;
+      {
+        const tag = await prisma.quizTag.findUnique({
+          where: { slug },
+          select: { id: true },
+        });
+        exists = tag !== null && tag.id !== excludeId;
+        break;
+      }
   }
 
   return !exists;
@@ -216,4 +228,3 @@ export function invalidateSlugCache(entity: SlugEntity): void {
 export function invalidateAllSlugCaches(): void {
   slugCache.clear();
 }
-

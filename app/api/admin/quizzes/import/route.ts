@@ -129,7 +129,7 @@ export async function POST(request: NextRequest) {
 
       // Create all questions in parallel using Promise.all
       const createdQuestions = await Promise.all(
-        questions.map((questionData, i) => {
+        questions.map((questionData) => {
           // Determine question type - cast to enum
           const questionType = (questionData.type
             ? questionData.type.toUpperCase()

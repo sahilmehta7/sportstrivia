@@ -15,7 +15,7 @@ export default function UnauthorizedPage() {
           </div>
           <CardTitle className="text-2xl font-bold">Access Denied</CardTitle>
           <CardDescription>
-            You don't have permission to access this page. Please sign in with an authorized account.
+            You don&apos;t have permission to access this page. Please sign in with an authorized account.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -42,4 +42,3 @@ export default function UnauthorizedPage() {
     </div>
   );
 }
-

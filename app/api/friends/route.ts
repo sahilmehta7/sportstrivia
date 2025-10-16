@@ -5,7 +5,6 @@ import { handleError, successResponse, BadRequestError, NotFoundError } from "@/
 import { z } from "zod";
 import {
   type FriendListFilters,
-  buildFriendWhereClause,
   buildReceivedFriendRequestsWhereClause,
   friendInclude,
 } from "@/lib/dto/friend-filters.dto";
@@ -161,4 +160,3 @@ export async function POST(request: NextRequest) {
     return handleError(error);
   }
 }
-

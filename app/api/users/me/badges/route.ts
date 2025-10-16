@@ -1,4 +1,3 @@
-import { NextRequest } from "next/server";
 import { requireAuth } from "@/lib/auth-helpers";
 import { handleError, successResponse } from "@/lib/errors";
 import { getUserBadgeProgress } from "@/lib/services/badge.service";
@@ -23,4 +22,3 @@ export async function GET() {
     return handleError(error);
   }
 }
-

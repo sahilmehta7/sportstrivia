@@ -7,8 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { UserAvatar } from "@/components/shared/UserAvatar";
 import { EmptyState } from "@/components/shared/EmptyState";
-import { useToast } from "@/hooks/use-toast";
-import { Check, X, UserPlus, Inbox, Send } from "lucide-react";
+import { Check, X, Inbox, Send } from "lucide-react";
 
 interface FriendRequest {
   id: string;
@@ -42,7 +41,6 @@ export function FriendRequests({
   onDecline,
   onCancel,
 }: FriendRequestsProps) {
-  const { toast } = useToast();
   const [processing, setProcessing] = useState<string | null>(null);
 
   const handleAction = async (
@@ -99,7 +97,7 @@ export function FriendRequests({
           <EmptyState
             icon={Inbox}
             title="No pending requests"
-            description="You don't have any pending friend requests"
+            description="You don&apos;t have any pending friend requests"
           />
         ) : (
           received.map((request) => (
@@ -153,7 +151,7 @@ export function FriendRequests({
           <EmptyState
             icon={Send}
             title="No pending requests"
-            description="You haven't sent any friend requests"
+            description="You haven&apos;t sent any friend requests"
           />
         ) : (
           sent.map((request) => (
@@ -194,4 +192,3 @@ export function FriendRequests({
     </Tabs>
   );
 }
-

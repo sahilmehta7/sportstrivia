@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Plus, Edit, Trash2, ChevronRight, ChevronDown } from "lucide-react";
@@ -50,11 +50,7 @@ export default function TopicsPage() {
   const [topicToDelete, setTopicToDelete] = useState<Topic | null>(null);
   const [deleting, setDeleting] = useState(false);
 
-  useEffect(() => {
-    loadTopics();
-  }, []);
-
-  const loadTopics = async () => {
+  const loadTopics = useCallback(async () => {
     setLoading(true);
     try {
       const response = await fetch("/api/admin/topics?includeChildren=true");
@@ -78,7 +74,11 @@ export default function TopicsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
+
+  useEffect(() => {
+    void loadTopics();
+  }, [loadTopics]);
 
   const toggleExpand = (topicId: string) => {
     setExpandedTopics((prev) => {
@@ -321,4 +321,3 @@ export default function TopicsPage() {
     </div>
   );
 }
-

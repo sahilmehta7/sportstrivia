@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type FormEvent } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -17,7 +17,7 @@ export function AddFriendForm({ onSuccess }: AddFriendFormProps) {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
@@ -66,7 +66,7 @@ export function AddFriendForm({ onSuccess }: AddFriendFormProps) {
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="email">Friend's Email</Label>
+            <Label htmlFor="email">Friend&apos;s Email</Label>
             <Input
               id="email"
               type="email"
@@ -85,4 +85,3 @@ export function AddFriendForm({ onSuccess }: AddFriendFormProps) {
     </Card>
   );
 }
-

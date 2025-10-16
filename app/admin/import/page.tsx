@@ -10,7 +10,6 @@ import { useToast } from "@/hooks/use-toast";
 import { Upload, FileJson, CheckCircle, AlertCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 
 export default function ImportPage() {
   const router = useRouter();
@@ -400,4 +399,3 @@ export default function ImportPage() {
     </div>
   );
 }
-

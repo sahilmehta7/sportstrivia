@@ -236,8 +236,6 @@ export async function getUserBadgeProgress(userId: string) {
   const progress = await Promise.all(
     allBadges.map(async (badge) => {
       const earned = earnedBadgeIds.has(badge.id);
-      const criteria = BADGE_CRITERIA[badge.name as keyof typeof BADGE_CRITERIA];
-
       return {
         badge,
         earned,

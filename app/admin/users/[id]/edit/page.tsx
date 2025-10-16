@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { Button } from "@/components/ui/button";
@@ -21,7 +21,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Save, TrendingUp, Award, Users, Star } from "lucide-react";
 import Link from "next/link";
@@ -86,7 +85,7 @@ export default function EditUserPage({ params }: EditUserPageProps) {
     loadUser();
   }, [params, router, toast]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setSaving(true);
 
@@ -445,4 +444,3 @@ export default function EditUserPage({ params }: EditUserPageProps) {
     </div>
   );
 }
-

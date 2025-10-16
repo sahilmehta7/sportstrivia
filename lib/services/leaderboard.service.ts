@@ -13,20 +13,26 @@ export function getDateRangeForPeriod(period: LeaderboardPeriod): Date | null {
   
   switch (period) {
     case "daily":
-      const startOfDay = new Date(now);
-      startOfDay.setHours(0, 0, 0, 0);
-      return startOfDay;
-      
+      {
+        const startOfDay = new Date(now);
+        startOfDay.setHours(0, 0, 0, 0);
+        return startOfDay;
+      }
+
     case "weekly":
-      const startOfWeek = new Date(now);
-      startOfWeek.setDate(now.getDate() - now.getDay());
-      startOfWeek.setHours(0, 0, 0, 0);
-      return startOfWeek;
-      
+      {
+        const startOfWeek = new Date(now);
+        startOfWeek.setDate(now.getDate() - now.getDay());
+        startOfWeek.setHours(0, 0, 0, 0);
+        return startOfWeek;
+      }
+
     case "monthly":
-      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-      return startOfMonth;
-      
+      {
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        return startOfMonth;
+      }
+
     case "all-time":
     default:
       return null;

@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/db";
-import { requireAuth, getCurrentUser } from "@/lib/auth-helpers";
+import { requireAuth } from "@/lib/auth-helpers";
 import { handleError, successResponse, NotFoundError, BadRequestError } from "@/lib/errors";
 import { z } from "zod";
 import {
@@ -156,4 +156,3 @@ async function updateQuizRating(quizId: string): Promise<void> {
     },
   });
 }
-
