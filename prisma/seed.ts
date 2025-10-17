@@ -263,10 +263,10 @@ async function main() {
   });
 
   const _perfectScoreBadge = await prisma.badge.upsert({
-    where: { name: "Perfect Score" },
+    where: { name: "Perfect Round" },
     update: {},
     create: {
-      name: "Perfect Score",
+      name: "Perfect Round",
       description: "Achieve a perfect score on any quiz",
       imageUrl: "/badges/perfect-score.png",
       criteria: { type: "perfect_score", count: 1 },
@@ -337,6 +337,28 @@ async function main() {
       description: "Review 10 quizzes",
       imageUrl: "/badges/reviewer.png",
       criteria: { type: "reviews", count: 10 },
+    },
+  });
+
+  const _lightningFastBadge = await prisma.badge.upsert({
+    where: { name: "Lightning Fast" },
+    update: {},
+    create: {
+      name: "Lightning Fast",
+      description: "Answer a question correctly in under 2 seconds",
+      imageUrl: "/badges/lightning-fast.png",
+      criteria: { type: "fast_answer", seconds: 2 },
+    },
+  });
+
+  const _comebackKidBadge = await prisma.badge.upsert({
+    where: { name: "Comeback Kid" },
+    update: {},
+    create: {
+      name: "Comeback Kid",
+      description: "Recover from two incorrect answers and still pass a quiz",
+      imageUrl: "/badges/comeback-kid.png",
+      criteria: { type: "comeback", minIncorrect: 2 },
     },
   });
 
@@ -645,7 +667,7 @@ async function main() {
   console.log(`- 6 topics (Sports hierarchy)`);
   console.log(`- 2 quiz tags`);
   console.log(`- 1 quiz with 3 questions`);
-  console.log(`- 8 badges`);
+  console.log(`- 10 badges`);
   console.log(`- 6 friend relationships (4 accepted, 2 pending)`);
   console.log(`- 6 badge awards`);
   console.log(`- 4 quiz reviews`);

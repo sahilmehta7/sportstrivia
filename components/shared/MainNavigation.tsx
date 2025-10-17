@@ -4,7 +4,6 @@ import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,7 +12,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { UserAvatar } from "@/components/shared/UserAvatar";
-import { Bell, Users, Trophy, User, LogOut, Settings } from "lucide-react";
+import { NotificationsDropdown } from "@/components/shared/NotificationsDropdown";
+import { Users, Trophy, User, LogOut, Settings } from "lucide-react";
 import { signOut, useSession } from "next-auth/react";
 import { cn } from "@/lib/utils";
 
@@ -92,20 +92,11 @@ export function MainNavigation() {
 
         {/* Right Section */}
         <div className="flex items-center gap-3">
-          {/* Notifications */}
-          <Link href="/notifications">
-            <Button variant="ghost" size="sm" className="relative">
-              <Bell className="h-5 w-5" />
-              {unreadCount > 0 && (
-                <Badge
-                  variant="destructive"
-                  className="absolute -right-1 -top-1 h-5 w-5 rounded-full p-0 text-xs"
-                >
-                  {unreadCount > 9 ? "9+" : unreadCount}
-                </Badge>
-              )}
-            </Button>
-          </Link>
+          {/* Notifications Dropdown */}
+          <NotificationsDropdown
+            unreadCount={unreadCount}
+            onUnreadCountChange={setUnreadCount}
+          />
 
           {/* User Menu */}
           <DropdownMenu>

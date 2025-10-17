@@ -1,14 +1,19 @@
 import type { Metadata } from "next";
-import { PageHeader } from "@/components/shared/PageHeader";
 import { QuizCard } from "@/components/quizzes/quiz-card";
-import { QuizFilterBar } from "@/components/quizzes/quiz-filter-bar";
+import { ModernFilterBar } from "@/components/quizzes/modern-filter-bar";
 import { QuizPagination } from "@/components/quizzes/quiz-pagination";
+import { QuizzesPageHeader } from "@/components/quizzes/quizzes-page-header";
+import { FeaturedQuizzesHero } from "@/components/quizzes/featured-quizzes-hero";
+import { ComingSoonWidget } from "@/components/quizzes/coming-soon-widget";
+import { DailyQuizWidget } from "@/components/quizzes/daily-quiz-widget";
 import {
   getPublicQuizFilterOptions,
   getPublicQuizList,
+  getDailyRecurringQuizzes,
 } from "@/lib/services/public-quiz.service";
 import type { PublicQuizFilters } from "@/lib/dto/quiz-filters.dto";
 import { Difficulty } from "@prisma/client";
+import { auth } from "@/lib/auth";
 
 export const metadata: Metadata = {
   title: "Browse Sports Trivia Quizzes | Sports Trivia Platform",
@@ -73,8 +78,6 @@ function parsePublicFilters(searchParams: SearchParams): PublicQuizFilters {
     difficulty: difficultyParam,
     tag: getParamValue(searchParams.tag),
     topic: getParamValue(searchParams.topic),
-    isFeatured: getParamValue(searchParams.featured) === "true",
-    comingSoon: getParamValue(searchParams.comingSoon) === "true",
     minDuration: minDurationParam ? parseInt(minDurationParam, 10) * 60 : undefined,
     maxDuration: maxDurationParam ? parseInt(maxDurationParam, 10) * 60 : undefined,
     minRating:
@@ -86,6 +89,31 @@ function parsePublicFilters(searchParams: SearchParams): PublicQuizFilters {
   };
 }
 
+// Coming Soon test data
+const comingSoonQuizzes = [
+  {
+    title: "NFL Super Bowl History",
+    sport: "American Football",
+    difficulty: Difficulty.HARD,
+    estimatedDate: "Nov 2025",
+    description: "Test your knowledge of Super Bowl records, memorable plays, and championship moments.",
+  },
+  {
+    title: "Formula 1 Legends",
+    sport: "Formula 1",
+    difficulty: Difficulty.MEDIUM,
+    estimatedDate: "Nov 2025",
+    description: "From Senna to Hamilton - explore the greatest drivers in F1 history.",
+  },
+  {
+    title: "Olympic Games Trivia",
+    sport: "Multi-sport",
+    difficulty: Difficulty.EASY,
+    estimatedDate: "Dec 2025",
+    description: "Discover fascinating facts about the Summer and Winter Olympics.",
+  },
+];
+
 export default async function QuizzesPage({
   searchParams,
 }: {
@@ -93,15 +121,22 @@ export default async function QuizzesPage({
 }) {
   const params = await searchParams;
   const filters = parsePublicFilters(params || {});
+  
+  // Get current user session
+  const session = await auth();
+  const userId = session?.user?.id;
 
-  const [listing, filterOptions] = await Promise.all([
+  const [listing, filterOptions, featuredListing, dailyQuizzes] = await Promise.all([
     getPublicQuizList(filters),
     getPublicQuizFilterOptions(),
+    // Fetch featured quizzes for hero section
+    getPublicQuizList({ isFeatured: true, limit: 5, page: 1 }),
+    // Fetch daily recurring quizzes with user completion data
+    getDailyRecurringQuizzes(userId),
   ]);
 
   const appliedFilters = {
     ...listing.filters,
-    search: filters.search,
   };
 
   const baseUrl =
@@ -127,17 +162,27 @@ export default async function QuizzesPage({
   return (
     <main className="min-h-screen bg-gradient-to-b from-background via-background to-muted/40 py-12">
       <div className="container mx-auto px-4">
-        <PageHeader
-          title="Discover Sports Trivia Quizzes"
-          description="Browse curated quizzes by sport, difficulty, and topic. Use filters to find the perfect challenge and invite friends to compete."
-        />
+        <QuizzesPageHeader />
 
-        <QuizFilterBar
+        {/* Featured Quizzes Hero Section */}
+        {featuredListing.quizzes.length > 0 && (
+          <FeaturedQuizzesHero featuredQuizzes={featuredListing.quizzes} />
+        )}
+
+        {/* Daily Recurring Quizzes */}
+        <DailyQuizWidget dailyQuizzes={dailyQuizzes} />
+
+        {/* Coming Soon Widget */}
+        <ComingSoonWidget quizzes={comingSoonQuizzes} />
+
+        {/* Modern Filter Bar */}
+        <ModernFilterBar
           filters={appliedFilters}
           {...filterOptions}
           total={listing.pagination.total}
         />
 
+        {/* Quiz Grid */}
         <section className="mt-8">
           {listing.quizzes.length > 0 ? (
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -147,7 +192,7 @@ export default async function QuizzesPage({
             </div>
           ) : (
             <div className="flex min-h-[200px] flex-col items-center justify-center rounded-xl border border-dashed border-border/60 bg-card/60 p-12 text-center text-muted-foreground">
-              <h2 className="text-lg font-semibold text-foreground">No quizzes match your filters yet</h2>
+              <h2 className="text-lg font-semibold text-foreground">No quizzes match your filters</h2>
               <p className="mt-2 max-w-md text-sm text-muted-foreground">
                 Try adjusting your filters or check back soon as new trivia challenges are added regularly.
               </p>

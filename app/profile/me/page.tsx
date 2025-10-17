@@ -8,20 +8,30 @@ import { BadgeShowcase } from "@/components/profile/BadgeShowcase";
 import { ActivityFeed } from "@/components/profile/ActivityFeed";
 import { TopTopics } from "@/components/profile/TopTopics";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { useToast } from "@/hooks/use-toast";
-import { Trophy, Target, TrendingUp, BarChart3, Save } from "lucide-react";
+import { 
+  Trophy, 
+  Target, 
+  TrendingUp, 
+  BarChart3, 
+  Save, 
+  Activity, 
+  LayoutDashboard, 
+  Settings, 
+  Award 
+} from "lucide-react";
 
 export default function MyProfilePage() {
   const router = useRouter();
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [editMode, setEditMode] = useState(false);
   const [profile, setProfile] = useState<any>(null);
   const [stats, setStats] = useState<any>(null);
   const [badges, setBadges] = useState<any[]>([]);
@@ -113,7 +123,6 @@ export default function MyProfilePage() {
         description: "Profile updated successfully",
       });
 
-      setEditMode(false);
       loadProfile();
       router.refresh();
     } catch (error: any) {
@@ -145,91 +154,49 @@ export default function MyProfilePage() {
         {/* Profile Header */}
         <ProfileHeader user={profile} isOwnProfile={true} />
 
-        {/* Edit Form */}
-        {editMode ? (
-          <Card>
-            <CardHeader>
-              <CardTitle>Edit Profile</CardTitle>
-              <CardDescription>Update your profile information</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="name">Name</Label>
-                  <Input
-                    id="name"
-                    value={formData.name}
-                    onChange={(e) =>
-                      setFormData({ ...formData, name: e.target.value })
-                    }
-                    placeholder="Your name"
-                  />
-                </div>
+        {/* Tabbed Content */}
+        <Tabs defaultValue="overview" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-4 lg:w-auto lg:inline-grid">
+            <TabsTrigger value="overview" className="gap-2">
+              <LayoutDashboard className="h-4 w-4" />
+              <span className="hidden sm:inline">Overview</span>
+            </TabsTrigger>
+            <TabsTrigger value="activity" className="gap-2">
+              <Activity className="h-4 w-4" />
+              <span className="hidden sm:inline">Activity</span>
+            </TabsTrigger>
+            <TabsTrigger value="achievements" className="gap-2">
+              <Award className="h-4 w-4" />
+              <span className="hidden sm:inline">Achievements</span>
+            </TabsTrigger>
+            <TabsTrigger value="settings" className="gap-2">
+              <Settings className="h-4 w-4" />
+              <span className="hidden sm:inline">Settings</span>
+            </TabsTrigger>
+          </TabsList>
 
-                <div className="space-y-2">
-                  <Label htmlFor="bio">Bio</Label>
-                  <Textarea
-                    id="bio"
-                    value={formData.bio}
-                    onChange={(e) =>
-                      setFormData({ ...formData, bio: e.target.value })
-                    }
-                    placeholder="Tell us about yourself..."
-                    rows={3}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="favoriteTeams">Favorite Teams</Label>
-                  <Input
-                    id="favoriteTeams"
-                    value={formData.favoriteTeams}
-                    onChange={(e) =>
-                      setFormData({ ...formData, favoriteTeams: e.target.value })
-                    }
-                    placeholder="Team 1, Team 2, Team 3"
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Comma-separated list of your favorite teams
-                  </p>
-                </div>
-
-                <div className="flex gap-3">
-                  <Button type="submit" disabled={saving}>
-                    <Save className="mr-2 h-4 w-4" />
-                    {saving ? "Saving..." : "Save Changes"}
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setEditMode(false)}
-                  >
-                    Cancel
-                  </Button>
-                </div>
-              </form>
-            </CardContent>
-          </Card>
-        ) : (
-          <>
+          {/* Overview Tab */}
+          <TabsContent value="overview" className="space-y-6">
             {/* Stats Grid */}
             {stats && (
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                 <StatsCard
-                  title="Total Attempts"
+                  title="Total Quizzes"
                   value={stats.stats.totalAttempts}
                   icon={Trophy}
+                  subtitle={`${stats.stats.passedQuizzes} passed`}
                 />
                 <StatsCard
                   title="Average Score"
                   value={`${stats.stats.averageScore.toFixed(1)}%`}
                   icon={BarChart3}
+                  subtitle={`${stats.stats.passRate.toFixed(0)}% pass rate`}
                 />
                 <StatsCard
-                  title="Pass Rate"
-                  value={`${stats.stats.passRate.toFixed(0)}%`}
-                  subtitle={`${stats.stats.passedQuizzes} passed`}
+                  title="Total Points"
+                  value={profile.totalPoints?.toLocaleString() || "0"}
                   icon={Target}
+                  subtitle={profile.experienceTier || "ROOKIE"}
                 />
                 <StatsCard
                   title="Current Streak"
@@ -242,17 +209,156 @@ export default function MyProfilePage() {
 
             {/* Content Grid */}
             <div className="grid gap-6 lg:grid-cols-2">
-              <BadgeShowcase badges={badges} />
               {stats && <TopTopics topics={stats.topTopics || []} />}
+              
+              {/* Quick Info */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Profile Info</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {profile.bio && (
+                    <div>
+                      <p className="text-sm text-muted-foreground">Bio</p>
+                      <p className="mt-1 text-sm">{profile.bio}</p>
+                    </div>
+                  )}
+                  {profile.favoriteTeams && profile.favoriteTeams.length > 0 && (
+                    <div>
+                      <p className="text-sm text-muted-foreground">Favorite Teams</p>
+                      <p className="mt-1 text-sm">
+                        {profile.favoriteTeams.join(", ")}
+                      </p>
+                    </div>
+                  )}
+                  <div>
+                    <p className="text-sm text-muted-foreground">Member since</p>
+                    <p className="mt-1 text-sm">
+                      {new Intl.DateTimeFormat("en-US", {
+                        month: "long",
+                        year: "numeric",
+                      }).format(new Date(profile.createdAt))}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Email</p>
+                    <p className="mt-1 text-sm">{profile.email}</p>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
+          </TabsContent>
 
-            {/* Recent Activity */}
+          {/* Activity Tab */}
+          <TabsContent value="activity" className="space-y-6">
             {stats && <ActivityFeed attempts={stats.recentAttempts || []} />}
+          </TabsContent>
 
-            {/* Account Info */}
+          {/* Achievements Tab */}
+          <TabsContent value="achievements" className="space-y-6">
+            <BadgeShowcase badges={badges} />
+            
+            {stats && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Performance Summary</CardTitle>
+                  <CardDescription>Your overall quiz performance metrics</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="space-y-2">
+                      <p className="text-sm text-muted-foreground">Total Questions Answered</p>
+                      <p className="text-2xl font-bold">
+                        {stats.stats.totalAttempts * 10 || 0}
+                      </p>
+                    </div>
+                    <div className="space-y-2">
+                      <p className="text-sm text-muted-foreground">Accuracy Rate</p>
+                      <p className="text-2xl font-bold text-primary">
+                        {stats.stats.averageScore.toFixed(1)}%
+                      </p>
+                    </div>
+                    <div className="space-y-2">
+                      <p className="text-sm text-muted-foreground">Perfect Scores</p>
+                      <p className="text-2xl font-bold">
+                        {stats.perfectScores || 0}
+                      </p>
+                    </div>
+                    <div className="space-y-2">
+                      <p className="text-sm text-muted-foreground">Badges Earned</p>
+                      <p className="text-2xl font-bold">
+                        {badges.filter((b) => b.earned || b.earnedAt).length} / {badges.length}
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
+
+          {/* Settings Tab */}
+          <TabsContent value="settings" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Edit Profile</CardTitle>
+                <CardDescription>Update your profile information</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="name">Name</Label>
+                    <Input
+                      id="name"
+                      value={formData.name}
+                      onChange={(e) =>
+                        setFormData({ ...formData, name: e.target.value })
+                      }
+                      placeholder="Your name"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="bio">Bio</Label>
+                    <Textarea
+                      id="bio"
+                      value={formData.bio}
+                      onChange={(e) =>
+                        setFormData({ ...formData, bio: e.target.value })
+                      }
+                      placeholder="Tell us about yourself..."
+                      rows={3}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="favoriteTeams">Favorite Teams</Label>
+                    <Input
+                      id="favoriteTeams"
+                      value={formData.favoriteTeams}
+                      onChange={(e) =>
+                        setFormData({ ...formData, favoriteTeams: e.target.value })
+                      }
+                      placeholder="Team 1, Team 2, Team 3"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Comma-separated list of your favorite teams
+                    </p>
+                  </div>
+
+                  <div className="flex gap-3">
+                    <Button type="submit" disabled={saving}>
+                      <Save className="mr-2 h-4 w-4" />
+                      {saving ? "Saving..." : "Save Changes"}
+                    </Button>
+                  </div>
+                </form>
+              </CardContent>
+            </Card>
+
             <Card>
               <CardHeader>
                 <CardTitle>Account Information</CardTitle>
+                <CardDescription>Your account details</CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="flex items-center justify-between text-sm">
@@ -260,33 +366,21 @@ export default function MyProfilePage() {
                   <span className="font-medium">{profile.email}</span>
                 </div>
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">Member since</span>
-                  <span className="font-medium">
-                    {new Intl.DateTimeFormat("en-US", {
-                      month: "long",
-                      year: "numeric",
-                    }).format(new Date(profile.createdAt))}
-                  </span>
+                  <span className="text-muted-foreground">Role</span>
+                  <span className="font-medium">{profile.role}</span>
                 </div>
-                {profile.favoriteTeams && profile.favoriteTeams.length > 0 && (
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">Favorite Teams</span>
-                    <span className="font-medium">
-                      {profile.favoriteTeams.join(", ")}
-                    </span>
-                  </div>
-                )}
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">Experience Tier</span>
+                  <span className="font-medium">{profile.experienceTier || "ROOKIE"}</span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">Total Points</span>
+                  <span className="font-medium">{profile.totalPoints?.toLocaleString() || "0"}</span>
+                </div>
               </CardContent>
             </Card>
-
-            {/* Edit Button */}
-            <div className="flex justify-center">
-              <Button onClick={() => setEditMode(true)}>
-                Edit Profile
-              </Button>
-            </div>
-          </>
-        )}
+          </TabsContent>
+        </Tabs>
       </div>
     </main>
   );

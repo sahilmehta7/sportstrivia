@@ -161,44 +161,57 @@ export async function buildTopicLeaderboard(
   };
 
   if (startDate) {
-    whereClause.answeredAt = { gte: startDate };
+    whereClause.createdAt = { gte: startDate };
   }
 
-  // Aggregate correct answers by user
-  const results = await prisma.userAnswer.groupBy({
-    by: ["userId"],
+  // Aggregate correct answers by attempt first (UserAnswer has no direct userId)
+  const byAttempt = await prisma.userAnswer.groupBy({
+    by: ["attemptId"],
     where: whereClause,
     _count: { id: true },
-    orderBy: {
-      _count: { id: "desc" },
-    },
-    take: limit,
   });
 
-  if (results.length === 0) {
+  if (byAttempt.length === 0) {
     return [];
   }
 
-  // Get user details
-  const userIds = results.map((r) => r.userId);
-  const users = await prisma.user.findMany({
-    where: { id: { in: userIds } },
-    select: {
-      id: true,
-      name: true,
-      image: true,
-    },
+  const attemptIds = byAttempt.map((r) => r.attemptId);
+  const attempts = await prisma.quizAttempt.findMany({
+    where: { id: { in: attemptIds } },
+    select: { id: true, userId: true },
   });
+  const attemptToUser = new Map(attempts.map((a) => [a.id, a.userId]));
 
+  // Reduce to per-user counts
+  const userCounts = new Map<string, number>();
+  for (const row of byAttempt) {
+    const userId = attemptToUser.get(row.attemptId);
+    if (!userId) continue;
+    userCounts.set(userId, (userCounts.get(userId) || 0) + (row._count?.id || 0));
+  }
+
+  const sorted = Array.from(userCounts.entries())
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, limit);
+
+  if (sorted.length === 0) {
+    return [];
+  }
+
+  const topUserIds = sorted.map(([userId]) => userId);
+  const users = await prisma.user.findMany({
+    where: { id: { in: topUserIds } },
+    select: { id: true, name: true, image: true },
+  });
   const userMap = new Map(users.map((u) => [u.id, u]));
 
-  return results.map((result, index) => {
-    const user = userMap.get(result.userId);
+  return sorted.map(([userId, count], index) => {
+    const user = userMap.get(userId);
     return {
-      userId: result.userId,
+      userId,
       userName: user?.name || null,
       userImage: user?.image || null,
-      score: result._count.id, // Number of correct answers
+      score: count,
       rank: index + 1,
     };
   });

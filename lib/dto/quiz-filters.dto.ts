@@ -162,6 +162,17 @@ export function buildPublicQuizWhereClause(filters: PublicQuizFilters): Prisma.Q
           },
         },
       },
+      {
+        questionPool: {
+          some: {
+            question: {
+              topic: {
+                slug: filters.topic,
+              },
+            },
+          },
+        },
+      },
     ];
   }
 
@@ -219,4 +230,3 @@ export function buildPaginationResult(page: number, limit: number, total: number
     pages: Math.ceil(total / limit),
   };
 }
-
