@@ -11,8 +11,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Save, Trash2 } from "lucide-react";
+import { ArrowLeft, Save, Trash2, CheckCircle, Archive, EyeOff } from "lucide-react";
 import Link from "next/link";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import {
@@ -36,6 +37,7 @@ export default function EditQuizPage({ params }: EditQuizPageProps) {
   const [saving, setSaving] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [topicConfigs, setTopicConfigs] = useState<any[]>([]);
 
   const [formData, setFormData] = useState({
     title: "",
@@ -115,6 +117,20 @@ export default function EditQuizPage({ params }: EditQuizPageProps) {
           seoDescription: quiz.seoDescription || "",
           seoKeywords: quiz.seoKeywords?.join(", ") || "",
         });
+
+        // Load topic configurations if TOPIC_RANDOM mode
+        if (quiz.questionSelectionMode === "TOPIC_RANDOM") {
+          try {
+            const topicResponse = await fetch(`/api/admin/quizzes/${resolvedParams.id}/topics`);
+            const topicResult = await topicResponse.json();
+            if (topicResponse.ok) {
+              setTopicConfigs(topicResult.data.topicConfigs || []);
+            }
+          } catch (error) {
+            // Silently fail - topic configs are optional
+            console.error("Failed to load topic configs:", error);
+          }
+        }
       } catch (error: any) {
         toast({
           title: "Error",
@@ -129,6 +145,25 @@ export default function EditQuizPage({ params }: EditQuizPageProps) {
 
     loadQuiz();
   }, [params, router, toast]);
+
+  // Load topic configs when switching to TOPIC_RANDOM mode
+  useEffect(() => {
+    async function loadTopicConfigs() {
+      if (formData.questionSelectionMode === "TOPIC_RANDOM" && quizId) {
+        try {
+          const topicResponse = await fetch(`/api/admin/quizzes/${quizId}/topics`);
+          const topicResult = await topicResponse.json();
+          if (topicResponse.ok) {
+            setTopicConfigs(topicResult.data.topicConfigs || []);
+          }
+        } catch (error) {
+          console.error("Failed to load topic configs:", error);
+        }
+      }
+    }
+    
+    loadTopicConfigs();
+  }, [formData.questionSelectionMode, quizId]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -211,8 +246,137 @@ export default function EditQuizPage({ params }: EditQuizPageProps) {
     }
   };
 
+  const handlePublish = async () => {
+    setSaving(true);
+
+    try {
+      const response = await fetch(`/api/admin/quizzes/${quizId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          status: "PUBLISHED",
+          isPublished: true 
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || "Failed to publish quiz");
+      }
+
+      setFormData(prev => ({ 
+        ...prev, 
+        status: "PUBLISHED",
+        isPublished: true 
+      }));
+
+      toast({
+        title: "Quiz published!",
+        description: "The quiz is now live and visible to users.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleUnpublish = async () => {
+    setSaving(true);
+
+    try {
+      const response = await fetch(`/api/admin/quizzes/${quizId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          status: "DRAFT",
+          isPublished: false 
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || "Failed to unpublish quiz");
+      }
+
+      setFormData(prev => ({ 
+        ...prev, 
+        status: "DRAFT",
+        isPublished: false 
+      }));
+
+      toast({
+        title: "Quiz unpublished!",
+        description: "The quiz has been moved back to draft status.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleArchive = async () => {
+    setSaving(true);
+
+    try {
+      const response = await fetch(`/api/admin/quizzes/${quizId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          status: "ARCHIVED",
+          isPublished: false 
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || "Failed to archive quiz");
+      }
+
+      setFormData(prev => ({ 
+        ...prev, 
+        status: "ARCHIVED",
+        isPublished: false 
+      }));
+
+      toast({
+        title: "Quiz archived!",
+        description: "The quiz is no longer visible to users.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const updateField = (field: string, value: any) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData(prev => {
+      const updates: any = { [field]: value };
+      
+      // Sync isPublished with status changes
+      if (field === "status") {
+        updates.isPublished = value === "PUBLISHED";
+      }
+      
+      return { ...prev, ...updates };
+    });
   };
 
   if (loading) {
@@ -392,7 +556,61 @@ export default function EditQuizPage({ params }: EditQuizPageProps) {
               </Select>
             </div>
 
-            {formData.questionSelectionMode !== "FIXED" && (
+            {formData.questionSelectionMode === "TOPIC_RANDOM" && (
+              <div className="rounded-lg border border-blue-200 bg-blue-50 dark:bg-blue-950 dark:border-blue-800 p-4">
+                <div className="flex items-start justify-between mb-3">
+                  <div className="space-y-1">
+                    <h4 className="font-medium text-sm">Configure Topics</h4>
+                    <p className="text-sm text-muted-foreground">
+                      Select which topics to randomly pull questions from, and how many from each
+                    </p>
+                  </div>
+                  <Link href={`/admin/quizzes/${quizId}/topics`}>
+                    <Button variant="outline" size="sm">
+                      Configure Topics
+                    </Button>
+                  </Link>
+                </div>
+                
+                {topicConfigs.length > 0 ? (
+                  <div className="mt-3 pt-3 border-t border-blue-200 dark:border-blue-800">
+                    <div className="text-xs font-medium mb-2">
+                      Configured Topics ({topicConfigs.length}):
+                    </div>
+                    <div className="space-y-1">
+                      {topicConfigs.map((config: any) => (
+                        <div key={config.id} className="flex items-center justify-between text-sm">
+                          <div className="flex items-center gap-2">
+                            <span>{config.topic.name}</span>
+                            <Badge variant={
+                              config.difficulty === "EASY" ? "secondary" : 
+                              config.difficulty === "HARD" ? "destructive" : 
+                              "default"
+                            } className="text-xs">
+                              {config.difficulty}
+                            </Badge>
+                          </div>
+                          <span className="text-muted-foreground text-xs">
+                            {config.questionCount} questions
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="mt-2 pt-2 border-t border-blue-200 dark:border-blue-800 text-xs text-muted-foreground">
+                      Total: {topicConfigs.reduce((sum: number, config: any) => sum + config.questionCount, 0)} questions per quiz
+                    </div>
+                  </div>
+                ) : (
+                  <div className="mt-3 pt-3 border-t border-blue-200 dark:border-blue-800">
+                    <p className="text-xs text-muted-foreground italic">
+                      No topics configured yet. Click "Configure Topics" to add topics.
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {formData.questionSelectionMode === "POOL_RANDOM" && (
               <div className="space-y-2">
                 <Label htmlFor="questionCount">Number of Questions *</Label>
                 <Input
@@ -402,6 +620,9 @@ export default function EditQuizPage({ params }: EditQuizPageProps) {
                   value={formData.questionCount}
                   onChange={(e) => updateField("questionCount", e.target.value)}
                 />
+                <p className="text-xs text-muted-foreground">
+                  How many random questions to select from the quiz pool
+                </p>
               </div>
             )}
 
@@ -604,31 +825,58 @@ export default function EditQuizPage({ params }: EditQuizPageProps) {
                 onCheckedChange={(checked) => updateField("isFeatured", checked)}
               />
             </div>
-
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label>Published</Label>
-                <p className="text-sm text-muted-foreground">Make quiz visible to users</p>
-              </div>
-              <Switch
-                checked={formData.isPublished}
-                onCheckedChange={(checked) => updateField("isPublished", checked)}
-              />
-            </div>
           </CardContent>
         </Card>
 
-        {/* Submit */}
-        <div className="flex justify-end gap-4">
-          <Link href="/admin/quizzes">
-            <Button type="button" variant="outline">
-              Cancel
+        {/* Actions */}
+        <div className="flex flex-col sm:flex-row justify-between gap-4">
+          <div className="flex gap-2 flex-wrap">
+            {formData.status !== "PUBLISHED" && (
+              <Button 
+                type="button" 
+                onClick={handlePublish} 
+                disabled={saving}
+                variant="default"
+              >
+                <CheckCircle className="mr-2 h-4 w-4" />
+                Publish Quiz
+              </Button>
+            )}
+            {formData.status === "PUBLISHED" && (
+              <Button 
+                type="button" 
+                onClick={handleUnpublish} 
+                disabled={saving}
+                variant="outline"
+              >
+                <EyeOff className="mr-2 h-4 w-4" />
+                Unpublish
+              </Button>
+            )}
+            {formData.status === "PUBLISHED" && (
+              <Button 
+                type="button" 
+                onClick={handleArchive} 
+                disabled={saving}
+                variant="secondary"
+              >
+                <Archive className="mr-2 h-4 w-4" />
+                Archive Quiz
+              </Button>
+            )}
+          </div>
+
+          <div className="flex gap-2 justify-end">
+            <Link href="/admin/quizzes">
+              <Button type="button" variant="outline">
+                Cancel
+              </Button>
+            </Link>
+            <Button type="submit" disabled={saving}>
+              <Save className="mr-2 h-4 w-4" />
+              {saving ? "Saving..." : "Save Changes"}
             </Button>
-          </Link>
-          <Button type="submit" disabled={saving}>
-            <Save className="mr-2 h-4 w-4" />
-            {saving ? "Saving..." : "Save Changes"}
-          </Button>
+          </div>
         </div>
       </form>
 

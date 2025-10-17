@@ -43,7 +43,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       }
       return session;
     },
-    async redirect({ url, baseUrl }) {
+    async redirect({ url }) {
       // Use the dynamically determined auth URL
       const base = getAuthUrl();
       

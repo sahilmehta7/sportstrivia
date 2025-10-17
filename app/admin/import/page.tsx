@@ -106,6 +106,7 @@ export default function ImportPage() {
   const exampleJSON = {
     title: "NBA Champions Quiz",
     slug: "nba-champions-quiz",
+    description: "Challenge yourself with questions about NBA championship history and legendary teams",
     sport: "Basketball",
     difficulty: "medium",
     duration: 600,
@@ -341,8 +342,9 @@ export default function ImportPage() {
                   <h4 className="font-semibold mb-2">Optional Fields</h4>
                   <ul className="list-disc list-inside space-y-1 text-muted-foreground">
                     <li><code className="text-xs">slug</code> - URL slug (auto-generated if not provided)</li>
+                    <li><code className="text-xs">description</code> - Brief description of the quiz</li>
                     <li><code className="text-xs">sport</code> - Sport category</li>
-                    <li><code className="text-xs">difficulty</code> - EASY, MEDIUM, or HARD</li>
+                    <li><code className="text-xs">difficulty</code> - easy, medium, or hard (case-insensitive)</li>
                     <li><code className="text-xs">duration</code> - Quiz duration in seconds</li>
                     <li><code className="text-xs">passingScore</code> - Percentage (default: 70)</li>
                     <li><code className="text-xs">questions[].topic</code> - Topic name (auto-creates if needed)</li>
@@ -355,6 +357,7 @@ export default function ImportPage() {
                   <pre className="bg-muted p-3 rounded text-xs overflow-x-auto">
 {`{
   "title": "Quiz Title",
+  "description": "Brief quiz description",
   "sport": "Basketball",
   "difficulty": "medium",
   "duration": 600,

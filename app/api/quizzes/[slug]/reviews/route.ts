@@ -13,7 +13,7 @@ import { calculatePagination, buildPaginationResult } from "@/lib/dto/quiz-filte
 
 const reviewSchema = z.object({
   rating: z.number().int().min(1).max(5),
-  comment: z.string().min(1).max(1000).optional(),
+  comment: z.string().min(1).max(1000).optional().or(z.literal("")).or(z.null()),
 });
 
 // GET /api/quizzes/[slug]/reviews - Get quiz reviews
@@ -121,7 +121,7 @@ export async function POST(
         userId: user.id,
         quizId: quiz.id,
         rating,
-        comment,
+        comment: comment && comment.trim() ? comment.trim() : undefined,
       },
       include: reviewInclude,
     });

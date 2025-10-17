@@ -65,16 +65,18 @@ export async function POST(request: NextRequest) {
           // Get all descendant topics using cached service
           const topicIds = await getTopicIdsWithDescendants(config.topicId);
 
-          // Get random questions from these topics
-          return prisma.question.findMany({
+          // Fetch ALL matching questions (not just take N)
+          const allQuestions = await prisma.question.findMany({
             where: {
               topicId: { in: topicIds },
               difficulty: config.difficulty,
             },
-            take: config.questionCount,
-            orderBy: { id: "asc" }, // Will be randomized in production with Prisma extension
             select: { id: true },
           });
+
+          // Shuffle and select the required number
+          const shuffled = allQuestions.sort(() => Math.random() - 0.5);
+          return shuffled.slice(0, config.questionCount);
         })
       );
 

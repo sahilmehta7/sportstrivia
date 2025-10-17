@@ -67,7 +67,13 @@ export async function PUT(
     const { id } = await params;
 
     const body = await request.json();
-    const validatedData = quizUpdateSchema.parse(body);
+    
+    // Convert null values to undefined for optional fields (Prisma sends null, schema expects undefined)
+    const cleanedBody = Object.fromEntries(
+      Object.entries(body).map(([key, value]) => [key, value === null ? undefined : value])
+    );
+    
+    const validatedData = quizUpdateSchema.parse(cleanedBody);
 
     // Check if quiz exists
     const existingQuiz = await prisma.quiz.findUnique({

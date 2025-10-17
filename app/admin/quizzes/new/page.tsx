@@ -637,22 +637,6 @@ export default function NewQuizPage() {
                   </FormItem>
                 )}
               />
-
-              <FormField
-                control={form.control}
-                name="isPublished"
-                render={({ field }) => (
-                  <FormItem className="flex items-center justify-between rounded-lg border p-4">
-                    <div>
-                      <FormLabel>Publish quiz immediately</FormLabel>
-                      <CardDescription>Make this quiz accessible to players.</CardDescription>
-                    </div>
-                    <FormControl>
-                      <Switch checked={field.value} onCheckedChange={field.onChange} />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
             </CardContent>
           </Card>
 

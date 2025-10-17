@@ -17,13 +17,13 @@ export const quizSchema = z.object({
   status: z.nativeEnum(QuizStatus).optional().default(QuizStatus.DRAFT),
   
   // Quiz configuration
-  duration: z.number().int().min(1).optional(),
-  timePerQuestion: z.number().int().min(1).optional(),
+  duration: z.number().int().min(1).nullish(),
+  timePerQuestion: z.number().int().min(1).nullish(),
   passingScore: z.number().int().min(0).max(100).optional().default(70),
   
   // Question selection
   questionSelectionMode: z.nativeEnum(QuestionSelectionMode).optional().default(QuestionSelectionMode.FIXED),
-  questionCount: z.number().int().min(1).optional(),
+  questionCount: z.number().int().min(1).nullish(),
   randomizeQuestionOrder: z.boolean().optional().default(false),
   showHints: z.boolean().optional().default(true),
   
@@ -62,6 +62,7 @@ export const quizTopicConfigSchema = z.object({
 export const quizImportSchema = z.object({
   title: z.string().min(3),
   slug: z.string().optional(),
+  description: z.string().optional(),
   sport: z.string().optional(),
   difficulty: z.nativeEnum(Difficulty).default(Difficulty.MEDIUM),
   duration: z.number().int().min(1).optional(),

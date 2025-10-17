@@ -2,8 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
-import { Footer } from "@/components/shared/Footer";
-import { MainNavigation } from "@/components/shared/MainNavigation";
+import { LayoutWrapper } from "@/components/LayoutWrapper";
 import { SessionProvider } from "next-auth/react";
 import React from "react";
 
@@ -23,11 +22,7 @@ export default function RootLayout({
     <html lang="en">
       <body className={inter.className}>
         <SessionProvider>
-          <div className="flex min-h-screen flex-col">
-            <MainNavigation />
-            <main className="flex-1">{children}</main>
-            <Footer />
-          </div>
+          <LayoutWrapper>{children}</LayoutWrapper>
           <Toaster />
         </SessionProvider>
       </body>

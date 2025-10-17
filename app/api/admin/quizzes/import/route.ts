@@ -26,6 +26,7 @@ interface QuizImportQuestion {
 interface QuizImportInput {
   title: string;
   slug?: string;
+  description?: string;
   sport?: string;
   difficulty: Difficulty;
   duration?: number;
@@ -38,12 +39,36 @@ interface QuizImportInput {
   questions: QuizImportQuestion[];
 }
 
+/**
+ * Normalize difficulty values to uppercase for case-insensitive input
+ */
+function normalizeDifficulty(value: string | undefined): string | undefined {
+  if (!value) return undefined;
+  const normalized = value.toUpperCase();
+  // Validate it's a valid difficulty
+  if (['EASY', 'MEDIUM', 'HARD'].includes(normalized)) {
+    return normalized;
+  }
+  return value; // Return original if invalid, let schema validation handle the error
+}
+
 // POST /api/admin/quizzes/import - Bulk import quiz from JSON
 export async function POST(request: NextRequest) {
   try {
     await requireAdmin();
 
     const body = await request.json();
+    
+    // Normalize difficulty values to uppercase (case-insensitive input)
+    if (body.difficulty) {
+      body.difficulty = normalizeDifficulty(body.difficulty);
+    }
+    if (Array.isArray(body.questions)) {
+      body.questions = body.questions.map((q: any) => ({
+        ...q,
+        difficulty: normalizeDifficulty(q.difficulty)
+      }));
+    }
     
     // Validate the input
     const parseResult = quizImportSchema.safeParse(body);
@@ -59,6 +84,7 @@ export async function POST(request: NextRequest) {
     const {
       title,
       slug: providedSlug,
+      description,
       sport,
       difficulty,
       duration,
@@ -95,6 +121,7 @@ export async function POST(request: NextRequest) {
         data: {
           title,
           slug,
+          description,
           sport,
           difficulty,
           duration,
