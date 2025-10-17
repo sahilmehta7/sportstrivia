@@ -240,17 +240,20 @@ export default async function QuizDetailPage({
 
   const tags = quiz.tags.map((relation) => relation.tag);
   const topics = quiz.topicConfigs.map((config) => config.topic);
-  const questionModeLabel = quiz.questionSelectionMode
-    .split("_")
-    .map((part) => part.charAt(0) + part.slice(1).toLowerCase())
-    .join(" ");
 
-  // Calculate actual number of questions user will answer
+  // Calculate actual number of questions user will answer (don't reveal pool size)
   const actualQuestionCount = quiz.questionSelectionMode === "FIXED"
     ? quiz._count.questionPool
     : quiz.questionCount || quiz._count.questionPool;
 
   const difficultyInfo = difficultyConfig[quiz.difficulty as keyof typeof difficultyConfig];
+  
+  // Get unique users who have attempted this quiz
+  const uniqueUsersCount = await prisma.quizAttempt.findMany({
+    where: { quizId: quiz.id },
+    distinct: ['userId'],
+    select: { userId: true },
+  }).then(results => results.length);
 
   const limitBlocksPlay = attemptLimitDetails?.isLocked ?? false;
   const startDisabled = !isLive || limitBlocksPlay;
@@ -410,14 +413,7 @@ export default async function QuizDetailPage({
                     <HelpCircle className="h-5 w-5 text-primary" />
                   </div>
                   <div>
-                    <p className="text-xs text-muted-foreground">
-                      Questions
-                      {quiz.questionSelectionMode !== "FIXED" && (
-                        <span className="ml-1 text-[10px]">
-                          (from pool of {quiz._count.questionPool})
-                        </span>
-                      )}
-                    </p>
+                    <p className="text-xs text-muted-foreground">Questions</p>
                     <p className="font-bold">{actualQuestionCount}</p>
                   </div>
                 </div>
@@ -444,11 +440,11 @@ export default async function QuizDetailPage({
 
                 <div className="flex items-center gap-3 rounded-lg border border-border/50 bg-card/50 p-3 backdrop-blur">
                   <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-                    <TrendingUp className="h-5 w-5 text-primary" />
+                    <Users className="h-5 w-5 text-primary" />
                   </div>
                   <div>
-                    <p className="text-xs text-muted-foreground">Mode</p>
-                    <p className="font-bold text-xs">{questionModeLabel.split(" ")[0]}</p>
+                    <p className="text-xs text-muted-foreground">Players</p>
+                    <p className="font-bold">{uniqueUsersCount.toLocaleString()}</p>
                   </div>
                 </div>
               </div>
