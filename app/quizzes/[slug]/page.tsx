@@ -250,7 +250,11 @@ export default async function QuizDetailPage({
   }
 
   const tags = quiz.tags.map((relation) => relation.tag);
-  const topics = quiz.topicConfigs.map((config) => config.topic);
+  // Deduplicate topics (multiple configs can reference same topic with different difficulties)
+  const topicsMap = new Map(
+    quiz.topicConfigs.map((config) => [config.topic.id, config.topic])
+  );
+  const topics = Array.from(topicsMap.values());
 
   // Calculate actual number of questions user will answer
   let actualQuestionCount = quiz._count.questionPool;
