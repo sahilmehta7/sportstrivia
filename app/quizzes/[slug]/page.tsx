@@ -137,9 +137,11 @@ export default async function QuizDetailPage({
   params,
 }: QuizDetailPageProps) {
   const { slug } = await params;
-  const [session, quiz, reviews] = await Promise.all([
-    auth(),
-    prisma.quiz.findUnique({
+  // Fetch session first (doesn't use DB connection)
+  const session = await auth();
+  
+  // Then fetch quiz data with all related data in a single optimized query
+  const quiz = await prisma.quiz.findUnique({
       where: { slug },
       include: {
         tags: {
@@ -153,18 +155,18 @@ export default async function QuizDetailPage({
             },
           },
         },
-        topicConfigs: {
-          select: {
-            questionCount: true,
-            topic: {
-              select: {
-                id: true,
-                name: true,
-                slug: true,
-              },
+      topicConfigs: {
+        select: {
+          questionCount: true,
+          topic: {
+            select: {
+              id: true,
+              name: true,
+              slug: true,
             },
           },
         },
+      },
         _count: {
           select: {
             questionPool: true,
@@ -173,9 +175,16 @@ export default async function QuizDetailPage({
           },
         },
       },
-    }),
+  });
+
+  if (!quiz || !quiz.isPublished || quiz.status !== "PUBLISHED") {
+    notFound();
+  }
+
+  // Fetch reviews and unique users count in parallel (after quiz is confirmed to exist)
+  const [reviews, uniqueUsersCount] = await Promise.all([
     prisma.quizReview.findMany({
-      where: { quiz: { slug } },
+      where: { quizId: quiz.id },
       include: {
         user: {
           select: {
@@ -188,11 +197,12 @@ export default async function QuizDetailPage({
       orderBy: { createdAt: "desc" },
       take: 10,
     }),
+    prisma.quizAttempt.groupBy({
+      by: ['userId'],
+      where: { quizId: quiz.id },
+      _count: true,
+    }).then(results => results.length),
   ]);
-
-  if (!quiz || !quiz.isPublished || quiz.status !== "PUBLISHED") {
-    notFound();
-  }
 
   const isLoggedIn = Boolean(session?.user);
   const now = new Date();
@@ -255,13 +265,6 @@ export default async function QuizDetailPage({
   // FIXED mode uses _count.questionPool (default from above)
 
   const difficultyInfo = difficultyConfig[quiz.difficulty as keyof typeof difficultyConfig];
-  
-  // Get unique users who have attempted this quiz
-  const uniqueUsersCount = await prisma.quizAttempt.findMany({
-    where: { quizId: quiz.id },
-    distinct: ['userId'],
-    select: { userId: true },
-  }).then(results => results.length);
 
   const limitBlocksPlay = attemptLimitDetails?.isLocked ?? false;
   const startDisabled = !isLive || limitBlocksPlay;
