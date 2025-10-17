@@ -245,6 +245,11 @@ export default async function QuizDetailPage({
     .map((part) => part.charAt(0) + part.slice(1).toLowerCase())
     .join(" ");
 
+  // Calculate actual number of questions user will answer
+  const actualQuestionCount = quiz.questionSelectionMode === "FIXED"
+    ? quiz._count.questionPool
+    : quiz.questionCount || quiz._count.questionPool;
+
   const difficultyInfo = difficultyConfig[quiz.difficulty as keyof typeof difficultyConfig];
 
   const limitBlocksPlay = attemptLimitDetails?.isLocked ?? false;
@@ -332,8 +337,8 @@ export default async function QuizDetailPage({
                 <div className="flex aspect-[4/3] w-full items-center justify-center rounded-2xl border border-dashed border-border bg-muted/30">
                   <Play className="h-16 w-16 text-muted-foreground/30" />
                 </div>
-              )}
-            </div>
+            )}
+          </div>
 
             {/* Right: Quiz Info */}
             <div className="space-y-6 lg:col-span-3">
@@ -349,22 +354,22 @@ export default async function QuizDetailPage({
                 >
                   {difficultyInfo.icon} {quiz.difficulty}
                 </Badge>
-                <Badge
-                  variant={
-                    availabilityStatus === "live"
-                      ? "default"
-                      : availabilityStatus === "upcoming"
-                        ? "secondary"
-                        : "destructive"
-                  }
+            <Badge
+              variant={
+                availabilityStatus === "live"
+                  ? "default"
+                  : availabilityStatus === "upcoming"
+                    ? "secondary"
+                    : "destructive"
+              }
                   className="px-3 py-1"
-                >
-                  {availabilityStatus === "live"
+            >
+              {availabilityStatus === "live"
                     ? "● Live now"
-                    : availabilityStatus === "upcoming"
-                      ? "Upcoming"
-                      : "Closed"}
-                </Badge>
+                : availabilityStatus === "upcoming"
+                  ? "Upcoming"
+                  : "Closed"}
+            </Badge>
                 {topics.map((topic) => (
                   <Link key={topic.id} href={`/topics/${topic.slug}`}>
                     <Badge
@@ -405,8 +410,15 @@ export default async function QuizDetailPage({
                     <HelpCircle className="h-5 w-5 text-primary" />
                   </div>
                   <div>
-                    <p className="text-xs text-muted-foreground">Questions</p>
-                    <p className="font-bold">{quiz._count.questionPool}</p>
+                    <p className="text-xs text-muted-foreground">
+                      Questions
+                      {quiz.questionSelectionMode !== "FIXED" && (
+                        <span className="ml-1 text-[10px]">
+                          (from pool of {quiz._count.questionPool})
+                        </span>
+                      )}
+                    </p>
+                    <p className="font-bold">{actualQuestionCount}</p>
                   </div>
                 </div>
 
@@ -494,7 +506,7 @@ export default async function QuizDetailPage({
           {/* Main Content */}
           <div className="space-y-6 lg:col-span-2">
             {/* Features Card */}
-            <Card>
+          <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Zap className="h-5 w-5 text-primary" />
@@ -505,55 +517,55 @@ export default async function QuizDetailPage({
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="flex items-start gap-3 rounded-lg border border-border/50 p-4">
                     <Shield className="mt-0.5 h-5 w-5 text-primary" />
-                    <div>
+              <div>
                       <p className="font-medium">Hints Available</p>
                       <p className="text-sm text-muted-foreground">
                         {quiz.showHints
                           ? "Get helpful hints for each question"
                           : "No hints - pure knowledge test"}
-                      </p>
-                    </div>
+                </p>
+              </div>
                   </div>
 
                   <div className="flex items-start gap-3 rounded-lg border border-border/50 p-4">
                     <Target className="mt-0.5 h-5 w-5 text-primary" />
-                    <div>
+              <div>
                       <p className="font-medium">Scoring</p>
                       <p className="text-sm text-muted-foreground">
                         {quiz.negativeMarkingEnabled
                           ? `Penalties apply (-${quiz.penaltyPercentage}%)`
                           : "No negative marking"}
-                      </p>
-                    </div>
-                  </div>
+                </p>
+              </div>
+              </div>
 
                   <div className="flex items-start gap-3 rounded-lg border border-border/50 p-4">
                     <Clock className="mt-0.5 h-5 w-5 text-primary" />
-                    <div>
+              <div>
                       <p className="font-medium">Time Bonus</p>
                       <p className="text-sm text-muted-foreground">
                         {quiz.timeBonusEnabled
                           ? `${quiz.bonusPointsPerSecond} pts/sec saved`
                           : "No time bonus"}
-                      </p>
-                    </div>
+                </p>
+              </div>
                   </div>
 
                   <div className="flex items-start gap-3 rounded-lg border border-border/50 p-4">
                     <HelpCircle className="mt-0.5 h-5 w-5 text-primary" />
-                    <div>
+              <div>
                       <p className="font-medium">Question Order</p>
                       <p className="text-sm text-muted-foreground">
                         {quiz.randomizeQuestionOrder ? "Randomized" : "Fixed order"}
                       </p>
                     </div>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
+              </div>
+            </CardContent>
+          </Card>
 
             {/* How to Play */}
-            <Card>
+          <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Award className="h-5 w-5 text-primary" />
@@ -580,8 +592,8 @@ export default async function QuizDetailPage({
                         You have {formatDuration(quiz.timePerQuestion)} for each question.
                         Answer before time runs out!
                       </p>
-                    </li>
-                  ) : (
+                  </li>
+                ) : (
                     <li className="flex gap-3">
                       <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
                         2
@@ -601,8 +613,8 @@ export default async function QuizDetailPage({
                         Be careful! Wrong answers reduce your score by{" "}
                         {quiz.penaltyPercentage}% of the question value.
                       </p>
-                    </li>
-                  )}
+                  </li>
+                )}
                   {quiz.timeBonusEnabled && (
                     <li className="flex gap-3">
                       <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
@@ -612,7 +624,7 @@ export default async function QuizDetailPage({
                         Answer quickly to earn bonus points! You'll get{" "}
                         {quiz.bonusPointsPerSecond} points for each second you save.
                       </p>
-                    </li>
+                  </li>
                   )}
                   <li className="flex gap-3">
                     <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
@@ -627,15 +639,15 @@ export default async function QuizDetailPage({
                     </p>
                   </li>
                 </ol>
-              </CardContent>
-            </Card>
-          </div>
+            </CardContent>
+          </Card>
+        </div>
 
           {/* Sidebar */}
           <div className="space-y-6">
             {/* Schedule Card */}
             {(quiz.startTime || quiz.endTime) && (
-              <Card>
+          <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-lg">
                     <Calendar className="h-5 w-5 text-primary" />
@@ -643,25 +655,25 @@ export default async function QuizDetailPage({
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  <div>
-                    <p className="text-sm text-muted-foreground">Opens</p>
-                    <p className="font-medium">
-                      {quiz.startTime ? formatDateTime(quiz.startTime) : "Available now"}
-                    </p>
-                  </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Opens</p>
+                <p className="font-medium">
+                  {quiz.startTime ? formatDateTime(quiz.startTime) : "Available now"}
+                </p>
+              </div>
                   <Separator />
-                  <div>
-                    <p className="text-sm text-muted-foreground">Closes</p>
-                    <p className="font-medium">
-                      {quiz.endTime ? formatDateTime(quiz.endTime) : "No end date"}
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
+              <div>
+                <p className="text-sm text-muted-foreground">Closes</p>
+                <p className="font-medium">
+                  {quiz.endTime ? formatDateTime(quiz.endTime) : "No end date"}
+                </p>
+              </div>
+            </CardContent>
+          </Card>
             )}
 
             {/* Community Stats */}
-            <Card>
+          <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-lg">
                   <Users className="h-5 w-5 text-primary" />
@@ -673,17 +685,17 @@ export default async function QuizDetailPage({
                   <span className="text-sm text-muted-foreground">Total Attempts</span>
                   <span className="font-bold">
                     {quiz._count.attempts.toLocaleString()}
-                  </span>
-                </div>
+                </span>
+              </div>
                 <Separator />
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-muted-foreground">Average Rating</span>
                   <span className="font-bold">
-                    {quiz.totalReviews > 0
+                  {quiz.totalReviews > 0
                       ? `${quiz.averageRating.toFixed(1)} ★`
                       : "No ratings"}
-                  </span>
-                </div>
+                </span>
+              </div>
                 <Separator />
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-muted-foreground">Reviews</span>
@@ -706,9 +718,9 @@ export default async function QuizDetailPage({
                     <Link href="/auth/signin">
                       <Button className="w-full">Sign Up Free</Button>
                     </Link>
-                  </div>
-                </CardContent>
-              </Card>
+              </div>
+            </CardContent>
+          </Card>
             )}
           </div>
         </div>
@@ -717,35 +729,35 @@ export default async function QuizDetailPage({
       {/* Reviews Section */}
       <section className="border-t bg-muted/30 py-12">
         <div className="mx-auto max-w-7xl px-4">
-          <div className="space-y-6">
-            <div>
+        <div className="space-y-6">
+          <div>
               <h2 className="text-3xl font-bold tracking-tight">Reviews & Ratings</h2>
-              {quiz._count.reviews > 0 ? (
-                <div className="mt-4 flex items-center gap-4">
+            {quiz._count.reviews > 0 ? (
+              <div className="mt-4 flex items-center gap-4">
                   <StarRating value={quiz.averageRating} readonly size="lg" showValue />
-                  <span className="text-sm text-muted-foreground">
-                    Based on {quiz._count.reviews}{" "}
-                    {quiz._count.reviews === 1 ? "review" : "reviews"}
-                  </span>
-                </div>
-              ) : (
-                <p className="mt-2 text-sm text-muted-foreground">
-                  No reviews yet. Be the first to review this quiz!
-                </p>
-              )}
-            </div>
+                <span className="text-sm text-muted-foreground">
+                  Based on {quiz._count.reviews}{" "}
+                  {quiz._count.reviews === 1 ? "review" : "reviews"}
+                </span>
+              </div>
+            ) : (
+              <p className="mt-2 text-sm text-muted-foreground">
+                No reviews yet. Be the first to review this quiz!
+              </p>
+            )}
+          </div>
 
-            <ReviewsList
-              quizSlug={quiz.slug}
-              quizTitle={quiz.title}
-              initialReviews={reviews.map((r) => ({
-                ...r,
-                createdAt: r.createdAt.toISOString(),
-              }))}
-              initialTotal={quiz._count.reviews}
-              initialPage={1}
-              currentUserId={session?.user?.id}
-            />
+          <ReviewsList
+            quizSlug={quiz.slug}
+            quizTitle={quiz.title}
+            initialReviews={reviews.map((r) => ({
+              ...r,
+              createdAt: r.createdAt.toISOString(),
+            }))}
+            initialTotal={quiz._count.reviews}
+            initialPage={1}
+            currentUserId={session?.user?.id}
+          />
           </div>
         </div>
       </section>

@@ -1,4 +1,19 @@
-# Latest Updates - Question Pool Manager
+# Latest Updates - Quiz Attempt Limits
+
+## 🚦 NEW FEATURE: Quiz Attempt Caps & Reset Messaging
+
+**What’s new:** Admins can now cap the number of attempts per user, choose a reset cadence, and players see clear banners/countdowns when they’re close to (or have hit) the limit.
+
+- Admin create/edit forms include an “Attempt Limits” card with toggle, input, and cadence dropdown that locks to `NEVER` for non-recurring quizzes.
+- Quiz list view displays an “Attempt Cap” column summarising the configured rule (`3 attempts / daily`, `Unlimited`, etc.).
+- `/api/attempts` returns attempt-limit metadata with every start and now emits `ATTEMPT_LIMIT_REACHED` payloads containing `limit`, `period`, and `resetAt`.
+- Player quiz detail and play flows surface a new `AttemptLimitBanner` component with progression dots, UTC countdown, and lockout messaging.
+
+> ✨ See `docs/QUIZ_ATTEMPT_LIMITS.md` for the full breakdown, testing checklist, and rollout notes.
+
+---
+
+# Previous Update - Question Pool Manager
 
 ## 🎉 NEW FEATURE: Question Pool Management
 
@@ -405,4 +420,3 @@ Edit Quiz → [Manage Questions] → Question Pool Manager
 - `COMPLETE_IMPLEMENTATION.md` - Project status
 
 **The admin panel is now FEATURE-COMPLETE!** 🚀
-
