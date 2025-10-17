@@ -119,7 +119,7 @@ export default function ImportPage() {
       {
         text: "Which team won the 2023 NBA Championship?",
         difficulty: "easy",
-        topicId: "get-topic-id-from-database",
+        topic: "NBA Finals",
         hint: "This team is from Denver",
         explanation: "The Denver Nuggets won their first NBA championship in 2023",
         answers: [
@@ -132,7 +132,7 @@ export default function ImportPage() {
       {
         text: "How many championships did Michael Jordan win with the Bulls?",
         difficulty: "medium",
-        topicId: "get-topic-id-from-database",
+        topic: "Chicago Bulls",
         hint: "Think of his two three-peats",
         explanation: "Michael Jordan won 6 NBA championships with the Chicago Bulls (1991-1993, 1996-1998)",
         answers: [
@@ -345,6 +345,7 @@ export default function ImportPage() {
                     <li><code className="text-xs">difficulty</code> - EASY, MEDIUM, or HARD</li>
                     <li><code className="text-xs">duration</code> - Quiz duration in seconds</li>
                     <li><code className="text-xs">passingScore</code> - Percentage (default: 70)</li>
+                    <li><code className="text-xs">questions[].topic</code> - Topic name (auto-creates if needed)</li>
                     <li><code className="text-xs">seo</code> - SEO metadata object</li>
                   </ul>
                 </div>
@@ -362,7 +363,7 @@ export default function ImportPage() {
     {
       "text": "Question?",
       "difficulty": "easy",
-      "topicId": "topic-id",
+      "topic": "Topic Name",
       "hint": "Optional hint",
       "explanation": "Why correct",
       "answers": [
@@ -387,8 +388,8 @@ export default function ImportPage() {
                     Important Note
                   </h4>
                   <p className="text-xs text-muted-foreground">
-                    You need to get valid <code>topicId</code> values from your database.
-                    Use the Topics page to find topic IDs, or leave it empty to use a default topic.
+                    Provide the <code>topic</code> name for each question. If the topic exists it will be reused,
+                    otherwise a new topic will be created automatically. Leave it empty to use the default topic.
                   </p>
                 </div>
               </div>
