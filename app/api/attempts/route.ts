@@ -1,9 +1,14 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireAuth } from "@/lib/auth-helpers";
-import { handleError, successResponse, NotFoundError, BadRequestError } from "@/lib/errors";
+import { handleError, successResponse, NotFoundError, BadRequestError, AttemptLimitError } from "@/lib/errors";
 import { z } from "zod";
 import { getTopicIdsWithDescendants } from "@/lib/services/topic.service";
+import {
+  getAttemptWindowStart,
+  getNextResetAt,
+  countUserAttemptsWithinWindow,
+} from "@/lib/services/attempt-limit.service";
 
 const startAttemptSchema = z.object({
   quizId: z.string().cuid(),
@@ -49,6 +54,35 @@ export async function POST(request: NextRequest) {
     }
     if (quiz.endTime && quiz.endTime < now) {
       throw new BadRequestError("Quiz has ended");
+    }
+
+    // Enforce attempt limits (skip for practice mode)
+    let attemptLimitMetadata: {
+      max: number;
+      remaining: number;
+      period: typeof quiz.attemptResetPeriod;
+      resetAt: Date | null;
+    } | null = null;
+
+    if (!isPracticeMode && quiz.maxAttemptsPerUser) {
+      const windowStart = getAttemptWindowStart(quiz.attemptResetPeriod, now);
+      const attemptsUsed = await countUserAttemptsWithinWindow(prisma, {
+        userId: user.id,
+        quizId: quiz.id,
+        windowStart,
+      });
+
+      if (attemptsUsed >= quiz.maxAttemptsPerUser) {
+        const nextResetAt = getNextResetAt(quiz.attemptResetPeriod, now);
+        throw new AttemptLimitError(quiz.maxAttemptsPerUser, nextResetAt);
+      }
+
+      attemptLimitMetadata = {
+        max: quiz.maxAttemptsPerUser,
+        remaining: Math.max(quiz.maxAttemptsPerUser - (attemptsUsed + 1), 0),
+        period: quiz.attemptResetPeriod,
+        resetAt: getNextResetAt(quiz.attemptResetPeriod, now),
+      };
     }
 
     // Select questions based on selection mode
@@ -138,6 +172,7 @@ export async function POST(request: NextRequest) {
       },
       quiz: attempt.quiz,
       totalQuestions: attempt.totalQuestions,
+      attemptLimit: attemptLimitMetadata,
     }, 201);
   } catch (error) {
     return handleError(error);

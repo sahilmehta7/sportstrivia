@@ -6,6 +6,9 @@ import { handleError, successResponse, BadRequestError } from "@/lib/errors";
 import { generateUniqueSlug } from "@/lib/services/slug.service";
 import { Prisma, Difficulty, QuestionType } from "@prisma/client";
 
+// Increase route timeout for large quiz imports (100+ questions can take 30-60 seconds)
+export const maxDuration = 60; // seconds
+
 interface QuizImportAnswer {
   text: string;
   isCorrect: boolean;
@@ -98,7 +101,7 @@ export async function POST(request: NextRequest) {
       ? await generateUniqueSlug(providedSlug, "quiz")
       : await generateUniqueSlug(title, "quiz");
 
-    // Create quiz and questions in a transaction
+    // Create quiz and questions in a transaction with extended timeout for large imports
     const quiz = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       // Get or create default topic if needed
       let defaultTopic = await tx.topic.findFirst({
@@ -186,42 +189,50 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      // Create all questions in parallel using Promise.all
-      const createdQuestions = await Promise.all(
-        questions.map((questionData) => {
-          // Determine question type - cast to enum
-          const questionType = (questionData.type
-            ? questionData.type.toUpperCase()
-            : "MULTIPLE_CHOICE") as QuestionType;
+      // Create all questions in batches to avoid overwhelming the database
+      // Process in chunks of 20 questions at a time
+      const BATCH_SIZE = 20;
+      const createdQuestions = [];
+      
+      for (let i = 0; i < questions.length; i += BATCH_SIZE) {
+        const batch = questions.slice(i, i + BATCH_SIZE);
+        const batchResults = await Promise.all(
+          batch.map((questionData) => {
+            // Determine question type - cast to enum
+            const questionType = (questionData.type
+              ? questionData.type.toUpperCase()
+              : "MULTIPLE_CHOICE") as QuestionType;
 
-          // Use provided topic or default
-          const normalizedTopicName = questionData.topic
-            ? normalizeTopicName(questionData.topic)
-            : null;
-          const topicId = normalizedTopicName
-            ? topicNameMap.get(normalizedTopicName)?.id || defaultTopic.id
-            : defaultTopic.id;
+            // Use provided topic or default
+            const normalizedTopicName = questionData.topic
+              ? normalizeTopicName(questionData.topic)
+              : null;
+            const topicId = normalizedTopicName
+              ? topicNameMap.get(normalizedTopicName)?.id || defaultTopic.id
+              : defaultTopic.id;
 
-          return tx.question.create({
-            data: {
-              type: questionType,
-              topicId,
-              difficulty: questionData.difficulty,
-              questionText: questionData.text,
-              hint: questionData.hint,
-              explanation: questionData.explanation,
-              answers: {
-                create: questionData.answers.map((answer, idx) => ({
-                  answerText: answer.text,
-                  answerImageUrl: answer.imageUrl,
-                  isCorrect: answer.isCorrect,
-                  displayOrder: idx,
-                })),
+            return tx.question.create({
+              data: {
+                type: questionType,
+                topicId,
+                difficulty: questionData.difficulty,
+                questionText: questionData.text,
+                hint: questionData.hint,
+                explanation: questionData.explanation,
+                answers: {
+                  create: questionData.answers.map((answer, idx) => ({
+                    answerText: answer.text,
+                    answerImageUrl: answer.imageUrl,
+                    isCorrect: answer.isCorrect,
+                    displayOrder: idx,
+                  })),
+                },
               },
-            },
-          });
-        })
-      );
+            });
+          })
+        );
+        createdQuestions.push(...batchResults);
+      }
 
       // Create quiz question pool entries in batch
       // Ensure no duplicate order values for FIXED mode (schema constraint workaround)
@@ -264,6 +275,9 @@ export async function POST(request: NextRequest) {
           },
         },
       });
+    }, {
+      maxWait: 30000, // Maximum wait time to acquire a transaction (30 seconds)
+      timeout: 60000,  // Maximum time the transaction can run (60 seconds)
     });
 
     return successResponse(

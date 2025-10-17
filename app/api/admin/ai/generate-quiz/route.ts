@@ -4,6 +4,9 @@ import { handleError, successResponse, BadRequestError } from "@/lib/errors";
 import { z } from "zod";
 import { getAIQuizPrompt, getAIModel } from "@/lib/services/settings.service";
 
+// Increase route timeout for AI generation (can take 30-60 seconds for large quizzes)
+export const maxDuration = 60; // seconds
+
 const generateQuizSchema = z.object({
   topic: z.string().min(1),
   sport: z.string().optional(),

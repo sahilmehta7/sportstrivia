@@ -1,10 +1,15 @@
 import { z } from "zod";
-import { 
-  Difficulty, 
-  QuizStatus, 
-  QuestionSelectionMode, 
-  RecurringType 
+import {
+  Difficulty,
+  QuizStatus,
+  QuestionSelectionMode,
+  RecurringType,
 } from "@prisma/client";
+import {
+  AttemptResetPeriod,
+  ATTEMPT_RESET_PERIODS,
+  type AttemptResetPeriodValue,
+} from "@/constants/attempts";
 
 export const quizSchema = z.object({
   title: z.string().min(3, "Title must be at least 3 characters").max(200),
@@ -20,6 +25,16 @@ export const quizSchema = z.object({
   duration: z.number().int().min(1).nullish(),
   timePerQuestion: z.number().int().min(1).nullish(),
   passingScore: z.number().int().min(0).max(100).optional().default(70),
+  maxAttemptsPerUser: z
+    .number()
+    .int()
+    .min(1)
+    .nullable()
+    .optional(),
+  attemptResetPeriod: z
+    .enum(ATTEMPT_RESET_PERIODS)
+    .optional()
+    .default(AttemptResetPeriod.NEVER),
   
   // Question selection
   questionSelectionMode: z.nativeEnum(QuestionSelectionMode).optional().default(QuestionSelectionMode.FIXED),
@@ -33,10 +48,34 @@ export const quizSchema = z.object({
   timeBonusEnabled: z.boolean().optional().default(false),
   bonusPointsPerSecond: z.number().min(0).optional().default(0),
   
-  // Scheduling
-  startTime: z.string().datetime().optional().or(z.literal("")),
-  endTime: z.string().datetime().optional().or(z.literal("")),
-  answersRevealTime: z.string().datetime().optional().or(z.literal("")),
+  // Scheduling - accept datetime-local format (YYYY-MM-DDTHH:mm) or ISO 8601
+  startTime: z.preprocess(
+    (val) => {
+      if (!val || val === "" || (typeof val === "string" && val.trim() === "")) {
+        return undefined;
+      }
+      return val;
+    },
+    z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?(\.\d{3})?([+-]\d{2}:\d{2}|Z)?$/).optional()
+  ),
+  endTime: z.preprocess(
+    (val) => {
+      if (!val || val === "" || (typeof val === "string" && val.trim() === "")) {
+        return undefined;
+      }
+      return val;
+    },
+    z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?(\.\d{3})?([+-]\d{2}:\d{2}|Z)?$/).optional()
+  ),
+  answersRevealTime: z.preprocess(
+    (val) => {
+      if (!val || val === "" || (typeof val === "string" && val.trim() === "")) {
+        return undefined;
+      }
+      return val;
+    },
+    z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?(\.\d{3})?([+-]\d{2}:\d{2}|Z)?$/).optional()
+  ),
   
   // Recurring
   recurringType: z.nativeEnum(RecurringType).optional().default(RecurringType.NONE),
@@ -95,4 +134,4 @@ export type QuizInput = z.infer<typeof quizSchema>;
 export type QuizUpdateInput = z.infer<typeof quizUpdateSchema>;
 export type QuizTopicConfigInput = z.infer<typeof quizTopicConfigSchema>;
 export type QuizImportInput = z.infer<typeof quizImportSchema>;
-
+export type QuizAttemptResetPeriod = AttemptResetPeriodValue;

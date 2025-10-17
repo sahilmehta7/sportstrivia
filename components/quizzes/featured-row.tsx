@@ -1,5 +1,4 @@
-import Link from "next/link";
-import { QuizCard } from "@/components/quizzes/quiz-card";
+import { FeaturedCard } from "@/components/quizzes/featured-card";
 import type { PublicQuizListItem } from "@/lib/services/public-quiz.service";
 
 interface FeaturedRowProps {
@@ -20,8 +19,8 @@ export function FeaturedRow({ title, description, quizzes }: FeaturedRowProps) {
       <div className="-mx-4 overflow-x-auto px-4">
         <div className="flex gap-4">
           {quizzes.map((quiz) => (
-            <div key={quiz.id} className="w-80 flex-none">
-              <QuizCard quiz={quiz} />
+            <div key={quiz.id} className="w-[22rem] flex-none">
+              <FeaturedCard quiz={quiz} />
             </div>
           ))}
         </div>
@@ -29,4 +28,3 @@ export function FeaturedRow({ title, description, quizzes }: FeaturedRowProps) {
     </section>
   );
 }
-

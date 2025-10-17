@@ -234,7 +234,7 @@ export function ModernFilterBar({
                 onClick={() => updateQuery("difficulty", undefined)}
                 className="h-9"
               >
-                All Levels
+                All difficulties
               </Button>
               {difficulties.map((difficulty) => (
                 <Button
@@ -339,4 +339,3 @@ export function ModernFilterBar({
     </div>
   );
 }
-

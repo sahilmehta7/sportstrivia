@@ -2,6 +2,11 @@ import { NextRequest } from "next/server";
 import { prisma } from "@/lib/db";
 import { handleError, successResponse, NotFoundError } from "@/lib/errors";
 import { getCurrentUser } from "@/lib/auth-helpers";
+import {
+  getAttemptWindowStart,
+  getNextResetAt,
+  countUserAttemptsWithinWindow,
+} from "@/lib/services/attempt-limit.service";
 
 // GET /api/quizzes/[slug] - Get quiz by slug
 export async function GET(
@@ -70,6 +75,36 @@ export async function GET(
       });
     }
 
+    // Attempt limit metadata
+    let attemptLimit: {
+      max: number;
+      period: typeof quiz.attemptResetPeriod;
+      resetAt: Date | null;
+      remaining: number | null;
+      used: number | null;
+    } | null = null;
+
+    if (quiz.maxAttemptsPerUser) {
+      attemptLimit = {
+        max: quiz.maxAttemptsPerUser,
+        period: quiz.attemptResetPeriod,
+        resetAt: quiz.attemptResetPeriod === "NEVER" ? null : getNextResetAt(quiz.attemptResetPeriod, now),
+        remaining: null,
+        used: null,
+      };
+
+      if (user) {
+        const windowStart = getAttemptWindowStart(quiz.attemptResetPeriod, now);
+        const used = await countUserAttemptsWithinWindow(prisma, {
+          userId: user.id,
+          quizId: quiz.id,
+          windowStart,
+        });
+        attemptLimit.used = used;
+        attemptLimit.remaining = Math.max(quiz.maxAttemptsPerUser - used, 0);
+      }
+    }
+
     // Get user's attempts if logged in
     let userAttempts = null;
     if (user) {
@@ -135,6 +170,7 @@ export async function GET(
       available: true,
       userAttempts,
       leaderboard,
+      attemptLimit,
     };
 
     return successResponse(response);
@@ -142,4 +178,3 @@ export async function GET(
     return handleError(error);
   }
 }
-

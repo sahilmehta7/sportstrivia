@@ -138,6 +138,8 @@ model Quiz {
   duration    Int?     // Total quiz duration in seconds
   timePerQuestion Int? // Time per question in seconds (overrides duration)
   passingScore Int     @default(70) // Percentage required to pass
+  maxAttemptsPerUser Int?
+  attemptResetPeriod AttemptResetPeriod @default(NEVER)
   
   // Question selection
   questionSelectionMode QuestionSelectionMode @default(FIXED)
@@ -640,6 +642,13 @@ enum RecurringType {
   HOURLY
   DAILY
   WEEKLY
+}
+
+enum AttemptResetPeriod {
+  NEVER
+  DAILY
+  WEEKLY
+  MONTHLY
 }
 
 enum QuestionType {

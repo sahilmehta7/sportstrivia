@@ -5,13 +5,28 @@ import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { auth } from "@/lib/auth";
 import { generateQuizMetaTags } from "@/lib/seo-utils";
+import { getQuizSchema, getQuizHowToSchema, getBreadcrumbSchema } from "@/lib/schema-utils";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
 import { StartQuizButton } from "./start-quiz-button";
 import { ChallengeButton } from "./challenge-button";
 import { StarRating } from "@/components/ui/star-rating";
 import { ReviewsList } from "@/components/quiz/ReviewsList";
+import {
+  Clock,
+  HelpCircle,
+  Target,
+  Users,
+  Calendar,
+  TrendingUp,
+  Award,
+  Zap,
+  Play,
+  Shield,
+  Star,
+} from "lucide-react";
 
 interface QuizDetailPageProps {
   params: Promise<{ slug: string }>;
@@ -46,6 +61,12 @@ function formatDateTime(date?: Date | null) {
     timeStyle: "short",
   }).format(date);
 }
+
+const difficultyConfig = {
+  EASY: { color: "bg-emerald-500/10 text-emerald-600 border-emerald-500/30", icon: "🟢" },
+  MEDIUM: { color: "bg-amber-500/10 text-amber-600 border-amber-500/30", icon: "🟡" },
+  HARD: { color: "bg-rose-500/10 text-rose-600 border-rose-500/30", icon: "🔴" },
+};
 
 export async function generateMetadata({
   params,
@@ -130,6 +151,17 @@ export default async function QuizDetailPage({
             },
           },
         },
+        topicConfigs: {
+          select: {
+            topic: {
+              select: {
+                id: true,
+                name: true,
+                slug: true,
+              },
+            },
+          },
+        },
         _count: {
           select: {
             questionPool: true,
@@ -177,247 +209,509 @@ export default async function QuizDetailPage({
   }
 
   const tags = quiz.tags.map((relation) => relation.tag);
+  const topics = quiz.topicConfigs.map((config) => config.topic);
   const questionModeLabel = quiz.questionSelectionMode
     .split("_")
     .map((part) => part.charAt(0) + part.slice(1).toLowerCase())
     .join(" ");
 
+  const difficultyInfo = difficultyConfig[quiz.difficulty as keyof typeof difficultyConfig];
+
+  // Generate structured data
+  const quizSchema = getQuizSchema(quiz);
+  const howToSchema = getQuizHowToSchema(quiz);
+  const breadcrumbSchema = getBreadcrumbSchema([
+    { name: "Home", url: "/" },
+    { name: "Quizzes", url: "/quizzes" },
+    { name: quiz.title },
+  ]);
+
   return (
     <main className="min-h-screen bg-background">
-      <section className="border-b bg-muted/30 py-12">
-        <div className="mx-auto flex max-w-5xl flex-col gap-6 px-4">
-          <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
-            {quiz.sport && <Badge variant="outline">{quiz.sport}</Badge>}
-            <Badge variant="secondary">{quiz.difficulty}</Badge>
-            {tags.map((tag) => (
-              <Badge key={tag.id} variant="outline" className="capitalize">
-                {tag.name}
-              </Badge>
-            ))}
+      {/* Hero Section with Image Background */}
+      <section className="relative overflow-hidden bg-gradient-to-b from-primary/5 via-background to-background">
+        {/* Background Image with Overlay */}
+        {quiz.descriptionImageUrl && (
+          <div className="absolute inset-0 z-0">
+            <Image
+              src={quiz.descriptionImageUrl}
+              alt={`${quiz.title} background`}
+              fill
+              className="object-cover opacity-10 blur-sm"
+              priority
+            />
+            <div className="absolute inset-0 bg-gradient-to-b from-background/80 via-background/90 to-background" />
           </div>
+        )}
 
-          <div>
-            <h1 className="text-4xl font-bold tracking-tight text-foreground">
-              {quiz.title}
-            </h1>
-            {quiz.description && (
-              <p className="mt-4 max-w-3xl text-lg text-muted-foreground">
-                {quiz.description}
-              </p>
-            )}
-          </div>
+        <div className="relative z-10 mx-auto max-w-7xl px-4 py-12">
+          <div className="grid gap-8 lg:grid-cols-5">
+            {/* Left: Image Card */}
+            <div className="lg:col-span-2">
+              {quiz.descriptionImageUrl ? (
+                <div className="group relative overflow-hidden rounded-2xl border border-border/50 bg-card shadow-2xl transition-transform hover:scale-[1.02]">
+                  <div className="aspect-[4/3] w-full">
+                    <Image
+                      src={quiz.descriptionImageUrl}
+                      alt={quiz.title}
+                      fill
+                      className="object-cover"
+                      sizes="(min-width: 1024px) 40vw, 100vw"
+                      priority
+                    />
+                  </div>
+                  {/* Featured Badge */}
+                  {quiz.isFeatured && (
+                    <div className="absolute left-4 top-4">
+                      <Badge className="bg-primary px-3 py-1 text-sm font-semibold shadow-lg">
+                        <Star className="mr-1 h-3 w-3 fill-current" />
+                        Featured
+                      </Badge>
+                    </div>
+                  )}
+                  {/* Stats Overlay */}
+                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-background via-background/80 to-transparent p-6">
+                    <div className="flex items-center justify-between text-sm">
+                      <div className="flex items-center gap-2">
+                        <Users className="h-4 w-4 text-muted-foreground" />
+                        <span className="font-medium text-foreground">
+                          {quiz._count.attempts.toLocaleString()}
+                        </span>
+                        <span className="text-muted-foreground">attempts</span>
+                      </div>
+                      {quiz.totalReviews > 0 && (
+                        <div className="flex items-center gap-1">
+                          <Star className="h-4 w-4 fill-primary text-primary" />
+                          <span className="font-medium text-foreground">
+                            {quiz.averageRating.toFixed(1)}
+                          </span>
+                          <span className="text-muted-foreground">
+                            ({quiz.totalReviews})
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex aspect-[4/3] w-full items-center justify-center rounded-2xl border border-dashed border-border bg-muted/30">
+                  <Play className="h-16 w-16 text-muted-foreground/30" />
+                </div>
+              )}
+            </div>
 
-          <div className="flex flex-wrap items-center gap-4">
-            {isLoggedIn ? (
-              <>
-                <StartQuizButton slug={quiz.slug} disabled={!isLive} />
-                <ChallengeButton
-                  quizId={quiz.id}
-                  disabled={!isLive}
-                />
-              </>
-            ) : (
-              <Link href="/auth/signin">
-                <Button size="lg">Sign up to play</Button>
-              </Link>
-            )}
-            <Badge
-              variant={
-                availabilityStatus === "live"
-                  ? "default"
-                  : availabilityStatus === "upcoming"
-                    ? "secondary"
-                    : "destructive"
-              }
-            >
-              {availabilityStatus === "live"
-                ? "Live now"
-                : availabilityStatus === "upcoming"
-                  ? "Upcoming"
-                  : "Closed"}
-            </Badge>
-            <p className="text-sm text-muted-foreground">{availabilityMessage}</p>
+            {/* Right: Quiz Info */}
+            <div className="space-y-6 lg:col-span-3">
+              {/* Badges Row */}
+              <div className="flex flex-wrap items-center gap-2">
+                {quiz.sport && (
+                  <Badge variant="secondary" className="px-3 py-1">
+                    {quiz.sport}
+                  </Badge>
+                )}
+                <Badge
+                  className={`border px-3 py-1 ${difficultyInfo.color}`}
+                >
+                  {difficultyInfo.icon} {quiz.difficulty}
+                </Badge>
+                <Badge
+                  variant={
+                    availabilityStatus === "live"
+                      ? "default"
+                      : availabilityStatus === "upcoming"
+                        ? "secondary"
+                        : "destructive"
+                  }
+                  className="px-3 py-1"
+                >
+                  {availabilityStatus === "live"
+                    ? "● Live now"
+                    : availabilityStatus === "upcoming"
+                      ? "Upcoming"
+                      : "Closed"}
+                </Badge>
+                {topics.map((topic) => (
+                  <Link key={topic.id} href={`/topics/${topic.slug}`}>
+                    <Badge
+                      variant="secondary"
+                      className="cursor-pointer px-3 py-1 transition-colors hover:bg-primary hover:text-primary-foreground"
+                    >
+                      📚 {topic.name}
+                    </Badge>
+                  </Link>
+                ))}
+                {tags.map((tag) => (
+                  <Badge
+                    key={tag.id}
+                    variant="outline"
+                    className="px-3 py-1 capitalize"
+                  >
+                    #{tag.name}
+                  </Badge>
+                ))}
+              </div>
+
+              {/* Title */}
+              <div>
+                <h1 className="text-4xl font-bold tracking-tight text-foreground lg:text-5xl">
+                  {quiz.title}
+                </h1>
+                {quiz.description && (
+                  <p className="mt-4 text-lg leading-relaxed text-muted-foreground">
+                    {quiz.description}
+                  </p>
+                )}
+              </div>
+
+              {/* Quick Stats Grid */}
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                <div className="flex items-center gap-3 rounded-lg border border-border/50 bg-card/50 p-3 backdrop-blur">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+                    <HelpCircle className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Questions</p>
+                    <p className="font-bold">{quiz._count.questionPool}</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3 rounded-lg border border-border/50 bg-card/50 p-3 backdrop-blur">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+                    <Clock className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Duration</p>
+                    <p className="font-bold text-sm">{formatDuration(quiz.duration)}</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3 rounded-lg border border-border/50 bg-card/50 p-3 backdrop-blur">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+                    <Target className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Pass</p>
+                    <p className="font-bold">{quiz.passingScore}%</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3 rounded-lg border border-border/50 bg-card/50 p-3 backdrop-blur">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+                    <TrendingUp className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Mode</p>
+                    <p className="font-bold text-xs">{questionModeLabel.split(" ")[0]}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex flex-wrap items-center gap-3">
+                {isLoggedIn ? (
+                  <>
+                    <StartQuizButton slug={quiz.slug} disabled={!isLive} />
+                    <ChallengeButton quizId={quiz.id} disabled={!isLive} />
+                  </>
+                ) : (
+                  <Link href="/auth/signin">
+                    <Button size="lg" className="gap-2 shadow-lg">
+                      <Play className="h-5 w-5" />
+                      Sign up to play
+                    </Button>
+                  </Link>
+                )}
+              </div>
+
+              {/* Availability Message */}
+              {availabilityStatus !== "live" && (
+                <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-4">
+                  <p className="text-sm text-amber-700 dark:text-amber-400">
+                    <Calendar className="mr-2 inline h-4 w-4" />
+                    {availabilityMessage}
+                  </p>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </section>
 
-      <section className="mx-auto flex max-w-5xl flex-col gap-8 px-4 py-12 lg:flex-row">
-        <div className="flex-1 space-y-8">
-          {quiz.descriptionImageUrl && (
-            <div className="overflow-hidden rounded-lg border bg-card">
-              <Image
-                src={quiz.descriptionImageUrl}
-                alt={`${quiz.title} cover image`}
-                width={960}
-                height={540}
-                className="h-auto w-full object-cover"
-                priority
-              />
-            </div>
-          )}
+      {/* Content Section */}
+      <section className="mx-auto max-w-7xl px-4 py-12">
+        <div className="grid gap-8 lg:grid-cols-3">
+          {/* Main Content */}
+          <div className="space-y-6 lg:col-span-2">
+            {/* Features Card */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Zap className="h-5 w-5 text-primary" />
+                  Quiz Features
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="flex items-start gap-3 rounded-lg border border-border/50 p-4">
+                    <Shield className="mt-0.5 h-5 w-5 text-primary" />
+                    <div>
+                      <p className="font-medium">Hints Available</p>
+                      <p className="text-sm text-muted-foreground">
+                        {quiz.showHints
+                          ? "Get helpful hints for each question"
+                          : "No hints - pure knowledge test"}
+                      </p>
+                    </div>
+                  </div>
 
-          <Card>
-            <CardContent className="grid gap-6 pt-6 md:grid-cols-2">
-              <div>
-                <p className="text-sm text-muted-foreground">Duration</p>
-                <p className="text-lg font-semibold">
-                  {formatDuration(quiz.duration)}
-                </p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Questions</p>
-                <p className="text-lg font-semibold">
-                  {quiz._count.questionPool} total questions
-                </p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Passing Score</p>
-                <p className="text-lg font-semibold">{quiz.passingScore}%</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Question Mode</p>
-                <p className="text-lg font-semibold">{questionModeLabel}</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Hints</p>
-                <p className="text-lg font-semibold">
-                  {quiz.showHints ? "Enabled" : "Disabled"}
-                </p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Negative Marking</p>
-                <p className="text-lg font-semibold">
-                  {quiz.negativeMarkingEnabled
-                    ? `Yes (-${quiz.penaltyPercentage}% per miss)`
-                    : "No"}
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+                  <div className="flex items-start gap-3 rounded-lg border border-border/50 p-4">
+                    <Target className="mt-0.5 h-5 w-5 text-primary" />
+                    <div>
+                      <p className="font-medium">Scoring</p>
+                      <p className="text-sm text-muted-foreground">
+                        {quiz.negativeMarkingEnabled
+                          ? `Penalties apply (-${quiz.penaltyPercentage}%)`
+                          : "No negative marking"}
+                      </p>
+                    </div>
+                  </div>
 
-          <Card>
-            <CardContent className="space-y-4 pt-6">
-              <h2 className="text-xl font-semibold">How scoring works</h2>
-              <ul className="list-disc space-y-2 pl-5 text-sm text-muted-foreground">
-                <li>
-                  Earn points for each correct answer and aim for at least {quiz.passingScore}% to pass.
-                </li>
-                {quiz.negativeMarkingEnabled && (
-                  <li>
-                    Incorrect answers reduce your score by {quiz.penaltyPercentage}% of the question value.
+                  <div className="flex items-start gap-3 rounded-lg border border-border/50 p-4">
+                    <Clock className="mt-0.5 h-5 w-5 text-primary" />
+                    <div>
+                      <p className="font-medium">Time Bonus</p>
+                      <p className="text-sm text-muted-foreground">
+                        {quiz.timeBonusEnabled
+                          ? `${quiz.bonusPointsPerSecond} pts/sec saved`
+                          : "No time bonus"}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3 rounded-lg border border-border/50 p-4">
+                    <HelpCircle className="mt-0.5 h-5 w-5 text-primary" />
+                    <div>
+                      <p className="font-medium">Question Order</p>
+                      <p className="text-sm text-muted-foreground">
+                        {quiz.randomizeQuestionOrder ? "Randomized" : "Fixed order"}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* How to Play */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Award className="h-5 w-5 text-primary" />
+                  How to Play
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ol className="space-y-3">
+                  <li className="flex gap-3">
+                    <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
+                      1
+                    </span>
+                    <p className="text-sm text-muted-foreground">
+                      Click "Start Quiz" to begin. You'll need to answer at least{" "}
+                      {quiz.passingScore}% correctly to pass.
+                    </p>
                   </li>
-                )}
-                {quiz.timeBonusEnabled ? (
-                  <li>
-                    Save time to earn bonus points ({quiz.bonusPointsPerSecond} per second remaining).
+                  {quiz.timePerQuestion ? (
+                    <li className="flex gap-3">
+                      <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
+                        2
+                      </span>
+                      <p className="text-sm text-muted-foreground">
+                        You have {formatDuration(quiz.timePerQuestion)} for each question.
+                        Answer before time runs out!
+                      </p>
+                    </li>
+                  ) : (
+                    <li className="flex gap-3">
+                      <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
+                        2
+                      </span>
+                      <p className="text-sm text-muted-foreground">
+                        Manage your total time of {formatDuration(quiz.duration)} wisely
+                        across all questions.
+                      </p>
+                    </li>
+                  )}
+                  {quiz.negativeMarkingEnabled && (
+                    <li className="flex gap-3">
+                      <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
+                        3
+                      </span>
+                      <p className="text-sm text-muted-foreground">
+                        Be careful! Wrong answers reduce your score by{" "}
+                        {quiz.penaltyPercentage}% of the question value.
+                      </p>
+                    </li>
+                  )}
+                  {quiz.timeBonusEnabled && (
+                    <li className="flex gap-3">
+                      <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
+                        {quiz.negativeMarkingEnabled ? 4 : 3}
+                      </span>
+                      <p className="text-sm text-muted-foreground">
+                        Answer quickly to earn bonus points! You'll get{" "}
+                        {quiz.bonusPointsPerSecond} points for each second you save.
+                      </p>
+                    </li>
+                  )}
+                  <li className="flex gap-3">
+                    <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
+                      {quiz.negativeMarkingEnabled && quiz.timeBonusEnabled
+                        ? 5
+                        : quiz.negativeMarkingEnabled || quiz.timeBonusEnabled
+                          ? 4
+                          : 3}
+                    </span>
+                    <p className="text-sm text-muted-foreground">
+                      Review your results, earn badges, and climb the leaderboard!
+                    </p>
                   </li>
-                ) : (
-                  <li>
-                    Focus on accuracy—there are no time-based bonus points for this quiz.
-                  </li>
-                )}
-                {quiz.timePerQuestion ? (
-                  <li>
-                    You have {formatDuration(quiz.timePerQuestion)} for each question.
-                  </li>
-                ) : (
-                  <li>
-                    Manage your total time of {formatDuration(quiz.duration)} wisely.
-                  </li>
-                )}
-              </ul>
-            </CardContent>
-          </Card>
+                </ol>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Sidebar */}
+          <div className="space-y-6">
+            {/* Schedule Card */}
+            {(quiz.startTime || quiz.endTime) && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <Calendar className="h-5 w-5 text-primary" />
+                    Schedule
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Opens</p>
+                    <p className="font-medium">
+                      {quiz.startTime ? formatDateTime(quiz.startTime) : "Available now"}
+                    </p>
+                  </div>
+                  <Separator />
+                  <div>
+                    <p className="text-sm text-muted-foreground">Closes</p>
+                    <p className="font-medium">
+                      {quiz.endTime ? formatDateTime(quiz.endTime) : "No end date"}
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Community Stats */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Users className="h-5 w-5 text-primary" />
+                  Community
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">Total Attempts</span>
+                  <span className="font-bold">
+                    {quiz._count.attempts.toLocaleString()}
+                  </span>
+                </div>
+                <Separator />
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">Average Rating</span>
+                  <span className="font-bold">
+                    {quiz.totalReviews > 0
+                      ? `${quiz.averageRating.toFixed(1)} ★`
+                      : "No ratings"}
+                  </span>
+                </div>
+                <Separator />
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">Reviews</span>
+                  <span className="font-bold">{quiz._count.reviews}</span>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* CTA for non-logged in users */}
+            {!isLoggedIn && (
+              <Card className="border-primary/50 bg-primary/5">
+                <CardContent className="pt-6">
+                  <div className="space-y-3 text-center">
+                    <Award className="mx-auto h-12 w-12 text-primary" />
+                    <h3 className="font-semibold">Join the Competition</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Create a free account to save your progress, earn badges, and
+                      compete on the leaderboard.
+                    </p>
+                    <Link href="/auth/signin">
+                      <Button className="w-full">Sign Up Free</Button>
+                    </Link>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </div>
         </div>
-
-        <aside className="w-full space-y-6 lg:w-80">
-          <Card>
-            <CardContent className="space-y-4 pt-6">
-              <h2 className="text-xl font-semibold">Schedule</h2>
-              <div>
-                <p className="text-sm text-muted-foreground">Opens</p>
-                <p className="font-medium">
-                  {quiz.startTime ? formatDateTime(quiz.startTime) : "Available now"}
-                </p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Closes</p>
-                <p className="font-medium">
-                  {quiz.endTime ? formatDateTime(quiz.endTime) : "No end date"}
-                </p>
-              </div>
-              {!isLoggedIn && (
-                <p className="text-sm text-muted-foreground">
-                  Create a free account to save your attempts and compete on the leaderboard.
-                </p>
-              )}
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="space-y-4 pt-6">
-              <h2 className="text-xl font-semibold">Community stats</h2>
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">Total attempts</span>
-                <span className="font-medium">
-                  {new Intl.NumberFormat("en-US").format(quiz._count.attempts)}
-                </span>
-              </div>
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">Average rating</span>
-                <span className="font-medium">
-                  {quiz.totalReviews > 0
-                    ? quiz.averageRating.toFixed(1)
-                    : "Not rated"}
-                </span>
-              </div>
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">Reviews</span>
-                <span className="font-medium">{quiz._count.reviews}</span>
-              </div>
-            </CardContent>
-          </Card>
-        </aside>
       </section>
 
       {/* Reviews Section */}
-      <section className="mx-auto max-w-5xl px-4 py-12">
-        <div className="space-y-6">
-          <div>
-            <h2 className="text-2xl font-bold tracking-tight">Reviews</h2>
-            {quiz._count.reviews > 0 ? (
-              <div className="mt-4 flex items-center gap-4">
-                <StarRating
-                  value={quiz.averageRating}
-                  readonly
-                  size="lg"
-                  showValue
-                />
-                <span className="text-sm text-muted-foreground">
-                  Based on {quiz._count.reviews}{" "}
-                  {quiz._count.reviews === 1 ? "review" : "reviews"}
-                </span>
-              </div>
-            ) : (
-              <p className="mt-2 text-sm text-muted-foreground">
-                No reviews yet. Be the first to review this quiz!
-              </p>
-            )}
-          </div>
+      <section className="border-t bg-muted/30 py-12">
+        <div className="mx-auto max-w-7xl px-4">
+          <div className="space-y-6">
+            <div>
+              <h2 className="text-3xl font-bold tracking-tight">Reviews & Ratings</h2>
+              {quiz._count.reviews > 0 ? (
+                <div className="mt-4 flex items-center gap-4">
+                  <StarRating value={quiz.averageRating} readonly size="lg" showValue />
+                  <span className="text-sm text-muted-foreground">
+                    Based on {quiz._count.reviews}{" "}
+                    {quiz._count.reviews === 1 ? "review" : "reviews"}
+                  </span>
+                </div>
+              ) : (
+                <p className="mt-2 text-sm text-muted-foreground">
+                  No reviews yet. Be the first to review this quiz!
+                </p>
+              )}
+            </div>
 
-          <ReviewsList
-            quizSlug={quiz.slug}
-            quizTitle={quiz.title}
-            initialReviews={reviews.map((r) => ({
-              ...r,
-              createdAt: r.createdAt.toISOString(),
-            }))}
-            initialTotal={quiz._count.reviews}
-            initialPage={1}
-            currentUserId={session?.user?.id}
-          />
+            <ReviewsList
+              quizSlug={quiz.slug}
+              quizTitle={quiz.title}
+              initialReviews={reviews.map((r) => ({
+                ...r,
+                createdAt: r.createdAt.toISOString(),
+              }))}
+              initialTotal={quiz._count.reviews}
+              initialPage={1}
+              currentUserId={session?.user?.id}
+            />
+          </div>
         </div>
       </section>
+
+      {/* Structured Data */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(quizSchema) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(howToSchema) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+      />
     </main>
   );
 }

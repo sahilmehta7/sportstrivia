@@ -36,6 +36,10 @@ import {
   QuestionSelectionMode,
   RecurringType,
 } from "@prisma/client";
+import {
+  AttemptResetPeriod,
+  ATTEMPT_RESET_PERIOD_OPTIONS,
+} from "@/constants/attempts";
 import { generateSlug } from "@/lib/seo-utils";
 
 export default function NewQuizPage() {
@@ -69,6 +73,8 @@ export default function NewQuizPage() {
       endTime: "",
       answersRevealTime: "",
       recurringType: RecurringType.NONE,
+      maxAttemptsPerUser: null,
+      attemptResetPeriod: AttemptResetPeriod.NEVER,
       isFeatured: false,
       isPublished: false,
       seoTitle: "",
@@ -76,6 +82,24 @@ export default function NewQuizPage() {
       seoKeywords: [],
     },
   });
+
+  const attemptResetOptions = ATTEMPT_RESET_PERIOD_OPTIONS;
+
+  const attemptLimitEnabled = form.watch("maxAttemptsPerUser") !== null;
+  const attemptResetPeriodValue = form.watch("attemptResetPeriod");
+  const recurringTypeValue = form.watch("recurringType");
+
+  const handleAttemptLimitToggle = (checked: boolean) => {
+    if (checked) {
+      form.setValue("maxAttemptsPerUser", 3, { shouldDirty: true });
+      if (recurringTypeValue === RecurringType.NONE) {
+        form.setValue("attemptResetPeriod", AttemptResetPeriod.NEVER, { shouldDirty: false });
+      }
+    } else {
+      form.setValue("maxAttemptsPerUser", null, { shouldDirty: true });
+      form.setValue("attemptResetPeriod", AttemptResetPeriod.NEVER, { shouldDirty: true });
+    }
+  };
 
   const titleValue = form.watch("title");
   const slugValue = form.watch("slug");
@@ -108,6 +132,16 @@ export default function NewQuizPage() {
       endTime: values.endTime || undefined,
       answersRevealTime: values.answersRevealTime || undefined,
     };
+
+    if (payload.maxAttemptsPerUser == null) {
+      payload.maxAttemptsPerUser = null;
+      payload.attemptResetPeriod = AttemptResetPeriod.NEVER;
+    } else {
+      payload.attemptResetPeriod =
+        payload.recurringType === RecurringType.NONE
+          ? AttemptResetPeriod.NEVER
+          : payload.attemptResetPeriod ?? AttemptResetPeriod.NEVER;
+    }
 
     try {
       const response = await fetch("/api/admin/quizzes", {
@@ -717,4 +751,3 @@ export default function NewQuizPage() {
     </div>
   );
 }
-

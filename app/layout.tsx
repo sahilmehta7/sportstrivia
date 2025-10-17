@@ -4,6 +4,7 @@ import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 import { LayoutWrapper } from "@/components/LayoutWrapper";
 import { SessionProvider } from "next-auth/react";
+import { getOrganizationSchema, getWebSiteSchema } from "@/lib/schema-utils";
 import React from "react";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -18,6 +19,9 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const organizationSchema = getOrganizationSchema();
+  const websiteSchema = getWebSiteSchema();
+
   return (
     <html lang="en">
       <body className={inter.className}>
@@ -25,6 +29,16 @@ export default function RootLayout({
           <LayoutWrapper>{children}</LayoutWrapper>
           <Toaster />
         </SessionProvider>
+
+        {/* Global Structured Data */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }}
+        />
       </body>
     </html>
   );

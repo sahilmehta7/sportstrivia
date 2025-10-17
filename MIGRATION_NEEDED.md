@@ -1,108 +1,83 @@
-# ⚠️ Database Migration Required
+# ⚠️ Database Migration Needed
 
-## New Features Requiring Migration
+## Schema Drift Detected
 
-The following features have been added that require a database schema update:
+Your Prisma schema has fields that don't exist in the database yet:
+- `Quiz.maxAttemptsPerUser` (Int?)
+- `Quiz.attemptResetPeriod` (enum AttemptResetPeriod)
 
-### 1. Admin Settings (AppSettings table)
+## To Fix
 
-A new `AppSettings` model has been added to store configurable settings like the AI quiz generator prompt.
+### Option 1: Use Direct URL (Recommended)
 
----
+The CLI can't connect through the pooler. Use the direct database URL:
 
-## 🔧 How to Apply Migration
+1. Get your direct connection URL from Supabase (not the pooled one)
+2. Temporarily update `.env`:
+   ```env
+   # Comment out pooled URL
+   # DATABASE_URL="postgresql://...pooler.supabase.com..."
+   
+   # Use direct URL for migration
+   DATABASE_URL="postgresql://...db.supabase.com..."
+   ```
 
-When your database is accessible, run ONE of the following commands:
+3. Run migration:
+   ```bash
+   npx prisma db push
+   ```
 
-### Option 1: Quick Push (Recommended for Development)
+4. Restore pooled URL for production use
 
+### Option 2: Using DIRECT_URL
+
+Add to `.env`:
+```env
+DIRECT_URL="postgresql://...db.supabase.com..."  # Direct connection
+DATABASE_URL="postgresql://...pooler.supabase.com..."  # Pooled for app
+```
+
+Then run:
 ```bash
 npx prisma db push
 ```
 
-This will:
-- Update your database schema immediately
-- Not create migration files
-- Best for rapid development
+### Option 3: Remove Unused Fields
 
-### Option 2: Create Migration (Recommended for Production)
+If you're not using these fields yet, you can comment them out in `prisma/schema.prisma`:
 
+```prisma
+// maxAttemptsPerUser Int?
+// attemptResetPeriod AttemptResetPeriod @default(NEVER)
+```
+
+Then regenerate Prisma client:
 ```bash
-npx prisma migrate dev --name add_app_settings
+npx prisma generate
 ```
 
-This will:
-- Create a migration file
-- Apply the migration
-- Update migration history
-- Better for version control
+## Current Workaround
 
----
+I've updated the AI cover route to use explicit `select` instead of `include` to avoid pulling non-existent fields. The feature will work, but you should still run the migration when possible.
 
-## 📋 What Gets Created
+## Why This Happened
 
-### AppSettings Table
+The schema was updated with new fields but the migration wasn't run. This is common during development when:
+- Making rapid schema changes
+- Working with multiple databases
+- Using connection poolers vs direct connections
 
-```sql
-CREATE TABLE "AppSettings" (
-  "id" TEXT PRIMARY KEY,
-  "key" TEXT UNIQUE NOT NULL,
-  "value" TEXT NOT NULL,
-  "category" TEXT DEFAULT 'general' NOT NULL,
-  "updatedAt" TIMESTAMP(3) NOT NULL,
-  "updatedBy" TEXT,
-  
-  CONSTRAINT "AppSettings_key_key" UNIQUE ("key")
-);
+## Impact
 
-CREATE INDEX "AppSettings_category_idx" ON "AppSettings"("category");
-```
+- ✅ App still works (workaround applied)
+- ⚠️ New fields not usable yet
+- ⚠️ Schema and database out of sync
+- ❌ Some Prisma queries may fail if they reference these fields
 
----
+## After Migration
 
-## ✅ Verification
-
-After running the migration, verify it worked:
-
-```bash
-# Check if table exists
-npx prisma studio
-```
-
-Then navigate to AppSettings table in Prisma Studio.
-
----
-
-## 🎯 Features That Depend on This
-
-### Admin Settings Page
-- **Route:** `/admin/settings`
-- **Status:** ⚠️ Works with fallback (uses default prompt)
-- **After Migration:** ✅ Can save custom prompts to database
-
-### AI Quiz Generator  
-- **Route:** `/admin/ai-quiz`
-- **Status:** ✅ Works (uses default prompt)
-- **After Migration:** ✅ Uses custom prompt from settings
-
----
-
-## 💡 Note
-
-**The app will work without this migration!**
-
-- Settings service has fallback to default values
-- No errors or crashes
-- Just can't save custom settings to database
-- After migration, full persistence enabled
-
----
-
-## 🚀 Quick Command
-
-```bash
-npx prisma db push
-```
-
-That's it! Run this when your database is ready.
-
+Once migration completes successfully:
+1. New fields will be available
+2. All queries will work
+3. Schema drift resolved
+4. Can implement attempt limits feature

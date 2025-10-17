@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 interface TopicHeroProps {
   title: string;
   subtitle?: string;
-  level?: number | null;
   backgroundImageUrl?: string | null;
   primaryCta?: { label: string; href: string };
   secondaryCta?: { label: string; href: string };
@@ -15,7 +14,6 @@ interface TopicHeroProps {
 export function TopicHero({
   title,
   subtitle,
-  level,
   backgroundImageUrl,
   primaryCta,
   secondaryCta,
@@ -35,11 +33,6 @@ export function TopicHero({
         </div>
       ) : null}
       <div className="relative flex flex-col gap-6 p-8 lg:p-12">
-        {typeof level === "number" ? (
-          <Badge variant="secondary" className="w-fit rounded-full px-3 py-1 text-sm">
-            Level {level}
-          </Badge>
-        ) : null}
         <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">{title}</h1>
         {subtitle && (
           <p className="max-w-3xl text-base text-muted-foreground lg:text-lg">{subtitle}</p>

@@ -8,6 +8,7 @@ import {
   type PaginationResult,
   type PublicQuizFilters,
 } from "@/lib/dto/quiz-filters.dto";
+import { getTopicIdsWithDescendants } from "@/lib/services/topic.service";
 
 export const publicQuizCardSelect = {
   id: true,
@@ -25,6 +26,8 @@ export const publicQuizCardSelect = {
   startTime: true,
   endTime: true,
   createdAt: true,
+  maxAttemptsPerUser: true,
+  attemptResetPeriod: true,
   _count: {
     select: {
       questionPool: true,
@@ -76,6 +79,18 @@ export async function getPublicQuizList(
     page,
     limit,
   };
+
+  if (filters.topic) {
+    const topic = await prisma.topic.findUnique({
+      where: { slug: filters.topic },
+      select: { id: true },
+    });
+
+    if (topic) {
+      const topicIds = await getTopicIdsWithDescendants(topic.id);
+      filters.topicIds = topicIds;
+    }
+  }
 
   const { skip, take } = calculatePagination(page, limit);
   const where = buildPublicQuizWhereClause(filters);

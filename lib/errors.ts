@@ -48,6 +48,12 @@ export class ConflictError extends AppError {
   }
 }
 
+export class AttemptLimitError extends AppError {
+  constructor(public limit: number, public resetAt: Date | null) {
+    super(403, "Attempt limit reached", "ATTEMPT_LIMIT_REACHED");
+  }
+}
+
 export class InternalServerError extends AppError {
   constructor(message = "Internal server error") {
     super(500, message, "INTERNAL_SERVER_ERROR");
@@ -56,6 +62,18 @@ export class InternalServerError extends AppError {
 
 export function handleError(error: unknown) {
   console.error("API Error:", error);
+
+  if (error instanceof AttemptLimitError) {
+    return NextResponse.json(
+      {
+        error: error.message,
+        code: error.code,
+        limit: error.limit,
+        resetAt: error.resetAt ? error.resetAt.toISOString() : null,
+      },
+      { status: error.statusCode }
+    );
+  }
 
   if (error instanceof AppError) {
     return NextResponse.json(
@@ -118,4 +136,3 @@ export function errorResponse(message: string, status = 400, code?: string) {
     { status }
   );
 }
-

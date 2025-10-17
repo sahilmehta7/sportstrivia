@@ -13,13 +13,14 @@ import {
   type PublicQuizListItem,
 } from "@/lib/services/public-quiz.service";
 import { buildTopicLeaderboard, type LeaderboardPeriod } from "@/lib/services/leaderboard.service";
-import { Badge } from "@/components/ui/badge";
+import { getTopicSchema, getBreadcrumbSchema, getItemListSchema } from "@/lib/schema-utils";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { TopicHero } from "@/components/topics/topic-hero";
 import { FeaturedRow } from "@/components/quizzes/featured-row";
 import { FeaturedQuizzesHero } from "@/components/quizzes/featured-quizzes-hero";
 import { ModernFilterBar } from "@/components/quizzes/modern-filter-bar";
 import { QuizCard } from "@/components/quizzes/quiz-card";
+import { QuizPagination } from "@/components/quizzes/quiz-pagination";
 import { StreakIndicator } from "@/components/shared/StreakIndicator";
 import { AISuggestionModal } from "@/components/topics/ai-suggestion-modal";
 import { ChevronRight } from "lucide-react";
@@ -110,12 +111,12 @@ export async function generateMetadata({
     return {};
   }
 
-  const title = `${topic.name} Trivia Quizzes & Sub-topics | Sports Trivia`;
+  const title = `${topic.name} Trivia Quizzes | Sports Trivia`;
   const description = topic.description
     ? topic.description.length > 160
       ? `${topic.description.slice(0, 157)}...`
       : topic.description
-    : `Explore trivia quizzes, key facts, and sub-topics for ${topic.name} on Sports Trivia.`;
+    : `Explore trivia quizzes, key facts, and highlights for ${topic.name} on Sports Trivia.`;
 
   return {
     title,
@@ -250,9 +251,33 @@ export default async function TopicDetailPage({
     listing.quizzes[0] ??
     null;
 
+  // Generate structured data
+  const topicSchema = getTopicSchema(topic, listing.pagination.total);
+  const breadcrumbItems = [
+    { name: "Home", url: "/" },
+  ];
+  if (topic.parent) {
+    breadcrumbItems.push({ name: topic.parent.name, url: `/topics/${topic.parent.slug}` });
+  }
+  breadcrumbItems.push({ name: topic.name });
+  const breadcrumbSchema = getBreadcrumbSchema(breadcrumbItems);
+  
+  const itemListSchema = listing.quizzes.length > 0
+    ? getItemListSchema(
+        listing.quizzes.map(q => ({
+          id: q.id,
+          title: q.title,
+          slug: q.slug,
+          description: q.description,
+          descriptionImageUrl: q.descriptionImageUrl,
+        })),
+        `${topic.name} Quizzes`
+      )
+    : null;
+
   return (
-    <main className="min-h-screen bg-gradient-to-b from-background via-background to-muted py-16">
-      <div className="mx-auto w-full max-w-6xl space-y-8 px-4 sm:px-6 lg:px-8">
+    <main className="min-h-screen bg-gradient-to-b from-background via-background to-muted">
+      <div className="mx-auto w-full max-w-6xl space-y-8 px-4 pb-16 pt-10 sm:px-6 lg:px-8">
         <nav className="flex items-center gap-2 text-sm text-muted-foreground">
           <Link href="/" className="transition-colors hover:text-foreground">
             Home
@@ -277,7 +302,6 @@ export default async function TopicDetailPage({
           subtitle={
             topic.description || `Discover quizzes, stats, and storylines for ${topic.name}.`
           }
-          level={topic.level}
           primaryCta={
             heroPrimaryQuiz
               ? { label: "Start a quiz", href: `/quizzes/${heroPrimaryQuiz.slug}` }
@@ -290,24 +314,50 @@ export default async function TopicDetailPage({
           <FeaturedQuizzesHero featuredQuizzes={heroFeaturedQuizzes} />
         )}
 
-        <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px]">
-          <div className="space-y-8">
+        {topRatedListing.quizzes.length > 0 && (
+          <FeaturedRow
+            title="Top rated by fans"
+            description="Quizzes the community keeps replaying"
+            quizzes={topRatedListing.quizzes.slice(0, 6)}
+          />
+        )}
 
-            {topRatedListing.quizzes.length > 0 && (
-              <FeaturedRow
-                title="Top rated by fans"
-                description="Quizzes the community keeps replaying"
-                quizzes={topRatedListing.quizzes.slice(0, 6)}
-              />
-            )}
+        {topic.children.length > 0 && (
+          <section className="space-y-4" id="topic-subtopics">
+            <div>
+              <h2 className="text-2xl font-semibold text-foreground">Related topics</h2>
+              <p className="text-sm text-muted-foreground">
+                Discover more angles connected to {topic.name}.
+              </p>
+            </div>
+            <div className="-mx-4 overflow-x-auto px-4">
+              <div className="flex gap-4">
+                {topic.children.map((child) => (
+                  <Link key={child.id} href={`/topics/${child.slug}`} className="flex-none">
+                    <Card className="h-full w-72 overflow-hidden border border-border/40 bg-gradient-to-br from-primary/10 via-background to-background shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
+                      <CardHeader className="space-y-2 p-5">
+                        <CardTitle className="truncate text-lg">{child.name}</CardTitle>
+                        <CardDescription className="line-clamp-3 text-sm text-muted-foreground">
+                          {child.description || `Explore quizzes focused on ${child.name}.`}
+                        </CardDescription>
+                      </CardHeader>
+                    </Card>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </section>
+        )}
 
-            <section className="space-y-6" id="topic-quizzes">
-              <ModernFilterBar
-                filters={appliedFilters}
-                {...filterOptions}
-                total={listing.pagination.total}
-              />
+        <section className="space-y-6" id="topic-quizzes">
+          <ModernFilterBar
+            filters={appliedFilters}
+            {...filterOptions}
+            total={listing.pagination.total}
+          />
 
+          <div className="flex flex-col gap-6 lg:grid lg:grid-cols-[minmax(0,1fr)_320px] lg:gap-8">
+            <div className="space-y-6">
               {listing.quizzes.length > 0 ? (
                 <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
                   {listing.quizzes.map((quiz) => (
@@ -321,113 +371,104 @@ export default async function TopicDetailPage({
                   </CardContent>
                 </Card>
               )}
-            </section>
-          </div>
 
-          <aside className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Top fans (all-time)</CardTitle>
-                <CardDescription>Correct answers in this topic</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {leaderboards.allTime.length > 0 ? (
-                  leaderboards.allTime.map((entry) => (
-                    <div
-                      key={entry.userId}
-                      className="flex items-center justify-between text-sm"
-                    >
-                      <div className="flex items-center gap-2">
-                        <span className="h-7 w-7 rounded-full bg-primary/10 text-center text-xs font-semibold leading-7 text-primary">
-                          {entry.rank}
-                        </span>
-                        <span className="font-medium text-foreground">{entry.name}</span>
-                      </div>
-                      <span className="text-xs text-muted-foreground">{entry.score} correct</span>
-                    </div>
-                  ))
-                ) : (
-                  <p className="text-sm text-muted-foreground">Be the first to climb this leaderboard.</p>
-                )}
-                <Link
-                  href={`/leaderboard?topic=${topic.slug}`}
-                  className="text-sm font-medium text-primary transition hover:text-primary/80"
-                >
-                  View full leaderboards
-                </Link>
-              </CardContent>
-            </Card>
-
-            {userStreak && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Your streak</CardTitle>
-                  <CardDescription>Keep the momentum going</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-2 text-sm">
-                  <StreakIndicator
-                    currentStreak={userStreak.currentStreak}
-                    longestStreak={userStreak.longestStreak}
-                    showLabel
-                  />
-                  <p className="text-muted-foreground">
-                    Answer a quiz today to extend your streak and climb the rankings.
-                  </p>
-                </CardContent>
-              </Card>
-            )}
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Need inspiration?</CardTitle>
-                <CardDescription>Let AI whip up a fresh quiz idea</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <AISuggestionModal
-                  topicName={topic.name}
-                  trigger={
-                    <button className="w-full rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition hover:bg-primary/90">
-                      Generate with AI
-                    </button>
-                  }
-                />
-              </CardContent>
-            </Card>
-          </aside>
-        </div>
-
-        {topic.children.length > 0 && (
-          <section className="space-y-4" id="topic-subtopics">
-            <div>
-              <h2 className="text-2xl font-semibold text-foreground">Explore all sub-topics</h2>
-              <p className="text-sm text-muted-foreground">
-                Dive deeper into specialised trivia paths under {topic.name}.
-              </p>
+              <QuizPagination
+                page={listing.pagination.page}
+                pages={listing.pagination.pages}
+                total={listing.pagination.total}
+                pageSize={listing.pagination.limit}
+              />
             </div>
-            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-              {topic.children.map((child) => (
-                <Link key={child.id} href={`/topics/${child.slug}`}>
-                  <Card className="h-full border border-border/50 bg-card/90 transition hover:-translate-y-1 hover:shadow-lg">
-                    <CardHeader className="space-y-2">
-                      <div className="flex items-center justify-between gap-2">
-                        <CardTitle className="truncate text-lg">{child.name}</CardTitle>
-                        <Badge variant="outline">Level {child.level}</Badge>
-                      </div>
-                      <CardDescription className="line-clamp-2">
-                        {child.description || `Test yourself on ${child.name} trivia.`}
-                      </CardDescription>
+
+            <aside className="space-y-4 lg:sticky lg:top-24">
+              <Card className="rounded-2xl border border-border/40 bg-gradient-to-br from-primary/10 via-background to-background shadow-sm">
+                  <CardHeader>
+                    <CardTitle className="text-lg">Top fans (all-time)</CardTitle>
+                    <CardDescription>Correct answers in this topic</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    {leaderboards.allTime.length > 0 ? (
+                      leaderboards.allTime.map((entry) => (
+                        <div
+                          key={entry.userId}
+                          className="flex items-center justify-between rounded-lg border border-border/40 bg-background/60 px-3 py-2 text-sm"
+                        >
+                          <div className="flex items-center gap-2">
+                            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/15 text-xs font-semibold text-primary">
+                              {entry.rank}
+                            </span>
+                            <span className="font-medium text-foreground">{entry.name}</span>
+                          </div>
+                          <span className="text-xs text-muted-foreground">{entry.score} correct</span>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-sm text-muted-foreground">Be the first to climb this leaderboard.</p>
+                    )}
+                    <Link
+                      href={`/leaderboard?topic=${topic.slug}`}
+                      className="text-sm font-medium text-primary transition hover:text-primary/80"
+                    >
+                      View full leaderboards
+                    </Link>
+                  </CardContent>
+                </Card>
+
+                {userStreak && (
+                  <Card className="rounded-2xl border border-border/40 bg-gradient-to-br from-amber-500/10 via-background to-background shadow-sm">
+                    <CardHeader>
+                      <CardTitle className="text-lg">Your streak</CardTitle>
+                      <CardDescription>Keep the momentum going</CardDescription>
                     </CardHeader>
-                    <CardContent className="flex items-center justify-between text-xs text-muted-foreground">
-                      <span>{child._count.questions} questions</span>
-                      <span>{child._count.children} sub-topics</span>
+                    <CardContent className="space-y-3 text-sm">
+                      <StreakIndicator
+                        currentStreak={userStreak.currentStreak}
+                        longestStreak={userStreak.longestStreak}
+                        showLabel
+                      />
+                      <p className="text-muted-foreground">
+                        Answer a quiz today to extend your streak and climb the rankings.
+                      </p>
                     </CardContent>
                   </Card>
-                </Link>
-              ))}
+                )}
+
+                <Card className="rounded-2xl border border-border/40 bg-gradient-to-br from-purple-500/10 via-background to-background shadow-sm">
+                  <CardHeader>
+                    <CardTitle className="text-lg">Need inspiration?</CardTitle>
+                    <CardDescription>Let AI whip up a fresh quiz idea</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <AISuggestionModal
+                      topicName={topic.name}
+                      trigger={
+                        <button className="w-full rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition hover:bg-primary/90">
+                          Generate with AI
+                        </button>
+                      }
+                    />
+                  </CardContent>
+                </Card>
+              </aside>
             </div>
-          </section>
-        )}
+        </section>
       </div>
+
+      {/* Structured Data */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(topicSchema) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+      />
+      {itemListSchema && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListSchema) }}
+        />
+      )}
     </main>
   );
 }

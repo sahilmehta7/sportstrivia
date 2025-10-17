@@ -15,6 +15,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { useToast } from "@/hooks/use-toast";
+import { getPersonSchema } from "@/lib/schema-utils";
 import { 
   Trophy, 
   Target, 
@@ -147,6 +148,8 @@ export default function MyProfilePage() {
   if (!profile) {
     return null;
   }
+
+  const personSchema = getPersonSchema(profile);
 
   return (
     <main className="min-h-screen bg-background py-8">
@@ -298,62 +301,62 @@ export default function MyProfilePage() {
 
           {/* Settings Tab */}
           <TabsContent value="settings" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Edit Profile</CardTitle>
-                <CardDescription>Update your profile information</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="name">Name</Label>
-                    <Input
-                      id="name"
-                      value={formData.name}
-                      onChange={(e) =>
-                        setFormData({ ...formData, name: e.target.value })
-                      }
-                      placeholder="Your name"
-                    />
-                  </div>
+          <Card>
+            <CardHeader>
+              <CardTitle>Edit Profile</CardTitle>
+              <CardDescription>Update your profile information</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="name">Name</Label>
+                  <Input
+                    id="name"
+                    value={formData.name}
+                    onChange={(e) =>
+                      setFormData({ ...formData, name: e.target.value })
+                    }
+                    placeholder="Your name"
+                  />
+                </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="bio">Bio</Label>
-                    <Textarea
-                      id="bio"
-                      value={formData.bio}
-                      onChange={(e) =>
-                        setFormData({ ...formData, bio: e.target.value })
-                      }
-                      placeholder="Tell us about yourself..."
-                      rows={3}
-                    />
-                  </div>
+                <div className="space-y-2">
+                  <Label htmlFor="bio">Bio</Label>
+                  <Textarea
+                    id="bio"
+                    value={formData.bio}
+                    onChange={(e) =>
+                      setFormData({ ...formData, bio: e.target.value })
+                    }
+                    placeholder="Tell us about yourself..."
+                    rows={3}
+                  />
+                </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="favoriteTeams">Favorite Teams</Label>
-                    <Input
-                      id="favoriteTeams"
-                      value={formData.favoriteTeams}
-                      onChange={(e) =>
-                        setFormData({ ...formData, favoriteTeams: e.target.value })
-                      }
-                      placeholder="Team 1, Team 2, Team 3"
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      Comma-separated list of your favorite teams
-                    </p>
-                  </div>
+                <div className="space-y-2">
+                  <Label htmlFor="favoriteTeams">Favorite Teams</Label>
+                  <Input
+                    id="favoriteTeams"
+                    value={formData.favoriteTeams}
+                    onChange={(e) =>
+                      setFormData({ ...formData, favoriteTeams: e.target.value })
+                    }
+                    placeholder="Team 1, Team 2, Team 3"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Comma-separated list of your favorite teams
+                  </p>
+                </div>
 
-                  <div className="flex gap-3">
-                    <Button type="submit" disabled={saving}>
-                      <Save className="mr-2 h-4 w-4" />
-                      {saving ? "Saving..." : "Save Changes"}
-                    </Button>
-                  </div>
-                </form>
-              </CardContent>
-            </Card>
+                <div className="flex gap-3">
+                  <Button type="submit" disabled={saving}>
+                    <Save className="mr-2 h-4 w-4" />
+                    {saving ? "Saving..." : "Save Changes"}
+                  </Button>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
 
             <Card>
               <CardHeader>
@@ -373,15 +376,21 @@ export default function MyProfilePage() {
                   <span className="text-muted-foreground">Experience Tier</span>
                   <span className="font-medium">{profile.experienceTier || "ROOKIE"}</span>
                 </div>
-                <div className="flex items-center justify-between text-sm">
+                  <div className="flex items-center justify-between text-sm">
                   <span className="text-muted-foreground">Total Points</span>
                   <span className="font-medium">{profile.totalPoints?.toLocaleString() || "0"}</span>
-                </div>
+                  </div>
               </CardContent>
             </Card>
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Structured Data */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(personSchema) }}
+      />
     </main>
   );
 }

@@ -4,6 +4,19 @@ import { requireAdmin } from "@/lib/auth-helpers";
 import { quizUpdateSchema } from "@/lib/validations/quiz.schema";
 import { handleError, successResponse, NotFoundError } from "@/lib/errors";
 import { generateUniqueSlug } from "@/lib/seo-utils";
+import {
+  AttemptResetPeriod as PrismaAttemptResetPeriod,
+  RecurringType,
+} from "@prisma/client";
+import { isAttemptResetPeriod } from "@/constants/attempts";
+
+function toPrismaAttemptResetPeriod(
+  value: string | PrismaAttemptResetPeriod
+): PrismaAttemptResetPeriod {
+  return PrismaAttemptResetPeriod[
+    value as keyof typeof PrismaAttemptResetPeriod
+  ];
+}
 
 // GET /api/admin/quizzes/[id] - Get single quiz
 export async function GET(
@@ -68,10 +81,55 @@ export async function PUT(
 
     const body = await request.json();
     
-    // Convert null values to undefined for optional fields (Prisma sends null, schema expects undefined)
+    // Debug: Log the datetime fields
+    console.log("Datetime fields received:", {
+      startTime: body.startTime,
+      endTime: body.endTime,
+      answersRevealTime: body.answersRevealTime,
+    });
+    
+    // Convert null values and empty strings to undefined for optional fields
+    // Especially important for datetime fields which fail validation with empty strings
     const cleanedBody = Object.fromEntries(
-      Object.entries(body).map(([key, value]) => [key, value === null ? undefined : value])
+      Object.entries(body).map(([key, value]) => {
+        if (key === "maxAttemptsPerUser") {
+          if (
+            value === null ||
+            value === undefined ||
+            (typeof value === "string" && value.trim() === "")
+          ) {
+            return [key, null];
+          }
+          const parsed =
+            typeof value === "number" ? value : parseInt(String(value), 10);
+          return [key, Number.isNaN(parsed) ? null : parsed];
+        }
+
+        if (key === "attemptResetPeriod") {
+          if (isAttemptResetPeriod(value)) {
+            return [key, value];
+          }
+          return [key, undefined];
+        }
+
+        // Convert null to undefined
+        if (value === null) return [key, undefined];
+        
+        // Convert empty strings to undefined for datetime and URL fields
+        if (typeof value === "string" && value.trim() === "" && 
+            ["startTime", "endTime", "answersRevealTime", "descriptionImageUrl", "descriptionVideoUrl", "seoTitle", "seoDescription"].includes(key)) {
+          return [key, undefined];
+        }
+        
+        return [key, value];
+      })
     );
+    
+    console.log("Cleaned datetime fields:", {
+      startTime: cleanedBody.startTime,
+      endTime: cleanedBody.endTime,
+      answersRevealTime: cleanedBody.answersRevealTime,
+    });
     
     const validatedData = quizUpdateSchema.parse(cleanedBody);
 
@@ -106,6 +164,42 @@ export async function PUT(
     }
     if (validatedData.answersRevealTime) {
       updateData.answersRevealTime = new Date(validatedData.answersRevealTime);
+    }
+
+    const nextRecurringType =
+      validatedData.recurringType ?? existingQuiz.recurringType ?? RecurringType.NONE;
+
+    if (validatedData.maxAttemptsPerUser !== undefined) {
+      if (validatedData.maxAttemptsPerUser === null) {
+        updateData.maxAttemptsPerUser = null;
+        updateData.attemptResetPeriod = PrismaAttemptResetPeriod.NEVER;
+      } else {
+        updateData.maxAttemptsPerUser = validatedData.maxAttemptsPerUser;
+        const attemptResetPeriodCandidate =
+          validatedData.attemptResetPeriod ??
+          existingQuiz.attemptResetPeriod ??
+          PrismaAttemptResetPeriod.NEVER;
+        updateData.attemptResetPeriod =
+          nextRecurringType === RecurringType.NONE
+            ? PrismaAttemptResetPeriod.NEVER
+            : toPrismaAttemptResetPeriod(attemptResetPeriodCandidate);
+      }
+    } else if (validatedData.attemptResetPeriod !== undefined) {
+      if (
+        (existingQuiz.maxAttemptsPerUser === null ||
+          existingQuiz.maxAttemptsPerUser === undefined) ||
+        nextRecurringType === RecurringType.NONE
+      ) {
+        updateData.attemptResetPeriod = PrismaAttemptResetPeriod.NEVER;
+      } else {
+        updateData.attemptResetPeriod = toPrismaAttemptResetPeriod(
+          validatedData.attemptResetPeriod
+        );
+      }
+    }
+
+    if (validatedData.recurringType !== undefined && nextRecurringType === RecurringType.NONE) {
+      updateData.attemptResetPeriod = PrismaAttemptResetPeriod.NEVER;
     }
 
     const quiz = await prisma.quiz.update({
@@ -158,4 +252,3 @@ export async function DELETE(
     return handleError(error);
   }
 }
-

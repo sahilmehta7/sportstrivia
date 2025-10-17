@@ -51,6 +51,7 @@ export interface PublicQuizFilters {
   difficulty?: Difficulty;
   tag?: string;
   topic?: string;
+  topicIds?: string[];
   isFeatured?: boolean;
   comingSoon?: boolean;
   minDuration?: number; // in seconds
@@ -70,33 +71,34 @@ export function buildPublicQuizWhereClause(filters: PublicQuizFilters): Prisma.Q
   };
 
   const now = new Date();
+  const andConditions: Prisma.QuizWhereInput[] = [];
 
   // Time-based filtering
   if (filters.comingSoon) {
     where.startTime = { gt: now };
   } else {
-    where.AND = [
-      {
-        OR: [
-          { startTime: null },
-          { startTime: { lte: now } },
-        ],
-      },
-      {
-        OR: [
-          { endTime: null },
-          { endTime: { gte: now } },
-        ],
-      },
-    ];
+    andConditions.push({
+      OR: [
+        { startTime: null },
+        { startTime: { lte: now } },
+      ],
+    });
+    andConditions.push({
+      OR: [
+        { endTime: null },
+        { endTime: { gte: now } },
+      ],
+    });
   }
 
   // Search filter
   if (filters.search) {
-    where.OR = [
-      { title: { contains: filters.search, mode: "insensitive" } },
-      { description: { contains: filters.search, mode: "insensitive" } },
-    ];
+    andConditions.push({
+      OR: [
+        { title: { contains: filters.search, mode: "insensitive" } },
+        { description: { contains: filters.search, mode: "insensitive" } },
+      ],
+    });
   }
 
   // Sport filter
@@ -142,8 +144,35 @@ export function buildPublicQuizWhereClause(filters: PublicQuizFilters): Prisma.Q
   }
 
   // Topic filter
+  const topicOrConditions: Prisma.QuizWhereInput[] = [];
+
+  if (filters.topicIds && filters.topicIds.length > 0) {
+    topicOrConditions.push(
+      {
+        topicConfigs: {
+          some: {
+            topicId: {
+              in: filters.topicIds,
+            },
+          },
+        },
+      },
+      {
+        questionPool: {
+          some: {
+            question: {
+              topicId: {
+                in: filters.topicIds,
+              },
+            },
+          },
+        },
+      }
+    );
+  }
+
   if (filters.topic) {
-    where.OR = [
+    topicOrConditions.push(
       {
         topicConfigs: {
           some: {
@@ -172,8 +201,16 @@ export function buildPublicQuizWhereClause(filters: PublicQuizFilters): Prisma.Q
             },
           },
         },
-      },
-    ];
+      }
+    );
+  }
+
+  if (topicOrConditions.length > 0) {
+    andConditions.push({ OR: topicOrConditions });
+  }
+
+  if (andConditions.length > 0) {
+    where.AND = andConditions;
   }
 
   return where;

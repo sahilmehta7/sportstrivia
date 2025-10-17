@@ -14,7 +14,19 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Save, Trash2, CheckCircle, Archive, EyeOff, Upload as UploadIcon, X } from "lucide-react";
+import {
+  ArrowLeft,
+  Save,
+  Trash2,
+  CheckCircle,
+  Archive,
+  EyeOff,
+  Upload as UploadIcon,
+  X,
+  Sparkles,
+  Wand2,
+  ImageIcon,
+} from "lucide-react";
 import Link from "next/link";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import {
@@ -25,6 +37,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  AttemptResetPeriod,
+  ATTEMPT_RESET_PERIOD_OPTIONS,
+} from "@/constants/attempts";
 
 interface EditQuizPageProps {
   params: Promise<{ id: string }>;
@@ -40,6 +56,11 @@ export default function EditQuizPage({ params }: EditQuizPageProps) {
   const [deleting, setDeleting] = useState(false);
   const [topicConfigs, setTopicConfigs] = useState<any[]>([]);
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [aiMetadataLoading, setAiMetadataLoading] = useState(false);
+  const [aiMetadataSuggestion, setAiMetadataSuggestion] = useState<{ title: string; description: string } | null>(null);
+  const [aiCoverLoading, setAiCoverLoading] = useState(false);
+  const [attemptLimitEnabled, setAttemptLimitEnabled] = useState(false);
+  const attemptResetOptions = ATTEMPT_RESET_PERIOD_OPTIONS;
 
   const [formData, setFormData] = useState({
     title: "",
@@ -64,6 +85,8 @@ export default function EditQuizPage({ params }: EditQuizPageProps) {
     endTime: "",
     answersRevealTime: "",
     recurringType: "NONE",
+    maxAttemptsPerUser: "",
+    attemptResetPeriod: "NEVER",
     isFeatured: false,
     isPublished: false,
     seoTitle: "",
@@ -113,14 +136,17 @@ export default function EditQuizPage({ params }: EditQuizPageProps) {
           bonusPointsPerSecond: quiz.bonusPointsPerSecond?.toString() || "0",
           startTime: formatDateTime(quiz.startTime),
           endTime: formatDateTime(quiz.endTime),
-          answersRevealTime: formatDateTime(quiz.answersRevealTime),
-          recurringType: quiz.recurringType || "NONE",
-          isFeatured: quiz.isFeatured || false,
-          isPublished: quiz.isPublished || false,
-          seoTitle: quiz.seoTitle || "",
-          seoDescription: quiz.seoDescription || "",
-          seoKeywords: quiz.seoKeywords?.join(", ") || "",
-        });
+        answersRevealTime: formatDateTime(quiz.answersRevealTime),
+        recurringType: quiz.recurringType || "NONE",
+        maxAttemptsPerUser: quiz.maxAttemptsPerUser?.toString() || "",
+        attemptResetPeriod: quiz.attemptResetPeriod || "NEVER",
+        isFeatured: quiz.isFeatured || false,
+        isPublished: quiz.isPublished || false,
+        seoTitle: quiz.seoTitle || "",
+        seoDescription: quiz.seoDescription || "",
+        seoKeywords: quiz.seoKeywords?.join(", ") || "",
+      });
+        setAttemptLimitEnabled(Boolean(quiz.maxAttemptsPerUser));
 
         // Load topic configurations if TOPIC_RANDOM mode
         if (quiz.questionSelectionMode === "TOPIC_RANDOM") {
@@ -175,6 +201,21 @@ export default function EditQuizPage({ params }: EditQuizPageProps) {
 
     try {
       // Prepare data
+      const parsedMaxAttempts =
+        attemptLimitEnabled && formData.maxAttemptsPerUser
+          ? parseInt(formData.maxAttemptsPerUser, 10)
+          : null;
+
+      const normalizedMaxAttempts =
+        parsedMaxAttempts !== null && !Number.isNaN(parsedMaxAttempts)
+          ? Math.max(parsedMaxAttempts, 1)
+          : null;
+
+      const effectiveResetPeriod =
+        formData.recurringType === "NONE"
+          ? AttemptResetPeriod.NEVER
+          : formData.attemptResetPeriod;
+
       const data = {
         ...formData,
         duration: formData.duration ? parseInt(formData.duration) : null,
@@ -187,6 +228,11 @@ export default function EditQuizPage({ params }: EditQuizPageProps) {
         startTime: formData.startTime || undefined,
         endTime: formData.endTime || undefined,
         answersRevealTime: formData.answersRevealTime || undefined,
+        maxAttemptsPerUser: normalizedMaxAttempts,
+        attemptResetPeriod:
+          normalizedMaxAttempts && normalizedMaxAttempts > 0
+            ? effectiveResetPeriod
+            : AttemptResetPeriod.NEVER,
       };
 
       const response = await fetch(`/api/admin/quizzes/${quizId}`, {
@@ -370,6 +416,103 @@ export default function EditQuizPage({ params }: EditQuizPageProps) {
     }
   };
 
+  const handleAttemptLimitToggle = (checked: boolean) => {
+    setAttemptLimitEnabled(checked);
+    if (checked) {
+      if (!formData.maxAttemptsPerUser) {
+        updateField("maxAttemptsPerUser", "3");
+      }
+    } else {
+      updateField("maxAttemptsPerUser", "");
+      updateField("attemptResetPeriod", "NEVER");
+    }
+  };
+
+  const handleGenerateMetadata = async () => {
+    if (!quizId) return;
+    setAiMetadataLoading(true);
+    setAiMetadataSuggestion(null);
+
+    try {
+      const response = await fetch(`/api/admin/quizzes/${quizId}/ai/metadata`, {
+        method: "POST",
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || "Failed to generate suggestion");
+      }
+
+      setAiMetadataSuggestion({
+        title: result.data.title,
+        description: result.data.description,
+      });
+
+      toast({
+        title: "AI suggestion ready",
+        description: "Review the regenerated title and description below.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "AI request failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setAiMetadataLoading(false);
+    }
+  };
+
+  const handleAcceptMetadataSuggestion = () => {
+    if (!aiMetadataSuggestion) return;
+
+    updateField("title", aiMetadataSuggestion.title);
+    updateField("description", aiMetadataSuggestion.description);
+    setAiMetadataSuggestion(null);
+
+    toast({
+      title: "Suggestion applied",
+      description: "Title and description updated.",
+    });
+  };
+
+  const handleDismissMetadataSuggestion = () => {
+    setAiMetadataSuggestion(null);
+  };
+
+  const handleGenerateCoverImage = async () => {
+    if (!quizId) return;
+    setAiCoverLoading(true);
+
+    try {
+      const response = await fetch(`/api/admin/quizzes/${quizId}/ai/cover`, {
+        method: "POST",
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || "Failed to generate cover image");
+      }
+
+      updateField("descriptionImageUrl", result.data.url);
+
+      toast({
+        title: "Cover image generated",
+        description: "A new AI-generated cover image has been applied.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Image generation failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setAiCoverLoading(false);
+    }
+  };
+
   const updateField = (field: string, value: any) => {
     setFormData(prev => {
       const updates: any = { [field]: value };
@@ -498,7 +641,29 @@ export default function EditQuizPage({ params }: EditQuizPageProps) {
           <CardContent className="space-y-4">
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="title">Title *</Label>
+                <div className="flex items-center justify-between gap-2">
+                  <Label htmlFor="title">Title *</Label>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    onClick={handleGenerateMetadata}
+                    disabled={aiMetadataLoading || !quizId}
+                    className="gap-1.5"
+                  >
+                    {aiMetadataLoading ? (
+                      <>
+                        <LoadingSpinner size="sm" />
+                        Thinking...
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="h-4 w-4" />
+                        Regenerate with AI
+                      </>
+                    )}
+                  </Button>
+                </div>
                 <Input
                   id="title"
                   value={formData.title}
@@ -528,13 +693,63 @@ export default function EditQuizPage({ params }: EditQuizPageProps) {
               />
             </div>
 
+            {aiMetadataSuggestion && (
+              <div className="rounded-lg border border-primary/30 bg-primary/5 p-4">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 text-sm font-semibold text-primary">
+                      <Wand2 className="h-4 w-4" />
+                      AI suggestion
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-foreground">{aiMetadataSuggestion.title}</p>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        {aiMetadataSuggestion.description}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <div className="mt-4 flex flex-wrap items-center gap-2">
+                  <Button type="button" onClick={handleAcceptMetadataSuggestion} size="sm" className="gap-1.5">
+                    <CheckCircle className="h-4 w-4" />
+                    Use suggestion
+                  </Button>
+                  <Button type="button" variant="outline" onClick={handleDismissMetadataSuggestion} size="sm">
+                    Dismiss
+                  </Button>
+                </div>
+              </div>
+            )}
+
             <Separator />
 
             <div className="space-y-2">
               <Label>Cover Image</Label>
-              <p className="text-sm text-muted-foreground">
-                Add a cover image for your quiz (displayed on quiz cards)
-              </p>
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <p className="text-sm text-muted-foreground">
+                  Add a cover image for your quiz (displayed on quiz cards)
+                </p>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  disabled={aiCoverLoading || !quizId || uploadingImage}
+                  onClick={handleGenerateCoverImage}
+                  className="gap-1.5"
+                >
+                  {aiCoverLoading ? (
+                    <>
+                      <LoadingSpinner size="sm" />
+                      Generating...
+                    </>
+                  ) : (
+                    <>
+                      <ImageIcon className="h-4 w-4" />
+                      Generate with AI
+                    </>
+                  )}
+                </Button>
+              </div>
               
               {formData.descriptionImageUrl ? (
                 <div className="space-y-3">
@@ -612,6 +827,73 @@ export default function EditQuizPage({ params }: EditQuizPageProps) {
                       placeholder="https://example.com/image.jpg"
                     />
                   </div>
+                </div>
+              )}
+            </div>
+
+            <Separator />
+
+            <div className="space-y-4">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <Label className="text-base">Attempt limits</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Control how many times each user can attempt this quiz.
+                  </p>
+                </div>
+                <Switch
+                  id="attempt-limit-toggle"
+                  checked={attemptLimitEnabled}
+                  onCheckedChange={handleAttemptLimitToggle}
+                />
+              </div>
+
+              {attemptLimitEnabled ? (
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="maxAttemptsPerUser">Max attempts</Label>
+                    <Input
+                      id="maxAttemptsPerUser"
+                      type="number"
+                      min={1}
+                      value={formData.maxAttemptsPerUser}
+                      onChange={(e) => updateField("maxAttemptsPerUser", e.target.value)}
+                      placeholder="e.g. 3"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Users can attempt up to this number before the limit applies.
+                    </p>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="attemptResetPeriod">Reset cadence</Label>
+                    <Select
+                      value={formData.attemptResetPeriod}
+                      onValueChange={(value) => updateField("attemptResetPeriod", value)}
+                      disabled={formData.recurringType === "NONE"}
+                    >
+                      <SelectTrigger id="attemptResetPeriod">
+                        <SelectValue placeholder="Select reset cadence" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {attemptResetOptions.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-muted-foreground">
+                      {formData.recurringType === "NONE"
+                        ? "This quiz doesn't recur, so attempts won't reset automatically."
+                        : formData.attemptResetPeriod === "NEVER"
+                          ? "Attempts never reset automatically."
+                          : `Attempts reset ${formData.attemptResetPeriod.toLowerCase()}.`}
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <div className="rounded-xl border border-dashed border-border/70 bg-muted/20 p-4 text-sm text-muted-foreground">
+                  Users currently have unlimited attempts for this quiz.
                 </div>
               )}
             </div>

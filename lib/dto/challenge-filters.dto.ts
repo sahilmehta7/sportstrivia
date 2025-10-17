@@ -50,6 +50,8 @@ export function buildReceivedChallengesWhereClause(
 
 /**
  * Standard challenge include for queries
+ * Note: Challenge model stores scores directly (challengerScore, challengedScore)
+ * not as relations to QuizAttempt
  */
 export const challengeInclude: Prisma.ChallengeInclude = {
   challenger: {
@@ -75,22 +77,6 @@ export const challengeInclude: Prisma.ChallengeInclude = {
       slug: true,
       difficulty: true,
       duration: true,
-    },
-  },
-  challengerAttempt: {
-    select: {
-      id: true,
-      score: true,
-      passed: true,
-      completedAt: true,
-    },
-  },
-  challengedAttempt: {
-    select: {
-      id: true,
-      score: true,
-      passed: true,
-      completedAt: true,
     },
   },
 };

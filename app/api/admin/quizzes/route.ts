@@ -10,7 +10,24 @@ import {
   calculatePagination,
   buildPaginationResult,
 } from "@/lib/dto/quiz-filters.dto";
-import { Difficulty, QuizStatus } from "@prisma/client";
+import {
+  AttemptResetPeriod as PrismaAttemptResetPeriod,
+  Difficulty,
+  QuizStatus,
+  RecurringType,
+} from "@prisma/client";
+import {
+  AttemptResetPeriod as AttemptResetPeriodConst,
+  isAttemptResetPeriod,
+} from "@/constants/attempts";
+
+function toPrismaAttemptResetPeriod(
+  value: string | PrismaAttemptResetPeriod
+): PrismaAttemptResetPeriod {
+  return PrismaAttemptResetPeriod[
+    value as keyof typeof PrismaAttemptResetPeriod
+  ];
+}
 
 // GET /api/admin/quizzes - List all quizzes with filters
 export async function GET(request: NextRequest) {
@@ -67,7 +84,42 @@ export async function POST(request: NextRequest) {
     await requireAdmin();
 
     const body = await request.json();
-    const validatedData = quizSchema.parse(body);
+    
+    // Convert null values and empty strings to undefined for optional fields
+    const cleanedBody = Object.fromEntries(
+      Object.entries(body).map(([key, value]) => {
+        if (key === "maxAttemptsPerUser") {
+          if (
+            value === null ||
+            value === undefined ||
+            (typeof value === "string" && value.trim() === "")
+          ) {
+            return [key, null];
+          }
+          const parsed =
+            typeof value === "number" ? value : parseInt(String(value), 10);
+          return [key, Number.isNaN(parsed) ? null : parsed];
+        }
+
+        if (key === "attemptResetPeriod") {
+          if (isAttemptResetPeriod(value)) {
+            return [key, value];
+          }
+          return [key, undefined];
+        }
+
+        if (value === null) return [key, undefined];
+        if (
+          value === "" &&
+          ["startTime", "endTime", "answersRevealTime", "descriptionImageUrl", "descriptionVideoUrl"].includes(key)
+        ) {
+          return [key, undefined];
+        }
+        return [key, value];
+      })
+    );
+    
+    const validatedData = quizSchema.parse(cleanedBody);
 
     // Generate unique slug if not provided
     const slug = validatedData.slug
@@ -90,6 +142,21 @@ export async function POST(request: NextRequest) {
       quizData.answersRevealTime = new Date(validatedData.answersRevealTime);
     }
 
+    const finalRecurringType = validatedData.recurringType ?? RecurringType.NONE;
+
+    if (validatedData.maxAttemptsPerUser === null || validatedData.maxAttemptsPerUser === undefined) {
+      quizData.maxAttemptsPerUser = null;
+      quizData.attemptResetPeriod = PrismaAttemptResetPeriod.NEVER;
+    } else {
+      quizData.maxAttemptsPerUser = validatedData.maxAttemptsPerUser;
+      const attemptResetPeriodValue =
+        validatedData.attemptResetPeriod ?? AttemptResetPeriodConst.NEVER;
+      quizData.attemptResetPeriod =
+        finalRecurringType === RecurringType.NONE
+          ? PrismaAttemptResetPeriod.NEVER
+          : toPrismaAttemptResetPeriod(attemptResetPeriodValue);
+    }
+
     const quiz = await prisma.quiz.create({
       data: quizData,
       include: {
@@ -106,4 +173,3 @@ export async function POST(request: NextRequest) {
     return handleError(error);
   }
 }
-
