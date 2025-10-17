@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { AttemptResetPeriod } from "@prisma/client";
 import { ZodError } from "zod";
 
 export class AppError extends Error {
@@ -49,7 +50,11 @@ export class ConflictError extends AppError {
 }
 
 export class AttemptLimitError extends AppError {
-  constructor(public limit: number, public resetAt: Date | null) {
+  constructor(
+    public limit: number,
+    public period: AttemptResetPeriod,
+    public resetAt: Date | null
+  ) {
     super(403, "Attempt limit reached", "ATTEMPT_LIMIT_REACHED");
   }
 }
@@ -69,6 +74,7 @@ export function handleError(error: unknown) {
         error: error.message,
         code: error.code,
         limit: error.limit,
+        period: error.period,
         resetAt: error.resetAt ? error.resetAt.toISOString() : null,
       },
       { status: error.statusCode }

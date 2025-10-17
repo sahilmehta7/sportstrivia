@@ -7,6 +7,7 @@ import { useForm } from "react-hook-form";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
@@ -18,6 +19,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Save } from "lucide-react";
 import Link from "next/link";
@@ -28,6 +30,7 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  FormDescription,
 } from "@/components/ui/form";
 import { QuizInput, quizSchema } from "@/lib/validations/quiz.schema";
 import {
@@ -39,6 +42,8 @@ import {
 import {
   AttemptResetPeriod,
   ATTEMPT_RESET_PERIOD_OPTIONS,
+  ATTEMPT_RESET_PERIOD_LABELS,
+  ATTEMPT_RESET_PERIOD_HELP_TEXT,
 } from "@/constants/attempts";
 import { generateSlug } from "@/lib/seo-utils";
 
@@ -85,9 +90,26 @@ export default function NewQuizPage() {
 
   const attemptResetOptions = ATTEMPT_RESET_PERIOD_OPTIONS;
 
-  const attemptLimitEnabled = form.watch("maxAttemptsPerUser") !== null;
+  const maxAttemptsValue = form.watch("maxAttemptsPerUser");
+  const attemptLimitEnabled = maxAttemptsValue !== null && maxAttemptsValue !== undefined;
   const attemptResetPeriodValue = form.watch("attemptResetPeriod");
   const recurringTypeValue = form.watch("recurringType");
+  const canConfigureReset = attemptLimitEnabled && recurringTypeValue !== RecurringType.NONE;
+  const attemptResetLabel = ATTEMPT_RESET_PERIOD_LABELS[attemptResetPeriodValue];
+  const attemptResetHelpText = ATTEMPT_RESET_PERIOD_HELP_TEXT[attemptResetPeriodValue];
+  const attemptLimitSummary = attemptLimitEnabled
+    ? maxAttemptsValue && maxAttemptsValue > 0
+      ? attemptResetPeriodValue === AttemptResetPeriod.NEVER
+        ? `Limited to ${maxAttemptsValue} attempt${maxAttemptsValue === 1 ? "" : "s"} total`
+        : `Limited to ${maxAttemptsValue} attempt${maxAttemptsValue === 1 ? "" : "s"} per ${attemptResetLabel.toLowerCase()}`
+      : "Enter a limit to enforce the cap."
+    : "Unlimited attempts";
+
+  useEffect(() => {
+    if (recurringTypeValue === RecurringType.NONE && attemptResetPeriodValue !== AttemptResetPeriod.NEVER) {
+      form.setValue("attemptResetPeriod", AttemptResetPeriod.NEVER, { shouldDirty: false });
+    }
+  }, [form, recurringTypeValue, attemptResetPeriodValue]);
 
   const handleAttemptLimitToggle = (checked: boolean) => {
     if (checked) {
@@ -303,6 +325,124 @@ export default function NewQuizPage() {
                           <SelectItem value={QuizStatus.REVIEW}>Review</SelectItem>
                           <SelectItem value={QuizStatus.PUBLISHED}>Published</SelectItem>
                           <SelectItem value={QuizStatus.ARCHIVED}>Archived</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle>Attempt Limits</CardTitle>
+              <CardDescription>Restrict how often each user can take this quiz.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <Label htmlFor="attempt-limit-toggle" className="text-base">
+                    Enable Attempt Cap
+                  </Label>
+                  <p className="text-sm text-muted-foreground">
+                    {attemptLimitEnabled
+                      ? "Players will be stopped once they reach the configured limit."
+                      : "Leave disabled to allow unlimited attempts per user."}
+                  </p>
+                </div>
+                <Switch
+                  id="attempt-limit-toggle"
+                  checked={attemptLimitEnabled}
+                  onCheckedChange={handleAttemptLimitToggle}
+                />
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2">
+                <Badge variant={attemptLimitEnabled ? "secondary" : "outline"}>{attemptLimitSummary}</Badge>
+                {attemptLimitEnabled && (
+                  <Badge variant="outline">
+                    {attemptResetPeriodValue === AttemptResetPeriod.NEVER
+                      ? "No automatic reset"
+                      : `Resets ${attemptResetLabel.toLowerCase()}`}
+                  </Badge>
+                )}
+                {attemptLimitEnabled && recurringTypeValue !== RecurringType.NONE && (
+                  <Badge variant="outline">
+                    Quiz recurs {recurringTypeValue.toLowerCase()}
+                  </Badge>
+                )}
+              </div>
+
+              <div className="grid gap-4 md:grid-cols-2">
+                <FormField
+                  control={form.control}
+                  name="maxAttemptsPerUser"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Attempts Allowed</FormLabel>
+                      <FormDescription>
+                        Users can start up to this many attempts before the lock applies.
+                      </FormDescription>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          min={1}
+                          value={field.value ?? ""}
+                          onChange={(event) => {
+                            const { value } = event.target;
+                            if (value === "") {
+                              field.onChange(null);
+                              return;
+                            }
+                            const parsed = Number(value);
+                            field.onChange(Number.isNaN(parsed) ? null : parsed);
+                          }}
+                          disabled={!attemptLimitEnabled}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="attemptResetPeriod"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Reset Schedule</FormLabel>
+                      <FormDescription>
+                        {!attemptLimitEnabled
+                          ? "Attempts reset is disabled while the cap is off."
+                          : !canConfigureReset
+                            ? "Enable a recurring schedule to allow automatic resets."
+                            : attemptResetHelpText}
+                      </FormDescription>
+                      <Select
+                        value={field.value}
+                        onValueChange={field.onChange}
+                        disabled={!canConfigureReset}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {attemptResetOptions.map((option) => (
+                            <SelectItem
+                              key={option.value}
+                              value={option.value}
+                              disabled={
+                                !attemptLimitEnabled ||
+                                (recurringTypeValue === RecurringType.NONE &&
+                                  option.value !== AttemptResetPeriod.NEVER)
+                              }
+                            >
+                              {option.label}
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                       <FormMessage />

@@ -6,9 +6,10 @@ import { Button } from "@/components/ui/button";
 interface StartQuizButtonProps {
   slug: string;
   disabled?: boolean;
+  text?: string;
 }
 
-export function StartQuizButton({ slug, disabled }: StartQuizButtonProps) {
+export function StartQuizButton({ slug, disabled, text = "Start Quiz" }: StartQuizButtonProps) {
   const router = useRouter();
 
   const handleStart = () => {
@@ -20,7 +21,7 @@ export function StartQuizButton({ slug, disabled }: StartQuizButtonProps) {
 
   return (
     <Button size="lg" onClick={handleStart} disabled={disabled}>
-      Start Quiz
+      {text}
     </Button>
   );
 }

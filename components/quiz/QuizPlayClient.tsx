@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { AttemptResetPeriod } from "@prisma/client";
 import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,11 +11,21 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { useToast } from "@/hooks/use-toast";
 import { ReviewModal } from "./ReviewModal";
+import { AttemptLimitBanner } from "@/components/quiz/AttemptLimitBanner";
+
+interface AttemptLimitClientInfo {
+  max: number;
+  remaining: number | null;
+  period: AttemptResetPeriod;
+  resetAt: string | null;
+  isLocked?: boolean;
+}
 
 interface QuizPlayClientProps {
   quizId: string;
   quizTitle: string;
   quizSlug: string;
+  initialAttemptLimit?: AttemptLimitClientInfo | null;
 }
 
 interface AttemptQuestion {
@@ -46,13 +57,15 @@ interface QuestionFeedback {
   selectedAnswerId: string | null;
 }
 
-export function QuizPlayClient({ quizId, quizTitle, quizSlug }: QuizPlayClientProps) {
+export function QuizPlayClient({ quizId, quizTitle, quizSlug, initialAttemptLimit }: QuizPlayClientProps) {
   const router = useRouter();
   const { toast } = useToast();
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [hasReviewed, setHasReviewed] = useState(false);
 
-  const [status, setStatus] = useState<"loading" | "in-progress" | "results" | "error">("loading");
+  const [status, setStatus] = useState<
+    "loading" | "in-progress" | "results" | "error" | "limit-reached"
+  >("loading");
   const attemptIdRef = useRef<string | null>(null);
   const [quizConfig, setQuizConfig] = useState<QuizConfig>({});
   const [totalQuestions, setTotalQuestions] = useState<number>(0);
@@ -66,6 +79,12 @@ export function QuizPlayClient({ quizId, quizTitle, quizSlug }: QuizPlayClientPr
   const [isCompleting, startCompletion] = useTransition();
   const [isSharing, setIsSharing] = useState(false);
   const [shareStatus, setShareStatus] = useState<"idle" | "success" | "error">("idle");
+  const [attemptLimit, setAttemptLimit] = useState<AttemptLimitClientInfo | null>(
+    initialAttemptLimit ?? null
+  );
+  const [limitLockInfo, setLimitLockInfo] = useState<AttemptLimitClientInfo | null>(
+    initialAttemptLimit?.isLocked ? initialAttemptLimit : null
+  );
 
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const advanceTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -201,16 +220,60 @@ export function QuizPlayClient({ quizId, quizTitle, quizSlug }: QuizPlayClientPr
       }
 
       if (!response.ok) {
+        if (result?.code === "ATTEMPT_LIMIT_REACHED") {
+          const limitInfo: AttemptLimitClientInfo = {
+            max: result.limit ?? initialAttemptLimit?.max ?? 0,
+            remaining: 0,
+            period:
+              (result.period as AttemptResetPeriod | undefined) ??
+              initialAttemptLimit?.period ??
+              AttemptResetPeriod.NEVER,
+            resetAt: result.resetAt ?? initialAttemptLimit?.resetAt ?? null,
+            isLocked: true,
+          };
+
+          setAttemptLimit(limitInfo);
+          setLimitLockInfo(limitInfo);
+          setStatus("limit-reached");
+          return;
+        }
+
         throw new Error(result.error || "Failed to start quiz");
       }
 
-      const { attempt, quiz, totalQuestions: total } = result.data;
+      const {
+        attempt,
+        quiz,
+        totalQuestions: total,
+        attemptLimit: attemptLimitMeta,
+      } = result.data;
       attemptIdRef.current = attempt.id;
       setQuizConfig({
         timePerQuestion: quiz.timePerQuestion,
         showHints: quiz.showHints,
       });
       setTotalQuestions(total);
+
+      if (attemptLimitMeta) {
+        const normalized: AttemptLimitClientInfo = {
+          max: attemptLimitMeta.max,
+          remaining:
+            typeof attemptLimitMeta.remaining === "number"
+              ? Math.max(attemptLimitMeta.remaining, 0)
+              : null,
+          period: attemptLimitMeta.period as AttemptResetPeriod,
+          resetAt: attemptLimitMeta.resetAt ?? null,
+          isLocked:
+            typeof attemptLimitMeta.remaining === "number"
+              ? attemptLimitMeta.remaining <= 0
+              : false,
+        };
+        setAttemptLimit(normalized);
+        setLimitLockInfo(null);
+      } else {
+        setAttemptLimit(null);
+        setLimitLockInfo(null);
+      }
 
       await fetchNextQuestion(attempt.id);
     } catch (error: any) {
@@ -221,16 +284,23 @@ export function QuizPlayClient({ quizId, quizTitle, quizSlug }: QuizPlayClientPr
       });
       setStatus("error");
     }
-  }, [fetchNextQuestion, quizId, quizSlug, router, toast]);
+  }, [fetchNextQuestion, quizId, quizSlug, router, toast, initialAttemptLimit]);
 
   useEffect(() => {
+    if (initialAttemptLimit?.isLocked) {
+      setStatus("limit-reached");
+      setLimitLockInfo(initialAttemptLimit);
+      setAttemptLimit(initialAttemptLimit);
+      return () => undefined;
+    }
+
     startAttempt();
 
     return () => {
       clearTimer();
       clearAdvanceTimeout();
     };
-  }, [startAttempt]);
+  }, [initialAttemptLimit, startAttempt]);
 
   const handleRematch = useCallback(() => {
     setStatus("loading");
@@ -239,6 +309,7 @@ export function QuizPlayClient({ quizId, quizTitle, quizSlug }: QuizPlayClientPr
     attemptIdRef.current = null;
     setPosition(0);
     setTotalQuestions(0);
+    setLimitLockInfo(null);
     startAttempt();
   }, [startAttempt]);
 
@@ -399,6 +470,45 @@ export function QuizPlayClient({ quizId, quizTitle, quizSlug }: QuizPlayClientPr
     return `${minutes}:${seconds.toString().padStart(2, "0")}`;
   }, [timeLeft]);
 
+  if (status === "limit-reached") {
+    const lockedInfo = limitLockInfo ?? attemptLimit ?? initialAttemptLimit ?? null;
+    const attemptsRemaining =
+      lockedInfo?.remaining !== undefined && lockedInfo?.remaining !== null
+        ? Math.max(lockedInfo.remaining, 0)
+        : 0;
+    const attemptsUsed =
+      lockedInfo && lockedInfo.remaining !== null
+        ? Math.max(lockedInfo.max - lockedInfo.remaining, 0)
+        : lockedInfo?.max ?? null;
+
+    return (
+      <div className="mx-auto max-w-xl space-y-6 py-12">
+        {lockedInfo && (
+          <AttemptLimitBanner
+            maxAttempts={lockedInfo.max}
+            period={lockedInfo.period}
+            attemptsRemaining={attemptsRemaining}
+            attemptsUsed={attemptsUsed}
+            resetAt={lockedInfo.resetAt}
+            className="shadow-sm"
+          />
+        )}
+        <p className="text-sm text-muted-foreground">
+          You’ve reached the attempt limit for this quiz. Please wait for the reset window or
+          explore other quizzes while you wait.
+        </p>
+        <div className="flex flex-wrap gap-2">
+          <Button onClick={() => router.push(`/quizzes/${quizSlug}`)}>
+            Return to quiz details
+          </Button>
+          <Button variant="outline" onClick={() => router.push("/quizzes")}>
+            Browse other quizzes
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   if (status === "loading") {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
@@ -445,6 +555,20 @@ export function QuizPlayClient({ quizId, quizTitle, quizSlug }: QuizPlayClientPr
 
     return (
       <div className="mx-auto grid max-w-4xl gap-6 py-8">
+        {attemptLimit && (
+          <AttemptLimitBanner
+            maxAttempts={attemptLimit.max}
+            period={attemptLimit.period}
+            attemptsRemaining={attemptLimit.remaining}
+            attemptsUsed={
+              attemptLimit.remaining !== null
+                ? Math.max(attemptLimit.max - attemptLimit.remaining, 0)
+                : null
+            }
+            resetAt={attemptLimit.resetAt}
+            className="shadow-sm"
+          />
+        )}
         <Card>
           <CardHeader>
             <CardTitle>Quiz Completed</CardTitle>
@@ -640,6 +764,20 @@ export function QuizPlayClient({ quizId, quizTitle, quizSlug }: QuizPlayClientPr
 
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-6 py-8">
+      {attemptLimit && (
+        <AttemptLimitBanner
+          maxAttempts={attemptLimit.max}
+          period={attemptLimit.period}
+          attemptsRemaining={attemptLimit.remaining}
+          attemptsUsed={
+            attemptLimit.remaining !== null
+              ? Math.max(attemptLimit.max - attemptLimit.remaining, 0)
+              : null
+          }
+          resetAt={attemptLimit.resetAt}
+          className="shadow-sm"
+        />
+      )}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold">{quizTitle}</h1>

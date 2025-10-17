@@ -14,6 +14,8 @@ import { StartQuizButton } from "./start-quiz-button";
 import { ChallengeButton } from "./challenge-button";
 import { StarRating } from "@/components/ui/star-rating";
 import { ReviewsList } from "@/components/quiz/ReviewsList";
+import { AttemptLimitBanner } from "@/components/quiz/AttemptLimitBanner";
+import { getAttemptLimitStatus } from "@/lib/services/attempt-limit.service";
 import {
   Clock,
   HelpCircle,
@@ -193,6 +195,34 @@ export default async function QuizDetailPage({
 
   const isLoggedIn = Boolean(session?.user);
   const now = new Date();
+
+  const userId = session?.user?.id ?? null;
+  const attemptLimitStatus = userId && quiz.maxAttemptsPerUser
+    ? await getAttemptLimitStatus(prisma, {
+        userId,
+        quiz: {
+          id: quiz.id,
+          maxAttemptsPerUser: quiz.maxAttemptsPerUser,
+          attemptResetPeriod: quiz.attemptResetPeriod,
+        },
+        referenceDate: now,
+      })
+    : null;
+
+  const attemptLimitDetails = quiz.maxAttemptsPerUser
+    ? {
+        maxAttempts: quiz.maxAttemptsPerUser,
+        period: quiz.attemptResetPeriod,
+        attemptsRemaining: isLoggedIn
+          ? attemptLimitStatus?.remainingBeforeStart ?? quiz.maxAttemptsPerUser
+          : null,
+        attemptsUsed: isLoggedIn ? attemptLimitStatus?.used ?? 0 : null,
+        resetAt: attemptLimitStatus?.resetAt
+          ? attemptLimitStatus.resetAt.toISOString()
+          : null,
+        isLocked: isLoggedIn ? attemptLimitStatus?.isLimitReached ?? false : false,
+      }
+    : null;
   const hasStarted = !quiz.startTime || quiz.startTime <= now;
   const hasEnded = Boolean(quiz.endTime && quiz.endTime < now);
   const isLive = hasStarted && !hasEnded;
@@ -216,6 +246,11 @@ export default async function QuizDetailPage({
     .join(" ");
 
   const difficultyInfo = difficultyConfig[quiz.difficulty as keyof typeof difficultyConfig];
+
+  const limitBlocksPlay = attemptLimitDetails?.isLocked ?? false;
+  const startDisabled = !isLive || limitBlocksPlay;
+  const challengeDisabled = !isLive || limitBlocksPlay;
+  const startButtonText = limitBlocksPlay ? "Attempts Locked" : "Start Quiz";
 
   // Generate structured data
   const quizSchema = getQuizSchema(quiz);
@@ -410,8 +445,12 @@ export default async function QuizDetailPage({
               <div className="flex flex-wrap items-center gap-3">
                 {isLoggedIn ? (
                   <>
-                    <StartQuizButton slug={quiz.slug} disabled={!isLive} />
-                    <ChallengeButton quizId={quiz.id} disabled={!isLive} />
+                    <StartQuizButton
+                      slug={quiz.slug}
+                      disabled={startDisabled}
+                      text={startButtonText}
+                    />
+                    <ChallengeButton quizId={quiz.id} disabled={challengeDisabled} />
                   </>
                 ) : (
                   <Link href="/auth/signin">
@@ -422,6 +461,18 @@ export default async function QuizDetailPage({
                   </Link>
                 )}
               </div>
+
+              {attemptLimitDetails && (
+                <AttemptLimitBanner
+                  maxAttempts={attemptLimitDetails.maxAttempts}
+                  period={attemptLimitDetails.period}
+                  attemptsRemaining={attemptLimitDetails.attemptsRemaining}
+                  attemptsUsed={attemptLimitDetails.attemptsUsed}
+                  resetAt={attemptLimitDetails.resetAt}
+                  requiresLogin={!isLoggedIn}
+                  className="mt-4"
+                />
+              )}
 
               {/* Availability Message */}
               {availabilityStatus !== "live" && (

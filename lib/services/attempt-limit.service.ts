@@ -1,4 +1,5 @@
-import { AttemptResetPeriod, PrismaClient } from "@prisma/client";
+import { AttemptResetPeriod, PrismaClient, type Quiz } from "@prisma/client";
+import { AttemptLimitError } from "@/lib/errors";
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 const MS_PER_WEEK = 7 * MS_PER_DAY;
@@ -77,4 +78,71 @@ export async function countUserAttemptsWithinWindow(
         : {}),
     },
   });
+}
+
+export interface AttemptLimitCheckParams {
+  userId: string;
+  quiz: Pick<Quiz, "id" | "maxAttemptsPerUser" | "attemptResetPeriod">;
+  isPracticeMode?: boolean;
+  referenceDate?: Date;
+}
+
+export interface AttemptLimitCheckResult {
+  max: number;
+  used: number;
+  remainingBeforeStart: number;
+  period: AttemptResetPeriod;
+  windowStart: Date | null;
+  resetAt: Date | null;
+  referenceDate: Date;
+  isLimitReached: boolean;
+}
+
+export async function getAttemptLimitStatus(
+  prisma: PrismaClient,
+  params: AttemptLimitCheckParams
+): Promise<AttemptLimitCheckResult | null> {
+  const { userId, quiz, isPracticeMode = false, referenceDate } = params;
+
+  if (isPracticeMode || !quiz.maxAttemptsPerUser) {
+    return null;
+  }
+
+  const now = referenceDate ?? new Date();
+  const windowStart = getAttemptWindowStart(quiz.attemptResetPeriod, now);
+  const attemptsUsed = await countUserAttemptsWithinWindow(prisma, {
+    userId,
+    quizId: quiz.id,
+    windowStart,
+  });
+
+  const remainingBeforeStart = Math.max(quiz.maxAttemptsPerUser - attemptsUsed, 0);
+
+  return {
+    max: quiz.maxAttemptsPerUser,
+    used: attemptsUsed,
+    remainingBeforeStart,
+    period: quiz.attemptResetPeriod,
+    windowStart,
+    resetAt: getNextResetAt(quiz.attemptResetPeriod, now),
+    referenceDate: now,
+    isLimitReached: remainingBeforeStart <= 0,
+  };
+}
+
+export async function checkAttemptLimit(
+  prisma: PrismaClient,
+  params: AttemptLimitCheckParams
+): Promise<AttemptLimitCheckResult | null> {
+  const status = await getAttemptLimitStatus(prisma, params);
+
+  if (!status) {
+    return null;
+  }
+
+  if (status.isLimitReached) {
+    throw new AttemptLimitError(status.max, status.period, status.resetAt);
+  }
+
+  return status;
 }

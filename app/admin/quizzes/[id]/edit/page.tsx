@@ -40,6 +40,8 @@ import {
 import {
   AttemptResetPeriod,
   ATTEMPT_RESET_PERIOD_OPTIONS,
+  ATTEMPT_RESET_PERIOD_LABELS,
+  ATTEMPT_RESET_PERIOD_HELP_TEXT,
 } from "@/constants/attempts";
 
 interface EditQuizPageProps {
@@ -93,6 +95,21 @@ export default function EditQuizPage({ params }: EditQuizPageProps) {
     seoDescription: "",
     seoKeywords: "",
   });
+
+  const maxAttemptsValue = formData.maxAttemptsPerUser
+    ? Number.parseInt(formData.maxAttemptsPerUser, 10)
+    : null;
+  const attemptResetPeriodValue = formData.attemptResetPeriod as AttemptResetPeriod;
+  const canConfigureReset = attemptLimitEnabled && formData.recurringType !== "NONE";
+  const attemptResetLabel = ATTEMPT_RESET_PERIOD_LABELS[attemptResetPeriodValue];
+  const attemptResetHelpText = ATTEMPT_RESET_PERIOD_HELP_TEXT[attemptResetPeriodValue];
+  const attemptLimitSummary = attemptLimitEnabled
+    ? maxAttemptsValue && maxAttemptsValue > 0
+      ? attemptResetPeriodValue === AttemptResetPeriod.NEVER
+        ? `Limited to ${maxAttemptsValue} attempt${maxAttemptsValue === 1 ? "" : "s"} total`
+        : `Limited to ${maxAttemptsValue} attempt${maxAttemptsValue === 1 ? "" : "s"} per ${attemptResetLabel.toLowerCase()}`
+      : "Enter a limit to enforce the cap."
+    : "Unlimited attempts";
 
   useEffect(() => {
     async function loadQuiz() {
@@ -194,6 +211,18 @@ export default function EditQuizPage({ params }: EditQuizPageProps) {
     
     loadTopicConfigs();
   }, [formData.questionSelectionMode, quizId]);
+
+  useEffect(() => {
+    if (
+      formData.recurringType === "NONE" &&
+      formData.attemptResetPeriod !== AttemptResetPeriod.NEVER
+    ) {
+      setFormData((prev) => ({
+        ...prev,
+        attemptResetPeriod: AttemptResetPeriod.NEVER,
+      }));
+    }
+  }, [formData.recurringType, formData.attemptResetPeriod]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -422,9 +451,12 @@ export default function EditQuizPage({ params }: EditQuizPageProps) {
       if (!formData.maxAttemptsPerUser) {
         updateField("maxAttemptsPerUser", "3");
       }
+      if (formData.recurringType === "NONE") {
+        updateField("attemptResetPeriod", AttemptResetPeriod.NEVER);
+      }
     } else {
       updateField("maxAttemptsPerUser", "");
-      updateField("attemptResetPeriod", "NEVER");
+      updateField("attemptResetPeriod", AttemptResetPeriod.NEVER);
     }
   };
 
@@ -520,6 +552,9 @@ export default function EditQuizPage({ params }: EditQuizPageProps) {
       // Sync isPublished with status changes
       if (field === "status") {
         updates.isPublished = value === "PUBLISHED";
+      }
+      if (field === "recurringType" && value === "NONE") {
+        updates.attemptResetPeriod = AttemptResetPeriod.NEVER;
       }
       
       return { ...prev, ...updates };
@@ -848,10 +883,26 @@ export default function EditQuizPage({ params }: EditQuizPageProps) {
                 />
               </div>
 
+              <div className="flex flex-wrap items-center gap-2">
+                <Badge variant={attemptLimitEnabled ? "secondary" : "outline"}>{attemptLimitSummary}</Badge>
+                {attemptLimitEnabled && (
+                  <Badge variant="outline">
+                    {attemptResetPeriodValue === AttemptResetPeriod.NEVER
+                      ? "No automatic reset"
+                      : `Resets ${attemptResetLabel.toLowerCase()}`}
+                  </Badge>
+                )}
+                {attemptLimitEnabled && formData.recurringType !== "NONE" && (
+                  <Badge variant="outline">
+                    Quiz recurs {formData.recurringType.toLowerCase()}
+                  </Badge>
+                )}
+              </div>
+
               {attemptLimitEnabled ? (
                 <div className="grid gap-4 md:grid-cols-2">
                   <div className="space-y-2">
-                    <Label htmlFor="maxAttemptsPerUser">Max attempts</Label>
+                    <Label htmlFor="maxAttemptsPerUser">Attempts Allowed</Label>
                     <Input
                       id="maxAttemptsPerUser"
                       type="number"
@@ -861,33 +912,40 @@ export default function EditQuizPage({ params }: EditQuizPageProps) {
                       placeholder="e.g. 3"
                     />
                     <p className="text-xs text-muted-foreground">
-                      Users can attempt up to this number before the limit applies.
+                      Users can start up to this many attempts before the lock applies.
                     </p>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="attemptResetPeriod">Reset cadence</Label>
+                    <Label htmlFor="attemptResetPeriod">Reset Schedule</Label>
                     <Select
                       value={formData.attemptResetPeriod}
                       onValueChange={(value) => updateField("attemptResetPeriod", value)}
-                      disabled={formData.recurringType === "NONE"}
+                      disabled={!canConfigureReset}
                     >
                       <SelectTrigger id="attemptResetPeriod">
                         <SelectValue placeholder="Select reset cadence" />
                       </SelectTrigger>
                       <SelectContent>
                         {attemptResetOptions.map((option) => (
-                          <SelectItem key={option.value} value={option.value}>
+                          <SelectItem
+                            key={option.value}
+                            value={option.value}
+                            disabled={
+                              !attemptLimitEnabled ||
+                              (formData.recurringType === "NONE" && option.value !== AttemptResetPeriod.NEVER)
+                            }
+                          >
                             {option.label}
                           </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
                     <p className="text-xs text-muted-foreground">
-                      {formData.recurringType === "NONE"
-                        ? "This quiz doesn't recur, so attempts won't reset automatically."
-                        : formData.attemptResetPeriod === "NEVER"
-                          ? "Attempts never reset automatically."
-                          : `Attempts reset ${formData.attemptResetPeriod.toLowerCase()}.`}
+                      {!attemptLimitEnabled
+                        ? "Attempts reset is disabled while the cap is off."
+                        : !canConfigureReset
+                          ? "Enable a recurring schedule to allow automatic resets."
+                          : attemptResetHelpText}
                     </p>
                   </div>
                 </div>
