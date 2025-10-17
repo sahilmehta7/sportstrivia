@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import { usePathname } from "next/navigation";
 import { MainNavigation } from "@/components/shared/MainNavigation";
 import { Footer } from "@/components/shared/Footer";

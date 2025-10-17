@@ -586,6 +586,21 @@ model Media {
 }
 
 // ============================================
+// SETTINGS
+// ============================================
+
+model AppSettings {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String   @db.Text
+  category  String   @default("general")
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  
+  @@index([category])
+}
+
+// ============================================
 // ENUMS
 // ============================================
 

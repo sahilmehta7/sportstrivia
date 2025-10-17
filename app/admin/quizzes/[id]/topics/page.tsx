@@ -1,14 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Plus, Trash2, Save, Settings } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Settings } from "lucide-react";
 import Link from "next/link";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { Badge } from "@/components/ui/badge";
@@ -44,7 +43,6 @@ interface TopicConfig {
 }
 
 export default function TopicConfigPage({ params }: TopicConfigPageProps) {
-  const router = useRouter();
   const { toast } = useToast();
   const [quizId, setQuizId] = useState<string>("");
   const [quizTitle, setQuizTitle] = useState<string>("");

@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect, type FormEvent } from "react";
+import React, { useState, useEffect, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,7 +14,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Save, Trash2, CheckCircle, Archive, EyeOff } from "lucide-react";
+import { ArrowLeft, Save, Trash2, CheckCircle, Archive, EyeOff, Upload as UploadIcon, X } from "lucide-react";
 import Link from "next/link";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import {
@@ -38,11 +39,13 @@ export default function EditQuizPage({ params }: EditQuizPageProps) {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [topicConfigs, setTopicConfigs] = useState<any[]>([]);
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   const [formData, setFormData] = useState({
     title: "",
     slug: "",
     description: "",
+    descriptionImageUrl: "",
     sport: "",
     difficulty: "MEDIUM",
     status: "DRAFT",
@@ -93,6 +96,7 @@ export default function EditQuizPage({ params }: EditQuizPageProps) {
           title: quiz.title || "",
           slug: quiz.slug || "",
           description: quiz.description || "",
+          descriptionImageUrl: quiz.descriptionImageUrl || "",
           sport: quiz.sport || "",
           difficulty: quiz.difficulty || "MEDIUM",
           status: quiz.status || "DRAFT",
@@ -379,6 +383,74 @@ export default function EditQuizPage({ params }: EditQuizPageProps) {
     });
   };
 
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file size (5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: "File too large",
+        description: "Image must be less than 5MB",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate file type
+    const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "image/gif", "image/webp"];
+    if (!allowedTypes.includes(file.type)) {
+      toast({
+        title: "Invalid file type",
+        description: "Only JPEG, PNG, GIF, and WebP images are allowed",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setUploadingImage(true);
+
+    try {
+      const uploadFormData = new FormData();
+      uploadFormData.append("file", file);
+      uploadFormData.append("folder", "quizzes");
+
+      const response = await fetch("/api/admin/upload/image", {
+        method: "POST",
+        body: uploadFormData,
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || "Failed to upload image");
+      }
+
+      updateField("descriptionImageUrl", result.data.url);
+
+      toast({
+        title: "Image uploaded!",
+        description: "Cover image has been uploaded successfully",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Upload failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
+  const handleRemoveImage = () => {
+    updateField("descriptionImageUrl", "");
+    toast({
+      title: "Image removed",
+      description: "Cover image has been removed",
+    });
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -454,6 +526,94 @@ export default function EditQuizPage({ params }: EditQuizPageProps) {
                 onChange={(e) => updateField("description", e.target.value)}
                 rows={3}
               />
+            </div>
+
+            <Separator />
+
+            <div className="space-y-2">
+              <Label>Cover Image</Label>
+              <p className="text-sm text-muted-foreground">
+                Add a cover image for your quiz (displayed on quiz cards)
+              </p>
+              
+              {formData.descriptionImageUrl ? (
+                <div className="space-y-3">
+                  <div className="relative rounded-lg border overflow-hidden bg-muted h-48">
+                    <Image
+                      src={formData.descriptionImageUrl}
+                      alt="Quiz cover"
+                      fill
+                      className="object-cover"
+                    />
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="icon"
+                      className="absolute top-2 right-2"
+                      onClick={handleRemoveImage}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="imageUrl" className="text-xs">Or update URL directly:</Label>
+                    <Input
+                      id="imageUrl"
+                      value={formData.descriptionImageUrl}
+                      onChange={(e) => updateField("descriptionImageUrl", e.target.value)}
+                      placeholder="https://example.com/image.jpg"
+                    />
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <div className="flex gap-2">
+                    <div className="flex-1">
+                      <Label htmlFor="file-upload" className="cursor-pointer">
+                        <div className="flex items-center justify-center h-32 border-2 border-dashed border-muted-foreground/25 rounded-lg hover:border-muted-foreground/50 hover:bg-muted/50 transition-colors">
+                          {uploadingImage ? (
+                            <div className="flex flex-col items-center gap-2">
+                              <LoadingSpinner size="sm" />
+                              <span className="text-sm text-muted-foreground">Uploading...</span>
+                            </div>
+                          ) : (
+                            <div className="flex flex-col items-center gap-2">
+                              <UploadIcon className="h-8 w-8 text-muted-foreground" />
+                              <span className="text-sm font-medium">Click to upload</span>
+                              <span className="text-xs text-muted-foreground">PNG, JPG, GIF, WebP (max 5MB)</span>
+                            </div>
+                          )}
+                        </div>
+                        <input
+                          id="file-upload"
+                          type="file"
+                          accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
+                          onChange={handleImageUpload}
+                          disabled={uploadingImage}
+                          className="hidden"
+                        />
+                      </Label>
+                    </div>
+                  </div>
+                  <div className="relative">
+                    <div className="absolute inset-0 flex items-center">
+                      <span className="w-full border-t" />
+                    </div>
+                    <div className="relative flex justify-center text-xs uppercase">
+                      <span className="bg-background px-2 text-muted-foreground">Or</span>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="imageUrlInput">Enter Image URL</Label>
+                    <Input
+                      id="imageUrlInput"
+                      value={formData.descriptionImageUrl}
+                      onChange={(e) => updateField("descriptionImageUrl", e.target.value)}
+                      placeholder="https://example.com/image.jpg"
+                    />
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="grid gap-4 md:grid-cols-3">
@@ -603,7 +763,7 @@ export default function EditQuizPage({ params }: EditQuizPageProps) {
                 ) : (
                   <div className="mt-3 pt-3 border-t border-blue-200 dark:border-blue-800">
                     <p className="text-xs text-muted-foreground italic">
-                      No topics configured yet. Click "Configure Topics" to add topics.
+                      No topics configured yet. Click &quot;Configure Topics&quot; to add topics.
                     </p>
                   </div>
                 )}
