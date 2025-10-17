@@ -155,6 +155,7 @@ export default async function QuizDetailPage({
         },
         topicConfigs: {
           select: {
+            questionCount: true,
             topic: {
               select: {
                 id: true,
@@ -241,10 +242,17 @@ export default async function QuizDetailPage({
   const tags = quiz.tags.map((relation) => relation.tag);
   const topics = quiz.topicConfigs.map((config) => config.topic);
 
-  // Calculate actual number of questions user will answer (don't reveal pool size)
-  const actualQuestionCount = quiz.questionSelectionMode === "FIXED"
-    ? quiz._count.questionPool
-    : quiz.questionCount || quiz._count.questionPool;
+  // Calculate actual number of questions user will answer
+  let actualQuestionCount = quiz._count.questionPool;
+  
+  if (quiz.questionSelectionMode === "TOPIC_RANDOM") {
+    // Sum up questionCount from all topic configs
+    actualQuestionCount = quiz.topicConfigs.reduce((sum, config) => sum + config.questionCount, 0);
+  } else if (quiz.questionSelectionMode === "POOL_RANDOM") {
+    // Use the specified questionCount
+    actualQuestionCount = quiz.questionCount || quiz._count.questionPool;
+  }
+  // FIXED mode uses _count.questionPool (default from above)
 
   const difficultyInfo = difficultyConfig[quiz.difficulty as keyof typeof difficultyConfig];
   

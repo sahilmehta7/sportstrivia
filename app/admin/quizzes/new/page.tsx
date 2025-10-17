@@ -94,6 +94,8 @@ export default function NewQuizPage() {
   const attemptLimitEnabled = maxAttemptsValue !== null && maxAttemptsValue !== undefined;
   const attemptResetPeriodValue = form.watch("attemptResetPeriod");
   const recurringTypeValue = form.watch("recurringType");
+  const timePerQuestionValue = form.watch("timePerQuestion");
+  const questionCountValue = form.watch("questionCount");
   const canConfigureReset = attemptLimitEnabled && recurringTypeValue !== RecurringType.NONE;
   const attemptResetLabel = ATTEMPT_RESET_PERIOD_LABELS[attemptResetPeriodValue];
   const attemptResetHelpText = ATTEMPT_RESET_PERIOD_HELP_TEXT[attemptResetPeriodValue];
@@ -142,6 +144,16 @@ export default function NewQuizPage() {
       });
     }
   }, [form, slugValue, titleValue]);
+
+  // Auto-calculate total duration when timePerQuestion is set
+  useEffect(() => {
+    if (!timePerQuestionValue || timePerQuestionValue <= 0) return;
+    
+    if (questionCountValue && questionCountValue > 0) {
+      const calculatedDuration = questionCountValue * timePerQuestionValue;
+      form.setValue("duration", calculatedDuration, { shouldDirty: false });
+    }
+  }, [form, timePerQuestionValue, questionCountValue]);
 
   const onSubmit = form.handleSubmit(async (values) => {
     const payload: QuizInput = {
@@ -465,7 +477,14 @@ export default function NewQuizPage() {
                   name="duration"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Duration (seconds)</FormLabel>
+                      <FormLabel>
+                        Total Duration (seconds)
+                        {timePerQuestionValue && (
+                          <span className="ml-2 text-xs font-normal text-muted-foreground">
+                            (auto-calculated)
+                          </span>
+                        )}
+                      </FormLabel>
                       <FormControl>
                         <Input
                           type="number"
@@ -476,8 +495,15 @@ export default function NewQuizPage() {
                               event.target.value === "" ? undefined : Number(event.target.value)
                             )
                           }
+                          disabled={Boolean(timePerQuestionValue)}
+                          className={timePerQuestionValue ? "bg-muted" : ""}
                         />
                       </FormControl>
+                      <FormDescription>
+                        {timePerQuestionValue 
+                          ? "Auto-calculated from time per question × question count" 
+                          : "Total time for entire quiz"}
+                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -501,6 +527,9 @@ export default function NewQuizPage() {
                           }
                         />
                       </FormControl>
+                      <FormDescription>
+                        Auto-calculates total duration when set
+                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}

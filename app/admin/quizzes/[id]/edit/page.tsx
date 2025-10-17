@@ -224,6 +224,32 @@ export default function EditQuizPage({ params }: EditQuizPageProps) {
     }
   }, [formData.recurringType, formData.attemptResetPeriod]);
 
+  // Auto-calculate total duration when timePerQuestion is set
+  useEffect(() => {
+    if (!formData.timePerQuestion || !topicConfigs) return;
+    
+    const timePerQ = parseInt(formData.timePerQuestion);
+    if (isNaN(timePerQ) || timePerQ <= 0) return;
+    
+    let questionCount = 0;
+    
+    if (formData.questionSelectionMode === "TOPIC_RANDOM") {
+      // Sum up question counts from all topic configs
+      questionCount = topicConfigs.reduce((sum: number, config: any) => sum + (config.questionCount || 0), 0);
+    } else if (formData.questionSelectionMode === "POOL_RANDOM") {
+      // Use the specified questionCount
+      questionCount = parseInt(formData.questionCount) || 0;
+    }
+    
+    if (questionCount > 0) {
+      const calculatedDuration = questionCount * timePerQ;
+      setFormData((prev) => ({
+        ...prev,
+        duration: calculatedDuration.toString(),
+      }));
+    }
+  }, [formData.timePerQuestion, formData.questionCount, formData.questionSelectionMode, topicConfigs]);
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setSaving(true);
@@ -1007,13 +1033,27 @@ export default function EditQuizPage({ params }: EditQuizPageProps) {
           <CardContent className="space-y-4">
             <div className="grid gap-4 md:grid-cols-3">
               <div className="space-y-2">
-                <Label htmlFor="duration">Duration (seconds)</Label>
+                <Label htmlFor="duration">
+                  Total Duration (seconds)
+                  {formData.timePerQuestion && (
+                    <span className="ml-2 text-xs font-normal text-muted-foreground">
+                      (auto-calculated)
+                    </span>
+                  )}
+                </Label>
                 <Input
                   id="duration"
                   type="number"
                   value={formData.duration}
                   onChange={(e) => updateField("duration", e.target.value)}
+                  disabled={Boolean(formData.timePerQuestion)}
+                  className={formData.timePerQuestion ? "bg-muted" : ""}
                 />
+                <p className="text-xs text-muted-foreground">
+                  {formData.timePerQuestion 
+                    ? "Auto-calculated from time per question" 
+                    : "Total time for entire quiz"}
+                </p>
               </div>
 
               <div className="space-y-2">
@@ -1024,6 +1064,9 @@ export default function EditQuizPage({ params }: EditQuizPageProps) {
                   value={formData.timePerQuestion}
                   onChange={(e) => updateField("timePerQuestion", e.target.value)}
                 />
+                <p className="text-xs text-muted-foreground">
+                  Overrides total duration if set
+                </p>
               </div>
 
               <div className="space-y-2">
