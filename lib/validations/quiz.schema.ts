@@ -75,7 +75,7 @@ export const quizImportSchema = z.object({
     text: z.string().min(1),
     type: z.string().optional(),
     difficulty: z.nativeEnum(Difficulty).default(Difficulty.MEDIUM),
-    topicId: z.string().optional(), // Made optional - will use default topic if not provided
+    topic: z.string().min(1).optional(), // Optional topic name, defaults to General if missing
     hint: z.string().optional(),
     explanation: z.string().optional(),
     order: z.number().int().optional(),

@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/auth-helpers";
 import { quizImportSchema } from "@/lib/validations/quiz.schema";
-import { handleError, successResponse, NotFoundError, BadRequestError } from "@/lib/errors";
+import { handleError, successResponse, BadRequestError } from "@/lib/errors";
 import { generateUniqueSlug } from "@/lib/services/slug.service";
 import { Prisma, Difficulty, QuestionType } from "@prisma/client";
 
@@ -16,7 +16,7 @@ interface QuizImportQuestion {
   text: string;
   type?: string;
   difficulty: Difficulty;
-  topicId?: string;
+  topic?: string;
   hint?: string;
   explanation?: string;
   order?: number;
@@ -108,22 +108,54 @@ export async function POST(request: NextRequest) {
       });
 
       // Validate all topics at once (batch validation)
-      const uniqueTopicIds = [
-        ...new Set(questions.map((q) => q.topicId).filter((id): id is string => Boolean(id))),
-      ];
-      
-      if (uniqueTopicIds.length > 0) {
+      const normalizeTopicName = (name: string) => name.trim().toLowerCase();
+      const topicOriginalNameMap = new Map<string, string>();
+
+      for (const name of questions
+        .map((q) => q.topic?.trim())
+        .filter((name): name is string => Boolean(name))) {
+        const normalized = normalizeTopicName(name);
+        if (!topicOriginalNameMap.has(normalized)) {
+          topicOriginalNameMap.set(normalized, name);
+        }
+      }
+
+      const topicNameMap = new Map<string, { id: string }>();
+
+      if (topicOriginalNameMap.size > 0) {
+        const normalizedNames = Array.from(topicOriginalNameMap.keys());
         const existingTopics = await tx.topic.findMany({
-          where: { id: { in: uniqueTopicIds } },
-          select: { id: true },
+          where: {
+            OR: normalizedNames.map((normalized) => ({
+              name: {
+                equals: topicOriginalNameMap.get(normalized)!,
+                mode: "insensitive" as const,
+              },
+            })),
+          },
+          select: { id: true, name: true },
         });
-        const existingTopicIds = new Set(existingTopics.map((t) => t.id));
-        
-        // Check if all required topics exist
-        for (const topicId of uniqueTopicIds) {
-          if (!existingTopicIds.has(topicId)) {
-            throw new NotFoundError(`Topic with ID ${topicId} not found`);
+
+        for (const topic of existingTopics) {
+          topicNameMap.set(normalizeTopicName(topic.name), { id: topic.id });
+        }
+
+        for (const normalizedName of normalizedNames) {
+          if (topicNameMap.has(normalizedName)) {
+            continue;
           }
+
+          const topicName = topicOriginalNameMap.get(normalizedName)!;
+
+          const newTopic = await tx.topic.create({
+            data: {
+              name: topicName,
+              slug: await generateUniqueSlug(topicName, "topic"),
+              level: 0,
+            },
+          });
+
+          topicNameMap.set(normalizedName, { id: newTopic.id });
         }
       }
 
@@ -135,8 +167,13 @@ export async function POST(request: NextRequest) {
             ? questionData.type.toUpperCase()
             : "MULTIPLE_CHOICE") as QuestionType;
 
-          // Use provided topicId or default
-          const topicId = questionData.topicId || defaultTopic.id;
+          // Use provided topic or default
+          const normalizedTopicName = questionData.topic
+            ? normalizeTopicName(questionData.topic)
+            : null;
+          const topicId = normalizedTopicName
+            ? topicNameMap.get(normalizedTopicName)?.id || defaultTopic.id
+            : defaultTopic.id;
 
           return tx.question.create({
             data: {
