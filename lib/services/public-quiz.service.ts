@@ -230,6 +230,44 @@ export interface DailyQuizItem {
  * Fetches daily recurring quizzes and enriches them with user completion data
  * @param userId - Optional user ID to check completion status and streaks
  */
+/**
+ * Fetches upcoming quizzes (published but with future start time)
+ */
+export async function getComingSoonQuizzes(limit: number = 6) {
+  const now = new Date();
+  
+  const quizzes = await prisma.quiz.findMany({
+    where: {
+      isPublished: true,
+      status: "PUBLISHED",
+      startTime: {
+        gt: now, // Start time in the future
+      },
+    },
+    select: {
+      title: true,
+      sport: true,
+      difficulty: true,
+      startTime: true,
+      description: true,
+    },
+    orderBy: {
+      startTime: "asc", // Soonest first
+    },
+    take: limit,
+  });
+
+  return quizzes.map(quiz => ({
+    title: quiz.title,
+    sport: quiz.sport || "Multi-sport",
+    difficulty: quiz.difficulty,
+    estimatedDate: quiz.startTime 
+      ? new Date(quiz.startTime).toLocaleDateString("en-US", { month: "short", year: "numeric" })
+      : "TBA",
+    description: quiz.description || undefined,
+  }));
+}
+
 export async function getDailyRecurringQuizzes(
   userId?: string
 ): Promise<DailyQuizItem[]> {

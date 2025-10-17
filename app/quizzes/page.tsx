@@ -10,6 +10,7 @@ import {
   getPublicQuizFilterOptions,
   getPublicQuizList,
   getDailyRecurringQuizzes,
+  getComingSoonQuizzes,
 } from "@/lib/services/public-quiz.service";
 import type { PublicQuizFilters } from "@/lib/dto/quiz-filters.dto";
 import { Difficulty } from "@prisma/client";
@@ -89,31 +90,6 @@ function parsePublicFilters(searchParams: SearchParams): PublicQuizFilters {
   };
 }
 
-// Coming Soon test data
-const comingSoonQuizzes = [
-  {
-    title: "NFL Super Bowl History",
-    sport: "American Football",
-    difficulty: Difficulty.HARD,
-    estimatedDate: "Nov 2025",
-    description: "Test your knowledge of Super Bowl records, memorable plays, and championship moments.",
-  },
-  {
-    title: "Formula 1 Legends",
-    sport: "Formula 1",
-    difficulty: Difficulty.MEDIUM,
-    estimatedDate: "Nov 2025",
-    description: "From Senna to Hamilton - explore the greatest drivers in F1 history.",
-  },
-  {
-    title: "Olympic Games Trivia",
-    sport: "Multi-sport",
-    difficulty: Difficulty.EASY,
-    estimatedDate: "Dec 2025",
-    description: "Discover fascinating facts about the Summer and Winter Olympics.",
-  },
-];
-
 export default async function QuizzesPage({
   searchParams,
 }: {
@@ -126,13 +102,15 @@ export default async function QuizzesPage({
   const session = await auth();
   const userId = session?.user?.id;
 
-  const [listing, filterOptions, featuredListing, dailyQuizzes] = await Promise.all([
+  const [listing, filterOptions, featuredListing, dailyQuizzes, comingSoonQuizzes] = await Promise.all([
     getPublicQuizList(filters),
     getPublicQuizFilterOptions(),
     // Fetch featured quizzes for hero section
     getPublicQuizList({ isFeatured: true, limit: 5, page: 1 }),
     // Fetch daily recurring quizzes with user completion data
     getDailyRecurringQuizzes(userId),
+    // Fetch upcoming quizzes with future start dates
+    getComingSoonQuizzes(6),
   ]);
 
   const appliedFilters = {
