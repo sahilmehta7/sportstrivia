@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Progress } from "@/components/ui/progress";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { useToast } from "@/hooks/use-toast";
 import { ReviewModal } from "./ReviewModal";
@@ -35,7 +36,11 @@ interface AttemptQuestion {
   questionVideoUrl?: string | null;
   questionAudioUrl?: string | null;
   hint?: string | null;
+  explanation?: string | null;
+  explanationImageUrl?: string | null;
+  explanationVideoUrl?: string | null;
   timeLimit?: number | null;
+  correctAnswerId: string | null;
   answers: {
     id: string;
     answerText: string;
@@ -55,6 +60,9 @@ interface QuestionFeedback {
   wasSkipped: boolean;
   message: string;
   selectedAnswerId: string | null;
+  correctAnswerId: string | null;
+  correctAnswerText: string | null;
+  explanation?: string | null;
 }
 
 export function QuizPlayClient({ quizId, quizTitle, quizSlug, initialAttemptLimit }: QuizPlayClientProps) {
@@ -69,13 +77,14 @@ export function QuizPlayClient({ quizId, quizTitle, quizSlug, initialAttemptLimi
   const attemptIdRef = useRef<string | null>(null);
   const [quizConfig, setQuizConfig] = useState<QuizConfig>({});
   const [totalQuestions, setTotalQuestions] = useState<number>(0);
-  const [position, setPosition] = useState<number>(0);
+  const [questions, setQuestions] = useState<AttemptQuestion[]>([]);
+  const [currentIndex, setCurrentIndex] = useState<number>(0);
   const [currentQuestion, setCurrentQuestion] = useState<AttemptQuestion | null>(null);
   const [feedback, setFeedback] = useState<QuestionFeedback | null>(null);
   const [results, setResults] = useState<any>(null);
   const [timeLeft, setTimeLeft] = useState<number>(0);
+  const [currentTimeLimit, setCurrentTimeLimit] = useState<number>(60);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isLoadingQuestion, setIsLoadingQuestion] = useState(false);
   const [isCompleting, startCompletion] = useTransition();
   const [isSharing, setIsSharing] = useState(false);
   const [shareStatus, setShareStatus] = useState<"idle" | "success" | "error">("idle");
@@ -89,19 +98,19 @@ export function QuizPlayClient({ quizId, quizTitle, quizSlug, initialAttemptLimi
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const advanceTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const clearTimer = () => {
+  const clearTimer = useCallback(() => {
     if (timerRef.current) {
       clearInterval(timerRef.current);
       timerRef.current = null;
     }
-  };
+  }, []);
 
-  const clearAdvanceTimeout = () => {
+  const clearAdvanceTimeout = useCallback(() => {
     if (advanceTimeoutRef.current) {
       clearTimeout(advanceTimeoutRef.current);
       advanceTimeoutRef.current = null;
     }
-  };
+  }, []);
 
   const computeTimeLimit = useCallback(
     (question?: AttemptQuestion | null) => {
@@ -122,6 +131,7 @@ export function QuizPlayClient({ quizId, quizTitle, quizSlug, initialAttemptLimi
   const resetTimerForQuestion = useCallback(
     (question?: AttemptQuestion | null) => {
       const limit = computeTimeLimit(question);
+      setCurrentTimeLimit(limit);
       setTimeLeft(limit);
     },
     [computeTimeLimit]
@@ -159,52 +169,10 @@ export function QuizPlayClient({ quizId, quizTitle, quizSlug, initialAttemptLimi
     [toast]
   );
 
-  const fetchNextQuestion = useCallback(
-    async (attemptIdentifier?: string) => {
-      const activeAttemptId = attemptIdentifier ?? attemptIdRef.current;
-      if (!activeAttemptId) return;
-
-      setIsLoadingQuestion(true);
-      try {
-        const response = await fetch(`/api/attempts/${activeAttemptId}/next`);
-        const result = await response.json();
-
-        if (!response.ok) {
-          throw new Error(result.error || "Failed to load next question");
-        }
-
-        const { nextQuestion, position: nextPosition, total } = result.data;
-        setTotalQuestions(total);
-        setPosition(nextPosition);
-
-        if (!nextQuestion) {
-          // No more questions, complete attempt
-          startCompletion(async () => {
-            await completeAttempt(activeAttemptId);
-          });
-          return;
-        }
-
-        setCurrentQuestion(nextQuestion);
-        setFeedback(null);
-        resetTimerForQuestion(nextQuestion);
-        setStatus("in-progress");
-      } catch (error: any) {
-        toast({
-          title: "Unable to load question",
-          description: error?.message || "An unexpected error occurred.",
-          variant: "destructive",
-        });
-        setStatus("error");
-      } finally {
-        setIsLoadingQuestion(false);
-      }
-    },
-    [completeAttempt, resetTimerForQuestion, startCompletion, toast]
-  );
-
   const startAttempt = useCallback(async () => {
     setStatus("loading");
+    clearTimer();
+    clearAdvanceTimeout();
     try {
       const response = await fetch("/api/attempts", {
         method: "POST",
@@ -244,15 +212,16 @@ export function QuizPlayClient({ quizId, quizTitle, quizSlug, initialAttemptLimi
       const {
         attempt,
         quiz,
-        totalQuestions: total,
+        totalQuestions: totalFromServer,
         attemptLimit: attemptLimitMeta,
+        questions: questionBundle,
       } = result.data;
+
       attemptIdRef.current = attempt.id;
       setQuizConfig({
         timePerQuestion: quiz.timePerQuestion,
         showHints: quiz.showHints,
       });
-      setTotalQuestions(total);
 
       if (attemptLimitMeta) {
         const normalized: AttemptLimitClientInfo = {
@@ -275,7 +244,30 @@ export function QuizPlayClient({ quizId, quizTitle, quizSlug, initialAttemptLimi
         setLimitLockInfo(null);
       }
 
-      await fetchNextQuestion(attempt.id);
+      const readyQuestions: AttemptQuestion[] = Array.isArray(questionBundle)
+        ? questionBundle
+        : [];
+
+      if (!readyQuestions.length) {
+        throw new Error("Quiz has no questions available right now.");
+      }
+
+      setQuestions(readyQuestions);
+      setTotalQuestions(readyQuestions.length || totalFromServer || 0);
+      setCurrentIndex(0);
+      setFeedback(null);
+
+      const firstQuestion = readyQuestions[0] ?? null;
+      setCurrentQuestion(firstQuestion);
+
+      const initialLimit = firstQuestion
+        ? firstQuestion.timeLimit ?? quiz.timePerQuestion ?? 60
+        : quiz.timePerQuestion ?? 60;
+
+      setCurrentTimeLimit(initialLimit);
+      setTimeLeft(initialLimit);
+
+      setStatus("in-progress");
     } catch (error: any) {
       toast({
         title: "Unable to start quiz",
@@ -284,7 +276,7 @@ export function QuizPlayClient({ quizId, quizTitle, quizSlug, initialAttemptLimi
       });
       setStatus("error");
     }
-  }, [fetchNextQuestion, quizId, quizSlug, router, toast, initialAttemptLimit]);
+  }, [clearAdvanceTimeout, clearTimer, initialAttemptLimit, quizId, quizSlug, router, toast]);
 
   useEffect(() => {
     if (initialAttemptLimit?.isLocked) {
@@ -300,15 +292,19 @@ export function QuizPlayClient({ quizId, quizTitle, quizSlug, initialAttemptLimi
       clearTimer();
       clearAdvanceTimeout();
     };
-  }, [initialAttemptLimit, startAttempt]);
+  }, [clearAdvanceTimeout, clearTimer, initialAttemptLimit, startAttempt]);
 
   const handleRematch = useCallback(() => {
     setStatus("loading");
     setResults(null);
     setFeedback(null);
     attemptIdRef.current = null;
-    setPosition(0);
     setTotalQuestions(0);
+    setQuestions([]);
+    setCurrentIndex(0);
+    setCurrentQuestion(null);
+    setCurrentTimeLimit(60);
+    setTimeLeft(0);
     setLimitLockInfo(null);
     startAttempt();
   }, [startAttempt]);
@@ -360,29 +356,6 @@ export function QuizPlayClient({ quizId, quizTitle, quizSlug, initialAttemptLimi
     router.push(`/quizzes/${quizSlug}`);
   }, [router, quizSlug]);
 
-  useEffect(() => {
-    clearTimer();
-
-    if (status !== "in-progress" || !currentQuestion || feedback) {
-      return;
-    }
-
-    timerRef.current = setInterval(() => {
-      setTimeLeft((prev) => {
-        if (prev <= 1) {
-          clearTimer();
-          void handleAnswer(null, true);
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-
-    return () => {
-      clearTimer();
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [status, currentQuestion, feedback]);
   const handleAnswer = useCallback(
     async (answerId: string | null, fromTimer = false) => {
       if (
@@ -397,10 +370,34 @@ export function QuizPlayClient({ quizId, quizTitle, quizSlug, initialAttemptLimi
 
       setIsSubmitting(true);
       clearTimer();
+      clearAdvanceTimeout();
+
+      const timeLimit = computeTimeLimit(currentQuestion);
+      const timeSpent = Math.max(timeLimit - timeLeft, 0);
+      const wasSkipped = fromTimer || answerId === null;
+
+      const correctAnswerId = currentQuestion.correctAnswerId;
+      const correctAnswerText =
+        currentQuestion.answers.find((answer) => answer.id === correctAnswerId)?.answerText ?? null;
+
+      const optimisticIsCorrect =
+        !!answerId && !!correctAnswerId && answerId === correctAnswerId && !wasSkipped;
+
+      setFeedback({
+        isCorrect: optimisticIsCorrect,
+        wasSkipped,
+        message: wasSkipped
+          ? "Question skipped"
+          : optimisticIsCorrect
+          ? "Correct answer!"
+          : "Incorrect answer",
+        selectedAnswerId: answerId,
+        correctAnswerId,
+        correctAnswerText,
+        explanation: currentQuestion.explanation ?? null,
+      });
 
       try {
-        const timeLimit = computeTimeLimit(currentQuestion);
-        const timeSpent = Math.max(timeLimit - timeLeft, 0);
         const response = await fetch(`/api/attempts/${attemptIdRef.current}/answer`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
@@ -417,14 +414,18 @@ export function QuizPlayClient({ quizId, quizTitle, quizSlug, initialAttemptLimi
           throw new Error(result.error || "Unable to submit answer");
         }
 
-        const isLastQuestion = position >= totalQuestions - 1;
+        setFeedback((prev) =>
+          prev
+            ? {
+                ...prev,
+                isCorrect: result.data.isCorrect,
+                wasSkipped: result.data.wasSkipped,
+                message: result.data.message ?? prev.message,
+              }
+            : prev
+        );
 
-        setFeedback({
-          isCorrect: result.data.isCorrect,
-          wasSkipped: result.data.wasSkipped,
-          message: result.data.message,
-          selectedAnswerId: answerId,
-        });
+        const isLastQuestion = currentIndex >= totalQuestions - 1;
 
         clearAdvanceTimeout();
         advanceTimeoutRef.current = setTimeout(() => {
@@ -433,28 +434,44 @@ export function QuizPlayClient({ quizId, quizTitle, quizSlug, initialAttemptLimi
               await completeAttempt();
             });
           } else {
-            void fetchNextQuestion();
+            const nextIndex = currentIndex + 1;
+            const nextQuestion = questions[nextIndex];
+
+            if (!nextQuestion) {
+              startCompletion(async () => {
+                await completeAttempt();
+              });
+              return;
+            }
+
+            setCurrentIndex(nextIndex);
+            setCurrentQuestion(nextQuestion);
+            setFeedback(null);
+            resetTimerForQuestion(nextQuestion);
           }
-        }, fromTimer ? 600 : 1200);
+        }, fromTimer ? 600 : 900);
       } catch (error: any) {
         toast({
           title: "Submission failed",
           description: error?.message || "We couldn't record your answer.",
           variant: "destructive",
         });
+        setFeedback(null);
         resetTimerForQuestion(currentQuestion);
       } finally {
         setIsSubmitting(false);
       }
     },
     [
+      clearAdvanceTimeout,
+      clearTimer,
       completeAttempt,
       computeTimeLimit,
+      currentIndex,
       currentQuestion,
-      fetchNextQuestion,
       feedback,
       isSubmitting,
-      position,
+      questions,
       resetTimerForQuestion,
       startCompletion,
       status,
@@ -464,11 +481,60 @@ export function QuizPlayClient({ quizId, quizTitle, quizSlug, initialAttemptLimi
     ]
   );
 
+  useEffect(() => {
+    clearTimer();
+    clearAdvanceTimeout();
+
+    if (status !== "in-progress" || !currentQuestion || feedback) {
+      return () => {
+        clearTimer();
+        clearAdvanceTimeout();
+      };
+    }
+
+    timerRef.current = setInterval(() => {
+      setTimeLeft((prev) => {
+        if (prev <= 1) {
+          clearTimer();
+          clearAdvanceTimeout();
+          void handleAnswer(null, true);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => {
+      clearTimer();
+      clearAdvanceTimeout();
+    };
+  }, [clearAdvanceTimeout, clearTimer, currentQuestion, feedback, handleAnswer, status]);
+
+  useEffect(() => {
+    if (typeof performance !== "undefined" && status === "in-progress" && currentQuestion) {
+      performance.mark(`quiz-question-ready-${currentQuestion.id}`);
+    }
+  }, [currentQuestion, status]);
+
   const formattedTimeLeft = useMemo(() => {
     const minutes = Math.floor(timeLeft / 60);
     const seconds = timeLeft % 60;
     return `${minutes}:${seconds.toString().padStart(2, "0")}`;
   }, [timeLeft]);
+
+  const timeProgress = useMemo(() => {
+    if (currentTimeLimit <= 0) {
+      return 0;
+    }
+    return Math.max(0, Math.min(100, (timeLeft / currentTimeLimit) * 100));
+  }, [currentTimeLimit, timeLeft]);
+
+  const questionProgress = useMemo(() => {
+    if (totalQuestions <= 0) {
+      return 0;
+    }
+    return Math.min(100, ((currentIndex + 1) / totalQuestions) * 100);
+  }, [currentIndex, totalQuestions]);
 
   if (status === "limit-reached") {
     const lockedInfo = limitLockInfo ?? attemptLimit ?? initialAttemptLimit ?? null;
@@ -753,11 +819,11 @@ export function QuizPlayClient({ quizId, quizTitle, quizSlug, initialAttemptLimi
     );
   }
 
-  if (isLoadingQuestion || !currentQuestion) {
+  if (!currentQuestion) {
     return (
       <div className="flex min-h-[50vh] flex-col items-center justify-center gap-4">
         <LoadingSpinner size="lg" />
-        <p className="text-sm text-muted-foreground">Loading next question…</p>
+        <p className="text-sm text-muted-foreground">Loading your next question…</p>
       </div>
     );
   }
@@ -778,19 +844,30 @@ export function QuizPlayClient({ quizId, quizTitle, quizSlug, initialAttemptLimi
           className="shadow-sm"
         />
       )}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold">{quizTitle}</h1>
-          <p className="text-sm text-muted-foreground">
-            Question {position + 1} of {totalQuestions}
-          </p>
+      <div className="space-y-3">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h1 className="text-2xl font-semibold">{quizTitle}</h1>
+            <p className="text-sm text-muted-foreground">
+              Question {currentIndex + 1} of {totalQuestions}
+            </p>
+          </div>
+          <div className="flex items-center gap-3 rounded-full border border-border bg-background/80 px-3 py-1 shadow-sm backdrop-blur">
+            <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              Time
+            </span>
+            <Badge
+              variant="outline"
+              className={cn(
+                "min-w-[64px] justify-center text-base font-semibold",
+                timeLeft <= 5 && "border-red-500 text-red-600"
+              )}
+            >
+              {formattedTimeLeft}
+            </Badge>
+          </div>
         </div>
-        <div className="flex items-center gap-3">
-          <span className="text-sm font-medium text-muted-foreground">Time remaining</span>
-          <Badge variant="outline" className={cn(timeLeft <= 5 && "border-red-500 text-red-600")}>
-            {formattedTimeLeft}
-          </Badge>
-        </div>
+        <Progress value={questionProgress} className="h-2 bg-muted/60" />
       </div>
 
       <Card>
@@ -800,27 +877,75 @@ export function QuizPlayClient({ quizId, quizTitle, quizSlug, initialAttemptLimi
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
+          <div className="space-y-3">
+            <div className="relative h-2 overflow-hidden rounded-full bg-muted">
+              <div
+                className={cn(
+                  "absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-emerald-400 via-amber-400 to-rose-500 transition-[width] duration-200 ease-out",
+                  timeLeft <= 5 && "animate-pulse"
+                )}
+                style={{ width: `${timeProgress}%` }}
+              />
+            </div>
+            <div className="flex items-center justify-between text-xs text-muted-foreground">
+              <span>Keep the streak going</span>
+              <span>{Math.max(timeLeft, 0)}s left</span>
+            </div>
+          </div>
+
           <div className="grid gap-3">
             {currentQuestion.answers.map((answer) => {
               const isSelected = feedback?.selectedAnswerId === answer.id;
-              const isCorrectSelection = isSelected && feedback?.isCorrect;
+              const isCorrectAnswer = feedback?.correctAnswerId === answer.id;
               const isIncorrectSelection =
                 isSelected && !feedback?.isCorrect && !feedback?.wasSkipped;
+
+              let statusHint: string | null = null;
+              if (feedback) {
+                if (isCorrectAnswer) {
+                  if (feedback.wasSkipped) {
+                    statusHint = "Time's up";
+                  } else {
+                    statusHint =
+                      feedback.isCorrect && isSelected ? "You nailed it!" : "Correct answer";
+                  }
+                } else if (isIncorrectSelection) {
+                  statusHint = "Your answer";
+                }
+              }
 
               return (
                 <Button
                   key={answer.id}
                   variant="outline"
                   className={cn(
-                    "justify-start text-left",
-                    isCorrectSelection && "border-green-500 bg-green-500/10 text-foreground",
-                    isIncorrectSelection && "border-red-500 bg-red-500/10 text-foreground",
-                    !feedback && "hover:border-primary hover:bg-primary/10"
+                    "justify-start text-left transition-all duration-200",
+                    !feedback && "hover:-translate-y-0.5 hover:border-primary hover:bg-primary/10",
+                    feedback && "cursor-default",
+                    isCorrectAnswer &&
+                      "border-emerald-500/80 bg-emerald-500/10 text-foreground shadow-[0_0_0_1px_rgba(16,185,129,0.2)]",
+                    isIncorrectSelection && "border-destructive/70 bg-destructive/10 text-foreground"
                   )}
                   disabled={Boolean(feedback) || isSubmitting}
                   onClick={() => handleAnswer(answer.id)}
                 >
-                  {answer.answerText}
+                  <div className="flex w-full flex-col gap-1">
+                    <span className="text-base font-medium leading-snug">{answer.answerText}</span>
+                    {statusHint && (
+                      <span
+                        className={cn(
+                          "text-xs font-semibold uppercase tracking-wide",
+                          isCorrectAnswer
+                            ? "text-emerald-600"
+                            : isIncorrectSelection
+                            ? "text-destructive"
+                            : "text-muted-foreground"
+                        )}
+                      >
+                        {statusHint}
+                      </span>
+                    )}
+                  </div>
                 </Button>
               );
             })}
@@ -838,7 +963,20 @@ export function QuizPlayClient({ quizId, quizTitle, quizSlug, initialAttemptLimi
               className={cn(!feedback.isCorrect && "border-red-500 bg-red-500/5")}
             >
               <AlertTitle>{feedback.isCorrect ? "Correct!" : "Not quite"}</AlertTitle>
-              <AlertDescription>{feedback.message}</AlertDescription>
+              <AlertDescription>
+                <div className="space-y-2 text-sm">
+                  <p>{feedback.message}</p>
+                  {feedback.correctAnswerText && (!feedback.isCorrect || feedback.wasSkipped) && (
+                    <p>
+                      The answer was{" "}
+                      <span className="font-semibold text-foreground">{feedback.correctAnswerText}</span>.
+                    </p>
+                  )}
+                  {feedback.explanation && (
+                    <p className="text-xs text-muted-foreground">{feedback.explanation}</p>
+                  )}
+                </div>
+              </AlertDescription>
             </Alert>
           )}
         </CardContent>

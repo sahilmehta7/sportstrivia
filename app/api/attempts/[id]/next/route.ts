@@ -73,6 +73,8 @@ export async function GET(
       ? [...answers].sort(() => Math.random() - 0.5)
       : answers;
 
+    const correctAnswer = question.answers.find((answer) => answer.isCorrect);
+
     return successResponse({
       nextQuestion: {
         id: question.id,
@@ -82,8 +84,11 @@ export async function GET(
         questionAudioUrl: question.questionAudioUrl,
         hint: question.hint,
         explanation: question.explanation,
+        explanationImageUrl: question.explanationImageUrl,
+        explanationVideoUrl: question.explanationVideoUrl,
         timeLimit: question.timeLimit,
         answers: randomizedAnswers,
+        correctAnswerId: correctAnswer?.id ?? null,
       },
       position: answeredCount,
       total,
@@ -92,4 +97,3 @@ export async function GET(
     return handleError(error);
   }
 }
-
