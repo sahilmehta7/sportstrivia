@@ -11,7 +11,7 @@ interface StickyActionsProps {
 }
 
 export function StickyActions({ onStartQuick, onRandom, onOpenFilters }: StickyActionsProps) {
-  const [visible, setVisible] = useState(true);
+  const [_visible, _setVisible] = useState(true);
   // Simple always-on bar; can add scroll hide/show later
   return (
     <div className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-3 gap-2 border-t bg-background/95 px-4 py-3 shadow-2xl sm:hidden">

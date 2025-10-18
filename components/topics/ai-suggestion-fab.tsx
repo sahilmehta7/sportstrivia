@@ -10,7 +10,7 @@ interface AISuggestionFabProps {
 }
 
 export function AISuggestionFab({ topicName }: AISuggestionFabProps) {
-  const [open, setOpen] = useState(false);
+  const [_open, setOpen] = useState(false);
   return (
     <div className="fixed bottom-6 right-6 z-40">
       <AISuggestionModal

@@ -55,7 +55,7 @@ const { checkAttemptLimit } = jest.requireMock(
 };
 
 describe("POST /api/attempts - attempt limit handling", () => {
-  const baseUrl = "http://localhost/api/attempts";
+  const _baseUrl = "http://localhost/api/attempts";
   let consoleErrorSpy: jest.SpiedFunction<typeof console.error>;
 
   beforeEach(() => {

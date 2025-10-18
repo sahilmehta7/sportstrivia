@@ -56,7 +56,7 @@ const topicWithRelations = {
   },
 } satisfies Prisma.TopicDefaultArgs;
 
-type TopicWithRelations = Prisma.TopicGetPayload<typeof topicWithRelations>;
+type _TopicWithRelations = Prisma.TopicGetPayload<typeof topicWithRelations>;
 
 const fetchTopicBySlug = cache(async (slug: string) => {
   return prisma.topic.findUnique({

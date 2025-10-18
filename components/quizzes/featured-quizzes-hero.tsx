@@ -5,7 +5,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { ChevronLeft, ChevronRight, Star, Clock, Users, Sparkles } from "lucide-react";
 import type { PublicQuizListItem } from "@/lib/services/public-quiz.service";
 import { cn } from "@/lib/utils";

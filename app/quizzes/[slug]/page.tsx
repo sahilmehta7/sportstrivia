@@ -22,7 +22,6 @@ import {
   Target,
   Users,
   Calendar,
-  TrendingUp,
   Award,
   Zap,
   Play,
@@ -590,7 +589,7 @@ export default async function QuizDetailPage({
                       1
                     </span>
                     <p className="text-sm text-muted-foreground">
-                      Click "Start Quiz" to begin. You'll need to answer at least{" "}
+                      Click &ldquo;Start Quiz&rdquo; to begin. You&apos;ll need to answer at least{" "}
                       {quiz.passingScore}% correctly to pass.
                     </p>
                   </li>
@@ -632,7 +631,7 @@ export default async function QuizDetailPage({
                         {quiz.negativeMarkingEnabled ? 4 : 3}
                       </span>
                       <p className="text-sm text-muted-foreground">
-                        Answer quickly to earn bonus points! You'll get{" "}
+                        Answer quickly to earn bonus points! You&apos;ll get{" "}
                         {quiz.bonusPointsPerSecond} points for each second you save.
                       </p>
                   </li>

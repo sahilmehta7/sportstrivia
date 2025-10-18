@@ -483,12 +483,10 @@ export function QuizPlayClient({ quizId, quizTitle, quizSlug, initialAttemptLimi
 
   useEffect(() => {
     clearTimer();
-    clearAdvanceTimeout();
 
     if (status !== "in-progress" || !currentQuestion || feedback) {
       return () => {
         clearTimer();
-        clearAdvanceTimeout();
       };
     }
 
@@ -496,7 +494,6 @@ export function QuizPlayClient({ quizId, quizTitle, quizSlug, initialAttemptLimi
       setTimeLeft((prev) => {
         if (prev <= 1) {
           clearTimer();
-          clearAdvanceTimeout();
           void handleAnswer(null, true);
           return 0;
         }
@@ -506,9 +503,14 @@ export function QuizPlayClient({ quizId, quizTitle, quizSlug, initialAttemptLimi
 
     return () => {
       clearTimer();
+    };
+  }, [clearTimer, currentQuestion, feedback, handleAnswer, status]);
+
+  useEffect(() => {
+    return () => {
       clearAdvanceTimeout();
     };
-  }, [clearAdvanceTimeout, clearTimer, currentQuestion, feedback, handleAnswer, status]);
+  }, [clearAdvanceTimeout]);
 
   useEffect(() => {
     if (typeof performance !== "undefined" && status === "in-progress" && currentQuestion) {
@@ -830,20 +832,6 @@ export function QuizPlayClient({ quizId, quizTitle, quizSlug, initialAttemptLimi
 
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-6 py-8">
-      {attemptLimit && (
-        <AttemptLimitBanner
-          maxAttempts={attemptLimit.max}
-          period={attemptLimit.period}
-          attemptsRemaining={attemptLimit.remaining}
-          attemptsUsed={
-            attemptLimit.remaining !== null
-              ? Math.max(attemptLimit.max - attemptLimit.remaining, 0)
-              : null
-          }
-          resetAt={attemptLimit.resetAt}
-          className="shadow-sm"
-        />
-      )}
       <div className="space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>

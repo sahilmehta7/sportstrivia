@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,8 +15,7 @@ import {
   Filter, 
   RefreshCw, 
   ChevronDown, 
-  Star,
-  X
+  Star
 } from "lucide-react";
 import type { Difficulty } from "@prisma/client";
 import type { QuizFilterOptions } from "@/lib/services/public-quiz.service";
