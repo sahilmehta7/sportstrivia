@@ -370,7 +370,6 @@ export function QuizPlayClient({ quizId, quizTitle, quizSlug, initialAttemptLimi
 
       setIsSubmitting(true);
       clearTimer();
-      clearAdvanceTimeout();
 
       const timeLimit = computeTimeLimit(currentQuestion);
       const timeSpent = Math.max(timeLimit - timeLeft, 0);
@@ -382,6 +381,12 @@ export function QuizPlayClient({ quizId, quizTitle, quizSlug, initialAttemptLimi
 
       const optimisticIsCorrect =
         !!answerId && !!correctAnswerId && answerId === correctAnswerId && !wasSkipped;
+
+      const previousIndex = currentIndex;
+      const previousQuestion = currentQuestion;
+      const nextIndex = currentIndex + 1;
+      const nextQuestion = questions[nextIndex];
+      const isLastQuestion = previousIndex >= totalQuestions - 1;
 
       setFeedback({
         isCorrect: optimisticIsCorrect,
@@ -396,6 +401,17 @@ export function QuizPlayClient({ quizId, quizTitle, quizSlug, initialAttemptLimi
         correctAnswerText,
         explanation: currentQuestion.explanation ?? null,
       });
+
+      clearAdvanceTimeout();
+
+      if (!isLastQuestion && nextQuestion) {
+        advanceTimeoutRef.current = setTimeout(() => {
+          setCurrentIndex(nextIndex);
+          setCurrentQuestion(nextQuestion);
+          setFeedback(null);
+          resetTimerForQuestion(nextQuestion);
+        }, fromTimer ? 350 : 550);
+      }
 
       try {
         const response = await fetch(`/api/attempts/${attemptIdRef.current}/answer`, {
@@ -425,39 +441,24 @@ export function QuizPlayClient({ quizId, quizTitle, quizSlug, initialAttemptLimi
             : prev
         );
 
-        const isLastQuestion = currentIndex >= totalQuestions - 1;
-
-        clearAdvanceTimeout();
-        advanceTimeoutRef.current = setTimeout(() => {
-          if (isLastQuestion) {
-            startCompletion(async () => {
-              await completeAttempt();
-            });
-          } else {
-            const nextIndex = currentIndex + 1;
-            const nextQuestion = questions[nextIndex];
-
-            if (!nextQuestion) {
-              startCompletion(async () => {
-                await completeAttempt();
-              });
-              return;
-            }
-
-            setCurrentIndex(nextIndex);
-            setCurrentQuestion(nextQuestion);
-            setFeedback(null);
-            resetTimerForQuestion(nextQuestion);
-          }
-        }, fromTimer ? 600 : 900);
+        if (isLastQuestion) {
+          startCompletion(async () => {
+            await completeAttempt();
+          });
+        }
       } catch (error: any) {
+        clearAdvanceTimeout();
+
         toast({
           title: "Submission failed",
           description: error?.message || "We couldn't record your answer.",
           variant: "destructive",
         });
+
+        setCurrentIndex(previousIndex);
+        setCurrentQuestion(previousQuestion);
         setFeedback(null);
-        resetTimerForQuestion(currentQuestion);
+        resetTimerForQuestion(previousQuestion);
       } finally {
         setIsSubmitting(false);
       }
