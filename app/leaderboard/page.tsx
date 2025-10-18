@@ -5,137 +5,50 @@ import {
   type LeaderboardDataset,
   type LeaderboardEntry,
 } from "@/components/leaderboard/leaderboard-tabs";
-import { prisma } from "@/lib/db";
+import { buildGlobalLeaderboard } from "@/lib/services/leaderboard.service";
 
 export const revalidate = 0;
 
-async function getDailyLeaderboard(): Promise<LeaderboardEntry[]> {
+async function mapLeaderboardEntries(period: "daily" | "all-time"): Promise<LeaderboardEntry[]> {
   try {
-    const now = new Date();
-    const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const leaderboard = await buildGlobalLeaderboard(period, 10);
 
-    const results = await prisma.quizAttempt.groupBy({
-      by: ["userId"],
-      where: {
-        completedAt: {
-          gte: startOfDay,
-        },
-        isPracticeMode: false,
-      },
-      _sum: { score: true },
-      _avg: { score: true },
-      _count: { id: true },
-      orderBy: [
-        { _sum: { score: "desc" } },
-        { _avg: { score: "desc" } },
-      ],
-      take: 10,
-    });
-
-    const userIds = results.map((entry) => entry.userId);
-
-    if (userIds.length === 0) {
-      return [];
-    }
-
-    const users = await prisma.user.findMany({
-      where: {
-        id: { in: userIds },
-      },
-      select: {
-        id: true,
-        name: true,
-        image: true,
-      },
-    });
-
-    const userMap = new Map(users.map((user) => [user.id, user]));
-
-    return results.map((entry) => {
-      const user = userMap.get(entry.userId);
+    return leaderboard.map((entry) => {
+      const totalPoints = entry.totalPoints ?? entry.score ?? 0;
+      const attempts = entry.attempts ?? 0;
+      const averagePoints = attempts > 0 ? totalPoints / attempts : totalPoints;
 
       return {
         userId: entry.userId,
-        name: user?.name ?? "Anonymous Fan",
-        image: user?.image ?? null,
-        totalScore: entry._sum.score ?? 0,
-        averageScore: entry._avg.score ?? 0,
-        count: entry._count.id ?? 0,
+        name: entry.userName ?? "Anonymous Fan",
+        image: entry.userImage ?? null,
+        totalScore: totalPoints,
+        averageScore: averagePoints,
+        count: attempts,
       } satisfies LeaderboardEntry;
     });
   } catch (error) {
-    console.error("Failed to load daily leaderboard", error);
-    return [];
-  }
-}
-
-async function getAllTimeLeaderboard(): Promise<LeaderboardEntry[]> {
-  try {
-    const results = await prisma.quizLeaderboard.groupBy({
-      by: ["userId"],
-      _sum: { bestScore: true },
-      _avg: { bestScore: true },
-      _count: { id: true },
-      orderBy: [
-        { _sum: { bestScore: "desc" } },
-        { _avg: { bestScore: "desc" } },
-      ],
-      take: 10,
-    });
-
-    const userIds = results.map((entry) => entry.userId);
-
-    if (userIds.length === 0) {
-      return [];
-    }
-
-    const users = await prisma.user.findMany({
-      where: {
-        id: { in: userIds },
-      },
-      select: {
-        id: true,
-        name: true,
-        image: true,
-      },
-    });
-
-    const userMap = new Map(users.map((user) => [user.id, user]));
-
-    return results.map((entry) => {
-      const user = userMap.get(entry.userId);
-
-      return {
-        userId: entry.userId,
-        name: user?.name ?? "Anonymous Fan",
-        image: user?.image ?? null,
-        totalScore: entry._sum.bestScore ?? 0,
-        averageScore: entry._avg.bestScore ?? 0,
-        count: entry._count.id ?? 0,
-      } satisfies LeaderboardEntry;
-    });
-  } catch (error) {
-    console.error("Failed to load all-time leaderboard", error);
+    console.error(`Failed to load ${period} leaderboard`, error);
     return [];
   }
 }
 
 export default async function LeaderboardPage() {
   const [dailyEntries, allTimeEntries] = await Promise.all([
-    getDailyLeaderboard(),
-    getAllTimeLeaderboard(),
+    mapLeaderboardEntries("daily"),
+    mapLeaderboardEntries("all-time"),
   ]);
 
   const dailyDataset: LeaderboardDataset = {
     entries: dailyEntries,
     countLabel: "attempt",
-    totalLabel: "Total Score",
+    totalLabel: "Total Points",
   };
 
   const allTimeDataset: LeaderboardDataset = {
     entries: allTimeEntries,
-    countLabel: "quiz",
-    totalLabel: "Leaderboard Points",
+    countLabel: "attempt",
+    totalLabel: "Total Points",
   };
 
   return (
