@@ -1,7 +1,9 @@
 import { prisma } from "@/lib/db";
 import { notFound } from "next/navigation";
 import { ShowcaseQuizCard } from "@/components/quiz/ShowcaseQuizCard";
-import { formatPlayerCount, formatQuizDuration, getSportGradient, getSportIcon } from "@/lib/quiz-formatters";
+import { ShowcaseThemeProvider } from "@/components/showcase/ShowcaseThemeProvider";
+import { ShowcaseLayout } from "@/components/showcase/ShowcaseLayout";
+import { formatPlayerCount, formatQuizDuration, getSportGradient } from "@/lib/quiz-formatters";
 
 export default async function QuizCardShowcasePage() {
   const quiz = await prisma.quiz.findFirst({
@@ -44,16 +46,22 @@ export default async function QuizCardShowcasePage() {
     quiz.topicConfigs?.[0]?.topic?.name ?? quiz.sport ?? quiz.difficulty ?? "Featured";
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 p-6">
-      <ShowcaseQuizCard
-        title={quiz.title}
-        badgeLabel={badgeLabel}
-        durationLabel={durationLabel}
-        playersLabel={playersLabel}
-        icon={getSportIcon(quiz.sport)}
-        accent={getSportGradient(quiz.sport)}
-        coverImageUrl={quiz.descriptionImageUrl}
-      />
-    </div>
+    <ShowcaseThemeProvider>
+      <ShowcaseLayout
+        title="Quiz Card"
+        subtitle="Interactive quiz cards with sport-specific styling and animations"
+        badge="QUIZ CARD SHOWCASE"
+        variant="dark"
+      >
+        <ShowcaseQuizCard
+          title={quiz.title}
+          badgeLabel={badgeLabel}
+          durationLabel={durationLabel}
+          playersLabel={playersLabel}
+          accent={getSportGradient(quiz.sport)}
+          coverImageUrl={quiz.descriptionImageUrl}
+        />
+      </ShowcaseLayout>
+    </ShowcaseThemeProvider>
   );
 }

@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { Heart } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useShowcaseTheme } from "@/components/showcase/ShowcaseThemeProvider";
+import { getTextColor } from "@/lib/showcase-theme";
 
 export type ShowcaseTopicCardVariant = "light" | "dark";
 
@@ -28,12 +30,13 @@ export function ShowcaseTopicCard({
   isFavorite = false,
   className,
 }: ShowcaseTopicCardProps) {
+  const { theme } = useShowcaseTheme();
   const isLight = variant === "light";
   const accentColor = isLight ? accentLight : accentDark;
   const headingClass = isLight
     ? "text-slate-900 drop-shadow-[0_3px_12px_rgba(0,0,0,0.12)]"
-    : "text-white drop-shadow-[0_8px_24px_rgba(0,0,0,0.35)]";
-  const descriptionClass = isLight ? "text-slate-700" : "text-white/85";
+    : getTextColor(theme, "primary");
+  const descriptionClass = isLight ? "text-slate-700" : getTextColor(theme, "secondary");
 
   return (
     <Link

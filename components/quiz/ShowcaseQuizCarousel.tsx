@@ -10,7 +10,6 @@ interface CarouselItem {
   badgeLabel?: string;
   durationLabel: string;
   playersLabel: string;
-  icon: string;
   accent: string;
   coverImageUrl?: string | null;
 }
@@ -106,7 +105,6 @@ export function ShowcaseQuizCarousel({ items, className }: ShowcaseQuizCarouselP
                 badgeLabel={item.badgeLabel}
                 durationLabel={item.durationLabel}
                 playersLabel={item.playersLabel}
-                icon={item.icon}
                 accent={item.accent}
                 coverImageUrl={item.coverImageUrl}
               />

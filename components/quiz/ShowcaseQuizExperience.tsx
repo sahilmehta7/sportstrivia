@@ -23,16 +23,16 @@ export interface ShowcaseQuizExperienceQuestion {
   correctAnswerId?: string | null;
 }
 
-type ShowcaseVariant = "light" | "dark";
+export type ShowcaseQuizExperienceVariant = "light" | "dark";
 
 interface ShowcaseQuizExperienceProps {
-  variant?: ShowcaseVariant;
+  variant?: ShowcaseQuizExperienceVariant;
   questions: ShowcaseQuizExperienceQuestion[];
   className?: string;
   helperText?: string;
 }
 
-const variantStyles: Record<ShowcaseVariant, {
+const variantStyles: Record<ShowcaseQuizExperienceVariant, {
   wrapper: string;
   overlayA: string;
   overlayB: string;

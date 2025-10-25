@@ -13,6 +13,8 @@ import {
 import { cn } from "@/lib/utils";
 import type { LeaderboardEntry } from "@/lib/services/leaderboard.service";
 import { useShareResults } from "./ShareResults";
+import { useShowcaseTheme } from "@/components/showcase/ShowcaseThemeProvider";
+import { getGlassCard, getTextColor, getAccentColor } from "@/lib/showcase-theme";
 
 interface QuizAttempt {
   id: string;
@@ -53,20 +55,14 @@ interface QuizAttempt {
   }>;
 }
 
-type ShowcaseVariant = "light" | "dark";
-
 interface ShowcaseQuizResultsProps {
   attempt: QuizAttempt | null;
   leaderboardData: LeaderboardEntry[];
 }
 
 export function ShowcaseQuizResults({ attempt, leaderboardData }: ShowcaseQuizResultsProps) {
-  const [variant, setVariant] = useState<ShowcaseVariant>("light");
+  const { theme, toggleTheme } = useShowcaseTheme();
   const [showConfetti] = useState(true);
-
-  const toggleTheme = () => {
-    setVariant(variant === "light" ? "dark" : "light");
-  };
 
   const formatTime = (seconds: number | null) => {
     if (!seconds) return "0 sec";
@@ -127,12 +123,12 @@ export function ShowcaseQuizResults({ attempt, leaderboardData }: ShowcaseQuizRe
     <div className="space-y-8">
       {/* Theme Toggle */}
       <div className="flex justify-center">
-        <Button 
+        <Button
           onClick={toggleTheme}
           variant="outline"
           className="gap-2"
         >
-          {variant === "dark" ? "☀️" : "🌙"} Switch to {variant === "dark" ? "Light" : "Dark"} Mode
+          {theme === "dark" ? "☀️" : "🌙"} Switch to {theme === "dark" ? "Light" : "Dark"} Mode
         </Button>
       </div>
 
@@ -140,20 +136,18 @@ export function ShowcaseQuizResults({ attempt, leaderboardData }: ShowcaseQuizRe
       <div className="w-full max-w-4xl mx-auto">
         <div className={cn(
           "relative rounded-[1.75rem] border backdrop-blur-xl overflow-hidden",
-          variant === "light" 
-            ? "border-white/20 bg-gradient-to-br from-white/80 via-slate-50/90 to-blue-50/80 shadow-[0_40px_120px_-40px_rgba(59,130,246,0.15)]"
-            : "border-white/10 bg-gradient-to-br from-black/70 via-slate-900/60 to-indigo-900/80 shadow-[0_40px_120px_-40px_rgba(0,0,0,0.8)]"
+          getGlassCard(theme)
         )}>
           {/* Header */}
           <div className={cn(
             "px-6 py-4 border-b",
-            variant === "light" 
+            theme === "light" 
               ? "border-slate-200/50" 
               : "border-white/10"
           )}>
             <div className="flex items-center gap-3">
               <Button variant="ghost" size="sm" className={cn(
-                variant === "light" 
+                theme === "light" 
                   ? "text-slate-700 hover:bg-slate-100" 
                   : "text-white hover:bg-white/20"
               )}>
@@ -162,11 +156,11 @@ export function ShowcaseQuizResults({ attempt, leaderboardData }: ShowcaseQuizRe
               <div>
                 <h1 className={cn(
                   "font-semibold text-lg",
-                  variant === "light" ? "text-slate-900" : "text-white"
+                  getTextColor(theme, "primary")
                 )}>Quiz Results</h1>
                 <p className={cn(
                   "text-sm",
-                  variant === "light" ? "text-slate-600" : "text-white/80"
+                  getTextColor(theme, "secondary")
                 )}>{results.quizTitle}</p>
               </div>
             </div>
@@ -176,7 +170,7 @@ export function ShowcaseQuizResults({ attempt, leaderboardData }: ShowcaseQuizRe
             {/* Congratulations Section */}
             <div className={cn(
               "relative p-6",
-              variant === "light" 
+              theme === "light" 
                 ? "bg-gradient-to-br from-blue-50/50 to-purple-50/50" 
                 : "bg-white/5"
             )}>
@@ -194,7 +188,7 @@ export function ShowcaseQuizResults({ attempt, leaderboardData }: ShowcaseQuizRe
               <div className="text-center">
                 <h2 className={cn(
                   "text-xl font-bold mb-4",
-                  variant === "light" ? "text-slate-900" : "text-white"
+                  getTextColor(theme, "primary")
                 )}>
                   Congratulations! You have scored
                 </h2>
@@ -203,13 +197,13 @@ export function ShowcaseQuizResults({ attempt, leaderboardData }: ShowcaseQuizRe
                 <div className="relative inline-block mb-4">
                   <div className={cn(
                     "w-24 h-24 rounded-full flex items-center justify-center shadow-lg",
-                    variant === "light"
+                    theme === "light"
                       ? "bg-gradient-to-br from-blue-500 to-purple-600 shadow-blue-500/25"
                       : "bg-gradient-to-br from-amber-400 to-pink-500 shadow-pink-500/25"
                   )}>
                     <div className={cn(
                       "text-center",
-                      variant === "light" ? "text-white" : "text-slate-900"
+                      theme === "light" ? "text-white" : getTextColor(theme, "primary")
                     )}>
                       <div className="text-2xl font-bold">{results.correctAnswers}</div>
                       <div className="text-xs">Out of {results.totalQuestions}</div>
@@ -221,21 +215,21 @@ export function ShowcaseQuizResults({ attempt, leaderboardData }: ShowcaseQuizRe
                 <div className="mb-4">
                   <p className={cn(
                     "mb-2",
-                    variant === "light" ? "text-slate-600" : "text-white/75"
+                    getTextColor(theme, "secondary")
                   )}>You have earned</p>
                   <div className={cn(
                     "inline-flex items-center gap-2 rounded-lg px-3 py-2 backdrop-blur-sm",
-                    variant === "light"
+                    theme === "light"
                       ? "bg-gradient-to-r from-blue-100/80 to-purple-100/80 border border-blue-200/50"
                       : "bg-gradient-to-r from-amber-400/20 to-pink-500/20 border border-amber-400/30"
                   )}>
                     <Coins className={cn(
                       "h-4 w-4",
-                      variant === "light" ? "text-blue-600" : "text-amber-300"
+                      getAccentColor(theme, "primary")
                     )} />
                     <span className={cn(
                       "font-semibold",
-                      variant === "light" ? "text-slate-900" : "text-white"
+                      getTextColor(theme, "primary")
                     )}>{results.totalPoints} Points</span>
                   </div>
                 </div>
@@ -243,7 +237,7 @@ export function ShowcaseQuizResults({ attempt, leaderboardData }: ShowcaseQuizRe
                 {/* Time Taken */}
                 <div className={cn(
                   "flex items-center justify-center gap-2",
-                  variant === "light" ? "text-emerald-600" : "text-emerald-300"
+                  getAccentColor(theme, "success")
                 )}>
                   <Clock className="h-4 w-4" />
                   <span className="text-sm">
@@ -256,27 +250,27 @@ export function ShowcaseQuizResults({ attempt, leaderboardData }: ShowcaseQuizRe
             {/* Leaderboard Section */}
             <div className={cn(
               "p-6",
-              variant === "light" 
+              theme === "light" 
                 ? "bg-gradient-to-br from-slate-50/50 to-blue-50/50" 
                 : "bg-white/5"
             )}>
               <h3 className={cn(
                 "text-lg font-bold mb-4",
-                variant === "light" ? "text-slate-900" : "text-white"
+                getTextColor(theme, "primary")
               )}>See where you stand</h3>
               
               <div className="space-y-3">
                 {displayLeaderboard.map((entry, index) => (
-                  <div key={entry.userId} className={cn(
+                  <div key={`${entry.userId}-${index}`} className={cn(
                     "flex items-center gap-3 p-3 rounded-2xl backdrop-blur-sm border",
-                    variant === "light"
+                    theme === "light"
                       ? "bg-white/60 shadow-[inset_0_1px_0_rgba(0,0,0,0.05)] border-slate-200/50"
                       : "bg-white/5 shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] border-white/10"
                   )}>
                     <div className="relative">
                       <div className={cn(
                         "w-10 h-10 rounded-full flex items-center justify-center",
-                        variant === "light" ? "bg-slate-100" : "bg-white/10"
+                        theme === "light" ? "bg-slate-100" : "bg-white/10"
                       )}>
                         {entry.userImage ? (
                           // eslint-disable-next-line @next/next/no-img-element
@@ -288,7 +282,7 @@ export function ShowcaseQuizResults({ attempt, leaderboardData }: ShowcaseQuizRe
                         ) : (
                           <span className={cn(
                             "text-sm font-medium",
-                            variant === "light" ? "text-slate-600" : "text-white/70"
+                            getTextColor(theme, "muted")
                           )}>
                             {(entry.userName || "U").charAt(0)}
                           </span>
@@ -296,7 +290,7 @@ export function ShowcaseQuizResults({ attempt, leaderboardData }: ShowcaseQuizRe
                       </div>
                       <div className={cn(
                         "absolute -bottom-1 -left-1 w-6 h-6 rounded-full flex items-center justify-center shadow-lg",
-                        variant === "light"
+                        theme === "light"
                           ? "bg-gradient-to-r from-blue-500 to-purple-600"
                           : "bg-gradient-to-r from-amber-400 to-pink-500"
                       )}>
@@ -307,11 +301,11 @@ export function ShowcaseQuizResults({ attempt, leaderboardData }: ShowcaseQuizRe
                     <div className="flex-1">
                       <p className={cn(
                         "font-semibold",
-                        variant === "light" ? "text-slate-900" : "text-white"
+                        getTextColor(theme, "primary")
                       )}>{entry.userName || "Anonymous"}</p>
                       <p className={cn(
                         "text-sm",
-                        variant === "light" ? "text-slate-600" : "text-white/60"
+                        getTextColor(theme, "muted")
                       )}>
                         {entry.totalPoints || entry.score} points
                       </p>
@@ -319,17 +313,17 @@ export function ShowcaseQuizResults({ attempt, leaderboardData }: ShowcaseQuizRe
                     
                     <div className={cn(
                       "flex items-center gap-1 rounded-lg px-2 py-1 backdrop-blur-sm",
-                      variant === "light"
+                      theme === "light"
                         ? "bg-gradient-to-r from-blue-100/80 to-purple-100/80 border border-blue-200/50"
                         : "bg-gradient-to-r from-amber-400/20 to-pink-500/20 border border-amber-400/30"
                     )}>
                       <Coins className={cn(
                         "h-3 w-3",
-                        variant === "light" ? "text-blue-600" : "text-amber-300"
+                        getAccentColor(theme, "primary")
                       )} />
                       <span className={cn(
                         "text-sm font-semibold",
-                        variant === "light" ? "text-slate-900" : "text-white"
+                        getTextColor(theme, "primary")
                       )}>{entry.totalPoints || entry.score}</span>
                     </div>
                   </div>
@@ -341,67 +335,67 @@ export function ShowcaseQuizResults({ attempt, leaderboardData }: ShowcaseQuizRe
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 p-6">
               <div className={cn(
                 "rounded-2xl border p-4 backdrop-blur-sm",
-                variant === "light"
+                theme === "light"
                   ? "border-slate-200/50 bg-white/60 shadow-[inset_0_1px_0_rgba(0,0,0,0.05)]"
                   : "border-white/10 bg-white/5 shadow-[inset_0_1px_0_rgba(255,255,255,0.12)]"
               )}>
                 <div className="flex items-center gap-2 mb-2">
                   <Zap className={cn(
                     "h-4 w-4",
-                    variant === "light" ? "text-amber-600" : "text-amber-300"
+                    getAccentColor(theme, "warning")
                   )} />
                   <p className={cn(
                     "font-semibold text-sm",
-                    variant === "light" ? "text-slate-900" : "text-white"
+                    getTextColor(theme, "primary")
                   )}>Longest Streak</p>
                 </div>
                 <p className={cn(
                   "text-2xl font-bold",
-                  variant === "light" ? "text-slate-900" : "text-white"
+                  getTextColor(theme, "primary")
                 )}>{results.longestStreak} correct</p>
               </div>
               
               <div className={cn(
                 "rounded-2xl border p-4 backdrop-blur-sm",
-                variant === "light"
+                theme === "light"
                   ? "border-slate-200/50 bg-white/60 shadow-[inset_0_1px_0_rgba(0,0,0,0.05)]"
                   : "border-white/10 bg-white/5 shadow-[inset_0_1px_0_rgba(255,255,255,0.12)]"
               )}>
                 <div className="flex items-center gap-2 mb-2">
                   <Clock className={cn(
                     "h-4 w-4",
-                    variant === "light" ? "text-emerald-600" : "text-emerald-300"
+                    getAccentColor(theme, "success")
                   )} />
                   <p className={cn(
                     "font-semibold text-sm",
-                    variant === "light" ? "text-slate-900" : "text-white"
+                    getTextColor(theme, "primary")
                   )}>Avg. Response Time</p>
                 </div>
                 <p className={cn(
                   "text-2xl font-bold",
-                  variant === "light" ? "text-slate-900" : "text-white"
+                  getTextColor(theme, "primary")
                 )}>{results.averageResponseTime.toFixed(1)} sec</p>
               </div>
               
               <div className={cn(
                 "rounded-2xl border p-4 backdrop-blur-sm",
-                variant === "light"
+                theme === "light"
                   ? "border-slate-200/50 bg-white/60 shadow-[inset_0_1px_0_rgba(0,0,0,0.05)]"
                   : "border-white/10 bg-white/5 shadow-[inset_0_1px_0_rgba(255,255,255,0.12)]"
               )}>
                 <div className="flex items-center gap-2 mb-2">
                   <Clock className={cn(
                     "h-4 w-4",
-                    variant === "light" ? "text-blue-600" : "text-blue-300"
+                    getAccentColor(theme, "primary")
                   )} />
                   <p className={cn(
                     "font-semibold text-sm",
-                    variant === "light" ? "text-slate-900" : "text-white"
+                    getTextColor(theme, "primary")
                   )}>Total Time</p>
                 </div>
                 <p className={cn(
                   "text-2xl font-bold",
-                  variant === "light" ? "text-slate-900" : "text-white"
+                  getTextColor(theme, "primary")
                 )}>{formatTime(results.timeSpent)}</p>
               </div>
             </div>
@@ -413,7 +407,7 @@ export function ShowcaseQuizResults({ attempt, leaderboardData }: ShowcaseQuizRe
                 disabled={isGenerating}
                 className={cn(
                   "group inline-flex items-center gap-3 rounded-full px-6 py-3 text-sm font-semibold uppercase tracking-widest shadow-lg transition-transform duration-200 ease-out hover:-translate-y-1",
-                  variant === "light"
+                  theme === "light"
                     ? "bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-blue-500/25 hover:shadow-blue-500/40"
                     : "bg-gradient-to-r from-amber-400 to-pink-500 text-slate-900 shadow-pink-500/25 hover:shadow-amber-500/40"
                 )}
@@ -425,7 +419,7 @@ export function ShowcaseQuizResults({ attempt, leaderboardData }: ShowcaseQuizRe
               
               <Button variant="outline" className={cn(
                 "inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-medium transition",
-                variant === "light"
+                theme === "light"
                   ? "border border-slate-300 text-slate-700 hover:border-slate-400 hover:text-slate-900"
                   : "border border-white/30 text-white/80 hover:border-white/60 hover:text-white"
               )}>

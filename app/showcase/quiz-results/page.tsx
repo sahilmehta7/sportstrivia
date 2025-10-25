@@ -1,6 +1,8 @@
 import { Metadata } from "next";
 import { prisma } from "@/lib/db";
 import { ShowcaseQuizResults } from "@/components/quiz/ShowcaseQuizResults";
+import { ShowcaseThemeProvider } from "@/components/showcase/ShowcaseThemeProvider";
+import { ShowcaseLayout } from "@/components/showcase/ShowcaseLayout";
 
 export const metadata: Metadata = {
   title: "Quiz Results Showcase",
@@ -103,37 +105,23 @@ export default async function QuizResultsShowcasePage() {
   const leaderboardData = attempt ? await getQuizLeaderboard(attempt.quiz.id) : [];
 
   return (
-    <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-gradient-to-br from-slate-900 via-purple-900 to-amber-500 px-4 py-12 sm:px-6 lg:py-16">
-      <div className="absolute inset-0 -z-10 opacity-70">
-        <div className="absolute -left-20 top-24 h-72 w-72 rounded-full bg-emerald-400/40 blur-[120px]" />
-        <div className="absolute right-12 top-12 h-64 w-64 rounded-full bg-pink-500/40 blur-[100px]" />
-        <div className="absolute bottom-8 left-1/2 h-56 w-56 -translate-x-1/2 rounded-full bg-blue-500/30 blur-[90px]" />
-      </div>
-
-      <div className="relative w-full max-w-5xl">
-        <div className="mb-8 text-center">
-          <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-1 text-xs uppercase tracking-[0.35em] text-white/70 mb-6">
-            QUIZ RESULTS SHOWCASE
-          </div>
-          <h1 className="text-4xl font-black uppercase tracking-tight text-white drop-shadow-[0_16px_32px_rgba(32,32,48,0.35)] sm:text-5xl lg:text-6xl mb-4">
-            Quiz Results
-            <span className="text-emerald-300"> Showcase</span>
-          </h1>
-          <p className="mx-auto max-w-2xl text-sm text-white/75 mb-4">
-            Interactive showcase of quiz results page with real data and light/dark mode support
+    <ShowcaseThemeProvider>
+      <ShowcaseLayout
+        title="Quiz Results"
+        subtitle="Interactive showcase of quiz results page with real data and light/dark mode support"
+        badge="RESULTS SHOWCASE"
+        variant="default"
+      >
+        {attempt && (
+          <p className="text-sm text-center mb-6 opacity-60">
+            Using real quiz attempt: &ldquo;{attempt.quiz.title}&rdquo; by {attempt.user.name}
           </p>
-          {attempt && (
-            <p className="text-sm text-white/60">
-              Using real quiz attempt: &ldquo;{attempt.quiz.title}&rdquo; by {attempt.user.name}
-            </p>
-          )}
-        </div>
-
+        )}
         <ShowcaseQuizResults 
           attempt={attempt}
           leaderboardData={leaderboardData}
         />
-      </div>
-    </div>
+      </ShowcaseLayout>
+    </ShowcaseThemeProvider>
   );
 }

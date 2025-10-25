@@ -1,6 +1,8 @@
 "use client";
 
 import { cn } from "@/lib/utils";
+import { useShowcaseTheme } from "@/components/showcase/ShowcaseThemeProvider";
+import { getGlassCard, getTextColor, getAccentColor } from "@/lib/showcase-theme";
 
 interface DailyStreakProps {
   currentStreak: number;
@@ -21,12 +23,14 @@ export function ShowcaseDailyStreak({
   message = "You're on fire!",
   className,
 }: DailyStreakProps) {
+  const { theme } = useShowcaseTheme();
   const displayedDays = weekDays.slice(0, 7);
 
   return (
     <div
       className={cn(
-        "relative flex w-full max-w-[320px] flex-col items-center overflow-hidden rounded-[2.5rem] border border-white/10 bg-gradient-to-b from-black/80 via-slate-950 to-black/90 p-8 text-white shadow-[0_30px_90px_-30px_rgba(0,0,0,0.85)]",
+        "relative flex w-full max-w-[320px] flex-col items-center overflow-hidden rounded-[2.5rem] border p-8 shadow-[0_30px_90px_-30px_rgba(0,0,0,0.85)]",
+        getGlassCard(theme),
         className
       )}
     >
@@ -36,11 +40,11 @@ export function ShowcaseDailyStreak({
         <span className="text-3xl">🔥</span>
       </div>
 
-      <div className="mt-6 text-5xl font-bold tracking-tight">{currentStreak}</div>
-      <p className="mt-1 text-sm uppercase tracking-[0.35em] text-amber-200/90">Days Streak</p>
+      <div className={cn("mt-6 text-5xl font-bold tracking-tight", getTextColor(theme, "primary"))}>{currentStreak}</div>
+      <p className={cn("mt-1 text-sm uppercase tracking-[0.35em]", getAccentColor(theme, "warning"))}>Days Streak</p>
 
       <div className="mt-8 w-full rounded-3xl border border-white/10 bg-black/40 px-5 py-4 text-sm">
-        <div className="flex justify-between text-xs uppercase tracking-[0.35em] text-white/40">
+        <div className={cn("flex justify-between text-xs uppercase tracking-[0.35em]", getTextColor(theme, "muted"))}>
           {displayedDays.map((day, index) => (
             <span key={`${day}-${index}`}>{day}</span>
           ))}
@@ -71,10 +75,10 @@ export function ShowcaseDailyStreak({
       </div>
 
       {typeof bestStreak === "number" && (
-        <p className="mt-4 text-xs text-white/50">Best streak: {bestStreak} days</p>
+        <p className={cn("mt-4 text-xs", getTextColor(theme, "muted"))}>Best streak: {bestStreak} days</p>
       )}
 
-      <div className="mt-6 w-full rounded-3xl border border-white/10 bg-black/50 px-5 py-3 text-center text-sm font-semibold text-white/80">
+      <div className={cn("mt-6 w-full rounded-3xl border border-white/10 bg-black/50 px-5 py-3 text-center text-sm font-semibold", getTextColor(theme, "secondary"))}>
         {message} 🔥
       </div>
     </div>

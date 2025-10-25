@@ -2,6 +2,8 @@
 
 import { useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
+import { useShowcaseTheme } from "@/components/showcase/ShowcaseThemeProvider";
+import { getGlassCard, getTextColor, getAccentColor } from "@/lib/showcase-theme";
 
 export type LeaderboardRangeKey = "daily" | "all-time";
 
@@ -28,6 +30,7 @@ const rangeLabels: Record<LeaderboardRangeKey, string> = {
 const orderedRanges: LeaderboardRangeKey[] = ["daily", "all-time"];
 
 export function ShowcaseLeaderboard({ title, datasets, initialRange = "daily", className }: ShowcaseLeaderboardProps) {
+  const { theme } = useShowcaseTheme();
   const availableRanges = useMemo(() => orderedRanges.filter((key) => (datasets[key]?.length ?? 0) > 0), [datasets]);
   const startingRange = availableRanges.includes(initialRange) ? initialRange : availableRanges[0] ?? "daily";
   const [activeRange, setActiveRange] = useState<LeaderboardRangeKey>(startingRange);
@@ -40,7 +43,8 @@ export function ShowcaseLeaderboard({ title, datasets, initialRange = "daily", c
   return (
     <div
       className={cn(
-        "relative mx-auto w-full max-w-[420px] overflow-hidden rounded-[2.5rem] border border-white/10 bg-gradient-to-br from-black/70 via-slate-900/70 to-indigo-900/80 p-6 text-white shadow-[0_40px_120px_-40px_rgba(18,18,32,0.9)]",
+        "relative mx-auto w-full max-w-[420px] overflow-hidden rounded-[2.5rem] border p-6 shadow-[0_40px_120px_-40px_rgba(18,18,32,0.9)]",
+        getGlassCard(theme),
         className
       )}
     >
@@ -56,12 +60,12 @@ export function ShowcaseLeaderboard({ title, datasets, initialRange = "daily", c
           ←
         </button>
         <div className="text-center">
-          <h2 className="text-sm font-semibold uppercase tracking-[0.35em] text-white/70">{title}</h2>
+          <h2 className={cn("text-sm font-semibold uppercase tracking-[0.35em]", getTextColor(theme, "secondary"))}>{title}</h2>
         </div>
         <div className="h-10 w-10" />
       </header>
 
-      <div className="mt-6 flex rounded-full bg-white/10 p-1 text-xs font-semibold uppercase tracking-[0.2em] text-white/60">
+      <div className={cn("mt-6 flex rounded-full bg-white/10 p-1 text-xs font-semibold uppercase tracking-[0.2em]", getTextColor(theme, "muted"))}>
         {orderedRanges.map((range) => {
           const disabled = (datasets[range]?.length ?? 0) === 0;
           const isActive = activeRange === range;
@@ -85,7 +89,7 @@ export function ShowcaseLeaderboard({ title, datasets, initialRange = "daily", c
       </div>
 
       {entries.length === 0 ? (
-        <div className="mt-10 rounded-3xl bg-slate-950/60 p-8 text-center text-sm text-white/60">
+        <div className={cn("mt-10 rounded-3xl bg-slate-950/60 p-8 text-center text-sm", getTextColor(theme, "muted"))}>
           No leaderboard data available for this range.
         </div>
       ) : (
@@ -121,15 +125,15 @@ export function ShowcaseLeaderboard({ title, datasets, initialRange = "daily", c
                     )}
                     <span
                       className={cn(
-                        "absolute -bottom-2 flex h-8 w-8 items-center justify-center rounded-full border-2 border-white/30 text-sm font-bold text-white",
+                        "absolute -bottom-2 flex h-8 w-8 items-center justify-center rounded-full border-2 border-white/30 text-sm font-bold",
                         isChampion ? "bg-amber-300 text-slate-900" : "bg-white/20"
                       )}
                     >
                       {entry.position}
                     </span>
                   </div>
-                  <div className="text-center text-sm font-semibold text-white/85">{entry.name}</div>
-                  <div className="text-xs font-bold text-cyan-300">{entry.score.toLocaleString()}</div>
+                  <div className={cn("text-center text-sm font-semibold", getTextColor(theme, "primary"))}>{entry.name}</div>
+                  <div className={cn("text-xs font-bold", getAccentColor(theme, "primary"))}>{entry.score.toLocaleString()}</div>
                 </div>
               );
             })}
@@ -139,15 +143,15 @@ export function ShowcaseLeaderboard({ title, datasets, initialRange = "daily", c
             {rest.map((entry) => (
               <div
                 key={entry.id}
-                className="flex items-center justify-between rounded-3xl bg-slate-950/70 px-4 py-3 text-sm text-white/80 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]"
+                className={cn("flex items-center justify-between rounded-3xl bg-slate-950/70 px-4 py-3 text-sm shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]", getTextColor(theme, "secondary"))}
               >
                 <div className="flex items-center gap-3">
-                  <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-xs font-semibold text-white/60">
+                  <span className={cn("flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-xs font-semibold", getTextColor(theme, "muted"))}>
                     {entry.position}
                   </span>
                   <span className="font-medium">{entry.name}</span>
                 </div>
-                <span className="text-cyan-300">
+                <span className={getAccentColor(theme, "primary")}>
                   {entry.score.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                 </span>
               </div>

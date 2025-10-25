@@ -1,6 +1,8 @@
 "use client";
 
 import { cn } from "@/lib/utils";
+import { useShowcaseTheme } from "@/components/showcase/ShowcaseThemeProvider";
+import { getGlassCard } from "@/lib/showcase-theme";
 
 type StreakCardVariant = "light" | "dark";
 
@@ -21,6 +23,7 @@ export function ShowcaseDailyStreakCard({
   variant = "light",
   className,
 }: ShowcaseDailyStreakCardProps) {
+  const { theme } = useShowcaseTheme();
   const displayedDays = weekDays.slice(0, 7);
   const isLight = variant === "light";
 
@@ -30,7 +33,7 @@ export function ShowcaseDailyStreakCard({
         "flex w-full max-w-[360px] flex-col gap-6 rounded-[1.75rem] border p-6 shadow-lg",
         isLight
           ? "border-white/60 bg-white text-slate-900 shadow-[0_20px_50px_-25px_rgba(255,105,55,0.45)]"
-          : "border-white/10 bg-gradient-to-br from-black/90 via-slate-950 to-black/90 text-white shadow-[0_20px_60px_-25px_rgba(0,0,0,0.8)]",
+          : getGlassCard(theme),
         className
       )}
     >
