@@ -49,8 +49,8 @@ export function ShowcaseQuizListing({
 }: ShowcaseQuizListingProps) {
   const { theme } = useShowcaseTheme();
   const [searchQuery, setSearchQuery] = useState(appliedFilters.search || "");
-  const [selectedSport, setSelectedSport] = useState(appliedFilters.sport || "");
-  const [selectedDifficulty, setSelectedDifficulty] = useState(appliedFilters.difficulty || "");
+  const [selectedSport, setSelectedSport] = useState(appliedFilters.sport || "all");
+  const [selectedDifficulty, setSelectedDifficulty] = useState(appliedFilters.difficulty || "all");
   const [sortBy, setSortBy] = useState(appliedFilters.sortBy || "createdAt");
   const [sortOrder, setSortOrder] = useState(appliedFilters.sortOrder || "desc");
 
@@ -178,7 +178,7 @@ export function ShowcaseQuizListing({
                     <SelectValue placeholder="All Sports" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All Sports</SelectItem>
+                    <SelectItem value="all">All Sports</SelectItem>
                     {filterOptions.sports.map((sport) => (
                       <SelectItem key={sport} value={sport}>
                         {sport}
@@ -198,7 +198,7 @@ export function ShowcaseQuizListing({
                     <SelectValue placeholder="All Levels" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All Levels</SelectItem>
+                    <SelectItem value="all">All Levels</SelectItem>
                     {Object.values(Difficulty).map((difficulty) => (
                       <SelectItem key={difficulty} value={difficulty}>
                         {difficulty}
@@ -248,22 +248,22 @@ export function ShowcaseQuizListing({
                   </button>
                 </Badge>
               )}
-              {selectedSport && (
+              {selectedSport && selectedSport !== "all" && (
                 <Badge variant="secondary" className="gap-1">
                   Sport: {selectedSport}
                   <button
-                    onClick={() => setSelectedSport("")}
+                    onClick={() => setSelectedSport("all")}
                     className="ml-1 hover:bg-destructive/20 rounded-full p-0.5"
                   >
                     ×
                   </button>
                 </Badge>
               )}
-              {selectedDifficulty && (
+              {selectedDifficulty && selectedDifficulty !== "all" && (
                 <Badge variant="secondary" className="gap-1">
                   Difficulty: {selectedDifficulty}
                   <button
-                    onClick={() => setSelectedDifficulty("")}
+                    onClick={() => setSelectedDifficulty("all")}
                     className="ml-1 hover:bg-destructive/20 rounded-full p-0.5"
                   >
                     ×
