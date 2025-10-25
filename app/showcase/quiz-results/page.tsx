@@ -1,6 +1,5 @@
 import { Metadata } from "next";
 import { prisma } from "@/lib/db";
-import { buildGlobalLeaderboard } from "@/lib/services/leaderboard.service";
 import { ShowcaseQuizResults } from "@/components/quiz/ShowcaseQuizResults";
 
 export const metadata: Metadata = {
@@ -60,31 +59,48 @@ async function getLatestQuizAttempt() {
   }
 }
 
-async function getLeaderboardData() {
+async function getQuizLeaderboard(quizId: string) {
   try {
-    const [dailyLeaderboard, allTimeLeaderboard] = await Promise.all([
-      buildGlobalLeaderboard("daily", 10),
-      buildGlobalLeaderboard("all-time", 10),
-    ]);
+    // Get quiz-specific leaderboard entries
+    const quizAttempts = await prisma.quizAttempt.findMany({
+      where: {
+        quizId,
+        completedAt: { not: null },
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            image: true,
+          },
+        },
+      },
+      orderBy: [
+        { score: "desc" },
+        { totalPoints: "desc" },
+        { completedAt: "asc" },
+      ],
+      take: 10,
+    });
 
-    return {
-      daily: dailyLeaderboard,
-      allTime: allTimeLeaderboard,
-    };
+    return quizAttempts.map((attempt, index) => ({
+      userId: attempt.userId,
+      userName: attempt.user.name,
+      userImage: attempt.user.image,
+      score: attempt.score || 0,
+      totalPoints: attempt.totalPoints || 0,
+      position: index + 1,
+    }));
   } catch (error) {
-    console.error("Failed to fetch leaderboard data:", error);
-    return {
-      daily: [],
-      allTime: [],
-    };
+    console.error("Failed to fetch quiz leaderboard:", error);
+    return [];
   }
 }
 
 export default async function QuizResultsShowcasePage() {
-  const [attempt, leaderboardData] = await Promise.all([
-    getLatestQuizAttempt(),
-    getLeaderboardData(),
-  ]);
+  const attempt = await getLatestQuizAttempt();
+  const leaderboardData = attempt ? await getQuizLeaderboard(attempt.quiz.id) : [];
 
   return (
     <div className="min-h-screen bg-background">

@@ -2,18 +2,14 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
 import { 
-  Trophy, 
   Clock, 
   Share2, 
   RotateCcw, 
   ChevronLeft,
   Coins,
-  Target,
-  Zap,
-  Users
+  Zap
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { LeaderboardEntry } from "@/lib/services/leaderboard.service";
@@ -57,16 +53,11 @@ interface QuizAttempt {
   }>;
 }
 
-interface LeaderboardData {
-  daily: LeaderboardEntry[];
-  allTime: LeaderboardEntry[];
-}
-
 type ShowcaseVariant = "light" | "dark";
 
 interface ShowcaseQuizResultsProps {
   attempt: QuizAttempt | null;
-  leaderboardData: LeaderboardData;
+  leaderboardData: LeaderboardEntry[];
 }
 
 export function ShowcaseQuizResults({ attempt, leaderboardData }: ShowcaseQuizResultsProps) {
@@ -84,13 +75,6 @@ export function ShowcaseQuizResults({ attempt, leaderboardData }: ShowcaseQuizRe
     return `${minutes} min ${remainingSeconds} sec`;
   };
 
-  const getScoreColor = (score: number | null) => {
-    if (!score) return "text-gray-600";
-    if (score >= 90) return "text-green-600";
-    if (score >= 70) return "text-blue-600";
-    if (score >= 50) return "text-yellow-600";
-    return "text-red-600";
-  };
 
   // Use real data or fallback to mock data
   const results = attempt ? {
@@ -119,7 +103,14 @@ export function ShowcaseQuizResults({ attempt, leaderboardData }: ShowcaseQuizRe
     userImage: null,
   };
 
-  const leaderboard = leaderboardData.daily.length > 0 ? leaderboardData.daily : leaderboardData.allTime;
+  // Find user's position in leaderboard
+  const userPosition = attempt ? leaderboardData.findIndex(entry => entry.userId === attempt.user.id) : -1;
+  const isUserInTop3 = userPosition >= 0 && userPosition < 3;
+  
+  // Show top 3 + user if not in top 3
+  const displayLeaderboard = isUserInTop3 
+    ? leaderboardData.slice(0, 3)
+    : [...leaderboardData.slice(0, 3), ...(userPosition >= 3 ? [leaderboardData[userPosition]] : [])];
 
   return (
     <div className="space-y-8">
@@ -134,8 +125,8 @@ export function ShowcaseQuizResults({ attempt, leaderboardData }: ShowcaseQuizRe
         </Button>
       </div>
 
-      {/* Mobile Quiz Results */}
-      <div className="max-w-md mx-auto">
+      {/* Unified Quiz Results Container */}
+      <div className="max-w-4xl mx-auto">
         <Card className={cn("overflow-hidden", variant === "dark" ? "bg-gray-900 border-gray-700" : "")}>
           {/* Header */}
           <div className={cn(
@@ -148,7 +139,10 @@ export function ShowcaseQuizResults({ attempt, leaderboardData }: ShowcaseQuizRe
               <Button variant="ghost" size="sm" className="text-white hover:bg-white/20">
                 <ChevronLeft className="h-4 w-4" />
               </Button>
-              <h1 className="text-white font-semibold">Quiz Results</h1>
+              <div>
+                <h1 className="text-white font-semibold">Quiz Results</h1>
+                <p className="text-white/80 text-sm">{results.quizTitle}</p>
+              </div>
             </div>
           </div>
 
@@ -205,7 +199,7 @@ export function ShowcaseQuizResults({ attempt, leaderboardData }: ShowcaseQuizRe
               <h3 className={cn("text-lg font-bold mb-4", variant === "light" ? "text-gray-900" : "text-white")}>See where you stand</h3>
               
               <div className="space-y-3">
-                {leaderboard.slice(0, 3).map((entry, index) => (
+                {displayLeaderboard.map((entry, index) => (
                   <div key={entry.userId} className={cn("flex items-center gap-3 p-3 rounded-lg border", variant === "light" ? "bg-white" : "bg-gray-700 border-gray-600")}>
                     <div className="relative">
                       <div className={cn("w-10 h-10 rounded-full flex items-center justify-center", variant === "light" ? "bg-gray-200" : "bg-gray-600")}>
@@ -242,47 +236,9 @@ export function ShowcaseQuizResults({ attempt, leaderboardData }: ShowcaseQuizRe
                 ))}
               </div>
             </div>
-          </CardContent>
-        </Card>
-      </div>
-
-
-      {/* Desktop Results */}
-      <div className="max-w-4xl mx-auto">
-        <Card className={cn(variant === "dark" ? "bg-gray-900 border-gray-700" : "")}>
-          <CardHeader>
-            <CardTitle className={cn("flex items-center gap-2", variant === "dark" ? "text-white" : "")}>
-              <Trophy className="h-5 w-5 text-yellow-500" />
-              Quiz Completed
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {/* Score Summary */}
-            <div className="text-center">
-              <div className="mb-4">
-                <p className={cn("text-3xl font-bold", getScoreColor(results.score))}>
-                  Score: {results.score.toFixed(1)}%
-                </p>
-                <p className={cn(variant === "dark" ? "text-gray-400" : "text-muted-foreground")}>
-                  {results.correctAnswers} / {results.totalQuestions} correct
-                </p>
-              </div>
-              
-              <Badge variant={results.passed ? "default" : "destructive"} className="mb-6">
-                {results.passed ? "Passed" : "Did not pass"}
-              </Badge>
-            </div>
 
             {/* Stats Grid */}
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              <div className={cn("rounded-lg border p-4", variant === "dark" ? "bg-gray-800 border-gray-600" : "bg-card")}>
-                <div className="flex items-center gap-2 mb-2">
-                  <Target className="h-4 w-4 text-primary" />
-                  <p className={cn("font-semibold text-sm", variant === "dark" ? "text-white" : "")}>Total Points</p>
-                </div>
-                <p className={cn("text-2xl font-bold", variant === "dark" ? "text-white" : "")}>{results.totalPoints}</p>
-              </div>
-              
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 p-6">
               <div className={cn("rounded-lg border p-4", variant === "dark" ? "bg-gray-800 border-gray-600" : "bg-card")}>
                 <div className="flex items-center gap-2 mb-2">
                   <Zap className="h-4 w-4 text-primary" />
@@ -308,23 +264,8 @@ export function ShowcaseQuizResults({ attempt, leaderboardData }: ShowcaseQuizRe
               </div>
             </div>
 
-            {/* Quiz Info */}
-            <div className={cn("rounded-lg border p-4", variant === "dark" ? "border-primary/30 bg-primary/10" : "border-primary/30 bg-primary/5")}>
-              <div className="flex items-center justify-between mb-3">
-                <div>
-                  <p className={cn("text-sm font-semibold", variant === "dark" ? "text-white" : "")}>Quiz</p>
-                  <p className={cn("text-lg font-bold", variant === "dark" ? "text-white" : "")}>{results.quizTitle}</p>
-                </div>
-                <Badge variant="outline">{results.passed ? "Passed" : "Failed"}</Badge>
-              </div>
-              
-              <div className={cn("text-sm", variant === "dark" ? "text-gray-400" : "text-muted-foreground")}>
-                Player: <span className={cn("font-semibold", variant === "dark" ? "text-white" : "text-foreground")}>{results.userName}</span>
-              </div>
-            </div>
-
             {/* Action Buttons */}
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2 p-6 pt-0">
               <Button>
                 <Share2 className="h-4 w-4 mr-2" />
                 Share Results
@@ -332,10 +273,6 @@ export function ShowcaseQuizResults({ attempt, leaderboardData }: ShowcaseQuizRe
               <Button variant="outline">
                 <RotateCcw className="h-4 w-4 mr-2" />
                 Take Another Quiz
-              </Button>
-              <Button variant="secondary">
-                <Users className="h-4 w-4 mr-2" />
-                View Leaderboard
               </Button>
             </div>
           </CardContent>
