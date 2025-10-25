@@ -231,6 +231,22 @@ export function ShowcaseQuizExperience({
     setIsAdvancing(false);
   }, [currentQuestion?.id]);
 
+  const answerMediaFrameClass = useMemo(
+    () =>
+      variant === "light"
+        ? "border-amber-200/70 bg-white/85 shadow-[0_12px_36px_-22px_rgba(15,23,42,0.3)]"
+        : "border-white/20 bg-white/10 shadow-[0_16px_48px_-28px_rgba(15,23,42,0.55)]",
+    [variant]
+  );
+
+  const answerMediaBadgeClass = useMemo(
+    () =>
+      variant === "light"
+        ? "border-amber-200/70 bg-amber-50/80 text-amber-700"
+        : "border-white/20 bg-white/10 text-white/80",
+    [variant]
+  );
+
   const handleSelect = (answerId: string) => {
     if (isAdvancing || isReviewing) return;
     setSelectedAnswerId((prev) => (prev === answerId ? null : answerId));
@@ -413,16 +429,6 @@ export function ShowcaseQuizExperience({
             </div>
 
             <div className="grid w-full gap-3 sm:grid-cols-2">
-              {(() => {
-                const mediaFrameClass =
-                  variant === "light"
-                    ? "border-amber-200/70 bg-white/85 shadow-[0_12px_36px_-22px_rgba(15,23,42,0.3)]"
-                    : "border-white/20 bg-white/10 shadow-[0_16px_48px_-28px_rgba(15,23,42,0.55)]";
-                const mediaBadgeClass =
-                  variant === "light"
-                    ? "border-amber-200/70 bg-amber-50/80 text-amber-700"
-                    : "border-white/20 bg-white/10 text-white/80";
-
               {currentQuestion.answers.map((answer) => {
                 const isSelected = answer.id === selectedAnswerId;
                 const isCorrect = answer.id === correctAnswerId || answer.isCorrect === true;
@@ -466,7 +472,7 @@ export function ShowcaseQuizExperience({
                           className={cn(
                             "relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-2xl border",
                             answer.imageUrl ? "" : "text-base",
-                            mediaFrameClass
+                            answerMediaFrameClass
                           )}
                           aria-hidden="true"
                         >
@@ -488,15 +494,26 @@ export function ShowcaseQuizExperience({
                       <span className="text-left leading-tight">{answer.text}</span>
                     </span>
                     {answerState === "correct" && (
-                      <span className={cn("text-xs font-semibold uppercase tracking-[0.3em]", mediaBadgeClass, "rounded-full border px-3 py-1")}>Correct</span>
+                      <span className={cn(
+                        "rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.3em]",
+                        answerMediaBadgeClass
+                      )}
+                      >
+                        Correct
+                      </span>
                     )}
                     {answerState === "incorrect" && (
-                      <span className={cn("text-xs font-semibold uppercase tracking-[0.3em]", mediaBadgeClass, "rounded-full border px-3 py-1")}>Incorrect</span>
+                      <span className={cn(
+                        "rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.3em]",
+                        answerMediaBadgeClass
+                      )}
+                      >
+                        Incorrect
+                      </span>
                     )}
                   </button>
                 );
               })}
-              })()}
             </div>
           </div>
 

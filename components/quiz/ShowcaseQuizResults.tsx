@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -103,15 +102,14 @@ const mockLeaderboard: LeaderboardEntry[] = [
   }
 ];
 
+type ShowcaseVariant = "light" | "dark";
+
 export function ShowcaseQuizResults() {
-  const { theme, setTheme } = useTheme();
-  const [isDarkMode, setIsDarkMode] = useState(theme === "dark");
+  const [variant, setVariant] = useState<ShowcaseVariant>("light");
   const [showConfetti] = useState(true);
 
   const toggleTheme = () => {
-    const newTheme = isDarkMode ? "light" : "dark";
-    setTheme(newTheme);
-    setIsDarkMode(!isDarkMode);
+    setVariant(variant === "light" ? "dark" : "light");
   };
 
   const formatTime = (seconds: number) => {
@@ -136,15 +134,20 @@ export function ShowcaseQuizResults() {
           variant="outline"
           className="gap-2"
         >
-          {isDarkMode ? "☀️" : "🌙"} Switch to {isDarkMode ? "Light" : "Dark"} Mode
+          {variant === "dark" ? "☀️" : "🌙"} Switch to {variant === "dark" ? "Light" : "Dark"} Mode
         </Button>
       </div>
 
       {/* Mobile Quiz Results */}
       <div className="max-w-md mx-auto">
-        <Card className="overflow-hidden">
+        <Card className={cn("overflow-hidden", variant === "dark" ? "bg-gray-900 border-gray-700" : "")}>
           {/* Header */}
-          <div className="bg-gradient-to-r from-purple-600 to-blue-600 px-4 py-3">
+          <div className={cn(
+            "px-4 py-3",
+            variant === "light" 
+              ? "bg-gradient-to-r from-purple-600 to-blue-600" 
+              : "bg-gradient-to-r from-blue-900 to-purple-900"
+          )}>
             <div className="flex items-center gap-3">
               <Button variant="ghost" size="sm" className="text-white hover:bg-white/20">
                 <ChevronLeft className="h-4 w-4" />
@@ -155,7 +158,7 @@ export function ShowcaseQuizResults() {
 
           <CardContent className="p-0">
             {/* Congratulations Section */}
-            <div className="relative p-6 bg-white">
+            <div className={cn("relative p-6", variant === "light" ? "bg-white" : "bg-gray-900")}>
               {showConfetti && (
                 <div className="absolute inset-0 pointer-events-none">
                   {/* Confetti */}
@@ -168,7 +171,7 @@ export function ShowcaseQuizResults() {
               )}
               
               <div className="text-center">
-                <h2 className="text-xl font-bold text-gray-900 mb-4">
+                <h2 className={cn("text-xl font-bold mb-4", variant === "light" ? "text-gray-900" : "text-white")}>
                   Congratulations! You have scored
                 </h2>
                 
@@ -184,7 +187,7 @@ export function ShowcaseQuizResults() {
 
                 {/* Points Earned */}
                 <div className="mb-4">
-                  <p className="text-gray-700 mb-2">You have earned</p>
+                  <p className={cn("mb-2", variant === "light" ? "text-gray-700" : "text-gray-300")}>You have earned</p>
                   <div className="inline-flex items-center gap-2 bg-yellow-100 border border-yellow-300 rounded-lg px-3 py-2">
                     <Coins className="h-4 w-4 text-yellow-600" />
                     <span className="font-semibold text-gray-900">{mockResults.totalPoints} Points</span>
@@ -192,7 +195,7 @@ export function ShowcaseQuizResults() {
                 </div>
 
                 {/* Time Taken */}
-                <div className="flex items-center justify-center gap-2 text-blue-600">
+                <div className={cn("flex items-center justify-center gap-2", variant === "light" ? "text-blue-600" : "text-blue-400")}>
                   <Clock className="h-4 w-4" />
                   <span className="text-sm">
                     You took {formatTime(mockResults.timeSpent)} to complete the quiz
@@ -202,15 +205,15 @@ export function ShowcaseQuizResults() {
             </div>
 
             {/* Leaderboard Section */}
-            <div className="p-6 bg-gray-50">
-              <h3 className="text-lg font-bold text-gray-900 mb-4">See where you stand</h3>
+            <div className={cn("p-6", variant === "light" ? "bg-gray-50" : "bg-gray-800")}>
+              <h3 className={cn("text-lg font-bold mb-4", variant === "light" ? "text-gray-900" : "text-white")}>See where you stand</h3>
               
               <div className="space-y-3">
                 {mockLeaderboard.map((entry) => (
-                  <div key={entry.id} className="flex items-center gap-3 p-3 bg-white rounded-lg border">
+                  <div key={entry.id} className={cn("flex items-center gap-3 p-3 rounded-lg border", variant === "light" ? "bg-white" : "bg-gray-700 border-gray-600")}>
                     <div className="relative">
-                      <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
-                        <span className="text-sm font-medium text-gray-600">
+                      <div className={cn("w-10 h-10 rounded-full flex items-center justify-center", variant === "light" ? "bg-gray-200" : "bg-gray-600")}>
+                        <span className={cn("text-sm font-medium", variant === "light" ? "text-gray-600" : "text-gray-300")}>
                           {entry.name.charAt(0)}
                         </span>
                       </div>
@@ -220,8 +223,8 @@ export function ShowcaseQuizResults() {
                     </div>
                     
                     <div className="flex-1">
-                      <p className="font-semibold text-gray-900">{entry.name}</p>
-                      <p className="text-sm text-gray-500">{entry.school}</p>
+                      <p className={cn("font-semibold", variant === "light" ? "text-gray-900" : "text-white")}>{entry.name}</p>
+                      <p className={cn("text-sm", variant === "light" ? "text-gray-500" : "text-gray-400")}>{entry.school}</p>
                     </div>
                     
                     <div className="flex items-center gap-1 bg-yellow-100 border border-yellow-300 rounded-lg px-2 py-1">
@@ -236,96 +239,12 @@ export function ShowcaseQuizResults() {
         </Card>
       </div>
 
-      {/* Dark Mode Results */}
-      <div className="max-w-md mx-auto">
-        <Card className="overflow-hidden bg-gray-900 border-gray-700">
-          {/* Header */}
-          <div className="bg-gradient-to-r from-blue-900 to-purple-900 px-4 py-3">
-            <div className="flex items-center gap-3">
-              <Button variant="ghost" size="sm" className="text-white hover:bg-white/20">
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              <h1 className="text-white font-semibold">Quiz Result</h1>
-            </div>
-          </div>
-
-          <CardContent className="p-0">
-            {/* Trophy Section */}
-            <div className="relative p-6 bg-gray-900">
-              {showConfetti && (
-                <div className="absolute inset-0 pointer-events-none">
-                  {/* Confetti */}
-                  <div className="absolute top-4 left-8 w-2 h-2 bg-pink-500 rounded-full animate-bounce" style={{ animationDelay: "0s" }} />
-                  <div className="absolute top-6 right-12 w-2 h-2 bg-green-500 rounded-full animate-bounce" style={{ animationDelay: "0.2s" }} />
-                  <div className="absolute top-8 left-16 w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: "0.4s" }} />
-                  <div className="absolute top-10 right-8 w-2 h-2 bg-yellow-500 rounded-full animate-bounce" style={{ animationDelay: "0.6s" }} />
-                </div>
-              )}
-              
-              <div className="text-center">
-                {/* Trophy */}
-                <div className="relative inline-block mb-6">
-                  <Trophy className="w-24 h-24 text-yellow-500 mx-auto" />
-                  <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 bg-yellow-500 text-xs font-bold px-2 py-1 rounded text-white text-xs">
-                    WINNER
-                  </div>
-                </div>
-
-                <h2 className="text-2xl font-bold text-white mb-2">Congratulations!</h2>
-                <p className="text-gray-300 text-sm mb-6">
-                  Consectetur adipiscing elit. Aenean euis bibendum laoreet.
-                </p>
-
-                {/* Score */}
-                <div className="mb-6">
-                  <p className="text-gray-400 text-sm uppercase tracking-wide mb-2">YOUR SCORE</p>
-                  <div className="text-3xl font-bold">
-                    <span className="text-teal-400">20</span>
-                    <span className="text-white"> / 20</span>
-                  </div>
-                </div>
-
-                {/* Earned Coins */}
-                <div className="mb-6">
-                  <p className="text-gray-400 text-sm uppercase tracking-wide mb-2">EARNED COINS</p>
-                  <div className="flex items-center justify-center gap-2">
-                    <div className="flex -space-x-1">
-                      <Coins className="w-6 h-6 text-yellow-500" />
-                      <Coins className="w-6 h-6 text-yellow-500" />
-                      <Coins className="w-6 h-6 text-yellow-500" />
-                    </div>
-                    <span className="text-white text-xl font-bold">500</span>
-                  </div>
-                </div>
-
-                {/* Action Buttons */}
-                <div className="flex gap-3 justify-center">
-                  <Button variant="outline" className="bg-white/10 border-gray-600 text-gray-300 hover:bg-white/20">
-                    <Share2 className="h-4 w-4 mr-2" />
-                    Share Results
-                  </Button>
-                  <Button className="bg-teal-600 hover:bg-teal-700 text-white">
-                    Take New Quiz
-                  </Button>
-                </div>
-
-                {/* Close Button */}
-                <div className="mt-4">
-                  <Button variant="ghost" size="sm" className="text-gray-400 hover:text-white">
-                    ✕
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
 
       {/* Desktop Results */}
       <div className="max-w-4xl mx-auto">
-        <Card>
+        <Card className={cn(variant === "dark" ? "bg-gray-900 border-gray-700" : "")}>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
+            <CardTitle className={cn("flex items-center gap-2", variant === "dark" ? "text-white" : "")}>
               <Trophy className="h-5 w-5 text-yellow-500" />
               Quiz Completed
             </CardTitle>
@@ -337,7 +256,7 @@ export function ShowcaseQuizResults() {
                 <p className={cn("text-3xl font-bold", getScoreColor(mockResults.score))}>
                   Score: {mockResults.score.toFixed(1)}%
                 </p>
-                <p className="text-muted-foreground">
+                <p className={cn(variant === "dark" ? "text-gray-400" : "text-muted-foreground")}>
                   {mockResults.correctAnswers} / {mockResults.totalQuestions} correct
                 </p>
               </div>
@@ -349,60 +268,60 @@ export function ShowcaseQuizResults() {
 
             {/* Stats Grid */}
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              <div className="rounded-lg border bg-card p-4">
+              <div className={cn("rounded-lg border p-4", variant === "dark" ? "bg-gray-800 border-gray-600" : "bg-card")}>
                 <div className="flex items-center gap-2 mb-2">
                   <Target className="h-4 w-4 text-primary" />
-                  <p className="font-semibold text-sm">Total Points</p>
+                  <p className={cn("font-semibold text-sm", variant === "dark" ? "text-white" : "")}>Total Points</p>
                 </div>
-                <p className="text-2xl font-bold">{mockResults.totalPoints}</p>
+                <p className={cn("text-2xl font-bold", variant === "dark" ? "text-white" : "")}>{mockResults.totalPoints}</p>
               </div>
               
-              <div className="rounded-lg border bg-card p-4">
+              <div className={cn("rounded-lg border p-4", variant === "dark" ? "bg-gray-800 border-gray-600" : "bg-card")}>
                 <div className="flex items-center gap-2 mb-2">
                   <Zap className="h-4 w-4 text-primary" />
-                  <p className="font-semibold text-sm">Longest Streak</p>
+                  <p className={cn("font-semibold text-sm", variant === "dark" ? "text-white" : "")}>Longest Streak</p>
                 </div>
-                <p className="text-2xl font-bold">{mockResults.longestStreak} correct</p>
+                <p className={cn("text-2xl font-bold", variant === "dark" ? "text-white" : "")}>{mockResults.longestStreak} correct</p>
               </div>
               
-              <div className="rounded-lg border bg-card p-4">
+              <div className={cn("rounded-lg border p-4", variant === "dark" ? "bg-gray-800 border-gray-600" : "bg-card")}>
                 <div className="flex items-center gap-2 mb-2">
                   <Clock className="h-4 w-4 text-primary" />
-                  <p className="font-semibold text-sm">Avg. Response Time</p>
+                  <p className={cn("font-semibold text-sm", variant === "dark" ? "text-white" : "")}>Avg. Response Time</p>
                 </div>
-                <p className="text-2xl font-bold">{mockResults.averageResponseTime.toFixed(1)} sec</p>
+                <p className={cn("text-2xl font-bold", variant === "dark" ? "text-white" : "")}>{mockResults.averageResponseTime.toFixed(1)} sec</p>
               </div>
               
-              <div className="rounded-lg border bg-card p-4">
+              <div className={cn("rounded-lg border p-4", variant === "dark" ? "bg-gray-800 border-gray-600" : "bg-card")}>
                 <div className="flex items-center gap-2 mb-2">
                   <Clock className="h-4 w-4 text-primary" />
-                  <p className="font-semibold text-sm">Total Time</p>
+                  <p className={cn("font-semibold text-sm", variant === "dark" ? "text-white" : "")}>Total Time</p>
                 </div>
-                <p className="text-2xl font-bold">{formatTime(mockResults.timeSpent)}</p>
+                <p className={cn("text-2xl font-bold", variant === "dark" ? "text-white" : "")}>{formatTime(mockResults.timeSpent)}</p>
               </div>
             </div>
 
             {/* Progression */}
-            <div className="rounded-lg border border-primary/30 bg-primary/5 p-4">
+            <div className={cn("rounded-lg border p-4", variant === "dark" ? "border-primary/30 bg-primary/10" : "border-primary/30 bg-primary/5")}>
               <div className="flex items-center justify-between mb-3">
                 <div>
-                  <p className="text-sm font-semibold">Current Tier</p>
-                  <p className="text-lg font-bold">{mockResults.progression.tierLabel}</p>
+                  <p className={cn("text-sm font-semibold", variant === "dark" ? "text-white" : "")}>Current Tier</p>
+                  <p className={cn("text-lg font-bold", variant === "dark" ? "text-white" : "")}>{mockResults.progression.tierLabel}</p>
                 </div>
                 <Badge>{mockResults.progression.tierLabel}</Badge>
               </div>
               
-              <div className="text-sm text-muted-foreground mb-3">
-                Career points: <span className="font-semibold text-foreground">{mockResults.progression.totalPoints}</span>
+              <div className={cn("text-sm mb-3", variant === "dark" ? "text-gray-400" : "text-muted-foreground")}>
+                Career points: <span className={cn("font-semibold", variant === "dark" ? "text-white" : "text-foreground")}>{mockResults.progression.totalPoints}</span>
               </div>
               
               <div className="space-y-2">
-                <div className="flex items-center justify-between text-xs text-muted-foreground">
+                <div className={cn("flex items-center justify-between text-xs", variant === "dark" ? "text-gray-400" : "text-muted-foreground")}>
                   <span>Progress to {mockResults.progression.nextTierLabel}</span>
                   <span>{mockResults.progression.progressPercent}%</span>
                 </div>
                 <Progress value={mockResults.progression.progressPercent} className="h-2" />
-                <p className="text-xs text-muted-foreground">
+                <p className={cn("text-xs", variant === "dark" ? "text-gray-400" : "text-muted-foreground")}>
                   {mockResults.progression.pointsToNext} points until {mockResults.progression.nextTierLabel}
                 </p>
               </div>
@@ -410,8 +329,8 @@ export function ShowcaseQuizResults() {
 
             {/* Badges */}
             {mockResults.badges.length > 0 && (
-              <div className="rounded-lg border border-emerald-400/40 bg-emerald-400/10 p-4">
-                <p className="text-sm font-semibold mb-2">New badges unlocked</p>
+              <div className={cn("rounded-lg border p-4", variant === "dark" ? "border-emerald-400/40 bg-emerald-400/20" : "border-emerald-400/40 bg-emerald-400/10")}>
+                <p className={cn("text-sm font-semibold mb-2", variant === "dark" ? "text-white" : "")}>New badges unlocked</p>
                 <div className="flex flex-wrap gap-2">
                   {mockResults.badges.map((badge) => (
                     <Badge key={badge} variant="secondary">
