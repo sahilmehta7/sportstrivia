@@ -13,9 +13,10 @@ export async function fetchStreakData(): Promise<{
   longestStreak: number;
   completedDays: number[];
 }> {
-  const headersList = headers();
+  const headersList = await headers();
   const host = headersList.get("x-forwarded-host") ?? headersList.get("host");
   const protocol = headersList.get("x-forwarded-proto") ?? "https";
+  const cookieHeader = headersList.get("cookie") ?? "";
 
   if (!host) {
     return { currentStreak: 0, longestStreak: 0, completedDays: [] };
@@ -24,6 +25,7 @@ export async function fetchStreakData(): Promise<{
   try {
     const res = await fetch(`${protocol}://${host}/api/users/me/stats`, {
       cache: "no-store",
+      headers: cookieHeader ? { cookie: cookieHeader } : undefined,
     });
 
     if (!res.ok) {
