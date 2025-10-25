@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { 
   Clock, 
+  Share2,
   RotateCcw, 
   ChevronLeft,
   Coins,
@@ -11,7 +12,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { LeaderboardEntry } from "@/lib/services/leaderboard.service";
-import { ShareResults } from "./ShareResults";
+import { useShareResults } from "./ShareResults";
 
 interface QuizAttempt {
   id: string;
@@ -110,6 +111,17 @@ export function ShowcaseQuizResults({ attempt, leaderboardData }: ShowcaseQuizRe
   const displayLeaderboard = isUserInTop3 
     ? leaderboardData.slice(0, 3)
     : [...leaderboardData.slice(0, 3), ...(userPosition >= 3 ? [leaderboardData[userPosition]] : [])];
+
+  // Share results functionality
+  const { shareResults, isGenerating } = useShareResults({
+    quizTitle: results.quizTitle,
+    userName: results.userName,
+    score: results.score,
+    correctAnswers: results.correctAnswers,
+    totalQuestions: results.totalQuestions,
+    totalPoints: results.totalPoints,
+    timeSpent: results.timeSpent,
+  });
 
   return (
     <div className="space-y-8">
@@ -395,18 +407,21 @@ export function ShowcaseQuizResults({ attempt, leaderboardData }: ShowcaseQuizRe
             </div>
 
             {/* Action Buttons */}
-            <div className="p-6 pt-0">
-              <div className="mb-4">
-                <ShareResults
-                  quizTitle={results.quizTitle}
-                  userName={results.userName}
-                  score={results.score}
-                  correctAnswers={results.correctAnswers}
-                  totalQuestions={results.totalQuestions}
-                  totalPoints={results.totalPoints}
-                  timeSpent={results.timeSpent}
-                />
-              </div>
+            <div className="flex flex-wrap gap-4 p-6 pt-0">
+              <Button 
+                onClick={shareResults}
+                disabled={isGenerating}
+                className={cn(
+                  "group inline-flex items-center gap-3 rounded-full px-6 py-3 text-sm font-semibold uppercase tracking-widest shadow-lg transition-transform duration-200 ease-out hover:-translate-y-1",
+                  variant === "light"
+                    ? "bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-blue-500/25 hover:shadow-blue-500/40"
+                    : "bg-gradient-to-r from-amber-400 to-pink-500 text-slate-900 shadow-pink-500/25 hover:shadow-amber-500/40"
+                )}
+              >
+                <Share2 className="h-4 w-4" />
+                {isGenerating ? "Generating..." : "Share Results"}
+                <span className="text-xs transition-transform group-hover:translate-x-1">→</span>
+              </Button>
               
               <Button variant="outline" className={cn(
                 "inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-medium transition",

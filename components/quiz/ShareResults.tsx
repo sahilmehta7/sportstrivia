@@ -1,9 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Download, MessageCircle } from "lucide-react";
-import { cn } from "@/lib/utils";
 
 interface ShareResultsProps {
   quizTitle: string;
@@ -13,18 +10,16 @@ interface ShareResultsProps {
   totalQuestions: number;
   totalPoints: number;
   timeSpent: number;
-  className?: string;
 }
 
-export function ShareResults({
+export function useShareResults({
   quizTitle,
   userName,
   score,
   correctAnswers,
   totalQuestions,
   totalPoints,
-  timeSpent,
-  className
+  timeSpent
 }: ShareResultsProps) {
   const [isGenerating, setIsGenerating] = useState(false);
 
@@ -180,23 +175,8 @@ export function ShareResults({
     }
   };
 
-  const downloadImage = async () => {
-    try {
-      const blob = await generateShareImage();
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `quiz-results-${userName}-${Date.now()}.jpg`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-    } catch (error) {
-      console.error('Error downloading image:', error);
-    }
-  };
 
-  const shareToWhatsApp = async () => {
+  const shareResults = async () => {
     try {
       const blob = await generateShareImage();
       const url = URL.createObjectURL(blob);
@@ -222,30 +202,12 @@ Think you can beat my score? Take the quiz and challenge me! 🏆
       // Clean up
       setTimeout(() => URL.revokeObjectURL(url), 1000);
     } catch (error) {
-      console.error('Error sharing to WhatsApp:', error);
+      console.error('Error sharing results:', error);
     }
   };
 
-  return (
-    <div className={cn("flex flex-wrap gap-3", className)}>
-      <Button
-        onClick={downloadImage}
-        disabled={isGenerating}
-        variant="outline"
-        className="flex items-center gap-2"
-      >
-        <Download className="h-4 w-4" />
-        {isGenerating ? "Generating..." : "Download Image"}
-      </Button>
-      
-      <Button
-        onClick={shareToWhatsApp}
-        disabled={isGenerating}
-        className="flex items-center gap-2 bg-green-600 hover:bg-green-700"
-      >
-        <MessageCircle className="h-4 w-4" />
-        {isGenerating ? "Generating..." : "Share on WhatsApp"}
-      </Button>
-    </div>
-  );
+  return {
+    shareResults,
+    isGenerating
+  };
 }
