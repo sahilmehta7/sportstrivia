@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useShowcaseTheme } from "@/components/showcase/ShowcaseThemeProvider";
-import { getGlassCard, getTextColor, getAccentColor } from "@/lib/showcase-theme";
+import { getGlassCard, getTextColor } from "@/lib/showcase-theme";
 import { cn } from "@/lib/utils";
 import { Users, BookOpen, TrendingUp, Loader2 } from "lucide-react";
 import Image from "next/image";

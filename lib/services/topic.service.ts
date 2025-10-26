@@ -107,6 +107,39 @@ export async function getDescendantTopicIdsForMultiple(
 }
 
 /**
+ * Fetch root topics with quiz counts for the topics browse page
+ */
+export async function getRootTopics() {
+  return await prisma.topic.findMany({
+    where: { parentId: null },
+    orderBy: { name: "asc" },
+    include: {
+      _count: {
+        select: { quizTopicConfigs: true }
+      }
+    }
+  });
+}
+
+/**
+ * Get featured topics (top by quiz count) for the topics browse page
+ */
+export async function getFeaturedTopics(limit = 6) {
+  return await prisma.topic.findMany({
+    where: { parentId: null },
+    orderBy: {
+      quizTopicConfigs: { _count: "desc" }
+    },
+    take: limit,
+    include: {
+      _count: {
+        select: { quizTopicConfigs: true }
+      }
+    }
+  });
+}
+
+/**
  * Get topic IDs including the parent and all descendants
  */
 export async function getTopicIdsWithDescendants(topicId: string): Promise<string[]> {
@@ -180,4 +213,3 @@ export async function getTopicTree(parentId: string | null = null): Promise<any[
 
   return result;
 }
-
