@@ -101,3 +101,68 @@ export function getShadowColor(theme: ShowcaseTheme) {
     ? "shadow-[0_40px_120px_-40px_rgba(59,130,246,0.15)]"
     : "shadow-[0_40px_120px_-40px_rgba(0,0,0,0.8)]";
 }
+
+export type SurfaceVariant = "base" | "raised" | "sunken";
+
+export function getSurfaceStyles(theme: ShowcaseTheme, variant: SurfaceVariant = "base") {
+  const base = theme === "light"
+    ? "bg-white/80 border border-white/60 shadow-[inset_0_1px_0_rgba(255,255,255,0.5)]"
+    : "bg-white/8 border border-white/15 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]";
+
+  const raised = theme === "light"
+    ? "bg-white/90 border border-white/70 shadow-[0_24px_60px_-30px_rgba(15,23,42,0.25)]"
+    : "bg-white/12 border border-white/20 shadow-[0_32px_80px_-40px_rgba(15,23,42,0.45)]";
+
+  const sunken = theme === "light"
+    ? "bg-white/65 border border-white/50 shadow-[inset_0_16px_40px_-24px_rgba(15,23,42,0.15)]"
+    : "bg-white/6 border border-white/12 shadow-[inset_0_18px_45px_-30px_rgba(0,0,0,0.6)]";
+
+  switch (variant) {
+    case "raised":
+      return raised;
+    case "sunken":
+      return sunken;
+    default:
+      return base;
+  }
+}
+
+export function getInputStyles(theme: ShowcaseTheme) {
+  return theme === "light"
+    ? "bg-white/80 border border-slate-200/70 text-slate-900 placeholder:text-slate-400 focus:border-blue-300 focus:ring-2 focus:ring-blue-200/70"
+    : "bg-white/10 border border-white/15 text-white placeholder:text-white/50 focus:border-blue-400/70 focus:ring-2 focus:ring-blue-500/40";
+}
+
+export type ChipEmphasis = "solid" | "outline" | "ghost";
+
+export function getChipStyles(theme: ShowcaseTheme, emphasis: ChipEmphasis = "solid") {
+  if (theme === "light") {
+    switch (emphasis) {
+      case "outline":
+        return "border border-slate-200 text-slate-600 bg-white/70 hover:bg-white/90";
+      case "ghost":
+        return "border border-transparent text-slate-500 hover:bg-slate-100/70";
+      default:
+        return "bg-slate-900 text-white border border-slate-900 shadow-[0_12px_24px_-16px_rgba(15,23,42,0.45)]";
+    }
+  }
+
+  switch (emphasis) {
+    case "outline":
+      return "border border-white/25 text-white/80 bg-white/5 hover:bg-white/10";
+    case "ghost":
+      return "border border-transparent text-white/70 hover:bg-white/10";
+    default:
+      return "bg-white/15 text-white border border-white/20 shadow-[0_12px_30px_-18px_rgba(59,130,246,0.45)]";
+  }
+}
+
+export function getDividerStyles(theme: ShowcaseTheme) {
+  return theme === "light" ? "bg-slate-200" : "bg-white/10";
+}
+
+export function getCardGlow(theme: ShowcaseTheme) {
+  return theme === "light"
+    ? "shadow-[0_26px_60px_-24px_rgba(59,130,246,0.25)]"
+    : "shadow-[0_32px_80px_-32px_rgba(15,23,42,0.65)]";
+}

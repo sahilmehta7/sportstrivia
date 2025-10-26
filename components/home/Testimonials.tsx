@@ -32,19 +32,24 @@ export function Testimonials() {
   return (
     <section className="px-4 py-12 sm:px-6 lg:py-16">
       <div className="mx-auto max-w-6xl">
-        <div className="text-center mb-8 sm:mb-12">
-          <h2 className={cn(
-            "text-2xl sm:text-3xl font-bold mb-4",
-            getTextColor(theme, "primary")
-          )}>
-            What Our Players Say
-          </h2>
-          <p className={cn(
-            "text-base sm:text-lg",
-            getTextColor(theme, "secondary")
-          )}>
-            Join thousands of satisfied sports fans
-          </p>
+        <div className={cn(
+          "relative w-full max-w-5xl mx-auto rounded-[1.75rem] border p-6 sm:p-8 backdrop-blur-xl mb-8",
+          getGlassCard(theme)
+        )}>
+          <div className="text-center">
+            <h2 className={cn(
+              "text-2xl sm:text-3xl font-bold mb-4",
+              getTextColor(theme, "primary")
+            )}>
+              What Our Players Say
+            </h2>
+            <p className={cn(
+              "text-base sm:text-lg",
+              getTextColor(theme, "secondary")
+            )}>
+              Join thousands of satisfied sports fans
+            </p>
+          </div>
         </div>
 
         <div className="grid md:grid-cols-3 gap-6 sm:gap-8">
