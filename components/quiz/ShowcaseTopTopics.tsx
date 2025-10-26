@@ -58,6 +58,18 @@ const topicIcons: Record<string, string> = {
   "default": "📝",
 };
 
+// Color pairs for topic backgrounds (matching showcase topic cards)
+const colorPairs = [
+  { dark: "#7c2d12", light: "#fde68a" },
+  { dark: "#065f46", light: "#bbf7d0" },
+  { dark: "#1e3a8a", light: "#bfdbfe" },
+  { dark: "#7c3aed", light: "#e9d5ff" },
+  { dark: "#9d174d", light: "#fecdd3" },
+  { dark: "#0f172a", light: "#cbd5f5" },
+  { dark: "#14532d", light: "#bef264" },
+  { dark: "#92400e", light: "#fed7aa" },
+];
+
 export function ShowcaseTopTopics({
   title = "Top Quiz Categories",
   showViewAll = true,
@@ -178,79 +190,110 @@ export function ShowcaseTopTopics({
 
       {/* Topics Grid */}
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-        {topics.map((topic) => (
-          <Card key={topic.id} className={cn("group cursor-pointer transition-all duration-200 hover:scale-105", getGlassCard(theme))}>
-            <Link href={`/topics/${topic.slug}`}>
-              <CardContent className="p-6 text-center space-y-4">
-                {/* Topic Icon */}
-                <div className="flex justify-center">
-                  <div className={cn(
-                    "w-16 h-16 rounded-2xl flex items-center justify-center text-3xl transition-all duration-200 group-hover:scale-110",
-                    theme === "light" 
-                      ? "bg-gradient-to-br from-blue-50 to-purple-50 shadow-lg shadow-blue-100/50" 
-                      : "bg-gradient-to-br from-blue-900/50 to-purple-900/50 shadow-lg shadow-blue-500/20"
-                  )}>
-                    {topic.imageUrl ? (
-                      <Image
-                        src={topic.imageUrl}
-                        alt={topic.name}
-                        width={48}
-                        height={48}
-                        className="rounded-lg object-cover"
-                      />
-                    ) : (
-                      <span className="text-3xl">{getTopicIcon(topic.name)}</span>
-                    )}
-                  </div>
-                </div>
-
-                {/* Topic Name */}
-                <div>
-                  <h3 className={cn("font-semibold text-lg group-hover:underline", getTextColor(theme, "primary"))}>
-                    {topic.name}
-                  </h3>
-                  {topic.description && (
-                    <p className={cn("text-xs mt-1 line-clamp-2", getTextColor(theme, "secondary"))}>
-                      {topic.description}
-                    </p>
-                  )}
-                </div>
-
-                {/* Stats */}
-                <div className="flex items-center justify-center gap-4 text-xs">
-                  <div className="flex items-center gap-1">
-                    <Users className="h-3 w-3" />
-                    <span className={getTextColor(theme, "muted")}>
-                      {sortBy === "users" ? topic.userCount : topic.quizCount}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <BookOpen className="h-3 w-3" />
-                    <span className={getTextColor(theme, "muted")}>
-                      {topic.quizCount}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Trending Badge */}
-                {sortBy === "users" && topic.userCount > 0 && (
-                  <Badge 
-                    variant="secondary" 
-                    className={cn(
-                      "text-xs",
-                      theme === "light" 
-                        ? "bg-emerald-100 text-emerald-700 border-emerald-200" 
-                        : "bg-emerald-900/50 text-emerald-300 border-emerald-700/50"
-                    )}
+        {topics.map((topic, index) => {
+          const colorPair = colorPairs[index % colorPairs.length];
+          const accentColor = theme === "light" ? colorPair.light : colorPair.dark;
+          
+          return (
+            <Card key={topic.id} className={cn("group cursor-pointer transition-all duration-200 hover:scale-105 overflow-hidden", getGlassCard(theme))}>
+              <Link href={`/topics/${topic.slug}`}>
+                <CardContent className="p-0">
+                  {/* Background Section with Accent Color */}
+                  <div 
+                    className="p-6 text-center space-y-4"
+                    style={{ backgroundColor: accentColor }}
                   >
-                    <TrendingUp className="h-3 w-3 mr-1" />
-                    Trending
-                  </Badge>
-                )}
-              </CardContent>
-            </Link>
-          </Card>
-        ))}
+                    {/* Topic Icon */}
+                    <div className="flex justify-center">
+                      <div className={cn(
+                        "w-16 h-16 rounded-2xl flex items-center justify-center text-3xl transition-all duration-200 group-hover:scale-110 backdrop-blur-sm",
+                        theme === "light" 
+                          ? "bg-white/80 shadow-lg shadow-black/10" 
+                          : "bg-black/20 shadow-lg shadow-black/30"
+                      )}>
+                        {topic.imageUrl ? (
+                          <Image
+                            src={topic.imageUrl}
+                            alt={topic.name}
+                            width={48}
+                            height={48}
+                            className="rounded-lg object-cover"
+                          />
+                        ) : (
+                          <span className="text-3xl">{getTopicIcon(topic.name)}</span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Topic Name */}
+                    <div>
+                      <h3 className={cn(
+                        "font-semibold text-lg group-hover:underline",
+                        theme === "light" 
+                          ? "text-slate-900 drop-shadow-[0_2px_8px_rgba(0,0,0,0.1)]" 
+                          : "text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.3)]"
+                      )}>
+                        {topic.name}
+                      </h3>
+                      {topic.description && (
+                        <p className={cn(
+                          "text-xs mt-1 line-clamp-2",
+                          theme === "light" 
+                            ? "text-slate-700" 
+                            : "text-white/80"
+                        )}>
+                          {topic.description}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Stats */}
+                    <div className="flex items-center justify-center gap-4 text-xs">
+                      <div className={cn(
+                        "flex items-center gap-1 px-2 py-1 rounded-full backdrop-blur-sm",
+                        theme === "light" 
+                          ? "bg-white/60 text-slate-700" 
+                          : "bg-black/30 text-white/80"
+                      )}>
+                        <Users className="h-3 w-3" />
+                        <span>
+                          {sortBy === "users" ? topic.userCount : topic.quizCount}
+                        </span>
+                      </div>
+                      <div className={cn(
+                        "flex items-center gap-1 px-2 py-1 rounded-full backdrop-blur-sm",
+                        theme === "light" 
+                          ? "bg-white/60 text-slate-700" 
+                          : "bg-black/30 text-white/80"
+                      )}>
+                        <BookOpen className="h-3 w-3" />
+                        <span>
+                          {topic.quizCount}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Trending Badge */}
+                    {sortBy === "users" && topic.userCount > 0 && (
+                      <Badge 
+                        variant="secondary" 
+                        className={cn(
+                          "text-xs backdrop-blur-sm",
+                          theme === "light" 
+                            ? "bg-emerald-100/80 text-emerald-700 border-emerald-200/50" 
+                            : "bg-emerald-900/50 text-emerald-300 border-emerald-700/50"
+                        )}
+                      >
+                        <TrendingUp className="h-3 w-3 mr-1" />
+                        Trending
+                      </Badge>
+                    )}
+                  </div>
+                </CardContent>
+              </Link>
+            </Card>
+          );
+        })}
       </div>
 
       {/* Empty State */}
