@@ -122,7 +122,7 @@ export function ShowcaseTopTopics({
     return (
       <div className={cn("w-full max-w-6xl mx-auto", className)}>
         <Card className={cn("p-6 text-center", getGlassCard(theme))}>
-          <p className={cn("text-sm", getTextColor(theme, "error"))}>
+          <p className={cn("text-sm", getTextColor(theme, "secondary"))}>
             Error: {error}
           </p>
         </Card>
