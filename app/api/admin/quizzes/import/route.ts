@@ -177,15 +177,48 @@ export async function POST(request: NextRequest) {
 
           const topicName = topicOriginalNameMap.get(normalizedName)!;
 
-          const newTopic = await tx.topic.create({
-            data: {
-              name: topicName,
-              slug: await generateUniqueSlug(topicName, "topic"),
-              level: 0,
-            },
-          });
+          try {
+            const newTopic = await tx.topic.create({
+              data: {
+                name: topicName,
+                slug: await generateUniqueSlug(topicName, "topic"),
+                level: 0,
+              },
+            });
 
-          topicNameMap.set(normalizedName, { id: newTopic.id });
+            topicNameMap.set(normalizedName, { id: newTopic.id });
+          } catch (error) {
+            // If topic creation fails due to unique constraint, try to find the existing topic
+            if (error.code === 'P2002' && error.meta?.target?.includes('name')) {
+              const existingTopic = await tx.topic.findUnique({
+                where: { name: topicName },
+                select: { id: true, name: true },
+              });
+              
+              if (existingTopic) {
+                topicNameMap.set(normalizedName, { id: existingTopic.id });
+              } else {
+                // If still not found, try case-insensitive search
+                const caseInsensitiveTopic = await tx.topic.findFirst({
+                  where: {
+                    name: {
+                      equals: topicName,
+                      mode: "insensitive",
+                    },
+                  },
+                  select: { id: true, name: true },
+                });
+                
+                if (caseInsensitiveTopic) {
+                  topicNameMap.set(normalizedName, { id: caseInsensitiveTopic.id });
+                } else {
+                  throw error; // Re-throw if we can't find the topic
+                }
+              }
+            } else {
+              throw error; // Re-throw if it's not a unique constraint error
+            }
+          }
         }
       }
 
