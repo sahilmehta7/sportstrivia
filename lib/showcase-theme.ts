@@ -1,4 +1,4 @@
-type ShowcaseTheme = "light" | "dark";
+import type { ShowcaseTheme } from "@/components/showcase/ShowcaseThemeProvider";
 
 export type BackgroundVariant = "default" | "dark" | "vibrant" | "cool";
 

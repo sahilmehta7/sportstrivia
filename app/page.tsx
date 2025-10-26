@@ -22,7 +22,7 @@ async function fetchTopTopics() {
     });
     if (!response.ok) return [];
     const data = await response.json();
-    return data.success ? data.data.topics : [];
+    return data.topics || [];
   } catch (error) {
     console.error('Error fetching top topics:', error);
     return [];

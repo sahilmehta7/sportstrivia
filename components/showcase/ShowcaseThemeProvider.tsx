@@ -2,7 +2,7 @@
 
 import { createContext, type ReactNode, useContext, useEffect, useState } from "react";
 
-type ShowcaseTheme = "light" | "dark";
+export type ShowcaseTheme = "light" | "dark";
 
 interface ShowcaseThemeContextType {
   theme: ShowcaseTheme;

@@ -24,7 +24,7 @@ export function PopularTopics({ topics }: PopularTopicsProps) {
     href: `/topics/${topic.slug}`,
     accentDark: "#1f2937",
     accentLight: "#f97316",
-    quizCount: topic._count?.quizTopicConfigs || 0,
+    quizCount: topic.quizCount || 0,
   }));
 
   return (
