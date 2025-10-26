@@ -1,12 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { ShowcaseQuizCard } from "./ShowcaseQuizCard";
 import { ShowcaseQuizCarousel } from "./ShowcaseQuizCarousel";
 import { ShowcaseDailyStreak } from "./ShowcaseDailyStreak";
 import { ShowcaseLeaderboard } from "./ShowcaseLeaderboard";
 import { useShowcaseTheme } from "@/components/showcase/ShowcaseThemeProvider";
-import { getGlassCard, getTextColor, getAccentColor } from "@/lib/showcase-theme";
+import { getGlassCard, getTextColor } from "@/lib/showcase-theme";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -17,6 +16,7 @@ import { Clock, Star, Users, Search, Filter, SortAsc, SortDesc } from "lucide-re
 import type { PublicQuizListResponse, PublicQuizFilterOptions, PublicQuizFilters } from "@/lib/services/public-quiz.service";
 import type { PublicQuizListItem } from "@/lib/services/public-quiz.service";
 import { Difficulty } from "@prisma/client";
+import Image from "next/image";
 
 interface ShowcaseQuizListingProps {
   listing: PublicQuizListResponse;
@@ -44,8 +44,8 @@ export function ShowcaseQuizListing({
   filterOptions,
   appliedFilters,
   featuredQuizzes,
-  dailyQuizzes,
-  comingSoonQuizzes,
+  dailyQuizzes: _dailyQuizzes,
+  comingSoonQuizzes: _comingSoonQuizzes,
 }: ShowcaseQuizListingProps) {
   const { theme } = useShowcaseTheme();
   const [searchQuery, setSearchQuery] = useState(appliedFilters.search || "");
@@ -55,7 +55,7 @@ export function ShowcaseQuizListing({
   const [sortOrder, setSortOrder] = useState(appliedFilters.sortOrder || "desc");
 
   // Convert quizzes to carousel format
-  const carouselItems = featuredQuizzes.map((quiz, index) => ({
+  const carouselItems = featuredQuizzes.map((quiz) => ({
     id: quiz.id,
     title: quiz.title,
     badgeLabel: quiz.sport || quiz.difficulty || "Featured",
@@ -292,10 +292,12 @@ export function ShowcaseQuizListing({
               <Card key={quiz.id} className={cn("overflow-hidden", getGlassCard(theme))}>
                 <div className="relative aspect-video">
                   {quiz.descriptionImageUrl ? (
-                    <img
+                    <Image
                       src={quiz.descriptionImageUrl}
                       alt={quiz.title}
-                      className="w-full h-full object-cover"
+                      fill
+                      className="object-cover"
+                      sizes="(min-width: 1024px) 300px, 60vw"
                     />
                   ) : (
                     <div className={cn("w-full h-full flex items-center justify-center", 

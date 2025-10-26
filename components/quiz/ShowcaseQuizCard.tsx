@@ -2,8 +2,6 @@
 
 import { cn } from "@/lib/utils";
 import { getSportGradient } from "@/lib/quiz-formatters";
-import { useShowcaseTheme } from "@/components/showcase/ShowcaseThemeProvider";
-import { getGlassCard } from "@/lib/showcase-theme";
 
 interface ShowcaseQuizCardProps {
   title: string;
@@ -33,13 +31,12 @@ export function ShowcaseQuizCard({
   coverImageUrl,
   className,
 }: ShowcaseQuizCardProps) {
-  const { theme } = useShowcaseTheme();
   const gradient = accent ?? getSportGradient(undefined, hashString(`${title}`));
   const label = (badgeLabel ?? "Featured").toUpperCase();
 
   return (
     <div className={cn("w-[300px]", className)}>
-      <div className={cn("flex h-full flex-col overflow-hidden rounded-[2.25rem] border shadow-[0_30px_70px_-28px_rgba(0,0,0,0.8)]", getGlassCard(theme))}>
+      <div className="flex h-full flex-col overflow-hidden rounded-[2.25rem] border border-white/10 bg-slate-950/80 text-white shadow-[0_30px_70px_-28px_rgba(0,0,0,0.8)]">
         <div className="relative aspect-[16/9] w-full overflow-hidden">
           <div className={cn("absolute inset-0", `bg-gradient-to-br ${gradient}`)} />
           {coverImageUrl && (
@@ -48,34 +45,33 @@ export function ShowcaseQuizCard({
               style={{ backgroundImage: `url(${coverImageUrl})` }}
             />
           )}
-          <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/30 to-black/80" />
-          <div className="absolute inset-0 flex flex-col justify-between p-4 text-white">
-            <div className="flex items-center justify-between gap-2 text-[0.65rem] font-semibold uppercase tracking-[0.25em]">
-              <span className="inline-flex items-center gap-2 rounded-full bg-black/50 px-3 py-1 backdrop-blur-sm">
-                <span className="text-sm" aria-hidden="true">
-                  ⏱️
-                </span>
-                <span className="tracking-tight">{durationLabel}</span>
+          <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/10 to-black/60" />
+        </div>
+        <div className="flex flex-1 flex-col justify-between px-5 pb-5 pt-4">
+          <div className="text-left">
+            <p className="text-[0.6rem] font-semibold uppercase tracking-[0.35em] text-white/50">{label}</p>
+            <p className="mt-2 text-lg font-bold leading-tight text-white">{title}</p>
+          </div>
+
+          <div className="mt-6 rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-xs text-white/70">
+            <div className="flex items-center justify-between">
+              <span className="flex items-center gap-2">
+                <span className="text-base">⏱️</span>
+                {durationLabel}
               </span>
-              <span className="inline-flex items-center gap-2 rounded-full bg-black/50 px-3 py-1 backdrop-blur-sm">
-                <span className="text-sm" aria-hidden="true">
-                  👥
-                </span>
-                <span className="tracking-tight">{playersLabel}</span>
+              <span className="flex items-center gap-2">
+                {playersLabel}
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                  className="h-4 w-4"
+                >
+                  <path d="M8 11a3 3 0 1 1 3-3 3 3 0 0 1-3 3Zm8-6a3 3 0 1 0 3 3 3 3 0 0 0-3-3Zm0 7a4.94 4.94 0 0 0-3.61 1.59A6.95 6.95 0 0 1 12 15.76 6.95 6.95 0 0 1 9.61 13.6 4.94 4.94 0 0 0 6 12a5 5 0 0 0-5 5 1 1 0 0 0 1 1h12a6.94 6.94 0 0 1 1.42-4h2.16A6.94 6.94 0 0 1 19 18h4a1 1 0 0 0 1-1 5 5 0 0 0-5-5Z" />
+                </svg>
               </span>
-            </div>
-            <div>
-              <p className="text-[0.6rem] font-semibold uppercase tracking-[0.35em] text-white/70">
-                {label}
-              </p>
-              <h3 className="mt-2 text-2xl font-bold leading-tight drop-shadow-[0_10px_25px_rgba(0,0,0,0.35)]">
-                {title}
-              </h3>
             </div>
           </div>
-        </div>
-        <div className="px-5 pb-5 pt-4">
-          <p className={cn("text-xs", theme === "light" ? "text-slate-600" : "text-white/70")}>Swipe to explore the full lineup.</p>
         </div>
       </div>
     </div>
