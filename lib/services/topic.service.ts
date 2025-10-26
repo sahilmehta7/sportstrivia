@@ -108,10 +108,16 @@ export async function getDescendantTopicIdsForMultiple(
 
 /**
  * Fetch root topics with quiz counts for the topics browse page
+ * Only includes topics that have quizzes
  */
 export async function getRootTopics() {
   return await prisma.topic.findMany({
-    where: { parentId: null },
+    where: { 
+      parentId: null,
+      quizTopicConfigs: {
+        some: {} // Only topics that have quizzes
+      }
+    },
     orderBy: { name: "asc" },
     include: {
       _count: {
@@ -123,15 +129,57 @@ export async function getRootTopics() {
 
 /**
  * Get featured topics (top by quiz count) for the topics browse page
+ * Only includes topics that have quizzes
  */
 export async function getFeaturedTopics(limit = 6) {
   return await prisma.topic.findMany({
-    where: { parentId: null },
+    where: { 
+      parentId: null,
+      quizTopicConfigs: {
+        some: {} // Only topics that have quizzes
+      }
+    },
     orderBy: {
       quizTopicConfigs: { _count: "desc" }
     },
     take: limit,
     include: {
+      _count: {
+        select: { quizTopicConfigs: true }
+      }
+    }
+  });
+}
+
+/**
+ * Get L2 topics for popular sports (Cricket, Football, Tennis, etc.)
+ * Only includes L2 topics that have quizzes
+ */
+export async function getL2TopicsForPopularSports() {
+  const popularSports = ['Cricket', 'Football (Soccer)', 'Tennis', 'Basketball', 'Baseball', 'Golf', 'Rugby'];
+  
+  return await prisma.topic.findMany({
+    where: {
+      parent: {
+        name: {
+          in: popularSports
+        }
+      },
+      quizTopicConfigs: {
+        some: {} // Only L2 topics that have quizzes
+      }
+    },
+    orderBy: [
+      { parent: { name: "asc" } },
+      { name: "asc" }
+    ],
+    include: {
+      parent: {
+        select: {
+          name: true,
+          slug: true
+        }
+      },
       _count: {
         select: { quizTopicConfigs: true }
       }

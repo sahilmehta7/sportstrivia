@@ -1,52 +1,83 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { Input } from "@/components/ui/input";
 import { ShowcaseTopicCarousel } from "@/components/quiz/ShowcaseTopicCarousel";
 import { ShowcaseTopicCard } from "@/components/quiz/ShowcaseTopicCard";
-import { Input } from "@/components/ui/input";
+import { useShowcaseTheme } from "@/components/showcase/ShowcaseThemeProvider";
+import { getBackgroundVariant, getBlurCircles, getTextColor, getGlassCard } from "@/lib/showcase-theme";
+import { cn } from "@/lib/utils";
 import { Search } from "lucide-react";
 
 interface TopicItem {
   id: string;
   title: string;
-  description?: string | null;
+  description: string | null;
   href: string;
   accentDark: string;
   accentLight: string;
   quizCount?: number;
+  parentName?: string;
+  parentSlug?: string;
 }
 
 interface TopicsBrowseProps {
   featured: TopicItem[];
   topics: TopicItem[];
+  l2TopicsByParent: Record<string, TopicItem[]>;
 }
 
-export default function TopicsBrowse({ featured, topics }: TopicsBrowseProps) {
+export default function TopicsBrowse({ featured, topics, l2TopicsByParent }: TopicsBrowseProps) {
+  const { theme } = useShowcaseTheme();
   const [searchQuery, setSearchQuery] = useState("");
-  
+
   const filteredTopics = useMemo(() => {
-    if (!searchQuery.trim()) return topics;
+    if (!searchQuery) return topics;
     return topics.filter(topic => 
       topic.title.toLowerCase().includes(searchQuery.toLowerCase())
     );
   }, [searchQuery, topics]);
-  
+
+  const filteredL2Topics = useMemo(() => {
+    if (!searchQuery) return l2TopicsByParent;
+    
+    const filtered: Record<string, TopicItem[]> = {};
+    Object.entries(l2TopicsByParent).forEach(([parentName, l2Topics]) => {
+      const matchingTopics = l2Topics.filter(topic => 
+        topic.title.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+      if (matchingTopics.length > 0) {
+        filtered[parentName] = matchingTopics;
+      }
+    });
+    return filtered;
+  }, [searchQuery, l2TopicsByParent]);
+
+  const blurCircles = getBlurCircles(theme);
+  const backgroundVariant = getBackgroundVariant("default", theme);
+
   return (
-    <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-gradient-to-br from-slate-900 via-purple-900 to-amber-500 px-4 py-12 sm:px-6 lg:py-16">
+    <div className={`relative flex min-h-screen flex-col items-center justify-center overflow-hidden ${backgroundVariant} px-4 py-12 sm:px-6 lg:py-16`}>
       {/* Animated blur circles */}
       <div className="absolute inset-0 -z-10 opacity-70">
-        <div className="absolute -left-20 top-24 h-72 w-72 rounded-full bg-emerald-400/40 blur-[120px]" />
-        <div className="absolute right-12 top-12 h-64 w-64 rounded-full bg-pink-500/40 blur-[100px]" />
-        <div className="absolute bottom-8 left-1/2 h-56 w-56 -translate-x-1/2 rounded-full bg-blue-500/30 blur-[90px]" />
+        <div className={`absolute -left-20 top-24 h-72 w-72 rounded-full ${blurCircles.circle1} blur-[120px]`} />
+        <div className={`absolute right-12 top-12 h-64 w-64 rounded-full ${blurCircles.circle2} blur-[100px]`} />
+        <div className={`absolute bottom-8 left-1/2 h-56 w-56 -translate-x-1/2 rounded-full ${blurCircles.circle3} blur-[90px]`} />
       </div>
 
       <div className="relative w-full max-w-6xl">
         {/* Hero Section */}
         <section className="mb-8 text-center">
-          <h1 className="text-4xl font-black uppercase tracking-tight text-white drop-shadow-[0_16px_32px_rgba(32,32,48,0.35)] sm:text-5xl lg:text-6xl mb-4">
-            Explore Quiz <span className="text-emerald-300">Topics</span>
+          <h1 className={cn(
+            "text-4xl font-black uppercase tracking-tight drop-shadow-[0_16px_32px_rgba(32,32,48,0.35)] sm:text-5xl lg:text-6xl mb-4",
+            getTextColor(theme, "primary")
+          )}>
+            Explore Quiz <span className={theme === "light" ? "text-blue-600" : "text-emerald-300"}>Topics</span>
           </h1>
-          <p className="mx-auto max-w-2xl text-sm text-white/75 mb-4">
+          <p className={cn(
+            "mx-auto max-w-2xl text-sm mb-4",
+            getTextColor(theme, "secondary")
+          )}>
             Discover your favorite quiz categories and test your knowledge across different subjects
           </p>
         </section>
@@ -54,11 +85,17 @@ export default function TopicsBrowse({ featured, topics }: TopicsBrowseProps) {
         {/* Featured Carousel */}
         {featured.length > 0 && (
           <section className="mb-8">
-            <div className="relative w-full max-w-5xl mx-auto rounded-[1.75rem] border border-white/10 bg-gradient-to-br from-black/70 via-slate-900/60 to-indigo-900/80 p-6 shadow-[0_40px_120px_-40px_rgba(0,0,0,0.8)] backdrop-blur-xl sm:p-8">
-              <h2 className="text-2xl font-semibold text-white mb-6 text-center">
+            <div className={cn(
+              "relative w-full max-w-5xl mx-auto rounded-[1.75rem] border p-6 shadow-[0_40px_120px_-40px_rgba(0,0,0,0.8)] backdrop-blur-xl sm:p-8",
+              getGlassCard(theme)
+            )}>
+              <h2 className={cn(
+                "text-2xl font-semibold mb-6 text-center",
+                getTextColor(theme, "primary")
+              )}>
                 Featured Topics
               </h2>
-              <ShowcaseTopicCarousel items={featured} variant="dark" />
+              <ShowcaseTopicCarousel items={featured} variant={theme} />
             </div>
           </section>
         )}
@@ -67,27 +104,85 @@ export default function TopicsBrowse({ featured, topics }: TopicsBrowseProps) {
         <section className="mb-8">
           <div className="max-w-md mx-auto">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/40 h-5 w-5" />
+              <Search className={cn(
+                "absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5",
+                theme === "light" ? "text-slate-400" : "text-white/40"
+              )} />
               <Input 
                 placeholder="Search topics..." 
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 bg-white/10 border-white/20 text-white placeholder:text-white/50 focus:border-white/40 focus:ring-white/20 backdrop-blur-xl"
+                className={cn(
+                  "pl-10 backdrop-blur-xl",
+                  theme === "light" 
+                    ? "bg-white/80 border-slate-200 text-slate-900 placeholder:text-slate-500 focus:border-blue-300 focus:ring-blue-200" 
+                    : "bg-white/10 border-white/20 text-white placeholder:text-white/50 focus:border-white/40 focus:ring-white/20"
+                )}
               />
             </div>
           </div>
         </section>
         
+        {/* L2 Topics for Popular Sports */}
+        {Object.keys(filteredL2Topics).length > 0 && (
+          <section className="mb-8">
+            <div className={cn(
+              "relative w-full max-w-5xl mx-auto rounded-[1.75rem] border p-6 shadow-[0_40px_120px_-40px_rgba(0,0,0,0.8)] backdrop-blur-xl sm:p-8",
+              getGlassCard(theme)
+            )}>
+              <h2 className={cn(
+                "text-2xl font-semibold mb-6 text-center",
+                getTextColor(theme, "primary")
+              )}>
+                Popular Sports Categories
+              </h2>
+              
+              {Object.entries(filteredL2Topics).map(([parentName, l2Topics]) => (
+                <div key={parentName} className="mb-8">
+                  <h3 className={cn(
+                    "text-xl font-semibold mb-4",
+                    getTextColor(theme, "primary")
+                  )}>
+                    {parentName}
+                  </h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {l2Topics.map((topic) => (
+                      <ShowcaseTopicCard 
+                        key={topic.id} 
+                        href={topic.href}
+                        title={topic.title}
+                        description={topic.description}
+                        accentDark={topic.accentDark}
+                        accentLight={topic.accentLight}
+                        variant={theme}
+                      />
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+        
         {/* All Topics Grid */}
         <section className="pb-12">
-          <div className="relative w-full max-w-5xl mx-auto rounded-[1.75rem] border border-white/10 bg-gradient-to-br from-black/70 via-slate-900/60 to-indigo-900/80 p-6 shadow-[0_40px_120px_-40px_rgba(0,0,0,0.8)] backdrop-blur-xl sm:p-8">
-            <h2 className="text-2xl font-semibold text-white mb-6 text-center">
+          <div className={cn(
+            "relative w-full max-w-5xl mx-auto rounded-[1.75rem] border p-6 shadow-[0_40px_120px_-40px_rgba(0,0,0,0.8)] backdrop-blur-xl sm:p-8",
+            getGlassCard(theme)
+          )}>
+            <h2 className={cn(
+              "text-2xl font-semibold mb-6 text-center",
+              getTextColor(theme, "primary")
+            )}>
               All Topics ({filteredTopics.length})
             </h2>
             
             {filteredTopics.length === 0 ? (
               <div className="text-center py-12">
-                <p className="text-white/60 text-lg">
+                <p className={cn(
+                  "text-lg",
+                  getTextColor(theme, "secondary")
+                )}>
                   No topics found matching "{searchQuery}"
                 </p>
               </div>
@@ -101,7 +196,7 @@ export default function TopicsBrowse({ featured, topics }: TopicsBrowseProps) {
                     description={topic.description}
                     accentDark={topic.accentDark}
                     accentLight={topic.accentLight}
-                    variant="dark"
+                    variant={theme}
                   />
                 ))}
               </div>

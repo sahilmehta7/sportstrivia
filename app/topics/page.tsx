@@ -1,4 +1,4 @@
-import { getRootTopics, getFeaturedTopics } from "@/lib/services/topic.service";
+import { getRootTopics, getFeaturedTopics, getL2TopicsForPopularSports } from "@/lib/services/topic.service";
 import TopicsBrowse from "@/components/topics/TopicsBrowse";
 import { ShowcaseThemeProvider } from "@/components/showcase/ShowcaseThemeProvider";
 
@@ -15,12 +15,13 @@ const colorPairs = [
 ];
 
 export default async function TopicsPage() {
-  const [featuredTopics, allTopics] = await Promise.all([
+  const [featuredTopics, allTopics, l2Topics] = await Promise.all([
     getFeaturedTopics(6),
-    getRootTopics()
+    getRootTopics(),
+    getL2TopicsForPopularSports()
   ]);
   
-  // Map topics to format with color pairs for the components
+  // Map root topics to format with color pairs
   const featuredItems = featuredTopics.map((topic, index) => ({
     id: topic.id,
     title: topic.name,
@@ -39,10 +40,34 @@ export default async function TopicsPage() {
     accentLight: colorPairs[index % colorPairs.length].light,
     quizCount: topic._count.quizTopicConfigs,
   }));
+
+  // Map L2 topics grouped by parent
+  const l2ItemsByParent = l2Topics.reduce((acc, topic) => {
+    const parentName = topic.parent.name;
+    if (!acc[parentName]) {
+      acc[parentName] = [];
+    }
+    acc[parentName].push({
+      id: topic.id,
+      title: topic.name,
+      description: topic.description,
+      href: `/topics/${topic.slug}`,
+      accentDark: colorPairs[Object.keys(acc).length % colorPairs.length].dark,
+      accentLight: colorPairs[Object.keys(acc).length % colorPairs.length].light,
+      quizCount: topic._count.quizTopicConfigs,
+      parentName: parentName,
+      parentSlug: topic.parent.slug,
+    });
+    return acc;
+  }, {} as Record<string, any[]>);
   
   return (
     <ShowcaseThemeProvider>
-      <TopicsBrowse featured={featuredItems} topics={allItems} />
+      <TopicsBrowse 
+        featured={featuredItems} 
+        topics={allItems}
+        l2TopicsByParent={l2ItemsByParent}
+      />
     </ShowcaseThemeProvider>
   );
 }

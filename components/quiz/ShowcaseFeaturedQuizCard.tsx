@@ -32,6 +32,7 @@ export function ShowcaseFeaturedQuizCard({
   className,
 }: ShowcaseFeaturedQuizCardProps) {
   const { theme } = useShowcaseTheme();
+  const isLight = theme === "light";
 
   return (
     <div
@@ -41,64 +42,161 @@ export function ShowcaseFeaturedQuizCard({
         className
       )}
     >
-      <div className={cn("absolute inset-0 -z-10 bg-gradient-to-br opacity-70", accent)} />
-      <div className="absolute inset-0 -z-20 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.35),_transparent_55%)]" />
+      <div
+        className={cn(
+          "absolute inset-0 -z-10 bg-gradient-to-br",
+          accent,
+          isLight ? "opacity-60" : "opacity-70"
+        )}
+      />
+      <div
+        className={cn(
+          "absolute inset-0 -z-20",
+          isLight
+            ? "bg-[radial-gradient(circle_at_top,_rgba(15,23,42,0.1),_transparent_55%)]"
+            : "bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.35),_transparent_55%)]"
+        )}
+      />
 
       <div className="flex flex-1 flex-col gap-6 px-8 py-10 md:px-12 md:py-12">
-        <div className="inline-flex w-fit items-center gap-2 rounded-full bg-white/15 px-4 py-1 text-xs font-semibold uppercase tracking-[0.35em] text-white/80">
+        <div
+          className={cn(
+            "inline-flex w-fit items-center gap-2 rounded-full px-4 py-1 text-xs font-semibold uppercase tracking-[0.35em]",
+            isLight ? "bg-slate-900/10 text-slate-900" : "bg-white/15 text-white/80"
+          )}
+        >
           {category}
         </div>
 
-        <div className="space-y-3 text-white">
+        <div className={cn("space-y-3", isLight ? "text-slate-900" : "text-white")}> 
           <h2 className="text-4xl font-black leading-tight md:text-5xl">{title}</h2>
           {subtitle && (
-            <p className="max-w-xl text-sm text-white/80">
+            <p className={cn("max-w-xl text-sm", isLight ? "text-slate-600" : "text-white/80")}> 
               {subtitle}
             </p>
           )}
         </div>
 
-        <div className="grid gap-3 text-sm text-white/80 sm:grid-cols-2">
-          <div className="flex items-center gap-3 rounded-[1.5rem] bg-white/10 px-4 py-3">
-            <Clock className="h-4 w-4" />
+        <div className="grid gap-3 text-sm sm:grid-cols-2">
+          <div
+            className={cn(
+              "flex items-center gap-3 rounded-[1.5rem] px-4 py-3",
+              isLight ? "bg-slate-900/5 text-slate-700" : "bg-white/10 text-white/80"
+            )}
+          >
+            <Clock className={cn("h-4 w-4", isLight ? "text-slate-700" : "text-white/80")} />
             <div>
-              <p className="text-xs uppercase tracking-[0.3em] text-white/50">Duration</p>
-              <p className="text-sm font-semibold text-white">{durationLabel}</p>
+              <p
+                className={cn(
+                  "text-xs uppercase tracking-[0.3em]",
+                  isLight ? "text-slate-500" : "text-white/50"
+                )}
+              >
+                Duration
+              </p>
+              <p className={cn("text-sm font-semibold", isLight ? "text-slate-900" : "text-white")}>{durationLabel}</p>
             </div>
           </div>
-          <div className="flex items-center gap-3 rounded-[1.5rem] bg-white/10 px-4 py-3">
-            <Users className="h-4 w-4" />
+          <div
+            className={cn(
+              "flex items-center gap-3 rounded-[1.5rem] px-4 py-3",
+              isLight ? "bg-slate-900/5 text-slate-700" : "bg-white/10 text-white/80"
+            )}
+          >
+            <Users className={cn("h-4 w-4", isLight ? "text-slate-700" : "text-white/80")} />
             <div>
-              <p className="text-xs uppercase tracking-[0.3em] text-white/50">Players</p>
-              <p className="text-sm font-semibold text-white">{playersLabel}</p>
+              <p
+                className={cn(
+                  "text-xs uppercase tracking-[0.3em]",
+                  isLight ? "text-slate-500" : "text-white/50"
+                )}
+              >
+                Players
+              </p>
+              <p className={cn("text-sm font-semibold", isLight ? "text-slate-900" : "text-white")}>{playersLabel}</p>
             </div>
           </div>
-          <div className="flex items-center gap-3 rounded-[1.5rem] bg-white/10 px-4 py-3">
+          <div
+            className={cn(
+              "flex items-center gap-3 rounded-[1.5rem] px-4 py-3",
+              isLight ? "bg-slate-900/5 text-slate-700" : "bg-white/10 text-white/80"
+            )}
+          >
             <span className="text-base font-semibold">🎯</span>
             <div>
-              <p className="text-xs uppercase tracking-[0.3em] text-white/50">Difficulty</p>
-              <p className="text-sm font-semibold text-white capitalize">{difficultyLabel}</p>
+              <p
+                className={cn(
+                  "text-xs uppercase tracking-[0.3em]",
+                  isLight ? "text-slate-500" : "text-white/50"
+                )}
+              >
+                Difficulty
+              </p>
+              <p className={cn("text-sm font-semibold capitalize", isLight ? "text-slate-900" : "text-white")}>{difficultyLabel}</p>
             </div>
           </div>
           {ratingLabel && (
-            <div className="flex items-center gap-3 rounded-[1.5rem] bg-white/10 px-4 py-3">
-              <Star className="h-4 w-4" />
+            <div
+              className={cn(
+                "flex items-center gap-3 rounded-[1.5rem] px-4 py-3",
+                isLight ? "bg-slate-900/5 text-slate-700" : "bg-white/10 text-white/80"
+              )}
+            >
+              <Star className={cn("h-4 w-4", isLight ? "text-slate-700" : "text-white/80")} />
               <div>
-                <p className="text-xs uppercase tracking-[0.3em] text-white/50">Rating</p>
-                <p className="text-sm font-semibold text-white">{ratingLabel}</p>
+                <p
+                  className={cn(
+                    "text-xs uppercase tracking-[0.3em]",
+                    isLight ? "text-slate-500" : "text-white/50"
+                  )}
+                >
+                  Rating
+                </p>
+                <p className={cn("text-sm font-semibold", isLight ? "text-slate-900" : "text-white")}>{ratingLabel}</p>
               </div>
             </div>
           )}
         </div>
 
-        <div className="flex flex-wrap gap-3 text-xs text-white/70">
-          <span className="inline-flex items-center gap-2 rounded-full bg-white/15 px-4 py-2">Live Leaderboard</span>
-          <span className="inline-flex items-center gap-2 rounded-full bg-white/15 px-4 py-2">Bonus Rounds</span>
-          <span className="inline-flex items-center gap-2 rounded-full bg-white/15 px-4 py-2">Coach Insights</span>
+        <div
+          className={cn(
+            "flex flex-wrap gap-3 text-xs",
+            isLight ? "text-slate-600" : "text-white/70"
+          )}
+        >
+          <span
+            className={cn(
+              "inline-flex items-center gap-2 rounded-full px-4 py-2",
+              isLight ? "bg-slate-900/10" : "bg-white/15"
+            )}
+          >
+            Live Leaderboard
+          </span>
+          <span
+            className={cn(
+              "inline-flex items-center gap-2 rounded-full px-4 py-2",
+              isLight ? "bg-slate-900/10" : "bg-white/15"
+            )}
+          >
+            Bonus Rounds
+          </span>
+          <span
+            className={cn(
+              "inline-flex items-center gap-2 rounded-full px-4 py-2",
+              isLight ? "bg-slate-900/10" : "bg-white/15"
+            )}
+          >
+            Coach Insights
+          </span>
         </div>
       </div>
 
-      <div className="relative flex min-h-[240px] flex-1 items-end overflow-hidden rounded-t-[2.75rem] bg-white/5 md:rounded-l-[2.75rem] md:rounded-tr-none">
+      <div
+        className={cn(
+          "relative flex min-h-[240px] flex-1 items-end overflow-hidden rounded-t-[2.75rem] md:rounded-l-[2.75rem] md:rounded-tr-none",
+          isLight ? "bg-slate-100/60" : "bg-white/5"
+        )}
+      >
         {coverImageUrl ? (
           <Image
             src={coverImageUrl}
@@ -109,14 +207,40 @@ export function ShowcaseFeaturedQuizCard({
             priority
           />
         ) : (
-          <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-white/15 to-transparent text-6xl text-white/60">
+          <div
+            className={cn(
+              "flex h-full w-full items-center justify-center text-6xl",
+              isLight
+                ? "bg-gradient-to-br from-slate-200 to-transparent text-slate-400"
+                : "bg-gradient-to-br from-white/15 to-transparent text-white/60"
+            )}
+          >
             🏆
           </div>
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+        <div
+          className={cn(
+            "absolute inset-0 bg-gradient-to-t",
+            isLight
+              ? "from-white/90 via-white/30 to-transparent"
+              : "from-black/70 via-black/20 to-transparent"
+          )}
+        />
 
-        <div className="relative w-full space-y-2 px-8 pb-10 text-white md:px-10">
-          <p className="text-xs uppercase tracking-[0.3em] text-white/60">Featured Quiz</p>
+        <div
+          className={cn(
+            "relative w-full space-y-2 px-8 pb-10 md:px-10",
+            isLight ? "text-slate-800" : "text-white"
+          )}
+        >
+          <p
+            className={cn(
+              "text-xs uppercase tracking-[0.3em]",
+              isLight ? "text-slate-500" : "text-white/60"
+            )}
+          >
+            Featured Quiz
+          </p>
           <p className="text-lg font-semibold">Unlock exclusive badges when you finish under the time cap.</p>
         </div>
       </div>
