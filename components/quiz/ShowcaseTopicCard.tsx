@@ -42,7 +42,7 @@ export function ShowcaseTopicCard({
     <Link
       href={href}
       className={cn(
-        "group relative flex h-full w-[320px] flex-col overflow-hidden rounded-[2.5rem] border transition-transform duration-300 hover:-translate-y-1",
+        "group relative flex h-[240px] w-[320px] flex-col overflow-hidden rounded-[2.5rem] border transition-transform duration-300 hover:-translate-y-1",
         isLight
           ? "border-white/60 bg-white text-slate-900 shadow-[0_32px_60px_-28px_rgba(255,100,0,0.3)]"
           : "border-white/10 bg-gradient-to-br from-black/85 via-slate-950 to-black/85 text-white shadow-[0_32px_72px_-30px_rgba(0,0,0,0.85)]",
@@ -54,17 +54,29 @@ export function ShowcaseTopicCard({
       </div>
 
       <div
-        className="relative flex flex-1 flex-col gap-6 px-7 py-8"
+        className="relative flex flex-1 flex-col justify-between px-7 py-8"
         style={{ backgroundColor: accentColor }}
       >
-        <h3 className={cn("text-3xl font-black leading-tight tracking-tight", headingClass)}>
-          {title}
-        </h3>
+        {/* Title Section - Fixed height for 2 lines */}
+        <div className="flex-1 flex flex-col justify-start">
+          <h3 className={cn(
+            "text-3xl font-black leading-tight tracking-tight line-clamp-2",
+            headingClass
+          )}>
+            {title}
+          </h3>
+        </div>
 
+        {/* Description Section - Fixed height for 2 lines */}
         {description && (
-          <p className={cn("text-sm leading-relaxed", descriptionClass)}>
-            {description}
-          </p>
+          <div className="mt-4 flex-1 flex flex-col justify-start">
+            <p className={cn(
+              "text-sm leading-relaxed line-clamp-2",
+              descriptionClass
+            )}>
+              {description}
+            </p>
+          </div>
         )}
       </div>
     </Link>
