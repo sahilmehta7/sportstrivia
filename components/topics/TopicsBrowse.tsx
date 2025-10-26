@@ -179,11 +179,13 @@ export default function TopicsBrowse({ featured, topics, l2TopicsByParent }: Top
             
             {filteredTopics.length === 0 ? (
               <div className="text-center py-12">
-                <p className={cn(
-                  "text-lg",
-                  getTextColor(theme, "secondary")
-                )}>
-                  No topics found matching "{searchQuery}"
+                <p
+                  className={cn(
+                    "text-lg",
+                    getTextColor(theme, "secondary")
+                  )}
+                >
+                  No topics found matching &quot;{searchQuery}&quot;
                 </p>
               </div>
             ) : (

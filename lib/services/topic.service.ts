@@ -108,20 +108,20 @@ export async function getDescendantTopicIdsForMultiple(
 
 /**
  * Fetch root topics with quiz counts for the topics browse page
- * Only includes topics that have quizzes
+ * Temporarily showing all root topics for debugging
  */
 export async function getRootTopics() {
   return await prisma.topic.findMany({
     where: { 
-      parentId: null,
-      quizTopicConfigs: {
-        some: {} // Only topics that have quizzes
-      }
+      parentId: null
     },
     orderBy: { name: "asc" },
     include: {
       _count: {
-        select: { quizTopicConfigs: true }
+        select: { 
+          quizTopicConfigs: true,
+          children: true
+        }
       }
     }
   });
@@ -129,23 +129,49 @@ export async function getRootTopics() {
 
 /**
  * Get featured topics (top by quiz count) for the topics browse page
- * Only includes topics that have quizzes
+ * Shows topics that have quizzes OR are popular sports categories
  */
 export async function getFeaturedTopics(limit = 6) {
+  const popularSports = ['Cricket', 'Football (Soccer)', 'Tennis', 'Basketball', 'Baseball', 'Golf', 'Rugby', 'American Football', 'Boxing', 'MMA'];
+  
   return await prisma.topic.findMany({
     where: { 
       parentId: null,
-      quizTopicConfigs: {
-        some: {} // Only topics that have quizzes
-      }
+      OR: [
+        {
+          quizTopicConfigs: {
+            some: {} // Direct quizzes
+          }
+        },
+        {
+          children: {
+            some: {
+              quizTopicConfigs: {
+                some: {} // Quizzes through children
+              }
+            }
+          }
+        },
+        {
+          name: {
+            in: popularSports // Popular sports even without quizzes
+          }
+        }
+      ]
     },
-    orderBy: {
-      quizTopicConfigs: { _count: "desc" }
-    },
+    orderBy: [
+      {
+        quizTopicConfigs: { _count: "desc" }
+      },
+      { name: "asc" }
+    ],
     take: limit,
     include: {
       _count: {
-        select: { quizTopicConfigs: true }
+        select: { 
+          quizTopicConfigs: true,
+          children: true
+        }
       }
     }
   });

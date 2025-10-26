@@ -4,7 +4,6 @@ import Image from "next/image";
 import { Star, Users, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useShowcaseTheme } from "@/components/showcase/ShowcaseThemeProvider";
-import { getGlassCard } from "@/lib/showcase-theme";
 
 interface ShowcaseFeaturedQuizCardProps {
   title: string;
@@ -33,13 +32,16 @@ export function ShowcaseFeaturedQuizCard({
 }: ShowcaseFeaturedQuizCardProps) {
   const { theme } = useShowcaseTheme();
   const isLight = theme === "light";
+  const cardShellClasses = isLight
+    ? "border border-slate-200/50 bg-white/85 text-slate-900 shadow-[0_30px_90px_-40px_rgba(249,115,22,0.25)]"
+    : "border border-white/15 bg-slate-950/85 text-white shadow-[0_40px_120px_-50px_rgba(15,23,42,0.65)]";
 
   return (
     <div
       className={cn(
-        "relative flex w-full max-w-4xl flex-col overflow-hidden rounded-[2.75rem] border backdrop-blur-xl transition-shadow duration-500 hover:shadow-[0_40px_120px_-50px_rgba(249,115,22,0.55)] md:flex-row",
-        getGlassCard(theme),
-        className
+        "relative flex w-full max-w-4xl flex-col overflow-hidden rounded-[2.75rem] backdrop-blur-xl transition-shadow duration-500 md:flex-row",
+        cardShellClasses,
+      className
       )}
     >
       <div
