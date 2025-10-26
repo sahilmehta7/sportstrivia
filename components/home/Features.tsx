@@ -55,57 +55,57 @@ export function Features() {
   ];
 
   return (
-    <section className="px-4 py-16 sm:px-6 lg:py-20">
+    <section className="px-4 py-12 sm:px-6 lg:py-16">
       <div className="mx-auto max-w-6xl">
-        <div className="text-center mb-12">
+        <div className="text-center mb-8 sm:mb-12">
           <h2 className={cn(
-            "text-3xl font-bold mb-4",
+            "text-2xl sm:text-3xl font-bold mb-4",
             getTextColor(theme, "primary")
           )}>
             Why Choose Sports Trivia?
           </h2>
           <p className={cn(
-            "text-lg",
+            "text-base sm:text-lg",
             getTextColor(theme, "secondary")
           )}>
             Discover what makes our platform the ultimate destination for sports fans
           </p>
         </div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
           {features.map((feature, index) => {
             const Icon = feature.icon;
             return (
               <div
                 key={index}
                 className={cn(
-                  "rounded-2xl p-6 backdrop-blur-sm transition-all duration-200 hover:scale-105",
+                  "rounded-xl sm:rounded-2xl p-4 sm:p-6 backdrop-blur-sm transition-all duration-200 hover:scale-105",
                   getGlassCard(theme)
                 )}
               >
-                <div className="flex items-start space-x-4">
+                <div className="flex items-start space-x-3 sm:space-x-4">
                   <div className={cn(
-                    "rounded-lg p-3 flex-shrink-0",
+                    "rounded-lg p-2 sm:p-3 flex-shrink-0",
                     theme === "light" 
                       ? "bg-white/80 shadow-lg" 
                       : "bg-white/10 shadow-lg"
                   )}>
                     <Icon className={cn(
-                      "h-6 w-6",
+                      "h-5 w-5 sm:h-6 sm:w-6",
                       getAccentColor(theme, feature.color)
                     )} />
                   </div>
                   
                   <div className="flex-1">
                     <h3 className={cn(
-                      "text-lg font-bold mb-2",
+                      "text-base sm:text-lg font-bold mb-2",
                       getTextColor(theme, "primary")
                     )}>
                       {feature.title}
                     </h3>
                     
                     <p className={cn(
-                      "text-sm leading-relaxed",
+                      "text-xs sm:text-sm leading-relaxed",
                       getTextColor(theme, "secondary")
                     )}>
                       {feature.description}

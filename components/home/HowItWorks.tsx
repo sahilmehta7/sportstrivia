@@ -30,37 +30,37 @@ export function HowItWorks() {
   ];
 
   return (
-    <section className="px-4 py-16 sm:px-6 lg:py-20">
+    <section className="px-4 py-12 sm:px-6 lg:py-16">
       <div className="mx-auto max-w-6xl">
-        <div className="text-center mb-12">
+        <div className="text-center mb-8 sm:mb-12">
           <h2 className={cn(
-            "text-3xl font-bold mb-4",
+            "text-2xl sm:text-3xl font-bold mb-4",
             getTextColor(theme, "primary")
           )}>
             How It Works
           </h2>
           <p className={cn(
-            "text-lg",
+            "text-base sm:text-lg",
             getTextColor(theme, "secondary")
           )}>
             Get started in three simple steps
           </p>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-8">
+        <div className="grid md:grid-cols-3 gap-6 sm:gap-8">
           {steps.map((step, index) => {
             const Icon = step.icon;
             return (
               <div
                 key={index}
                 className={cn(
-                  "relative rounded-2xl p-8 text-center backdrop-blur-sm transition-all duration-200 hover:scale-105",
+                  "relative rounded-xl sm:rounded-2xl p-6 sm:p-8 text-center backdrop-blur-sm transition-all duration-200 hover:scale-105",
                   getGlassCard(theme)
                 )}
               >
                 {/* Step number */}
                 <div className={cn(
-                  "absolute -top-4 left-1/2 transform -translate-x-1/2 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold",
+                  "absolute -top-3 sm:-top-4 left-1/2 transform -translate-x-1/2 w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-xs sm:text-sm font-bold",
                   theme === "light"
                     ? "bg-blue-600 text-white"
                     : "bg-emerald-500 text-white"
@@ -69,15 +69,15 @@ export function HowItWorks() {
                 </div>
 
                 {/* Icon */}
-                <div className="flex justify-center mb-6 mt-4">
+                <div className="flex justify-center mb-4 sm:mb-6 mt-2 sm:mt-4">
                   <div className={cn(
-                    "rounded-full p-6",
+                    "rounded-full p-4 sm:p-6",
                     theme === "light" 
                       ? "bg-white/80 shadow-lg" 
                       : "bg-white/10 shadow-lg"
                   )}>
                     <Icon className={cn(
-                      "h-12 w-12",
+                      "h-8 w-8 sm:h-12 sm:w-12",
                       getAccentColor(theme, step.color)
                     )} />
                   </div>
@@ -85,7 +85,7 @@ export function HowItWorks() {
 
                 {/* Content */}
                 <h3 className={cn(
-                  "text-xl font-bold mb-4",
+                  "text-lg sm:text-xl font-bold mb-3 sm:mb-4",
                   getTextColor(theme, "primary")
                 )}>
                   {step.title}

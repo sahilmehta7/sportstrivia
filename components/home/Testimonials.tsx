@@ -30,29 +30,29 @@ export function Testimonials() {
   ];
 
   return (
-    <section className="px-4 py-16 sm:px-6 lg:py-20">
+    <section className="px-4 py-12 sm:px-6 lg:py-16">
       <div className="mx-auto max-w-6xl">
-        <div className="text-center mb-12">
+        <div className="text-center mb-8 sm:mb-12">
           <h2 className={cn(
-            "text-3xl font-bold mb-4",
+            "text-2xl sm:text-3xl font-bold mb-4",
             getTextColor(theme, "primary")
           )}>
             What Our Players Say
           </h2>
           <p className={cn(
-            "text-lg",
+            "text-base sm:text-lg",
             getTextColor(theme, "secondary")
           )}>
             Join thousands of satisfied sports fans
           </p>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-8">
+        <div className="grid md:grid-cols-3 gap-6 sm:gap-8">
           {testimonials.map((testimonial, index) => (
             <div
               key={index}
               className={cn(
-                "rounded-2xl p-8 backdrop-blur-sm transition-all duration-200 hover:scale-105",
+                "rounded-xl sm:rounded-2xl p-6 sm:p-8 backdrop-blur-sm transition-all duration-200 hover:scale-105",
                 getGlassCard(theme)
               )}
             >
@@ -62,7 +62,7 @@ export function Testimonials() {
                   <Star
                     key={i}
                     className={cn(
-                      "h-5 w-5",
+                      "h-4 w-4 sm:h-5 sm:w-5",
                       theme === "light" ? "text-yellow-500" : "text-yellow-400"
                     )}
                     fill="currentColor"
@@ -72,7 +72,7 @@ export function Testimonials() {
 
               {/* Quote */}
               <blockquote className={cn(
-                "text-center mb-6 italic",
+                "text-center mb-4 sm:mb-6 italic text-sm sm:text-base",
                 getTextColor(theme, "secondary")
               )}>
                 "{testimonial.quote}"
@@ -81,13 +81,13 @@ export function Testimonials() {
               {/* Author */}
               <div className="text-center">
                 <div className={cn(
-                  "font-bold",
+                  "font-bold text-sm sm:text-base",
                   getTextColor(theme, "primary")
                 )}>
                   {testimonial.name}
                 </div>
                 <div className={cn(
-                  "text-sm",
+                  "text-xs sm:text-sm",
                   getTextColor(theme, "muted")
                 )}>
                   {testimonial.title}

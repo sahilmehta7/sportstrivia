@@ -20,36 +20,32 @@ export function FeaturedQuizzes({ quizzes }: FeaturedQuizzesProps) {
   const carouselItems = quizzes.map((quiz) => ({
     id: quiz.id,
     title: quiz.title,
-    description: quiz.description,
-    href: `/quizzes/${quiz.slug}`,
-    accentDark: "#7c2d12", // Default accent colors
-    accentLight: "#fde68a",
+    badgeLabel: quiz.isFeatured ? "Featured" : "Quiz",
+    durationLabel: `${Math.round(quiz.duration / 60)} min`,
+    playersLabel: `${quiz._count?.attempts || 0} players`,
+    accent: "#7c2d12", // Default accent color
+    coverImageUrl: quiz.descriptionImageUrl,
   }));
 
   return (
-    <section className="px-4 py-16 sm:px-6 lg:py-20">
+    <section className="px-4 py-12 sm:px-6 lg:py-16">
       <div className="mx-auto max-w-6xl">
-        <div className={cn(
-          "relative w-full max-w-5xl mx-auto rounded-[1.75rem] border p-6 sm:p-8 backdrop-blur-xl",
-          getGlassCard(theme)
-        )}>
-          <div className="text-center mb-8">
-            <h2 className={cn(
-              "text-3xl font-bold mb-4",
-              getTextColor(theme, "primary")
-            )}>
-              Featured Quizzes
-            </h2>
-            <p className={cn(
-              "text-lg",
-              getTextColor(theme, "secondary")
-            )}>
-              Hand-picked quizzes to challenge your sports knowledge
-            </p>
-          </div>
-          
-          <ShowcaseQuizCarousel items={carouselItems} variant={theme} />
+        <div className="text-center mb-8">
+          <h2 className={cn(
+            "text-2xl sm:text-3xl font-bold mb-4",
+            getTextColor(theme, "primary")
+          )}>
+            Featured Quizzes
+          </h2>
+          <p className={cn(
+            "text-base sm:text-lg",
+            getTextColor(theme, "secondary")
+          )}>
+            Hand-picked quizzes to challenge your sports knowledge
+          </p>
         </div>
+        
+        <ShowcaseQuizCarousel items={carouselItems} />
       </div>
     </section>
   );
