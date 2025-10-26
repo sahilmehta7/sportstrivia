@@ -1,0 +1,122 @@
+"use client";
+
+import { useShowcaseTheme } from "@/components/showcase/ShowcaseThemeProvider";
+import { getGlassCard, getTextColor, getAccentColor } from "@/lib/showcase-theme";
+import { cn } from "@/lib/utils";
+import { 
+  BookOpen, 
+  Trophy, 
+  Calendar, 
+  BarChart3, 
+  Users, 
+  Award 
+} from "lucide-react";
+
+export function Features() {
+  const { theme } = useShowcaseTheme();
+
+  const features = [
+    {
+      icon: BookOpen,
+      title: "Diverse Quiz Topics",
+      description: "From cricket to basketball, explore quizzes across all major sports and disciplines.",
+      color: "primary" as const,
+    },
+    {
+      icon: Trophy,
+      title: "Real-time Leaderboards",
+      description: "Compete with players worldwide and see your ranking update in real-time.",
+      color: "warning" as const,
+    },
+    {
+      icon: Calendar,
+      title: "Daily Challenges",
+      description: "New challenges every day to keep your sports knowledge sharp and engaging.",
+      color: "success" as const,
+    },
+    {
+      icon: BarChart3,
+      title: "Track Your Progress",
+      description: "Monitor your improvement with detailed statistics and performance analytics.",
+      color: "primary" as const,
+    },
+    {
+      icon: Users,
+      title: "Compete with Friends",
+      description: "Challenge your friends and create private competitions to see who knows more.",
+      color: "success" as const,
+    },
+    {
+      icon: Award,
+      title: "Earn Badges",
+      description: "Unlock achievements and badges as you master different sports and topics.",
+      color: "warning" as const,
+    },
+  ];
+
+  return (
+    <section className="px-4 py-16 sm:px-6 lg:py-20">
+      <div className="mx-auto max-w-6xl">
+        <div className="text-center mb-12">
+          <h2 className={cn(
+            "text-3xl font-bold mb-4",
+            getTextColor(theme, "primary")
+          )}>
+            Why Choose Sports Trivia?
+          </h2>
+          <p className={cn(
+            "text-lg",
+            getTextColor(theme, "secondary")
+          )}>
+            Discover what makes our platform the ultimate destination for sports fans
+          </p>
+        </div>
+
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {features.map((feature, index) => {
+            const Icon = feature.icon;
+            return (
+              <div
+                key={index}
+                className={cn(
+                  "rounded-2xl p-6 backdrop-blur-sm transition-all duration-200 hover:scale-105",
+                  getGlassCard(theme)
+                )}
+              >
+                <div className="flex items-start space-x-4">
+                  <div className={cn(
+                    "rounded-lg p-3 flex-shrink-0",
+                    theme === "light" 
+                      ? "bg-white/80 shadow-lg" 
+                      : "bg-white/10 shadow-lg"
+                  )}>
+                    <Icon className={cn(
+                      "h-6 w-6",
+                      getAccentColor(theme, feature.color)
+                    )} />
+                  </div>
+                  
+                  <div className="flex-1">
+                    <h3 className={cn(
+                      "text-lg font-bold mb-2",
+                      getTextColor(theme, "primary")
+                    )}>
+                      {feature.title}
+                    </h3>
+                    
+                    <p className={cn(
+                      "text-sm leading-relaxed",
+                      getTextColor(theme, "secondary")
+                    )}>
+                      {feature.description}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </section>
+  );
+}

@@ -1,0 +1,102 @@
+"use client";
+
+import { useShowcaseTheme } from "@/components/showcase/ShowcaseThemeProvider";
+import { getGlassCard, getTextColor } from "@/lib/showcase-theme";
+import { cn } from "@/lib/utils";
+import { Star } from "lucide-react";
+
+export function Testimonials() {
+  const { theme } = useShowcaseTheme();
+
+  const testimonials = [
+    {
+      name: "Sarah Johnson",
+      title: "Cricket Enthusiast",
+      quote: "This platform has completely changed how I test my cricket knowledge. The questions are challenging and the competition keeps me coming back daily.",
+      rating: 5,
+    },
+    {
+      name: "Mike Chen",
+      title: "Basketball Fan",
+      quote: "The real-time leaderboards are amazing! I love competing with friends and seeing my ranking improve as I learn more about basketball.",
+      rating: 5,
+    },
+    {
+      name: "Emma Rodriguez",
+      title: "Sports Blogger",
+      quote: "As someone who writes about sports, this platform helps me stay sharp on facts and trivia. The variety of topics is impressive.",
+      rating: 5,
+    },
+  ];
+
+  return (
+    <section className="px-4 py-16 sm:px-6 lg:py-20">
+      <div className="mx-auto max-w-6xl">
+        <div className="text-center mb-12">
+          <h2 className={cn(
+            "text-3xl font-bold mb-4",
+            getTextColor(theme, "primary")
+          )}>
+            What Our Players Say
+          </h2>
+          <p className={cn(
+            "text-lg",
+            getTextColor(theme, "secondary")
+          )}>
+            Join thousands of satisfied sports fans
+          </p>
+        </div>
+
+        <div className="grid md:grid-cols-3 gap-8">
+          {testimonials.map((testimonial, index) => (
+            <div
+              key={index}
+              className={cn(
+                "rounded-2xl p-8 backdrop-blur-sm transition-all duration-200 hover:scale-105",
+                getGlassCard(theme)
+              )}
+            >
+              {/* Stars */}
+              <div className="flex justify-center mb-4">
+                {[...Array(testimonial.rating)].map((_, i) => (
+                  <Star
+                    key={i}
+                    className={cn(
+                      "h-5 w-5",
+                      theme === "light" ? "text-yellow-500" : "text-yellow-400"
+                    )}
+                    fill="currentColor"
+                  />
+                ))}
+              </div>
+
+              {/* Quote */}
+              <blockquote className={cn(
+                "text-center mb-6 italic",
+                getTextColor(theme, "secondary")
+              )}>
+                "{testimonial.quote}"
+              </blockquote>
+
+              {/* Author */}
+              <div className="text-center">
+                <div className={cn(
+                  "font-bold",
+                  getTextColor(theme, "primary")
+                )}>
+                  {testimonial.name}
+                </div>
+                <div className={cn(
+                  "text-sm",
+                  getTextColor(theme, "muted")
+                )}>
+                  {testimonial.title}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}

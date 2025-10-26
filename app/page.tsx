@@ -1,67 +1,57 @@
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { Trophy, ArrowRight } from "lucide-react";
-import { auth } from "@/lib/auth";
+import { ShowcaseThemeProvider } from "@/components/showcase/ShowcaseThemeProvider";
+import { LandingPage } from "@/components/home/LandingPage";
+
+async function fetchFeaturedQuizzes() {
+  try {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/quizzes?featured=true&limit=6`, {
+      next: { revalidate: 300 } // Revalidate every 5 minutes
+    });
+    if (!response.ok) return [];
+    const data = await response.json();
+    return data.success ? data.data.quizzes : [];
+  } catch (error) {
+    console.error('Error fetching featured quizzes:', error);
+    return [];
+  }
+}
+
+async function fetchTopTopics() {
+  try {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/topics/top?sortBy=users&limit=6`, {
+      next: { revalidate: 300 } // Revalidate every 5 minutes
+    });
+    if (!response.ok) return [];
+    const data = await response.json();
+    return data.success ? data.data.topics : [];
+  } catch (error) {
+    console.error('Error fetching top topics:', error);
+    return [];
+  }
+}
 
 export default async function Home() {
-  const session = await auth();
+  // Fetch data for the landing page
+  const [featuredQuizzes, topTopics] = await Promise.all([
+    fetchFeaturedQuizzes(),
+    fetchTopTopics(),
+  ]);
+
+  // Mock stats for now - these could be fetched from database in the future
+  const stats = {
+    totalQuizzes: 150,
+    activeUsers: 2500,
+    questionsAnswered: 50000,
+    averageRating: 4.7,
+  };
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center p-24 bg-gradient-to-br from-background to-muted">
-      <div className="text-center max-w-3xl mx-auto space-y-8">
-        <div className="flex justify-center mb-8">
-          <div className="rounded-full bg-primary/10 p-6">
-            <Trophy className="h-16 w-16 text-primary" />
-          </div>
-        </div>
-        
-        <h1 className="text-5xl font-bold tracking-tight">
-          Sports Trivia Platform
-        </h1>
-        
-        <p className="text-xl text-muted-foreground">
-          Test your sports knowledge, compete with friends, and climb the leaderboards
-        </p>
-
-        <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mt-8">
-          {session ? (
-            <>
-              <Link href="/quizzes">
-                <Button size="lg" className="min-w-[200px]">
-                  Browse Quizzes
-                  <ArrowRight className="ml-2 h-5 w-5" />
-                </Button>
-              </Link>
-              <Link href="/admin">
-                <Button size="lg" variant="outline" className="min-w-[200px]">
-                  Admin Panel
-                </Button>
-              </Link>
-            </>
-          ) : (
-            <>
-              <Link href="/auth/signin">
-                <Button size="lg" className="min-w-[200px]">
-                  Get Started
-                  <ArrowRight className="ml-2 h-5 w-5" />
-                </Button>
-              </Link>
-              <Link href="/api/quizzes">
-                <Button size="lg" variant="outline" className="min-w-[200px]">
-                  View API
-                </Button>
-              </Link>
-            </>
-          )}
-        </div>
-
-        <div className="mt-12 pt-8 border-t">
-          <p className="text-sm text-muted-foreground">
-            Backend API and Admin Panel Ready • User-facing pages coming soon
-          </p>
-        </div>
-      </div>
-    </main>
+    <ShowcaseThemeProvider>
+      <LandingPage 
+        featuredQuizzes={featuredQuizzes}
+        topTopics={topTopics}
+        stats={stats}
+      />
+    </ShowcaseThemeProvider>
   );
 }
 
