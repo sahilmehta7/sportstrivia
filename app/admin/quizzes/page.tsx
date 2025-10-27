@@ -299,6 +299,7 @@ export default async function QuizzesPage({ searchParams }: QuizzesPageProps) {
       <AdminDataTable
         headers={[
           { label: "Title" },
+          { label: "Topics" },
           { label: "Sport" },
           { label: "Difficulty" },
           { label: "Status" },
@@ -317,25 +318,20 @@ export default async function QuizzesPage({ searchParams }: QuizzesPageProps) {
           return (
             <TableRow key={quiz.id}>
               <TableCell className="font-medium">
-                <div>
-                  <div className="flex items-center gap-2">
-                    {quiz.isFeatured && (
-                      <Badge variant="default" className="text-xs">
-                        Featured
+                <span>{quiz.title}</span>
+              </TableCell>
+              <TableCell>
+                {quiz.topicConfigs.length > 0 ? (
+                  <div className="flex flex-wrap gap-1">
+                    {quiz.topicConfigs.map((config, index) => (
+                      <Badge key={`${quiz.id}-${config.topic.id}-${index}`} variant="outline" className="text-xs">
+                        {config.topic.name}
                       </Badge>
-                    )}
-                    <span>{quiz.title}</span>
+                    ))}
                   </div>
-                  {quiz.topicConfigs.length > 0 && (
-                    <div className="mt-1 flex flex-wrap gap-1">
-                      {quiz.topicConfigs.map((config, index) => (
-                        <Badge key={`${quiz.id}-${config.topic.id}-${index}`} variant="outline" className="text-xs">
-                          {config.topic.name}
-                        </Badge>
-                      ))}
-                    </div>
-                  )}
-                </div>
+                ) : (
+                  <span className="text-muted-foreground">—</span>
+                )}
               </TableCell>
               <TableCell>{quiz.sport || "-"}</TableCell>
               <TableCell>
