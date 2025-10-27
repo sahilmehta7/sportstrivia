@@ -462,18 +462,20 @@ export default function UsersPage() {
             <DialogTitle>Delete User</DialogTitle>
             <DialogDescription>
               Are you sure you want to delete {userToDelete?.name || userToDelete?.email}?
-              This will permanently delete:
-              <ul className="mt-2 list-disc pl-5 text-sm">
-                <li>{userToDelete?._count.quizAttempts || 0} quiz attempts</li>
-                <li>{userToDelete?._count.reviews || 0} reviews</li>
-                <li>{userToDelete?._count.friends || 0} friend connections</li>
-                <li>{userToDelete?._count.badges || 0} earned badges</li>
-              </ul>
-              <p className="mt-2 font-semibold text-destructive">
-                This action cannot be undone.
-              </p>
+              This will permanently delete the following:
             </DialogDescription>
           </DialogHeader>
+          <div className="mt-4">
+            <ul className="list-disc pl-5 text-sm">
+              <li>{userToDelete?._count.quizAttempts || 0} quiz attempts</li>
+              <li>{userToDelete?._count.reviews || 0} reviews</li>
+              <li>{userToDelete?._count.friends || 0} friend connections</li>
+              <li>{userToDelete?._count.badges || 0} earned badges</li>
+            </ul>
+            <p className="mt-4 font-semibold text-destructive">
+              This action cannot be undone.
+            </p>
+          </div>
           <DialogFooter>
             <Button
               variant="outline"
