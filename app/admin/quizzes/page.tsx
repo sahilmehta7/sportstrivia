@@ -143,18 +143,41 @@ export default async function QuizzesPage({ searchParams }: QuizzesPageProps) {
         }
       />
 
-      <AdminFilterForm method="get" action="/admin/quizzes" className="md:grid-cols-5">
-        <div className="space-y-2 md:col-span-2">
-          <label htmlFor="search" className="text-sm font-medium">
-            Search
-          </label>
-          <Input
-            id="search"
-            name="search"
-            placeholder="Search quizzes..."
-            defaultValue={search}
-          />
-        </div>
+      {/* Search Bar */}
+      <div className="mb-6">
+        <form method="get" action="/admin/quizzes" className="flex gap-2">
+          <div className="flex-1 space-y-2">
+            <label htmlFor="search" className="text-sm font-medium">
+              Search Quizzes
+            </label>
+            <Input
+              id="search"
+              name="search"
+              placeholder="Search by title, description, or slug..."
+              defaultValue={search}
+            />
+          </div>
+          <input type="hidden" name="topicId" value={topicFilter} />
+          <input type="hidden" name="difficulty" value={difficultyFilter} />
+          <input type="hidden" name="status" value={statusFilter} />
+          <input type="hidden" name="sport" value={sportFilter} />
+          <input type="hidden" name="featured" value={featuredFilter} />
+          <input type="hidden" name="recurringType" value={recurringFilter} />
+          <div className="flex items-end gap-2">
+            <Button type="submit">Search</Button>
+            {search && (
+              <Link href="/admin/quizzes">
+                <Button type="button" variant="outline">
+                  Clear
+                </Button>
+              </Link>
+            )}
+          </div>
+        </form>
+      </div>
+
+      <AdminFilterForm method="get" action="/admin/quizzes" className="md:grid-cols-4">
+        <input type="hidden" name="search" value={search} />
 
         <div className="space-y-2">
           <label htmlFor="topicId" className="text-sm font-medium">
@@ -307,7 +330,7 @@ export default async function QuizzesPage({ searchParams }: QuizzesPageProps) {
                   {quiz.topicConfigs.length > 0 && (
                     <div className="mt-1 flex flex-wrap gap-1">
                       {quiz.topicConfigs.map((config) => (
-                        <Badge key={config.topic.id} variant="outline" className="text-xs">
+                        <Badge key={`${quiz.id}-${config.topic.id}`} variant="outline" className="text-xs">
                           {config.topic.name}
                         </Badge>
                       ))}
