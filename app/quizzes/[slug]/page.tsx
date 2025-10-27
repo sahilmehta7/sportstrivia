@@ -219,6 +219,21 @@ export default async function QuizDetailPage({
       })
     : null;
 
+  // Check if user has completed attempts for this quiz
+  const completedAttempts = userId
+    ? await prisma.quizAttempt.findMany({
+        where: {
+          userId,
+          quizId: quiz.id,
+          completedAt: { not: null },
+        },
+        orderBy: { completedAt: 'desc' },
+        take: 1,
+      })
+    : [];
+
+  const latestCompletedAttempt = completedAttempts.length > 0 ? completedAttempts[0] : null;
+
   const attemptLimitDetails = quiz.maxAttemptsPerUser
     ? {
         maxAttempts: quiz.maxAttemptsPerUser,
@@ -270,9 +285,18 @@ export default async function QuizDetailPage({
   const difficultyInfo = difficultyConfig[quiz.difficulty as keyof typeof difficultyConfig];
 
   const limitBlocksPlay = attemptLimitDetails?.isLocked ?? false;
-  const startDisabled = !isLive || limitBlocksPlay;
-  const challengeDisabled = !isLive || limitBlocksPlay;
-  const startButtonText = limitBlocksPlay ? "Attempts Locked" : "Start Quiz";
+  const hasCompletedAttempts = latestCompletedAttempt !== null;
+  
+  // Show "View Results" if locked AND has completed attempts
+  const showViewResults = limitBlocksPlay && hasCompletedAttempts;
+  
+  const startDisabled = !isLive || (limitBlocksPlay && !showViewResults);
+  const challengeDisabled = !isLive || (limitBlocksPlay && !showViewResults);
+  const startButtonText = showViewResults 
+    ? "View Results" 
+    : limitBlocksPlay 
+      ? "Attempts Locked" 
+      : "Start Quiz";
 
   // Generate structured data
   const quizSchema = getQuizSchema(quiz);
@@ -471,6 +495,7 @@ export default async function QuizDetailPage({
                       slug={quiz.slug}
                       disabled={startDisabled}
                       text={startButtonText}
+                      attemptId={showViewResults ? latestCompletedAttempt?.id : null}
                     />
                     <ChallengeButton quizId={quiz.id} disabled={challengeDisabled} />
                   </>
