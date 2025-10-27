@@ -9,7 +9,7 @@ import {
   Calendar, 
   Target, 
   List,
-  Carousel,
+  ImageIcon,
   FileText,
   Zap,
   Award,
@@ -57,7 +57,7 @@ const showcaseComponents = [
     id: "quiz-carousel",
     title: "Quiz Carousel",
     description: "Horizontal scrolling quiz showcase",
-    icon: Carousel,
+    icon: ImageIcon,
     category: "Interactive",
   },
   {
