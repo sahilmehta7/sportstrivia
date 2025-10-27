@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/auth-helpers";
 import { handleError, successResponse, NotFoundError } from "@/lib/errors";
+import { syncTopicsFromQuestionPool } from "@/lib/services/quiz-topic-sync.service";
 import { z } from "zod";
 
 const addQuestionSchema = z.object({
@@ -147,6 +148,13 @@ export async function POST(
       },
     });
 
+    // Sync topics from question pool
+    try {
+      await syncTopicsFromQuestionPool(id);
+    } catch (error) {
+      console.error("Failed to sync topics after adding question:", error);
+    }
+
     return successResponse(poolEntry, 201);
   } catch (error) {
     return handleError(error);
@@ -213,6 +221,13 @@ export async function DELETE(
 
     if (deleted.count === 0) {
       throw new NotFoundError("Question not found in quiz pool");
+    }
+
+    // Sync topics from question pool
+    try {
+      await syncTopicsFromQuestionPool(id);
+    } catch (error) {
+      console.error("Failed to sync topics after removing question:", error);
     }
 
     return successResponse({ message: "Question removed from quiz" });

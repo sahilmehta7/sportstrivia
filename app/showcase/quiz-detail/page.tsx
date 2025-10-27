@@ -24,57 +24,82 @@ function formatTimeUntil(date?: Date | null) {
 }
 
 export default async function QuizDetailShowcasePage() {
-  const quiz = await prisma.quiz.findFirst({
-    where: {
-      isPublished: true,
-      status: "PUBLISHED",
-    },
-    orderBy: {
-      updatedAt: "desc",
-    },
-    include: {
-      _count: {
-        select: {
-          attempts: true,
-        },
-      },
-      leaderboard: {
-        take: 3,
-        orderBy: [
-          {
-            bestPoints: "desc",
-          },
-          {
-            averageResponseTime: "asc",
-          },
-        ],
-        include: {
-          user: {
-            select: {
-              name: true,
-              email: true,
-            },
-          },
-        },
-      },
-      topicConfigs: {
-        include: {
-          topic: {
-            select: {
-              name: true,
-            },
-          },
-        },
-        orderBy: {
-          createdAt: "asc",
-        },
-        take: 1,
-      },
-    },
-  });
+  let quiz: any;
 
-  if (!quiz) {
-    notFound();
+  try {
+    quiz = await prisma.quiz.findFirst({
+      where: {
+        isPublished: true,
+        status: "PUBLISHED",
+      },
+      orderBy: {
+        updatedAt: "desc",
+      },
+      include: {
+        _count: {
+          select: {
+            attempts: true,
+          },
+        },
+        leaderboard: {
+          take: 3,
+          orderBy: [
+            {
+              bestPoints: "desc",
+            },
+            {
+              averageResponseTime: "asc",
+            },
+          ],
+          include: {
+            user: {
+              select: {
+                name: true,
+                email: true,
+              },
+            },
+          },
+        },
+        topicConfigs: {
+          include: {
+            topic: {
+              select: {
+                name: true,
+              },
+            },
+          },
+          orderBy: {
+            createdAt: "asc",
+          },
+          take: 1,
+        },
+      },
+    });
+
+    if (!quiz) {
+      notFound();
+    }
+  } catch (error) {
+    console.warn("[showcase/quiz-detail] Using fallback data", error);
+    quiz = {
+      id: "demo-quiz",
+      title: "Ultimate Cricket Venue Challenge",
+      description: "An immersive sprint through global cricket arenas.",
+      slug: "demo-cricket-venue",
+      sport: "Cricket",
+      difficulty: "Medium",
+      duration: 1200,
+      timePerQuestion: 60,
+      timeBonusEnabled: true,
+      bonusPointsPerSecond: 1.2,
+      _count: { attempts: 12345 },
+      topicConfigs: [{ topic: { name: "Cricket" } }],
+      leaderboard: [
+        { user: { name: "Alex Johnson", email: "alex@example.com" }, bestPoints: 9600, rank: 1 },
+        { user: { name: "Priya Singh", email: "priya@example.com" }, bestPoints: 9320, rank: 2 },
+        { user: { name: "Diego Morales", email: "diego@example.com" }, bestPoints: 9210, rank: 3 },
+      ],
+    };
   }
 
   const durationLabel = formatQuizDuration(quiz.duration ?? quiz.timePerQuestion);
