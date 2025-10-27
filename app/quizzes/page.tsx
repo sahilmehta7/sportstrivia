@@ -1,18 +1,14 @@
 import type { Metadata } from "next";
-import { QuizCard } from "@/components/quizzes/quiz-card";
-import { ModernFilterBar } from "@/components/quizzes/modern-filter-bar";
-import { QuizPagination } from "@/components/quizzes/quiz-pagination";
 import { QuizzesPageHeader } from "@/components/quizzes/quizzes-page-header";
-import { FeaturedQuizzesHero } from "@/components/quizzes/featured-quizzes-hero";
-import { ComingSoonWidget } from "@/components/quizzes/coming-soon-widget";
-import { DailyQuizWidget } from "@/components/quizzes/daily-quiz-widget";
+import { QuizzesPageContent } from "./QuizzesPageContent";
+import { prisma } from "@/lib/db";
 import {
-  getPublicQuizFilterOptions,
   getPublicQuizList,
   getDailyRecurringQuizzes,
   getComingSoonQuizzes,
 } from "@/lib/services/public-quiz.service";
 import type { PublicQuizFilters } from "@/lib/dto/quiz-filters.dto";
+import type { ShowcaseFilterGroup } from "@/components/showcase/ui/FilterBar";
 import { Difficulty } from "@prisma/client";
 import { auth } from "@/lib/auth";
 
@@ -90,6 +86,119 @@ function parsePublicFilters(searchParams: SearchParams): PublicQuizFilters {
   };
 }
 
+async function getFilterGroups(searchParams: SearchParams): Promise<ShowcaseFilterGroup[]> {
+  // Get all level 0 topics (parentId === null) with their hierarchy
+  const level0Topics = await prisma.topic.findMany({
+    where: {
+      parentId: null,
+    },
+    include: {
+      quizTopicConfigs: {
+        select: {
+          quizId: true,
+        },
+        where: {
+          quiz: {
+            isPublished: true,
+            status: "PUBLISHED",
+          },
+        },
+      },
+      children: {
+        include: {
+          quizTopicConfigs: {
+            select: {
+              quizId: true,
+            },
+            where: {
+              quiz: {
+                isPublished: true,
+                status: "PUBLISHED",
+              },
+            },
+          },
+          children: {
+            include: {
+              quizTopicConfigs: {
+                select: {
+                  quizId: true,
+                },
+                where: {
+                  quiz: {
+                    isPublished: true,
+                    status: "PUBLISHED",
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  });
+
+  // Calculate unique quiz counts including children and sub-children
+  const topicsWithCounts = level0Topics
+    .filter((topic) => topic.parentId === null) // Extra safety filter for level 0 only
+    .map((topic) => {
+      // Get all quiz IDs from this topic and its descendants
+      const quizIds = new Set<string>();
+      
+      // Add quizzes from the topic itself
+      topic.quizTopicConfigs.forEach((config) => quizIds.add(config.quizId));
+      
+      // Add quizzes from direct children
+      topic.children.forEach((child) => {
+        child.quizTopicConfigs.forEach((config) => quizIds.add(config.quizId));
+        
+        // Add quizzes from grandchildren
+        child.children.forEach((grandchild) => {
+          grandchild.quizTopicConfigs.forEach((config) => quizIds.add(config.quizId));
+        });
+      });
+      
+      const quizCount = quizIds.size;
+      return { ...topic, quizCount };
+    })
+    .filter((topic) => topic.quizCount > 0) // Only include topics with at least one quiz
+    .sort((a, b) => b.quizCount - a.quizCount);
+
+  // Map topics to filter options with emojis
+  const sportEmojiMap: Record<string, string> = {
+    "Cricket": "🏏",
+    "Football": "⚽",
+    "Basketball": "🏀",
+    "Tennis": "🎾",
+    "Formula 1": "🏎️",
+    "Olympics": "🏅",
+    "Rugby": "🏉",
+    "Golf": "⛳",
+    "Baseball": "⚾",
+    "Hockey": "🏒",
+  };
+
+  const topicParam = getParamValue(searchParams.topic);
+  
+  const categoryOptions = [
+    { value: "all", label: "All Sports" },
+    ...topicsWithCounts.map((topic) => ({
+      value: topic.slug,
+      label: topic.name,
+      emoji: sportEmojiMap[topic.name] || "🏆",
+      count: topic.quizCount,
+    })),
+  ];
+
+  return [
+    {
+      id: "category",
+      label: "Category",
+      options: categoryOptions,
+      activeValue: topicParam || "all",
+    },
+  ];
+}
+
 export default async function QuizzesPage({
   searchParams,
 }: {
@@ -102,20 +211,17 @@ export default async function QuizzesPage({
   const session = await auth();
   const userId = session?.user?.id;
 
-  const [listing, filterOptions, featuredListing, dailyQuizzes, comingSoonQuizzes] = await Promise.all([
+  const [listing, featuredListing, dailyQuizzes, comingSoonQuizzes, filterGroups] = await Promise.all([
     getPublicQuizList(filters),
-    getPublicQuizFilterOptions(),
     // Fetch featured quizzes for hero section
     getPublicQuizList({ isFeatured: true, limit: 5, page: 1 }),
     // Fetch daily recurring quizzes with user completion data
     getDailyRecurringQuizzes(userId),
     // Fetch upcoming quizzes with future start dates
     getComingSoonQuizzes(6),
+    // Fetch filter groups
+    getFilterGroups(params || {}),
   ]);
-
-  const appliedFilters = {
-    ...listing.filters,
-  };
 
   const baseUrl =
     process.env.NEXT_PUBLIC_APP_URL ||
@@ -138,59 +244,26 @@ export default async function QuizzesPage({
   };
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-background via-background to-muted/40 py-12">
-      <div className="container mx-auto px-4">
+    <>
+      <div className="container mx-auto px-4 pt-12">
         <QuizzesPageHeader />
-
-        {/* Featured Quizzes Hero Section */}
-        {featuredListing.quizzes.length > 0 && (
-          <FeaturedQuizzesHero featuredQuizzes={featuredListing.quizzes} />
-        )}
-
-        {/* Daily Recurring Quizzes */}
-        <DailyQuizWidget dailyQuizzes={dailyQuizzes} />
-
-        {/* Coming Soon Widget */}
-        <ComingSoonWidget quizzes={comingSoonQuizzes} />
-
-        {/* Modern Filter Bar */}
-        <ModernFilterBar
-          filters={appliedFilters}
-          {...filterOptions}
-          total={listing.pagination.total}
-        />
-
-        {/* Quiz Grid */}
-        <section className="mt-8">
-          {listing.quizzes.length > 0 ? (
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {listing.quizzes.map((quiz) => (
-                <QuizCard key={quiz.id} quiz={quiz} />
-              ))}
-            </div>
-          ) : (
-            <div className="flex min-h-[200px] flex-col items-center justify-center rounded-xl border border-dashed border-border/60 bg-card/60 p-12 text-center text-muted-foreground">
-              <h2 className="text-lg font-semibold text-foreground">No quizzes match your filters</h2>
-              <p className="mt-2 max-w-md text-sm text-muted-foreground">
-                Try adjusting your filters or check back soon as new trivia challenges are added regularly.
-              </p>
-            </div>
-          )}
-        </section>
-
-        <QuizPagination
-          page={listing.pagination.page}
-          pages={listing.pagination.pages}
-          total={listing.pagination.total}
-          pageSize={listing.pagination.limit}
-        />
       </div>
+      
+      <QuizzesPageContent
+        quizzes={listing.quizzes}
+        featuredQuizzes={featuredListing.quizzes}
+        dailyQuizzes={dailyQuizzes}
+        comingSoonQuizzes={comingSoonQuizzes}
+        filterGroups={filterGroups}
+        pagination={listing.pagination}
+      />
+      
       {itemList.length > 0 && (
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
       )}
-    </main>
+    </>
   );
 }

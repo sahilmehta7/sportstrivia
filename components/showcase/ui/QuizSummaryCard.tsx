@@ -1,9 +1,10 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import { Clock, Users, Star } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useShowcaseTheme } from "@/components/showcase/ShowcaseThemeProvider";
+import { useTheme } from "next-themes";
 import { getSurfaceStyles, getTextColor, getChipStyles, getCardGlow } from "@/lib/showcase-theme";
 import type { ComponentType } from "react";
 
@@ -37,7 +38,15 @@ export function ShowcaseQuizSummaryCard({
   isNew = false,
   className,
 }: ShowcaseQuizSummaryCardProps) {
-  const { theme } = useShowcaseTheme();
+  const { theme: themeMode } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Default to dark theme until mounted to prevent hydration mismatch
+  const theme = mounted && themeMode === "light" ? "light" : "dark";
 
   const body = (
     <div
@@ -108,13 +117,13 @@ export function ShowcaseQuizSummaryCard({
 
   if (href) {
     return (
-      <a href={href} className={cn("block", className)}>
+      <a href={href} className={cn("block group", className)}>
         {body}
       </a>
     );
   }
 
-  return <div className={className}>{body}</div>;
+  return <div className={cn("block", className)}>{body}</div>;
 }
 
 interface MetaPillProps {
@@ -124,7 +133,15 @@ interface MetaPillProps {
 }
 
 function MetaPill({ icon: Icon, label, value }: MetaPillProps) {
-  const { theme } = useShowcaseTheme();
+  const { theme: themeMode } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Default to dark theme until mounted to prevent hydration mismatch
+  const theme = mounted && themeMode === "light" ? "light" : "dark";
   const base = theme === "light" ? "bg-slate-900/5" : "bg-white/10";
   const textPrimary = theme === "light" ? "text-slate-700" : "text-white/80";
   const textSecondary = theme === "light" ? "text-slate-500" : "text-white/60";

@@ -1,12 +1,7 @@
 import type { Metadata } from "next";
-import { Trophy } from "lucide-react";
-
-import {
-  LeaderboardTabs,
-  type LeaderboardDataset,
-  type LeaderboardEntry,
-} from "@/components/leaderboard/leaderboard-tabs";
-import { buildGlobalLeaderboard } from "@/lib/services/leaderboard.service";
+import { headers } from "next/headers";
+import { ShowcaseLeaderboard, type LeaderboardEntry, type LeaderboardRangeKey } from "@/components/quiz/ShowcaseLeaderboard";
+import { notFound } from "next/navigation";
 
 export const metadata: Metadata = {
   title: "Global Leaderboard - Top Performers",
@@ -28,70 +23,67 @@ export const metadata: Metadata = {
   },
 };
 
-export const revalidate = 0;
+async function fetchLeaderboard(baseUrl: string, period: string): Promise<LeaderboardEntry[]> {
+  const response = await fetch(`${baseUrl}/api/leaderboards/global?period=${period}&limit=10`, {
+    cache: "no-store",
+  });
 
-async function mapLeaderboardEntries(period: "daily" | "all-time"): Promise<LeaderboardEntry[]> {
-  try {
-    const leaderboard = await buildGlobalLeaderboard(period, 10);
-
-    return leaderboard.map((entry) => {
-      const totalPoints = entry.totalPoints ?? entry.score ?? 0;
-      const attempts = entry.attempts ?? 0;
-      const averagePoints = attempts > 0 ? totalPoints / attempts : totalPoints;
-
-      return {
-        userId: entry.userId,
-        name: entry.userName ?? "Anonymous Fan",
-        image: entry.userImage ?? null,
-        totalScore: totalPoints,
-        averageScore: averagePoints,
-        count: attempts,
-      } satisfies LeaderboardEntry;
-    });
-  } catch (error) {
-    console.error(`Failed to load ${period} leaderboard`, error);
+  if (!response.ok) {
     return [];
   }
+
+  const json = await response.json();
+  const leaderboard = json?.data?.leaderboard ?? [];
+
+  return leaderboard.map((entry: any, index: number) => ({
+    id: `${period}-${entry.userId ?? index}`,
+    name: entry.userName || entry.userId || `Player ${index + 1}`,
+    score: Math.round(entry.totalPoints ?? entry.score ?? 0),
+    avatarUrl: entry.userImage ?? null,
+    position: entry.rank ?? index + 1,
+  }));
 }
 
 export default async function LeaderboardPage() {
-  const [dailyEntries, allTimeEntries] = await Promise.all([
-    mapLeaderboardEntries("daily"),
-    mapLeaderboardEntries("all-time"),
+  const headersList = headers();
+  const host = headersList.get("x-forwarded-host") ?? headersList.get("host");
+  const protocol = headersList.get("x-forwarded-proto") ?? "https";
+
+  if (!host) {
+    notFound();
+  }
+
+  const baseUrl = `${protocol}://${host}`;
+
+  const [daily, allTime] = await Promise.all([
+    fetchLeaderboard(baseUrl, "daily"),
+    fetchLeaderboard(baseUrl, "all-time"),
   ]);
 
-  const dailyDataset: LeaderboardDataset = {
-    entries: dailyEntries,
-    countLabel: "attempt",
-    totalLabel: "Total Points",
-  };
+  if (daily.length === 0 && allTime.length === 0) {
+    notFound();
+  }
 
-  const allTimeDataset: LeaderboardDataset = {
-    entries: allTimeEntries,
-    countLabel: "attempt",
-    totalLabel: "Total Points",
+  const datasets: Record<LeaderboardRangeKey, LeaderboardEntry[]> = {
+    daily,
+    "all-time": allTime,
   };
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-background via-background to-muted/50 pb-16">
-      <div className="mx-auto flex w-full max-w-4xl flex-col gap-8 px-4 pt-16 sm:px-6 lg:px-8">
-        <header className="flex flex-col items-start justify-between gap-6 sm:flex-row sm:items-center">
-          <div className="flex items-center gap-4">
-            <div className="rounded-full bg-primary/10 p-4 text-primary">
-              <Trophy className="h-8 w-8" />
-            </div>
-            <div>
-              <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
-                Global Leaderboard
-              </h1>
-              <p className="text-muted-foreground">
-                Track the top performers in daily quizzes and all-time rankings.
-              </p>
-            </div>
-          </div>
+    <main className="min-h-screen bg-gradient-to-br from-background via-background to-muted/50 py-16">
+      <div className="mx-auto flex w-full max-w-4xl flex-col gap-8 px-4 sm:px-6 lg:px-8">
+        <header className="flex flex-col items-center gap-2">
+          <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
+            Global Leaderboard
+          </h1>
+          <p className="text-muted-foreground">
+            Track the top performers in daily quizzes and all-time rankings.
+          </p>
         </header>
 
-        <LeaderboardTabs daily={dailyDataset} allTime={allTimeDataset} />
+        <div className="flex justify-center">
+          <ShowcaseLeaderboard title="Leaderboard" datasets={datasets} initialRange={daily.length > 0 ? "daily" : "all-time"} />
+        </div>
       </div>
     </main>
   );

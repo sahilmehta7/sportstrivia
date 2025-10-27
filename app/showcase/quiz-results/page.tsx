@@ -1,8 +1,7 @@
 import { Metadata } from "next";
 import { prisma } from "@/lib/db";
 import { ShowcaseQuizResults } from "@/components/quiz/ShowcaseQuizResults";
-import { ShowcaseThemeProvider } from "@/components/showcase/ShowcaseThemeProvider";
-import { ShowcaseLayout } from "@/components/showcase/ShowcaseLayout";
+import { ShowcasePage } from "@/components/showcase/ShowcasePage";
 
 export const metadata: Metadata = {
   title: "Quiz Results Showcase",
@@ -105,23 +104,21 @@ export default async function QuizResultsShowcasePage() {
   const leaderboardData = attempt ? await getQuizLeaderboard(attempt.quiz.id) : [];
 
   return (
-    <ShowcaseThemeProvider>
-      <ShowcaseLayout
-        title="Quiz Results"
-        subtitle="Interactive showcase of quiz results page with real data and light/dark mode support"
-        badge="RESULTS SHOWCASE"
-        variant="default"
-      >
-        {attempt && (
-          <p className="text-sm text-center mb-6 opacity-60">
-            Using real quiz attempt: &ldquo;{attempt.quiz.title}&rdquo; by {attempt.user.name}
-          </p>
-        )}
-        <ShowcaseQuizResults 
-          attempt={attempt}
-          leaderboardData={leaderboardData}
-        />
-      </ShowcaseLayout>
-    </ShowcaseThemeProvider>
+    <ShowcasePage
+      title="Quiz Results"
+      subtitle="Interactive showcase of quiz results page with real data and light/dark mode support"
+      badge="RESULTS SHOWCASE"
+      variant="default"
+    >
+      {attempt && (
+        <p className="text-sm text-center mb-6 opacity-60">
+          Using real quiz attempt: &ldquo;{attempt.quiz.title}&rdquo; by {attempt.user.name}
+        </p>
+      )}
+      <ShowcaseQuizResults 
+        attempt={attempt}
+        leaderboardData={leaderboardData}
+      />
+    </ShowcasePage>
   );
 }

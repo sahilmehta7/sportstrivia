@@ -3,6 +3,7 @@ import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 import { LayoutWrapper } from "@/components/LayoutWrapper";
 import { SessionProvider } from "next-auth/react";
+import { ThemeProvider } from "@/components/ThemeProvider";
 import { getOrganizationSchema, getWebSiteSchema } from "@/lib/schema-utils";
 import React from "react";
 
@@ -72,12 +73,14 @@ export default function RootLayout({
   const websiteSchema = getWebSiteSchema();
 
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body className="font-sans">
-        <SessionProvider>
-          <LayoutWrapper>{children}</LayoutWrapper>
-          <Toaster />
-        </SessionProvider>
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+          <SessionProvider>
+            <LayoutWrapper>{children}</LayoutWrapper>
+            <Toaster />
+          </SessionProvider>
+        </ThemeProvider>
 
         {/* Global Structured Data */}
         <script

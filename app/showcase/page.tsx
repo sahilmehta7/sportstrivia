@@ -1,6 +1,10 @@
+"use client";
+
+import { useState } from "react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { 
   Sparkles, 
   Trophy, 
@@ -15,6 +19,7 @@ import {
   Award,
   Star
 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 const showcaseComponents = [
   {
@@ -118,7 +123,18 @@ const showcaseComponents = [
   },
 ];
 
+const categories = ["All Sports", "UI Components", "Quiz Cards", "Layouts", "Interactive", "Pages", "Experience", "Results", "Topics", "Competition", "Engagement"];
+
 export default function ShowcaseIndexPage() {
+  const [selectedCategory, setSelectedCategory] = useState("All Sports");
+
+  const filteredComponents = selectedCategory === "All Sports"
+    ? showcaseComponents
+    : showcaseComponents.filter((c) => c.category === selectedCategory);
+
+  const featuredComponents = filteredComponents.filter((c) => c.featured);
+  const regularComponents = filteredComponents.filter((c) => !c.featured);
+
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-12">
@@ -135,39 +151,57 @@ export default function ShowcaseIndexPage() {
           </p>
         </div>
 
-        {/* Featured Component */}
-        <div className="mb-12">
-          <h2 className="text-2xl font-semibold mb-6">Featured</h2>
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {showcaseComponents
-              .filter((component) => component.featured)
-              .map((component) => (
-                <FeaturedCard key={component.id} component={component} />
-              ))}
+        {/* Category Filters */}
+        <div className="mb-8 overflow-x-auto pb-2 scrollbar-hide">
+          <div className="flex gap-2 min-w-max">
+            {categories.map((category) => (
+              <Button
+                key={category}
+                variant={selectedCategory === category ? "default" : "outline"}
+                size="sm"
+                onClick={() => setSelectedCategory(category)}
+                className={cn(
+                  "whitespace-nowrap",
+                  selectedCategory === category && "bg-primary text-primary-foreground"
+                )}
+              >
+                {category}
+              </Button>
+            ))}
           </div>
         </div>
 
-        {/* All Components by Category */}
-        <div className="space-y-12">
-          {["UI Components", "Quiz Cards", "Layouts", "Interactive", "Pages", "Experience", "Results", "Topics", "Competition", "Engagement"].map((category) => {
-            const components = showcaseComponents.filter(
-              (c) => c.category === category && !c.featured
-            );
-            
-            if (components.length === 0) return null;
+        {/* Featured Component */}
+        {featuredComponents.length > 0 && (
+          <div className="mb-12">
+            <h2 className="text-2xl font-semibold mb-6">Featured</h2>
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {featuredComponents.map((component) => (
+                <FeaturedCard key={component.id} component={component} />
+              ))}
+            </div>
+          </div>
+        )}
 
-            return (
-              <div key={category}>
-                <h2 className="text-2xl font-semibold mb-6">{category}</h2>
-                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                  {components.map((component) => (
-                    <ComponentCard key={component.id} component={component} />
-                  ))}
-                </div>
-              </div>
-            );
-          })}
-        </div>
+        {/* Regular Components */}
+        {regularComponents.length > 0 && (
+          <div>
+            <h2 className="text-2xl font-semibold mb-6">
+              {selectedCategory === "All Sports" ? "All Components" : selectedCategory}
+            </h2>
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {regularComponents.map((component) => (
+                <ComponentCard key={component.id} component={component} />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {filteredComponents.length === 0 && (
+          <div className="text-center py-12">
+            <p className="text-muted-foreground">No components found in this category.</p>
+          </div>
+        )}
       </div>
     </div>
   );

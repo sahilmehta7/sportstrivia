@@ -1,8 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
+import { useTheme } from "next-themes";
 import { cn } from "@/lib/utils";
-import { useShowcaseTheme } from "@/components/showcase/ShowcaseThemeProvider";
 import { getGlassCard, getTextColor, getAccentColor } from "@/lib/showcase-theme";
 
 export type LeaderboardRangeKey = "daily" | "all-time";
@@ -30,7 +30,16 @@ const rangeLabels: Record<LeaderboardRangeKey, string> = {
 const orderedRanges: LeaderboardRangeKey[] = ["daily", "all-time"];
 
 export function ShowcaseLeaderboard({ title, datasets, initialRange = "daily", className }: ShowcaseLeaderboardProps) {
-  const { theme } = useShowcaseTheme();
+  const { theme: themeMode } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Default to dark theme until mounted to prevent hydration mismatch
+  const theme = mounted && themeMode === "light" ? "light" : "dark";
+
   const availableRanges = useMemo(() => orderedRanges.filter((key) => (datasets[key]?.length ?? 0) > 0), [datasets]);
   const startingRange = availableRanges.includes(initialRange) ? initialRange : availableRanges[0] ?? "daily";
   const [activeRange, setActiveRange] = useState<LeaderboardRangeKey>(startingRange);

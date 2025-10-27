@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { Star, Users, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useShowcaseTheme } from "@/components/showcase/ShowcaseThemeProvider";
+import { useTheme } from "next-themes";
 
 interface ShowcaseFeaturedQuizCardProps {
   title: string;
@@ -30,8 +30,8 @@ export function ShowcaseFeaturedQuizCard({
   accent = "from-orange-500/90 via-pink-500/80 to-purple-600/80",
   className,
 }: ShowcaseFeaturedQuizCardProps) {
-  const { theme } = useShowcaseTheme();
-  const isLight = theme === "light";
+  const { theme: themeMode } = useTheme();
+  const isLight = themeMode === "light";
   const cardShellClasses = isLight
     ? "border border-slate-200/50 bg-white/85 text-slate-900 shadow-[0_30px_90px_-40px_rgba(249,115,22,0.25)]"
     : "border border-white/15 bg-slate-950/85 text-white shadow-[0_40px_120px_-50px_rgba(15,23,42,0.65)]";
@@ -60,7 +60,37 @@ export function ShowcaseFeaturedQuizCard({
         )}
       />
 
-      <div className="flex flex-1 flex-col gap-6 px-8 py-10 md:px-12 md:py-12">
+      {/* Image Section - Now on top for mobile */}
+      <div
+        className={cn(
+          "relative flex min-h-[240px] flex-1 items-center justify-center overflow-hidden rounded-t-[2.75rem] md:order-2 md:rounded-l-[2.75rem] md:rounded-tr-none",
+          isLight ? "bg-slate-100/60" : "bg-white/5"
+        )}
+      >
+        {coverImageUrl ? (
+          <Image
+            src={coverImageUrl}
+            alt={title}
+            fill
+            className="object-cover"
+            sizes="(min-width: 1024px) 480px, 100vw"
+            priority
+          />
+        ) : (
+          <div
+            className={cn(
+              "flex h-full w-full items-center justify-center text-6xl",
+              isLight
+                ? "bg-gradient-to-br from-slate-200 to-transparent text-slate-400"
+                : "bg-gradient-to-br from-white/15 to-transparent text-white/60"
+            )}
+          >
+            🏆
+          </div>
+        )}
+      </div>
+
+      <div className="flex flex-1 flex-col gap-6 px-8 py-10 md:order-1 md:px-12 md:py-12">
         <div
           className={cn(
             "inline-flex w-fit items-center gap-2 rounded-full px-4 py-1 text-xs font-semibold uppercase tracking-[0.35em]",
@@ -190,60 +220,6 @@ export function ShowcaseFeaturedQuizCard({
           >
             Coach Insights
           </span>
-        </div>
-      </div>
-
-      <div
-        className={cn(
-          "relative flex min-h-[240px] flex-1 items-end overflow-hidden rounded-t-[2.75rem] md:rounded-l-[2.75rem] md:rounded-tr-none",
-          isLight ? "bg-slate-100/60" : "bg-white/5"
-        )}
-      >
-        {coverImageUrl ? (
-          <Image
-            src={coverImageUrl}
-            alt={title}
-            fill
-            className="object-cover"
-            sizes="(min-width: 1024px) 480px, 100vw"
-            priority
-          />
-        ) : (
-          <div
-            className={cn(
-              "flex h-full w-full items-center justify-center text-6xl",
-              isLight
-                ? "bg-gradient-to-br from-slate-200 to-transparent text-slate-400"
-                : "bg-gradient-to-br from-white/15 to-transparent text-white/60"
-            )}
-          >
-            🏆
-          </div>
-        )}
-        <div
-          className={cn(
-            "absolute inset-0 bg-gradient-to-t",
-            isLight
-              ? "from-white/90 via-white/30 to-transparent"
-              : "from-black/70 via-black/20 to-transparent"
-          )}
-        />
-
-        <div
-          className={cn(
-            "relative w-full space-y-2 px-8 pb-10 md:px-10",
-            isLight ? "text-slate-800" : "text-white"
-          )}
-        >
-          <p
-            className={cn(
-              "text-xs uppercase tracking-[0.3em]",
-              isLight ? "text-slate-500" : "text-white/60"
-            )}
-          >
-            Featured Quiz
-          </p>
-          <p className="text-lg font-semibold">Unlock exclusive badges when you finish under the time cap.</p>
         </div>
       </div>
     </div>

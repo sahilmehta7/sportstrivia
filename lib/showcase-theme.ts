@@ -71,11 +71,11 @@ export function getBackgroundVariant(variant: BackgroundVariant, theme: Showcase
     }
   } else {
     switch (variant) {
-      case "default": return "bg-gradient-to-br from-black via-slate-950 to-slate-950";
-      case "dark": return "bg-gradient-to-br from-black via-black to-slate-950";
-      case "vibrant": return "bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950";
-      case "cool": return "bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950";
-      default: return "bg-gradient-to-br from-black via-slate-950 to-slate-950";
+      case "default": return "bg-slate-950";
+      case "dark": return "bg-black";
+      case "vibrant": return "bg-slate-950";
+      case "cool": return "bg-slate-950";
+      default: return "bg-slate-950";
     }
   }
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import React, { type ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
 interface ShowcaseMasonryGridProps {
@@ -11,8 +11,15 @@ interface ShowcaseMasonryGridProps {
 
 export function ShowcaseMasonryGrid({ children, columns = 3, className }: ShowcaseMasonryGridProps) {
   return (
-    <div className={cn("grid gap-4", className)} style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}>
-      {children}
+    <div className={cn(
+      "flex gap-4 overflow-x-auto pb-4 scrollbar-hide snap-x snap-mandatory",
+      className
+    )}>
+      {React.Children.map(children, (child) => (
+        <div className="flex-shrink-0 w-[calc(100vw-2rem)] snap-start sm:w-[500px] md:w-[600px]">
+          {child}
+        </div>
+      ))}
     </div>
   );
 }

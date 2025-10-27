@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -11,45 +8,36 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
-// ============================================
-// CORE MODELS
-// ============================================
-
 model User {
-  id            String    @id @default(cuid())
-  email         String    @unique
-  emailVerified DateTime?
-  name          String?
-  image         String?
-  bio           String?
-  favoriteTeams String[]
-  role          UserRole  @default(USER)
-  totalPoints   Int       @default(0)
-  experienceTier ExperienceTier @default(ROOKIE)
-  
-  // Streak tracking
-  currentStreak Int       @default(0)
-  longestStreak Int       @default(0)
-  lastActiveDate DateTime?
-  
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-
-  // Relations
-  accounts      Account[]
-  sessions      Session[]
-  quizAttempts  QuizAttempt[]
-  friends       Friend[]     @relation("UserFriends")
-  friendOf      Friend[]     @relation("FriendOf")
-  challengesSent Challenge[] @relation("Challenger")
-  challengesReceived Challenge[] @relation("Challenged")
-  badges        UserBadge[]
-  notifications Notification[]
-  mediaUploads  Media[]
-  topicStats    UserTopicStats[]
-  reviews       QuizReview[]
-  reports       QuestionReport[]
+  id                 String            @id @default(cuid())
+  email              String            @unique
+  emailVerified      DateTime?
+  name               String?
+  image              String?
+  bio                String?
+  favoriteTeams      String[]
+  role               UserRole          @default(USER)
+  currentStreak      Int               @default(0)
+  longestStreak      Int               @default(0)
+  lastActiveDate     DateTime?
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+  experienceTier     ExperienceTier    @default(ROOKIE)
+  totalPoints        Int               @default(0)
+  accounts           Account[]
+  challengesReceived Challenge[]       @relation("Challenged")
+  challengesSent     Challenge[]       @relation("Challenger")
+  friendOf           Friend[]          @relation("FriendOf")
+  friends            Friend[]          @relation("UserFriends")
+  mediaUploads       Media[]
+  notifications      Notification[]
+  reports            QuestionReport[]
+  quizAttempts       QuizAttempt[]
   leaderboardEntries QuizLeaderboard[]
+  reviews            QuizReview[]
+  sessions           Session[]
+  badges             UserBadge[]
+  topicStats         UserTopicStats[]
 
   @@index([email])
 }
@@ -60,15 +48,14 @@ model Account {
   type              String
   provider          String
   providerAccountId String
-  refresh_token     String? @db.Text
-  access_token      String? @db.Text
+  refresh_token     String?
+  access_token      String?
   expires_at        Int?
   token_type        String?
   scope             String?
-  id_token          String? @db.Text
+  id_token          String?
   session_state     String?
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
   @@index([userId])
@@ -92,104 +79,71 @@ model VerificationToken {
   @@unique([identifier, token])
 }
 
-// ============================================
-// TOPIC HIERARCHY
-// ============================================
-
 model Topic {
-  id          String   @id @default(cuid())
-  name        String   @unique
-  slug        String   @unique
-  description String?
-  parentId    String?
-  level       Int      @default(0)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  // Self-referencing for tree hierarchy
-  parent      Topic?   @relation("TopicHierarchy", fields: [parentId], references: [id])
-  children    Topic[]  @relation("TopicHierarchy")
-  
-  // Relations
-  questions   Question[]
+  id               String            @id @default(cuid())
+  name             String            @unique
+  slug             String            @unique
+  description      String?
+  parentId         String?
+  level            Int               @default(0)
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  questions        Question[]
   quizTopicConfigs QuizTopicConfig[]
-  userStats   UserTopicStats[]
+  parent           Topic?            @relation("TopicHierarchy", fields: [parentId], references: [id])
+  children         Topic[]           @relation("TopicHierarchy")
+  userStats        UserTopicStats[]
 
   @@index([parentId])
   @@index([slug])
 }
 
-// ============================================
-// QUIZ MODELS
-// ============================================
-
 model Quiz {
-  id          String   @id @default(cuid())
-  title       String
-  slug        String   @unique
-  description String?  @db.Text
-  descriptionImageUrl String?
-  descriptionVideoUrl String?
-  sport       String?
-  difficulty  Difficulty @default(MEDIUM)
-  status      QuizStatus @default(DRAFT)
-  
-  // Quiz configuration
-  duration    Int?     // Total quiz duration in seconds
-  timePerQuestion Int? // Time per question in seconds (overrides duration)
-  passingScore Int     @default(70) // Percentage required to pass
-  maxAttemptsPerUser Int?
-  attemptResetPeriod AttemptResetPeriod @default(NEVER)
-  
-  // Question selection
-  questionSelectionMode QuestionSelectionMode @default(FIXED)
-  questionCount Int?    // For TOPIC_RANDOM and POOL_RANDOM modes
-  randomizeQuestionOrder Boolean @default(false)
-  showHints   Boolean  @default(true)
-  
-  // Scoring
-  negativeMarkingEnabled Boolean @default(false)
-  penaltyPercentage Int @default(25) // Percentage of points to deduct for wrong answer
-  timeBonusEnabled Boolean @default(false)
-  bonusPointsPerSecond Float @default(0) // Bonus points per second saved
-  
-  // Scheduling
-  startTime   DateTime?
-  endTime     DateTime?
-  answersRevealTime DateTime? // When to reveal correct answers
-  
-  // Recurring quizzes
-  recurringType RecurringType @default(NONE)
-  lastRefreshedAt DateTime?
-  
-  // Quiz templates
-  isDuplicated Boolean @default(false)
-  originalQuizId String?
-  
-  // Ratings
-  averageRating Float @default(0)
-  totalReviews Int @default(0)
-  
-  // Featured & Visibility
-  isFeatured Boolean @default(false)
-  
-  // SEO
-  seoTitle       String?
-  seoDescription String?
-  seoKeywords    String[]
-  
-  isPublished Boolean  @default(false)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  // Relations
-  topicConfigs QuizTopicConfig[]
-  questionPool QuizQuestionPool[]
-  attempts     QuizAttempt[]
-  challenges   Challenge[]
-  tags         QuizTagRelation[]
-  reviews      QuizReview[]
-  leaderboard  QuizLeaderboard[]
+  id                     String                @id @default(cuid())
+  title                  String
+  slug                   String                @unique
+  description            String?
+  descriptionImageUrl    String?
+  descriptionVideoUrl    String?
+  sport                  String?
+  difficulty             Difficulty            @default(MEDIUM)
+  status                 QuizStatus            @default(DRAFT)
+  duration               Int?
+  timePerQuestion        Int?
+  passingScore           Int                   @default(70)
+  questionSelectionMode  QuestionSelectionMode @default(FIXED)
+  questionCount          Int?
+  randomizeQuestionOrder Boolean               @default(false)
+  showHints              Boolean               @default(true)
+  negativeMarkingEnabled Boolean               @default(false)
+  penaltyPercentage      Int                   @default(25)
+  timeBonusEnabled       Boolean               @default(false)
+  bonusPointsPerSecond   Float                 @default(0)
+  startTime              DateTime?
+  endTime                DateTime?
+  answersRevealTime      DateTime?
+  recurringType          RecurringType         @default(NONE)
+  lastRefreshedAt        DateTime?
+  isDuplicated           Boolean               @default(false)
+  originalQuizId         String?
+  averageRating          Float                 @default(0)
+  totalReviews           Int                   @default(0)
+  seoTitle               String?
+  seoDescription         String?
+  seoKeywords            String[]
+  isPublished            Boolean               @default(false)
+  createdAt              DateTime              @default(now())
+  updatedAt              DateTime              @updatedAt
+  isFeatured             Boolean               @default(false)
+  attemptResetPeriod     AttemptResetPeriod    @default(NEVER)
+  maxAttemptsPerUser     Int?
+  challenges             Challenge[]
+  attempts               QuizAttempt[]
+  leaderboard            QuizLeaderboard[]
+  questionPool           QuizQuestionPool[]
+  reviews                QuizReview[]
+  tags                   QuizTagRelation[]
+  topicConfigs           QuizTopicConfig[]
 
   @@index([slug])
   @@index([sport])
@@ -199,12 +153,11 @@ model Quiz {
 }
 
 model QuizTag {
-  id          String   @id @default(cuid())
-  name        String   @unique
-  slug        String   @unique
+  id          String            @id @default(cuid())
+  name        String            @unique
+  slug        String            @unique
   description String?
-  createdAt   DateTime @default(now())
-
+  createdAt   DateTime          @default(now())
   quizzes     QuizTagRelation[]
 
   @@index([slug])
@@ -215,9 +168,8 @@ model QuizTagRelation {
   quizId    String
   tagId     String
   createdAt DateTime @default(now())
-
-  quiz Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
-  tag  QuizTag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  quiz      Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  tag       QuizTag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
 
   @@unique([quizId, tagId])
   @@index([quizId])
@@ -229,11 +181,10 @@ model QuizTopicConfig {
   quizId        String
   topicId       String
   difficulty    Difficulty
-  questionCount Int        // How many questions to pull from this topic
+  questionCount Int
   createdAt     DateTime   @default(now())
-
-  quiz  Quiz  @relation(fields: [quizId], references: [id], onDelete: Cascade)
-  topic Topic @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  quiz          Quiz       @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  topic         Topic      @relation(fields: [topicId], references: [id], onDelete: Cascade)
 
   @@unique([quizId, topicId, difficulty])
   @@index([quizId])
@@ -244,59 +195,42 @@ model QuizQuestionPool {
   id         String   @id @default(cuid())
   quizId     String
   questionId String
-  order      Int?     // For FIXED mode, null for random modes
-  points     Int      @default(1) // Point weighting for this question
+  order      Int?
+  points     Int      @default(1)
   createdAt  DateTime @default(now())
-
-  quiz     Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
-  question Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  quiz       Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
 
   @@unique([quizId, questionId])
-  // NOTE: Prisma doesn't support partial unique constraints (WHERE order IS NOT NULL)
-  // Application code must ensure unique [quizId, order] combinations for FIXED quizzes
-  // Consider database trigger: CREATE UNIQUE INDEX CONCURRENTLY quiz_question_order_unique 
-  // ON "QuizQuestionPool" (quiz_id, "order") WHERE "order" IS NOT NULL;
   @@index([quizId])
   @@index([questionId])
   @@index([quizId, order])
 }
 
-// ============================================
-// QUESTION MODELS
-// ============================================
-
 model Question {
-  id           String       @id @default(cuid())
-  type         QuestionType @default(MULTIPLE_CHOICE)
-  topicId      String
-  difficulty   Difficulty   @default(MEDIUM)
-  
-  questionText String       @db.Text
-  questionImageUrl String?
-  questionVideoUrl String?
-  questionAudioUrl String?
-  
-  hint         String?      @db.Text
-  explanation  String?      @db.Text
-  explanationImageUrl String?
-  explanationVideoUrl String?
-  
-  randomizeAnswerOrder Boolean @default(false)
-  timeLimit    Int?         // Time limit for this specific question in seconds
-  
-  // Statistics
-  timesAnswered Int @default(0)
-  timesCorrect  Int @default(0)
-  
-  createdAt    DateTime     @default(now())
-  updatedAt    DateTime     @updatedAt
-
-  // Relations
-  topic        Topic        @relation(fields: [topicId], references: [id])
-  answers      Answer[]
-  quizPools    QuizQuestionPool[]
-  userAnswers  UserAnswer[]
-  reports      QuestionReport[]
+  id                   String             @id @default(cuid())
+  type                 QuestionType       @default(MULTIPLE_CHOICE)
+  topicId              String
+  difficulty           Difficulty         @default(MEDIUM)
+  questionText         String
+  questionImageUrl     String?
+  questionVideoUrl     String?
+  questionAudioUrl     String?
+  hint                 String?
+  explanation          String?
+  explanationImageUrl  String?
+  explanationVideoUrl  String?
+  randomizeAnswerOrder Boolean            @default(false)
+  timeLimit            Int?
+  timesAnswered        Int                @default(0)
+  timesCorrect         Int                @default(0)
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+  answers              Answer[]
+  topic                Topic              @relation(fields: [topicId], references: [id])
+  reports              QuestionReport[]
+  quizPools            QuizQuestionPool[]
+  userAnswers          UserAnswer[]
 
   @@index([topicId])
   @@index([difficulty])
@@ -304,58 +238,43 @@ model Question {
 }
 
 model Answer {
-  id         String   @id @default(cuid())
-  questionId String
-  
-  answerText String   @db.Text
+  id             String       @id @default(cuid())
+  questionId     String
+  answerText     String
   answerImageUrl String?
   answerVideoUrl String?
   answerAudioUrl String?
-  
-  isCorrect  Boolean  @default(false)
-  displayOrder Int    @default(0)
-  
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-
-  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
-  userAnswers UserAnswer[]
+  isCorrect      Boolean      @default(false)
+  displayOrder   Int          @default(0)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  question       Question     @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  userAnswers    UserAnswer[]
 
   @@index([questionId])
 }
 
-// ============================================
-// USER PROGRESS & ATTEMPTS
-// ============================================
-
 model QuizAttempt {
-  id                  String    @id @default(cuid())
+  id                  String       @id @default(cuid())
   userId              String
   quizId              String
-  
-  selectedQuestionIds String[]  // JSON array of question IDs for random quizzes
-  score               Float     @default(0)
-  totalQuestions      Int       @default(0)
-  correctAnswers      Int       @default(0)
-  passed              Boolean   @default(false)
-  totalPoints         Int       @default(0)
-  longestStreak       Int       @default(0)
-  averageResponseTime Float     @default(0)
-  totalTimeSpent      Int       @default(0)
-  
-  // Practice mode
-  isPracticeMode      Boolean   @default(false)
-  
-  // Resume functionality
-  isPaused            Boolean   @default(false)
-  resumeToken         String?   @unique
-  
-  startedAt           DateTime  @default(now())
+  selectedQuestionIds String[]
+  score               Float        @default(0)
+  totalQuestions      Int          @default(0)
+  correctAnswers      Int          @default(0)
+  passed              Boolean      @default(false)
+  isPracticeMode      Boolean      @default(false)
+  isPaused            Boolean      @default(false)
+  resumeToken         String?      @unique
+  startedAt           DateTime     @default(now())
   completedAt         DateTime?
-  
-  user       User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  quiz       Quiz         @relation(fields: [quizId], references: [id], onDelete: Cascade)
-  userAnswers UserAnswer[]
+  averageResponseTime Float        @default(0)
+  longestStreak       Int          @default(0)
+  totalPoints         Int          @default(0)
+  totalTimeSpent      Int          @default(0)
+  quiz                Quiz         @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  user                User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userAnswers         UserAnswer[]
 
   @@index([userId])
   @@index([quizId])
@@ -363,50 +282,40 @@ model QuizAttempt {
 }
 
 model UserAnswer {
-  id         String   @id @default(cuid())
-  attemptId  String
-  questionId String
-  answerId   String?  // Null if skipped
-  
-  isCorrect  Boolean  @default(false)
-  wasSkipped Boolean  @default(false)
-  timeSpent  Int      @default(0) // Time spent in seconds
-  
-  createdAt  DateTime @default(now())
-
-  attempt  QuizAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
-  question Question    @relation(fields: [questionId], references: [id])
-  answer   Answer?     @relation(fields: [answerId], references: [id])
-  basePoints  Int      @default(0)
-  timeBonus   Int      @default(0)
-  streakBonus Int      @default(0)
-  totalPoints Int      @default(0)
+  id          String      @id @default(cuid())
+  attemptId   String
+  questionId  String
+  answerId    String?
+  isCorrect   Boolean     @default(false)
+  wasSkipped  Boolean     @default(false)
+  timeSpent   Int         @default(0)
+  createdAt   DateTime    @default(now())
+  basePoints  Int         @default(0)
+  streakBonus Int         @default(0)
+  timeBonus   Int         @default(0)
+  totalPoints Int         @default(0)
+  answer      Answer?     @relation(fields: [answerId], references: [id])
+  attempt     QuizAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  question    Question    @relation(fields: [questionId], references: [id])
 
   @@index([attemptId])
   @@index([questionId])
 }
 
-// ============================================
-// USER STATISTICS
-// ============================================
-
 model UserTopicStats {
-  id              String   @id @default(cuid())
-  userId          String
-  topicId         String
-  
-  questionsAnswered Int    @default(0)
-  questionsCorrect  Int    @default(0)
-  successRate       Float  @default(0) // Percentage
-  averageTime       Float  @default(0) // Average time per question in seconds
-  currentStreak     Int    @default(0)
+  id                String    @id @default(cuid())
+  userId            String
+  topicId           String
+  questionsAnswered Int       @default(0)
+  questionsCorrect  Int       @default(0)
+  successRate       Float     @default(0)
+  averageTime       Float     @default(0)
+  currentStreak     Int       @default(0)
   lastAnsweredAt    DateTime?
-  
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-
-  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
-  topic Topic @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  topic             Topic     @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, topicId])
   @@index([userId])
@@ -414,33 +323,25 @@ model UserTopicStats {
 }
 
 model QuizLeaderboard {
-  id         String   @id @default(cuid())
-  quizId     String
-  userId     String
-  
-  bestScore  Float
-  bestTime   Int      // Best time in seconds
-  bestPoints Int      @default(0)
-  averageResponseTime Float @default(0)
-  attempts   Int      @default(1)
-  rank       Int      @default(999999) // Placeholder rank, updated by leaderboard calculation
-  
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-
-  quiz Quiz @relation(fields: [quizId], references: [id], onDelete: Cascade)
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                  String   @id @default(cuid())
+  quizId              String
+  userId              String
+  bestScore           Float
+  bestTime            Int
+  attempts            Int      @default(1)
+  rank                Int      @default(999999)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  averageResponseTime Float    @default(0)
+  bestPoints          Int      @default(0)
+  quiz                Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([quizId, userId])
-  @@unique([quizId, rank]) // Ensure each rank is unique per quiz
-  // Covering index for leaderboard queries: ORDER BY bestPoints DESC, averageResponseTime ASC
-  @@index([quizId, bestPoints(sort: Desc), averageResponseTime(sort: Asc)])
+  @@unique([quizId, rank])
+  @@index([quizId, bestPoints(sort: Desc), averageResponseTime])
   @@index([userId])
 }
-
-// ============================================
-// SOCIAL FEATURES
-// ============================================
 
 model Friend {
   id        String       @id @default(cuid())
@@ -449,9 +350,8 @@ model Friend {
   status    FriendStatus @default(PENDING)
   createdAt DateTime     @default(now())
   updatedAt DateTime     @updatedAt
-
-  user   User @relation("UserFriends", fields: [userId], references: [id], onDelete: Cascade)
-  friend User @relation("FriendOf", fields: [friendId], references: [id], onDelete: Cascade)
+  friend    User         @relation("FriendOf", fields: [friendId], references: [id], onDelete: Cascade)
+  user      User         @relation("UserFriends", fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, friendId])
   @@index([userId])
@@ -459,41 +359,33 @@ model Friend {
 }
 
 model Challenge {
-  id             String          @id @default(cuid())
-  challengerId   String
-  challengedId   String
-  quizId         String
-  
+  id              String          @id @default(cuid())
+  challengerId    String
+  challengedId    String
+  quizId          String
   challengerScore Float?
   challengedScore Float?
-  expiresAt      DateTime?
-  
-  status         ChallengeStatus @default(PENDING)
-  createdAt      DateTime        @default(now())
-  updatedAt      DateTime        @updatedAt
-
-  challenger User @relation("Challenger", fields: [challengerId], references: [id], onDelete: Cascade)
-  challenged User @relation("Challenged", fields: [challengedId], references: [id], onDelete: Cascade)
-  quiz       Quiz @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  status          ChallengeStatus @default(PENDING)
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  expiresAt       DateTime?
+  challenged      User            @relation("Challenged", fields: [challengedId], references: [id], onDelete: Cascade)
+  challenger      User            @relation("Challenger", fields: [challengerId], references: [id], onDelete: Cascade)
+  quiz            Quiz            @relation(fields: [quizId], references: [id], onDelete: Cascade)
 
   @@index([challengerId])
   @@index([challengedId])
   @@index([quizId])
 }
 
-// ============================================
-// ENGAGEMENT FEATURES
-// ============================================
-
 model Badge {
-  id          String   @id @default(cuid())
-  name        String   @unique
+  id          String      @id @default(cuid())
+  name        String      @unique
   description String
   imageUrl    String
-  criteria    Json     // Criteria for earning the badge
-  createdAt   DateTime @default(now())
-
-  userBadges UserBadge[]
+  criteria    Json
+  createdAt   DateTime    @default(now())
+  userBadges  UserBadge[]
 
   @@index([name])
 }
@@ -503,9 +395,8 @@ model UserBadge {
   userId   String
   badgeId  String
   earnedAt DateTime @default(now())
-
-  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
-  badge Badge @relation(fields: [badgeId], references: [id], onDelete: Cascade)
+  badge    Badge    @relation(fields: [badgeId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, badgeId])
   @@index([userId])
@@ -516,32 +407,26 @@ model Notification {
   id        String   @id @default(cuid())
   userId    String
   type      String
-  content   String   @db.Text
+  content   String
   read      Boolean  @default(false)
   createdAt DateTime @default(now())
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([read])
 }
 
-// ============================================
-// CONTENT MODERATION & REVIEWS
-// ============================================
-
 model QuizReview {
   id           String   @id @default(cuid())
   userId       String
   quizId       String
-  rating       Int      // 1-5 stars
-  comment      String?  @db.Text
+  rating       Int
+  comment      String?
   helpfulCount Int      @default(0)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  quiz Quiz @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  quiz         Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, quizId])
   @@index([quizId])
@@ -553,21 +438,16 @@ model QuestionReport {
   userId      String
   questionId  String
   reason      String
-  description String?      @db.Text
+  description String?
   status      ReportStatus @default(PENDING)
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
-
-  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  question Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  question    Question     @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([questionId])
   @@index([status])
 }
-
-// ============================================
-// MEDIA MANAGEMENT
-// ============================================
 
 model Media {
   id         String    @id @default(cuid())
@@ -575,36 +455,27 @@ model Media {
   fileUrl    String
   fileType   MediaType
   mimeType   String
-  fileSize   Int       // Size in bytes
+  fileSize   Int
   bucket     String    @default("quiz-media")
   uploadedBy String
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
-
-  uploader User @relation(fields: [uploadedBy], references: [id], onDelete: Cascade)
+  uploader   User      @relation(fields: [uploadedBy], references: [id], onDelete: Cascade)
 
   @@index([uploadedBy])
   @@index([fileType])
 }
 
-// ============================================
-// SETTINGS
-// ============================================
-
 model AppSettings {
   id        String   @id @default(cuid())
   key       String   @unique
-  value     String   @db.Text
+  value     String
   category  String   @default("general")
   updatedAt DateTime @updatedAt
   updatedBy String?
-  
+
   @@index([category])
 }
-
-// ============================================
-// ENUMS
-// ============================================
 
 enum UserRole {
   USER

@@ -1,8 +1,10 @@
 "use client";
+
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-import { useShowcaseTheme } from "@/components/showcase/ShowcaseThemeProvider";
+import { useTheme } from "next-themes";
 import { getChipStyles, getSurfaceStyles, getTextColor } from "@/lib/showcase-theme";
 
 export interface ShowcaseFilterOption {
@@ -29,7 +31,15 @@ interface ShowcaseFilterBarProps {
 }
 
 export function ShowcaseFilterBar({ groups, className, condensed = false, onChange, onReset }: ShowcaseFilterBarProps) {
-  const { theme } = useShowcaseTheme();
+  const { theme: themeMode } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Default to dark theme until mounted to prevent hydration mismatch
+  const theme = mounted && themeMode === "light" ? "light" : "dark";
 
   return (
     <div
@@ -83,7 +93,10 @@ export function ShowcaseFilterBar({ groups, className, condensed = false, onChan
               <span className={cn("text-sm font-semibold uppercase tracking-[0.3em]", getTextColor(theme, "secondary"))}>
                 {group.label}
               </span>
-              <div className="flex flex-wrap gap-2">
+              <div className={cn(
+                "flex gap-2",
+                group.id === "category" ? "overflow-x-auto pb-2 scrollbar-hide" : "flex-wrap"
+              )}>
                 {group.options.map((option) => {
                   const active = option.value === group.activeValue;
                   return (
@@ -92,7 +105,7 @@ export function ShowcaseFilterBar({ groups, className, condensed = false, onChan
                       type="button"
                       onClick={() => onChange?.(group.id, option)}
                       className={cn(
-                        "rounded-full px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em]",
+                        "rounded-full px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.25em] whitespace-nowrap",
                         active ? getChipStyles(theme, "solid") : getChipStyles(theme, "outline")
                       )}
                     >
@@ -109,21 +122,7 @@ export function ShowcaseFilterBar({ groups, className, condensed = false, onChan
           );
         })}
 
-        {onReset && (
-          <div className="flex justify-end">
-            <button
-              type="button"
-              onClick={onReset}
-              className={cn(
-                "text-xs font-semibold uppercase tracking-[0.3em]",
-                getTextColor(theme, "muted"),
-                "hover:opacity-80"
-              )}
-            >
-              Reset filters
-            </button>
-          </div>
-        )}
+
       </div>
     </div>
   );
