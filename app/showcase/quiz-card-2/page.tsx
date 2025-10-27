@@ -15,60 +15,93 @@ function formatCoachPlaceholder(title: string, index: number) {
 }
 
 export default async function ShowcaseQuizCard2Page() {
-  const quizzes = await prisma.quiz.findMany({
-    where: {
-      isPublished: true,
-      status: "PUBLISHED",
+  let cards = [
+    {
+      id: "demo-1",
+      title: "Upper Body Boxing",
+      category: "Upper Body",
+      durationLabel: "20 min",
+      difficultyLabel: "Easy",
+      coach: {
+        name: "Coach Morgan Green",
+        avatarUrl: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1",
+      },
+      coverImageUrl: "https://images.unsplash.com/photo-1540747913346-19e32dc3e97e",
+      accent: getSportGradient("boxing"),
     },
-    orderBy: {
-      updatedAt: "desc",
+    {
+      id: "demo-2",
+      title: "Mindfulness Basics",
+      category: "Upper Body",
+      durationLabel: "20 min",
+      difficultyLabel: "Easy",
+      coach: {
+        name: "Coach Azunyan Senpai",
+        avatarUrl: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1",
+      },
+      coverImageUrl: "https://images.unsplash.com/photo-1506126613408-eca07ce68773",
+      accent: getSportGradient("yoga", 1),
     },
-    take: 2,
-    include: {
-      topicConfigs: {
-        include: {
-          topic: {
-            select: {
-              name: true,
+  ];
+
+  try {
+    const quizzes = await prisma.quiz.findMany({
+      where: {
+        isPublished: true,
+        status: "PUBLISHED",
+      },
+      orderBy: {
+        updatedAt: "desc",
+      },
+      take: 2,
+      include: {
+        topicConfigs: {
+          include: {
+            topic: {
+              select: {
+                name: true,
+              },
             },
           },
+          orderBy: {
+            createdAt: "asc",
+          },
+          take: 1,
         },
-        orderBy: {
-          createdAt: "asc",
-        },
-        take: 1,
       },
-    },
-  });
+    });
 
-  if (!quizzes.length) {
-    notFound();
+    if (!quizzes.length) {
+      notFound();
+    }
+
+    cards = quizzes.map((quiz, index) => {
+      const durationSeconds = quiz.duration ?? quiz.timePerQuestion ?? 0;
+      const category = quiz.topicConfigs?.[0]?.topic?.name ?? quiz.sport ?? "Featured";
+      const difficultyLabel = quiz.difficulty
+        .toLowerCase()
+        .replace(/_/g, " ")
+        .replace(/\b\w/g, (char) => char.toUpperCase());
+      const coachName = formatCoachPlaceholder(quiz.title, index);
+      const accent = getSportGradient(quiz.sport, index) ?? "from-orange-500 to-amber-400";
+
+      return {
+        id: quiz.id,
+        title: quiz.title,
+        category,
+        durationLabel: durationSeconds ? formatQuizDuration(durationSeconds) : "Flexible",
+        difficultyLabel,
+        coach: {
+          name: coachName,
+          avatarUrl: `https://api.dicebear.com/7.x/avataaars/png?seed=${encodeURIComponent(coachName)}`,
+        },
+        coverImageUrl: quiz.descriptionImageUrl ?? undefined,
+        accent,
+      };
+    });
+  } catch (error) {
+    console.warn("[showcase/quiz-card-2] Using fallback data", error);
   }
-
-  const cards = quizzes.map((quiz, index) => {
-    const durationSeconds = quiz.duration ?? quiz.timePerQuestion ?? 0;
-    const category = quiz.topicConfigs?.[0]?.topic?.name ?? quiz.sport ?? "Featured";
-    const difficultyLabel = quiz.difficulty
-      .toLowerCase()
-      .replace(/_/g, " ")
-      .replace(/\b\w/g, (char) => char.toUpperCase());
-    const coachName = formatCoachPlaceholder(quiz.title, index);
-    const accent = getSportGradient(quiz.sport, index) ?? "from-orange-500 to-amber-400";
-
-    return {
-      id: quiz.id,
-      title: quiz.title,
-      category,
-      durationLabel: durationSeconds ? formatQuizDuration(durationSeconds) : "Flexible",
-      difficultyLabel,
-      coach: {
-        name: coachName,
-        avatarUrl: `https://api.dicebear.com/7.x/avataaars/png?seed=${encodeURIComponent(coachName)}`,
-      },
-      coverImageUrl: quiz.descriptionImageUrl ?? undefined,
-      accent,
-    };
-  });
 
   return (
     <ShowcaseLayout

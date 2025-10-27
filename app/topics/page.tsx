@@ -36,11 +36,19 @@ const colorPairs = [
 ];
 
 export default async function TopicsPage() {
-  const [featuredTopics, allTopics, l2Topics] = await Promise.all([
-    getFeaturedTopics(6),
-    getRootTopics(),
-    getL2TopicsForPopularSports()
-  ]);
+  let featuredTopics = [];
+  let allTopics = [];
+  let l2Topics = [];
+
+  try {
+    [featuredTopics, allTopics, l2Topics] = await Promise.all([
+      getFeaturedTopics(6),
+      getRootTopics(),
+      getL2TopicsForPopularSports(),
+    ]);
+  } catch (error) {
+    console.warn("[topics] Falling back to empty data due to fetch error", error);
+  }
   
   // Map root topics to format with color pairs
   const featuredItems = featuredTopics.map((topic, index) => ({

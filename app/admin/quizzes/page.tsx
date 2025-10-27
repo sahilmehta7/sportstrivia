@@ -2,11 +2,12 @@ import { prisma } from "@/lib/db";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus } from "lucide-react";
+import { Plus, Star, Edit, HelpCircle, Settings } from "lucide-react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { AdminDataTable } from "@/components/admin/data-table/AdminDataTable";
 import { AdminFilterForm } from "@/components/admin/data-table/AdminFilterForm";
+import { FeaturedToggleButton } from "@/components/admin/FeaturedToggleButton";
 import { TableCell, TableRow } from "@/components/ui/table";
 import {
   AttemptResetPeriod as AttemptResetPeriodConst,
@@ -302,7 +303,6 @@ export default async function QuizzesPage({ searchParams }: QuizzesPageProps) {
           { label: "Difficulty" },
           { label: "Status" },
           { label: "Attempt Cap", align: "right" },
-          { label: "Questions", align: "right" },
           { label: "Attempts", align: "right" },
           { label: "Actions", align: "right" },
         ]}
@@ -326,7 +326,6 @@ export default async function QuizzesPage({ searchParams }: QuizzesPageProps) {
                     )}
                     <span>{quiz.title}</span>
                   </div>
-                  <div className="text-sm text-muted-foreground">/{quiz.slug}</div>
                   {quiz.topicConfigs.length > 0 && (
                     <div className="mt-1 flex flex-wrap gap-1">
                       {quiz.topicConfigs.map((config, index) => (
@@ -343,22 +342,17 @@ export default async function QuizzesPage({ searchParams }: QuizzesPageProps) {
                 <Badge variant="outline">{quiz.difficulty}</Badge>
               </TableCell>
               <TableCell>
-                <div className="flex flex-col gap-1">
-                  <Badge
-                    variant={
-                      quiz.status === "PUBLISHED"
-                        ? "default"
-                        : quiz.status === "DRAFT"
-                        ? "secondary"
-                        : "outline"
-                    }
-                  >
-                    {quiz.status}
-                  </Badge>
-                  {quiz.isPublished && quiz.status === "PUBLISHED" && (
-                    <span className="text-xs text-muted-foreground">Published</span>
-                  )}
-                </div>
+                <Badge
+                  variant={
+                    quiz.status === "PUBLISHED"
+                      ? "default"
+                      : quiz.status === "DRAFT"
+                      ? "secondary"
+                      : "outline"
+                  }
+                >
+                  {quiz.status}
+                </Badge>
               </TableCell>
               <TableCell className="text-right">
                 {quiz.maxAttemptsPerUser ? (
@@ -374,18 +368,18 @@ export default async function QuizzesPage({ searchParams }: QuizzesPageProps) {
                   <span className="text-sm text-muted-foreground">Unlimited</span>
                 )}
               </TableCell>
-              <TableCell className="text-right">{quiz._count.questionPool}</TableCell>
               <TableCell className="text-right">{quiz._count.attempts}</TableCell>
               <TableCell className="text-right">
-                <div className="flex justify-end gap-2">
+                <div className="flex justify-end gap-1">
+                  <FeaturedToggleButton quizId={quiz.id} isFeatured={quiz.isFeatured} />
                   <Link href={`/admin/quizzes/${quiz.id}/questions`}>
-                    <Button variant="ghost" size="sm" title="Manage Questions">
-                      Questions ({quiz._count.questionPool})
+                    <Button variant="ghost" size="sm" title={`Manage Questions (${quiz._count.questionPool})`}>
+                      <HelpCircle className="h-4 w-4" />
                     </Button>
                   </Link>
                   <Link href={`/admin/quizzes/${quiz.id}/edit`}>
-                    <Button variant="outline" size="sm">
-                      Edit
+                    <Button variant="ghost" size="sm" title="Edit Quiz">
+                      <Edit className="h-4 w-4" />
                     </Button>
                   </Link>
                 </div>

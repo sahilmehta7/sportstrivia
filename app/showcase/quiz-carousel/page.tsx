@@ -7,51 +7,87 @@ import {
 import { ShowcaseQuizCarousel } from "@/components/quiz/ShowcaseQuizCarousel";
 import { notFound } from "next/navigation";
 
+const fallbackItems = [
+  {
+    id: "demo-1",
+    title: "Legends of the Premier League",
+    badgeLabel: "Football",
+    durationLabel: "20 min",
+    playersLabel: "12.3k players",
+    accent: getSportGradient("football"),
+    coverImageUrl: "https://images.unsplash.com/photo-1522778119026-d647f0596c20",
+  },
+  {
+    id: "demo-2",
+    title: "Grand Slam Trivia",
+    badgeLabel: "Tennis",
+    durationLabel: "18 min",
+    playersLabel: "9.4k players",
+    accent: getSportGradient("tennis", 1),
+    coverImageUrl: "https://images.unsplash.com/photo-1505664194779-8beaceb93744",
+  },
+  {
+    id: "demo-3",
+    title: "NBA Timeline Challenge",
+    badgeLabel: "Basketball",
+    durationLabel: "22 min",
+    playersLabel: "15.2k players",
+    accent: getSportGradient("basketball", 2),
+    coverImageUrl: "https://images.unsplash.com/photo-1517976487492-5750f3195933",
+  },
+];
+
 export default async function QuizCarouselShowcasePage() {
-  const quizzes = await prisma.quiz.findMany({
-    where: {
-      isPublished: true,
-      status: "PUBLISHED",
-    },
-    orderBy: {
-      updatedAt: "desc",
-    },
-    take: 8,
-    include: {
-      _count: {
-        select: {
-          attempts: true,
-        },
+  let items = fallbackItems;
+
+  try {
+    const quizzes = await prisma.quiz.findMany({
+      where: {
+        isPublished: true,
+        status: "PUBLISHED",
       },
-      topicConfigs: {
-        include: {
-          topic: {
-            select: {
-              name: true,
-            },
+      orderBy: {
+        updatedAt: "desc",
+      },
+      take: 8,
+      include: {
+        _count: {
+          select: {
+            attempts: true,
           },
         },
-        orderBy: {
-          createdAt: "asc",
+        topicConfigs: {
+          include: {
+            topic: {
+              select: {
+                name: true,
+              },
+            },
+          },
+          orderBy: {
+            createdAt: "asc",
+          },
+          take: 1,
         },
-        take: 1,
       },
-    },
-  });
+    });
 
-  if (quizzes.length === 0) {
-    notFound();
+    if (quizzes.length === 0) {
+      notFound();
+    }
+
+    items = quizzes.map((quiz, index) => ({
+      id: quiz.id,
+      title: quiz.title,
+      badgeLabel: quiz.topicConfigs?.[0]?.topic?.name ?? quiz.sport ?? quiz.difficulty ?? "Featured",
+      durationLabel: formatQuizDuration(quiz.duration ?? quiz.timePerQuestion),
+      playersLabel: formatPlayerCount(quiz._count?.attempts),
+      accent: getSportGradient(quiz.sport, index),
+      coverImageUrl: quiz.descriptionImageUrl,
+    }));
+  } catch (error) {
+    console.warn("[showcase/quiz-carousel] Using fallback data", error);
   }
-
-  const items = quizzes.map((quiz, index) => ({
-    id: quiz.id,
-    title: quiz.title,
-    badgeLabel: quiz.topicConfigs?.[0]?.topic?.name ?? quiz.sport ?? quiz.difficulty ?? "Featured",
-    durationLabel: formatQuizDuration(quiz.duration ?? quiz.timePerQuestion),
-    playersLabel: formatPlayerCount(quiz._count?.attempts),
-    accent: getSportGradient(quiz.sport, index),
-    coverImageUrl: quiz.descriptionImageUrl,
-  }));
 
   return (
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 px-6 py-16">

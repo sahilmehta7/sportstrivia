@@ -16,6 +16,7 @@ export const metadata: Metadata = {
 };
 
 async function getQuizJourneyData() {
+  try {
   const quiz = await prisma.quiz.findFirst({
     where: {
       isPublished: true,
@@ -207,12 +208,79 @@ async function getQuizJourneyData() {
     }));
   }
 
-  return {
-    quiz,
-    experienceQuestions,
-    latestAttempt,
-    leaderboardData,
-  };
+    return {
+      quiz,
+      experienceQuestions,
+      latestAttempt,
+      leaderboardData,
+    };
+  } catch (error) {
+    console.warn("[showcase/quiz-journey] Using fallback data", error);
+
+    const fallbackQuiz: any = {
+      id: "demo-quiz",
+      title: "Ultimate Cricket Venue Challenge",
+      description: "Test your knowledge of iconic venues and record-breaking matches.",
+      slug: "demo-cricket-venue",
+      sport: "Cricket",
+      difficulty: "MEDIUM",
+      duration: 1200,
+      timePerQuestion: 60,
+      timeBonusEnabled: true,
+      bonusPointsPerSecond: 1.2,
+      _count: { attempts: 12345 },
+      topicConfigs: [{ topic: { name: "Cricket" } }],
+      leaderboard: [
+        { user: { name: "Alex Johnson", email: "alex@example.com" }, bestPoints: 9800, rank: 1 },
+        { user: { name: "Priya Singh", email: "priya@example.com" }, bestPoints: 9420, rank: 2 },
+        { user: { name: "Diego Morales", email: "diego@example.com" }, bestPoints: 9310, rank: 3 },
+      ],
+    };
+
+    const fallbackQuestions: ShowcaseQuizExperienceQuestion[] = [
+      {
+        id: "q1",
+        prompt: "Which venue hosted the first-ever Cricket World Cup final?",
+        imageUrl: "https://images.unsplash.com/photo-1517649763962-0c623066013b",
+        timeLimit: 60,
+        timeRemaining: 48,
+        answers: [
+          { id: "a1", text: "Lord's", isCorrect: true },
+          { id: "a2", text: "Eden Gardens" },
+          { id: "a3", text: "Melbourne Cricket Ground" },
+          { id: "a4", text: "SCG" },
+        ],
+        correctAnswerId: "a1",
+      },
+      {
+        id: "q2",
+        prompt: "Which stadium is nicknamed 'The Bullring'?",
+        imageUrl: "https://images.unsplash.com/photo-1536697246787-1f7ae568d89b",
+        timeLimit: 60,
+        timeRemaining: 52,
+        answers: [
+          { id: "b1", text: "Wankhede Stadium" },
+          { id: "b2", text: "Newlands" },
+          { id: "b3", text: "Eden Park" },
+          { id: "b4", text: "Wanderers Stadium", isCorrect: true },
+        ],
+        correctAnswerId: "b4",
+      },
+    ];
+
+    const fallbackLeaderboard: LeaderboardEntry[] = [
+      { userId: "u1", userName: "Alex Johnson", userImage: null, score: 9200, totalPoints: 9200, rank: 1 },
+      { userId: "u2", userName: "Priya Singh", userImage: null, score: 8970, totalPoints: 8970, rank: 2 },
+      { userId: "u3", userName: "Diego Morales", userImage: null, score: 8810, totalPoints: 8810, rank: 3 },
+    ];
+
+    return {
+      quiz: fallbackQuiz,
+      experienceQuestions: fallbackQuestions,
+      latestAttempt: null,
+      leaderboardData: fallbackLeaderboard,
+    };
+  }
 }
 
 export default async function ShowcaseQuizJourneyPage() {
