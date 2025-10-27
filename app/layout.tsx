@@ -10,8 +10,60 @@ import React from "react";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Sports Trivia - Test Your Sports Knowledge",
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "https://sportstrivia.in"),
+  title: {
+    default: "Sports Trivia - Test Your Sports Knowledge",
+    template: "%s | Sports Trivia",
+  },
   description: "Compete with friends, climb the leaderboards, and become a sports trivia champion",
+  keywords: ["sports", "trivia", "quiz", "sports knowledge", "competitive gaming"],
+  authors: [{ name: "Sports Trivia Team" }],
+  creator: "Sports Trivia",
+  publisher: "Sports Trivia",
+  formatDetection: {
+    email: false,
+    address: false,
+    telephone: false,
+  },
+  openGraph: {
+    type: "website",
+    locale: "en_US",
+    url: process.env.NEXT_PUBLIC_APP_URL || "https://sportstrivia.in",
+    siteName: "Sports Trivia",
+    title: "Sports Trivia - Test Your Sports Knowledge",
+    description: "Compete with friends, climb the leaderboards, and become a sports trivia champion",
+    images: [
+      {
+        url: "/og-image.jpg",
+        width: 1200,
+        height: 630,
+        alt: "Sports Trivia",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Sports Trivia - Test Your Sports Knowledge",
+    description: "Compete with friends, climb the leaderboards, and become a sports trivia champion",
+    images: ["/og-image.jpg"],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
+  verification: {
+    // Add verification codes when available
+    // google: "your-google-verification-code",
+    // yandex: "your-yandex-verification-code",
+  },
+  category: "Sports & Recreation",
 };
 
 export default function RootLayout({

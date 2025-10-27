@@ -1,5 +1,23 @@
+import type { Metadata } from "next";
 import { ShowcaseThemeProvider } from "@/components/showcase/ShowcaseThemeProvider";
 import { LandingPage } from "@/components/home/LandingPage";
+
+export const metadata: Metadata = {
+  title: "Home",
+  description: "Test your sports knowledge with thousands of trivia questions. Compete with friends, climb leaderboards, and become a sports trivia champion.",
+  keywords: ["sports trivia", "sports quiz", "trivia questions", "sports knowledge", "competitive gaming"],
+  openGraph: {
+    title: "Sports Trivia - Test Your Sports Knowledge",
+    description: "Test your sports knowledge with thousands of trivia questions. Compete with friends, climb leaderboards, and become a sports trivia champion.",
+    type: "website",
+    url: "/",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Sports Trivia - Test Your Sports Knowledge",
+    description: "Test your sports knowledge with thousands of trivia questions. Compete with friends, climb leaderboards, and become a sports trivia champion.",
+  },
+};
 
 async function fetchFeaturedQuizzes() {
   try {

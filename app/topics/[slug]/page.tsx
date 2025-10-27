@@ -118,6 +118,8 @@ export async function generateMetadata({
       : topic.description
     : `Explore trivia quizzes, key facts, and highlights for ${topic.name} on Sports Trivia.`;
 
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://sportstrivia.in";
+  
   return {
     title,
     description,
@@ -125,7 +127,7 @@ export async function generateMetadata({
       title,
       description,
       type: "article",
-      url: `https://sportstrivia.example.com/topics/${topic.slug}`,
+      url: `${baseUrl}/topics/${topic.slug}`,
     },
     twitter: {
       card: "summary_large_image",

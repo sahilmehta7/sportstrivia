@@ -1,6 +1,27 @@
+import type { Metadata } from "next";
 import { getRootTopics, getFeaturedTopics, getL2TopicsForPopularSports } from "@/lib/services/topic.service";
 import TopicsBrowse from "@/components/topics/TopicsBrowse";
 import { ShowcaseThemeProvider } from "@/components/showcase/ShowcaseThemeProvider";
+
+export const metadata: Metadata = {
+  title: "Sports Topics - Explore by Category",
+  description: "Browse sports trivia quizzes by topic. Explore football, cricket, basketball, tennis, and more. Find quizzes on your favorite sports and topics.",
+  keywords: ["sports topics", "sports categories", "trivia topics", "sports quizzes", "football trivia", "cricket trivia"],
+  openGraph: {
+    title: "Sports Topics - Explore by Category",
+    description: "Browse sports trivia quizzes by topic. Explore football, cricket, basketball, tennis, and more. Find quizzes on your favorite sports and topics.",
+    type: "website",
+    url: "/topics",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Sports Topics - Explore by Category",
+    description: "Browse sports trivia quizzes by topic. Explore football, cricket, basketball, tennis, and more.",
+  },
+  alternates: {
+    canonical: "/topics",
+  },
+};
 
 // Color pairs matching the showcase design
 const colorPairs = [

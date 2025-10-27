@@ -1,5 +1,77 @@
 import { prisma } from "./db";
 
+const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || "https://sportstrivia.in";
+
+/**
+ * Get the canonical URL for a given path
+ */
+export function getCanonicalUrl(path: string): string {
+  // Remove trailing slashes from BASE_URL
+  const baseUrl = BASE_URL.replace(/\/$/, "");
+  
+  // Ensure path starts with /
+  const cleanPath = path.startsWith("/") ? path : `/${path}`;
+  
+  return `${baseUrl}${cleanPath}`;
+}
+
+/**
+ * Generate Open Graph meta tags
+ */
+export function generateOpenGraphTags({
+  title,
+  description,
+  url,
+  imageUrl,
+  type = "website",
+  siteName = "Sports Trivia",
+}: {
+  title: string;
+  description: string;
+  url: string;
+  imageUrl?: string;
+  type?: string;
+  siteName?: string;
+}) {
+  const image = imageUrl || `${BASE_URL}/og-image.jpg`;
+  
+  return {
+    "og:title": title,
+    "og:description": description,
+    "og:url": url,
+    "og:type": type,
+    "og:site_name": siteName,
+    "og:locale": "en_US",
+    "og:image": image,
+    "og:image:width": "1200",
+    "og:image:height": "630",
+  };
+}
+
+/**
+ * Generate Twitter Card meta tags
+ */
+export function generateTwitterCardTags({
+  title,
+  description,
+  imageUrl,
+  cardType = "summary_large_image",
+}: {
+  title: string;
+  description: string;
+  imageUrl?: string;
+  cardType?: "summary" | "summary_large_image";
+}) {
+  const image = imageUrl || `${BASE_URL}/og-image.jpg`;
+  
+  return {
+    "twitter:card": cardType,
+    "twitter:title": title,
+    "twitter:description": description,
+    "twitter:image": image,
+  };
+}
+
 /**
  * Generate a URL-friendly slug from a title
  */
@@ -58,16 +130,19 @@ export interface MetaTags {
   ogTitle?: string;
   ogDescription?: string;
   ogImage?: string;
+  canonicalUrl?: string;
 }
 
 export function generateQuizMetaTags(quiz: {
   title: string;
+  slug: string;
   description?: string | null;
   seoTitle?: string | null;
   seoDescription?: string | null;
   seoKeywords?: string[];
   sport?: string | null;
   difficulty: string;
+  descriptionImageUrl?: string | null;
 }): MetaTags {
   const title = quiz.seoTitle || `${quiz.title} - Sports Trivia Quiz`;
   const description =
@@ -83,12 +158,17 @@ export function generateQuizMetaTags(quiz: {
     "test your knowledge",
   ];
 
+  const trimmedDescription = description.substring(0, 160);
+  const canonicalUrl = getCanonicalUrl(`/quizzes/${quiz.slug}`);
+
   return {
     title,
-    description: description.substring(0, 160),
+    description: trimmedDescription,
     keywords,
     ogTitle: title,
-    ogDescription: description.substring(0, 160),
+    ogDescription: trimmedDescription,
+    ogImage: quiz.descriptionImageUrl || undefined,
+    canonicalUrl,
   };
 }
 

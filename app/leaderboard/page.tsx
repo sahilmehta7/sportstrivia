@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { Trophy } from "lucide-react";
 
 import {
@@ -6,6 +7,26 @@ import {
   type LeaderboardEntry,
 } from "@/components/leaderboard/leaderboard-tabs";
 import { buildGlobalLeaderboard } from "@/lib/services/leaderboard.service";
+
+export const metadata: Metadata = {
+  title: "Global Leaderboard - Top Performers",
+  description: "View the top performers in sports trivia. Check daily and all-time leaderboards to see who's dominating the competition.",
+  keywords: ["leaderboard", "top performers", "rankings", "competitive gaming", "sports trivia champions"],
+  openGraph: {
+    title: "Global Leaderboard - Top Performers",
+    description: "View the top performers in sports trivia. Check daily and all-time leaderboards to see who's dominating the competition.",
+    type: "website",
+    url: "/leaderboard",
+  },
+  twitter: {
+    card: "summary",
+    title: "Global Leaderboard - Top Performers",
+    description: "View the top performers in sports trivia. Check daily and all-time leaderboards.",
+  },
+  alternates: {
+    canonical: "/leaderboard",
+  },
+};
 
 export const revalidate = 0;
 
