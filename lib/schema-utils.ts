@@ -3,7 +3,7 @@
  * Generates JSON-LD markup for SEO and rich snippets
  */
 
-const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || "https://sportstrivia.in";
+const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || "https://www.sportstrivia.in";
 
 /**
  * Organization Schema - Add to root layout

@@ -1,13 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  webpack: (config, { isServer }) => {
-    if (isServer && config.output) {
-      config.output.chunkFilename = "chunks/[name].js";
-      config.output.hotUpdateChunkFilename = "chunks/[id].[fullhash].hot-update.js";
-    }
-    return config;
-  },
+  webpack: (config) => config,
   eslint: {
     // Warning: This allows production builds to successfully complete even if
     // your project has ESLint errors.

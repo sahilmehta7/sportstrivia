@@ -2,7 +2,7 @@ import { MetadataRoute } from 'next';
 import { prisma } from '@/lib/db';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://sportstrivia.in';
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://www.sportstrivia.in';
 
   // Fetch all published quizzes
   const quizzes = await prisma.quiz.findMany({

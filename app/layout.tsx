@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 import { LayoutWrapper } from "@/components/LayoutWrapper";
@@ -7,10 +6,8 @@ import { SessionProvider } from "next-auth/react";
 import { getOrganizationSchema, getWebSiteSchema } from "@/lib/schema-utils";
 import React from "react";
 
-const inter = Inter({ subsets: ["latin"] });
-
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "https://sportstrivia.in"),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "https://www.sportstrivia.in"),
   title: {
     default: "Sports Trivia - Test Your Sports Knowledge",
     template: "%s | Sports Trivia",
@@ -28,7 +25,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "en_US",
-    url: process.env.NEXT_PUBLIC_APP_URL || "https://sportstrivia.in",
+    url: process.env.NEXT_PUBLIC_APP_URL || "https://www.sportstrivia.in",
     siteName: "Sports Trivia",
     title: "Sports Trivia - Test Your Sports Knowledge",
     description: "Compete with friends, climb the leaderboards, and become a sports trivia champion",
@@ -76,7 +73,7 @@ export default function RootLayout({
 
   return (
     <html lang="en">
-      <body className={inter.className}>
+      <body className="font-sans">
         <SessionProvider>
           <LayoutWrapper>{children}</LayoutWrapper>
           <Toaster />
@@ -95,4 +92,3 @@ export default function RootLayout({
     </html>
   );
 }
-

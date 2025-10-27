@@ -1,6 +1,6 @@
 import { prisma } from "./db";
 
-const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || "https://sportstrivia.in";
+const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || "https://www.sportstrivia.in";
 
 /**
  * Get the canonical URL for a given path

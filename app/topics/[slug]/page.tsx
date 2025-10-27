@@ -118,7 +118,7 @@ export async function generateMetadata({
       : topic.description
     : `Explore trivia quizzes, key facts, and highlights for ${topic.name} on Sports Trivia.`;
 
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://sportstrivia.in";
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://www.sportstrivia.in";
   
   return {
     title,
