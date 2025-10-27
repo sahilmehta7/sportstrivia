@@ -1,28 +1,33 @@
-import { MetadataRoute } from 'next';
-import { prisma } from '@/lib/db';
+import type { MetadataRoute } from "next";
+import { prisma } from "@/lib/db";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://www.sportstrivia.in';
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://www.sportstrivia.in";
 
-  // Fetch all published quizzes
-  const quizzes = await prisma.quiz.findMany({
-    where: {
-      isPublished: true,
-      status: 'PUBLISHED',
-    },
-    select: {
-      slug: true,
-      updatedAt: true,
-    },
-  });
+  let quizzes: Array<{ slug: string; updatedAt: Date }> = [];
+  let topics: Array<{ slug: string; updatedAt: Date }> = [];
 
-  // Fetch all topics
-  const topics = await prisma.topic.findMany({
-    select: {
-      slug: true,
-      updatedAt: true,
-    },
-  });
+  try {
+    quizzes = await prisma.quiz.findMany({
+      where: {
+        isPublished: true,
+        status: "PUBLISHED",
+      },
+      select: {
+        slug: true,
+        updatedAt: true,
+      },
+    });
+
+    topics = await prisma.topic.findMany({
+      select: {
+        slug: true,
+        updatedAt: true,
+      },
+    });
+  } catch (error) {
+    console.warn("[sitemap] Falling back to static routes. Reason:", error);
+  }
 
   // Static pages
   const staticPages: MetadataRoute.Sitemap = [

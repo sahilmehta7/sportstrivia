@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { Save, RotateCcw, AlertCircle } from "lucide-react";
+import { Save, RotateCcw, AlertCircle, RefreshCw, Globe } from "lucide-react";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -19,6 +19,7 @@ export default function SettingsPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [resetting, setResetting] = useState(false);
+  const [regenerating, setRegenerating] = useState(false);
   const [aiPrompt, setAiPrompt] = useState("");
   const [isDefault, setIsDefault] = useState(true);
   const [originalPrompt, setOriginalPrompt] = useState("");
@@ -185,6 +186,35 @@ export default function SettingsPage() {
       });
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleRegenerateSitemap = async () => {
+    setRegenerating(true);
+
+    try {
+      const response = await fetch("/api/admin/sitemap", {
+        method: "POST",
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || "Failed to regenerate sitemap");
+      }
+
+      toast({
+        title: "Sitemap regenerated!",
+        description: "The sitemap has been successfully regenerated",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Regeneration failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setRegenerating(false);
     }
   };
 
@@ -364,6 +394,69 @@ export default function SettingsPage() {
                 </div>
               </AlertDescription>
             </Alert>
+          </CardContent>
+        </Card>
+
+        <Separator />
+
+        {/* Sitemap Management */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Globe className="h-5 w-5" />
+              Sitemap Management
+            </CardTitle>
+            <CardDescription>
+              Regenerate the sitemap to update search engine indexing
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <Alert>
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>About Sitemaps</AlertTitle>
+              <AlertDescription>
+                <p className="text-sm">
+                  The sitemap helps search engines discover and index all your quizzes, topics, and pages. 
+                  Regenerate it after adding new content or making significant changes to your site structure.
+                </p>
+              </AlertDescription>
+            </Alert>
+
+            <div className="flex items-center justify-between p-4 bg-muted rounded-lg">
+              <div>
+                <p className="text-sm font-medium">Current Status</p>
+                <p className="text-xs text-muted-foreground">
+                  Sitemap is automatically generated from your published content
+                </p>
+              </div>
+              <Button
+                onClick={handleRegenerateSitemap}
+                disabled={regenerating}
+                variant="outline"
+              >
+                {regenerating ? (
+                  <>
+                    <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                    Regenerating...
+                  </>
+                ) : (
+                  <>
+                    <RefreshCw className="mr-2 h-4 w-4" />
+                    Regenerate Sitemap
+                  </>
+                )}
+              </Button>
+            </div>
+
+            <div className="text-xs text-muted-foreground space-y-2">
+              <p>💡 <strong>Tip:</strong> The sitemap includes:</p>
+              <ul className="list-disc list-inside ml-4 space-y-1">
+                <li>All published quizzes</li>
+                <li>All topics</li>
+                <li>Main pages (Home, Leaderboard, etc.)</li>
+                <li>Updated timestamps for search engines</li>
+              </ul>
+            </div>
           </CardContent>
         </Card>
 
