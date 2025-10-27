@@ -73,7 +73,7 @@ export function getBackgroundVariant(variant: BackgroundVariant, theme: Showcase
     switch (variant) {
       case "default": return "bg-gradient-to-br from-black via-slate-950 to-slate-950";
       case "dark": return "bg-gradient-to-br from-black via-black to-slate-950";
-      case "vibrant": return "bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-600";
+      case "vibrant": return "bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950";
       case "cool": return "bg-gradient-to-br from-cyan-900 via-blue-900 to-indigo-800";
       default: return "bg-gradient-to-br from-black via-slate-950 to-slate-950";
     }
