@@ -329,8 +329,8 @@ export default async function QuizzesPage({ searchParams }: QuizzesPageProps) {
                   <div className="text-sm text-muted-foreground">/{quiz.slug}</div>
                   {quiz.topicConfigs.length > 0 && (
                     <div className="mt-1 flex flex-wrap gap-1">
-                      {quiz.topicConfigs.map((config) => (
-                        <Badge key={`${quiz.id}-${config.topic.id}`} variant="outline" className="text-xs">
+                      {quiz.topicConfigs.map((config, index) => (
+                        <Badge key={`${quiz.id}-${config.topic.id}-${index}`} variant="outline" className="text-xs">
                           {config.topic.name}
                         </Badge>
                       ))}
