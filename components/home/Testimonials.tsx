@@ -76,11 +76,13 @@ export function Testimonials() {
               </div>
 
               {/* Quote */}
-              <blockquote className={cn(
-                "text-center mb-4 sm:mb-6 italic text-sm sm:text-base",
-                getTextColor(theme, "secondary")
-              )}>
-                "{testimonial.quote}"
+              <blockquote
+                className={cn(
+                  "text-center mb-4 sm:mb-6 italic text-sm sm:text-base",
+                  getTextColor(theme, "secondary")
+                )}
+              >
+                &ldquo;{testimonial.quote}&rdquo;
               </blockquote>
 
               {/* Author */}

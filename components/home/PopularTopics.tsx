@@ -5,11 +5,7 @@ import { getGlassCard, getTextColor } from "@/lib/showcase-theme";
 import { cn } from "@/lib/utils";
 import { ShowcaseTopTopics } from "@/components/quiz/ShowcaseTopTopics";
 
-interface PopularTopicsProps {
-  topics: any[];
-}
-
-export function PopularTopics({ topics }: PopularTopicsProps) {
+export function PopularTopics() {
   const { theme } = useShowcaseTheme();
 
   return (
