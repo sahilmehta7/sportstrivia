@@ -1,8 +1,8 @@
 import { NextRequest } from "next/server";
-import { prisma } from "@/lib/db";
 import { requireAuth } from "@/lib/auth-helpers";
 import { handleError, successResponse } from "@/lib/errors";
 import { z } from "zod";
+import { prisma } from "@/lib/db";
 
 const updateProfileSchema = z.object({
   name: z.string().min(1).max(100).optional(),
@@ -61,4 +61,3 @@ export async function PATCH(request: NextRequest) {
     return handleError(error);
   }
 }
-

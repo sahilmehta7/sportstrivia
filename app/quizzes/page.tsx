@@ -1,3 +1,4 @@
+import { cache } from "react";
 import type { Metadata } from "next";
 import { QuizzesPageHeader } from "@/components/quizzes/quizzes-page-header";
 import { QuizzesPageContent } from "./QuizzesPageContent";
@@ -11,6 +12,26 @@ import type { PublicQuizFilters } from "@/lib/dto/quiz-filters.dto";
 import type { ShowcaseFilterGroup } from "@/components/showcase/ui/FilterBar";
 import { Difficulty } from "@prisma/client";
 import { auth } from "@/lib/auth";
+
+const HERO_SECTION_LIMIT = 5;
+const DEFAULT_PAGE_SIZE = 12;
+
+type SearchParams = {
+  [key: string]: string | string[] | undefined;
+};
+
+const sportEmojiMap: Record<string, string> = {
+  Cricket: "🏏",
+  Football: "⚽",
+  Basketball: "🏀",
+  Tennis: "🎾",
+  "Formula 1": "🏎️",
+  Olympics: "🏅",
+  Rugby: "🏉",
+  Golf: "⛳",
+  Baseball: "⚾",
+  Hockey: "🏒",
+};
 
 export const metadata: Metadata = {
   title: "Browse Sports Trivia Quizzes | Sports Trivia Platform",
@@ -28,12 +49,6 @@ export const metadata: Metadata = {
   },
 };
 
-const DEFAULT_PAGE_SIZE = 12;
-
-type SearchParams = {
-  [key: string]: string | string[] | undefined;
-};
-
 function getParamValue(value: string | string[] | undefined) {
   if (Array.isArray(value)) {
     return value[0];
@@ -49,7 +64,9 @@ function parsePublicFilters(searchParams: SearchParams): PublicQuizFilters {
   const minRatingParam = getParamValue(searchParams.minRating);
 
   const page = pageParam ? Math.max(1, parseInt(pageParam, 10) || 1) : 1;
-  const limitValue = limitParam ? Math.max(1, parseInt(limitParam, 10) || DEFAULT_PAGE_SIZE) : DEFAULT_PAGE_SIZE;
+  const limitValue = limitParam
+    ? Math.max(1, parseInt(limitParam, 10) || DEFAULT_PAGE_SIZE)
+    : DEFAULT_PAGE_SIZE;
   const limit = Math.min(limitValue, 50);
 
   const difficultyValue = getParamValue(searchParams.difficulty);
@@ -86,8 +103,7 @@ function parsePublicFilters(searchParams: SearchParams): PublicQuizFilters {
   };
 }
 
-async function getFilterGroups(searchParams: SearchParams): Promise<ShowcaseFilterGroup[]> {
-  // Get all level 0 topics (parentId === null) with their hierarchy
+const loadTopicsWithQuizCounts = cache(async () => {
   const level0Topics = await prisma.topic.findMany({
     where: {
       parentId: null,
@@ -137,48 +153,32 @@ async function getFilterGroups(searchParams: SearchParams): Promise<ShowcaseFilt
     },
   });
 
-  // Calculate unique quiz counts including children and sub-children
-  const topicsWithCounts = level0Topics
-    .filter((topic) => topic.parentId === null) // Extra safety filter for level 0 only
+  return level0Topics
+    .filter((topic) => topic.parentId === null)
     .map((topic) => {
-      // Get all quiz IDs from this topic and its descendants
       const quizIds = new Set<string>();
-      
-      // Add quizzes from the topic itself
+
       topic.quizTopicConfigs.forEach((config) => quizIds.add(config.quizId));
-      
-      // Add quizzes from direct children
+
       topic.children.forEach((child) => {
         child.quizTopicConfigs.forEach((config) => quizIds.add(config.quizId));
-        
-        // Add quizzes from grandchildren
+
         child.children.forEach((grandchild) => {
           grandchild.quizTopicConfigs.forEach((config) => quizIds.add(config.quizId));
         });
       });
-      
+
       const quizCount = quizIds.size;
       return { ...topic, quizCount };
     })
-    .filter((topic) => topic.quizCount > 0) // Only include topics with at least one quiz
+    .filter((topic) => topic.quizCount > 0)
     .sort((a, b) => b.quizCount - a.quizCount);
+});
 
-  // Map topics to filter options with emojis
-  const sportEmojiMap: Record<string, string> = {
-    "Cricket": "🏏",
-    "Football": "⚽",
-    "Basketball": "🏀",
-    "Tennis": "🎾",
-    "Formula 1": "🏎️",
-    "Olympics": "🏅",
-    "Rugby": "🏉",
-    "Golf": "⛳",
-    "Baseball": "⚾",
-    "Hockey": "🏒",
-  };
-
+async function getFilterGroups(searchParams: SearchParams): Promise<ShowcaseFilterGroup[]> {
+  const topicsWithCounts = await loadTopicsWithQuizCounts();
   const topicParam = getParamValue(searchParams.topic);
-  
+
   const categoryOptions = [
     { value: "all", label: "All Sports" },
     ...topicsWithCounts.map((topic) => ({
@@ -206,21 +206,52 @@ export default async function QuizzesPage({
 }) {
   const params = await searchParams;
   const filters = parsePublicFilters(params || {});
-  
-  // Get current user session
+
   const session = await auth();
   const userId = session?.user?.id;
 
-  const [listing, featuredListing, dailyQuizzes, comingSoonQuizzes, filterGroups] = await Promise.all([
-    getPublicQuizList(filters),
-    // Fetch featured quizzes for hero section
-    getPublicQuizList({ isFeatured: true, limit: 5, page: 1 }),
-    // Fetch daily recurring quizzes with user completion data
-    getDailyRecurringQuizzes(userId),
-    // Fetch upcoming quizzes with future start dates
-    getComingSoonQuizzes(6),
-    // Fetch filter groups
-    getFilterGroups(params || {}),
+  const listingPromise = getPublicQuizList(filters);
+  const dailyQuizzesPromise = getDailyRecurringQuizzes(userId);
+  const comingSoonPromise = getComingSoonQuizzes(6);
+  const filterGroupsPromise = getFilterGroups(params || {});
+
+  const listing = await listingPromise;
+
+  const seenFeaturedIds = new Set<string>();
+  const inlineFeatured = listing.quizzes.filter((quiz) => {
+    if (!quiz.isFeatured) {
+      return false;
+    }
+    seenFeaturedIds.add(quiz.id);
+    return true;
+  });
+
+  let featuredQuizzes = inlineFeatured.slice(0, HERO_SECTION_LIMIT);
+
+  if (featuredQuizzes.length < HERO_SECTION_LIMIT) {
+    const featuredListing = await getPublicQuizList({
+      isFeatured: true,
+      limit: HERO_SECTION_LIMIT,
+      page: 1,
+    });
+
+    for (const quiz of featuredListing.quizzes) {
+      if (seenFeaturedIds.has(quiz.id)) {
+        continue;
+      }
+      featuredQuizzes.push(quiz);
+      seenFeaturedIds.add(quiz.id);
+
+      if (featuredQuizzes.length === HERO_SECTION_LIMIT) {
+        break;
+      }
+    }
+  }
+
+  const [dailyQuizzes, comingSoonQuizzes, filterGroups] = await Promise.all([
+    dailyQuizzesPromise,
+    comingSoonPromise,
+    filterGroupsPromise,
   ]);
 
   const baseUrl =
@@ -248,16 +279,16 @@ export default async function QuizzesPage({
       <div className="container mx-auto px-4 pt-12">
         <QuizzesPageHeader />
       </div>
-      
+
       <QuizzesPageContent
         quizzes={listing.quizzes}
-        featuredQuizzes={featuredListing.quizzes}
+        featuredQuizzes={featuredQuizzes}
         dailyQuizzes={dailyQuizzes}
         comingSoonQuizzes={comingSoonQuizzes}
         filterGroups={filterGroups}
         pagination={listing.pagination}
       />
-      
+
       {itemList.length > 0 && (
         <script
           type="application/ld+json"
@@ -267,3 +298,4 @@ export default async function QuizzesPage({
     </>
   );
 }
+

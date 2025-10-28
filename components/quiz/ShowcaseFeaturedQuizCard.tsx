@@ -1,9 +1,11 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { Star, Users, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTheme } from "next-themes";
+import { GlassButton } from "@/components/showcase/ui";
 
 interface ShowcaseFeaturedQuizCardProps {
   title: string;
@@ -16,6 +18,8 @@ interface ShowcaseFeaturedQuizCardProps {
   coverImageUrl?: string | null;
   accent?: string;
   className?: string;
+  ctaHref?: string;
+  ctaLabel?: string;
 }
 
 export function ShowcaseFeaturedQuizCard({
@@ -29,6 +33,8 @@ export function ShowcaseFeaturedQuizCard({
   coverImageUrl,
   accent = "from-orange-500/90 via-pink-500/80 to-purple-600/80",
   className,
+  ctaHref,
+  ctaLabel = "Start Quiz",
 }: ShowcaseFeaturedQuizCardProps) {
   const { theme: themeMode } = useTheme();
   const isLight = themeMode === "light";
@@ -41,7 +47,7 @@ export function ShowcaseFeaturedQuizCard({
       className={cn(
         "relative flex w-full max-w-4xl flex-col overflow-hidden rounded-[2.75rem] backdrop-blur-xl transition-shadow duration-500 md:flex-row",
         cardShellClasses,
-      className
+        className
       )}
     >
       <div
@@ -221,6 +227,24 @@ export function ShowcaseFeaturedQuizCard({
             Coach Insights
           </span>
         </div>
+
+        {ctaHref && (
+          <div className="pt-2">
+            <GlassButton
+              asChild
+              size="lg"
+              tone={isLight ? "light" : "dark"}
+              className={cn(
+                "group w-full justify-center text-sm font-semibold uppercase tracking-[0.25em]",
+                isLight
+                  ? "bg-gradient-to-r from-blue-600 via-indigo-500 to-purple-500 text-white hover:shadow-[0_18px_55px_-28px_rgba(99,102,241,0.55)]"
+                  : "bg-gradient-to-r from-amber-300 via-pink-500 to-rose-500 text-slate-900 hover:shadow-[0_22px_60px_-28px_rgba(244,114,182,0.55)]"
+              )}
+            >
+              <Link href={ctaHref}>{ctaLabel}</Link>
+            </GlassButton>
+          </div>
+        )}
       </div>
     </div>
   );

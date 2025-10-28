@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireAuth } from "@/lib/auth-helpers";
-import { handleError, successResponse, NotFoundError, BadRequestError } from "@/lib/errors";
+import { handleError, successResponse, NotFoundError, BadRequestError, UnauthorizedError } from "@/lib/errors";
 import { z } from "zod";
 
 const submitAnswerSchema = z.object({
@@ -36,12 +36,12 @@ export async function PUT(
 
     // Verify ownership
     if (attempt.userId !== user.id) {
-      throw new Error("Unauthorized");
+      throw new UnauthorizedError();
     }
 
     // Check if attempt is already completed
     if (attempt.completedAt) {
-      throw new Error("Quiz attempt already completed");
+      throw new BadRequestError("Quiz attempt already completed");
     }
 
     if (!attempt.selectedQuestionIds.includes(questionId)) {
@@ -57,7 +57,7 @@ export async function PUT(
     });
 
     if (existingAnswer) {
-      throw new Error("Answer already submitted for this question");
+      throw new BadRequestError("Answer already submitted for this question");
     }
 
     // Get the correct answer

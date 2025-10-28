@@ -5,6 +5,7 @@ import { useShowcaseTheme } from "./ShowcaseThemeProvider";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { getBackgroundVariant, getBlurCircles, getTextColor, type BackgroundVariant } from "@/lib/showcase-theme";
+import { ShowcaseBreadcrumbs, type ShowcaseBreadcrumbItem } from "./ui/Breadcrumbs";
 
 interface ShowcasePageProps {
   title: string;
@@ -13,9 +14,10 @@ interface ShowcasePageProps {
   variant?: BackgroundVariant;
   children: ReactNode;
   actions?: ReactNode;
+  breadcrumbs?: ShowcaseBreadcrumbItem[];
 }
 
-export function ShowcasePage({ title, subtitle, badge, variant = "default", children, actions }: ShowcasePageProps) {
+export function ShowcasePage({ title, subtitle, badge, variant = "default", children, actions, breadcrumbs }: ShowcasePageProps) {
   const { theme, toggleTheme } = useShowcaseTheme();
   const blur = getBlurCircles(theme);
 
@@ -28,6 +30,12 @@ export function ShowcasePage({ title, subtitle, badge, variant = "default", chil
       </div>
 
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-10">
+        {breadcrumbs && (
+          <div className="mb-4">
+            <ShowcaseBreadcrumbs items={breadcrumbs} homeLabel="Showcase" />
+          </div>
+        )}
+        
         <header className="flex flex-col gap-4 text-center">
           {badge && (
             <span className={cn("mx-auto inline-flex items-center gap-2 rounded-full px-4 py-1 text-xs uppercase tracking-[0.35em]", getTextColor(theme, "muted"), theme === "light" ? "border border-slate-200/50 bg-slate-100/80" : "border border-white/20 bg-white/10")}>{badge}</span>

@@ -9,9 +9,11 @@ import {
 } from "@/lib/quiz-formatters";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { GlassButton } from "@/components/showcase/ui";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import type { Metadata } from "next";
+import type { Prisma } from "@prisma/client";
 
 export const metadata: Metadata = {
   title: "Random Quiz Challenge | Sports Trivia",
@@ -22,6 +24,35 @@ export const metadata: Metadata = {
     type: "website",
   },
 };
+
+function renderNoRandomQuiz() {
+  return (
+    <main className="min-h-screen bg-gradient-to-b from-background via-background to-muted/40 py-12">
+      <div className="container mx-auto px-4">
+        <Link href="/quizzes">
+          <Button variant="ghost" className="mb-6">
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Quizzes
+          </Button>
+        </Link>
+
+        <Card className="max-w-2xl mx-auto">
+          <CardContent className="pt-6">
+            <div className="text-center space-y-4">
+              <h1 className="text-3xl font-bold">No Random Quiz Available</h1>
+              <p className="text-muted-foreground">
+                You&apos;ve either attempted all single-attempt quizzes or there are none available at the moment.
+              </p>
+              <GlassButton asChild tone="light" className="mt-6">
+                <Link href="/quizzes">Browse All Quizzes</Link>
+              </GlassButton>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </main>
+  );
+}
 
 export default async function RandomQuizPage() {
   const session = await auth();
@@ -44,15 +75,34 @@ export default async function RandomQuizPage() {
 
   const attemptedIds = attemptedQuizIds.map((attempt) => attempt.quizId);
 
-  // Find a random quiz that is a single attempt and hasn't been attempted
-  const availableQuizzes = await prisma.quiz.findMany({
-    where: {
-      isPublished: true,
-      status: "PUBLISHED",
-      maxAttemptsPerUser: 1, // Single attempt quiz
-      id: {
-        notIn: attemptedIds,
-      },
+  const singleAttemptWhere: Prisma.QuizWhereInput = {
+    isPublished: true,
+    status: "PUBLISHED",
+    maxAttemptsPerUser: 1, // Single attempt quiz
+    ...(attemptedIds.length > 0
+      ? {
+          id: {
+            notIn: attemptedIds,
+          },
+        }
+      : {}),
+  };
+
+  const availableCount = await prisma.quiz.count({
+    where: singleAttemptWhere,
+  });
+
+  if (availableCount === 0) {
+    return renderNoRandomQuiz();
+  }
+
+  const randomIndex = Math.floor(Math.random() * availableCount);
+
+  const quiz = await prisma.quiz.findFirst({
+    where: singleAttemptWhere,
+    skip: randomIndex,
+    orderBy: {
+      createdAt: "asc",
     },
     include: {
       _count: {
@@ -74,40 +124,11 @@ export default async function RandomQuizPage() {
         take: 1,
       },
     },
-    take: 1,
   });
 
-  if (availableQuizzes.length === 0) {
-    // No available quizzes
-    return (
-      <main className="min-h-screen bg-gradient-to-b from-background via-background to-muted/40 py-12">
-        <div className="container mx-auto px-4">
-          <Link href="/quizzes">
-            <Button variant="ghost" className="mb-6">
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to Quizzes
-            </Button>
-          </Link>
-
-          <Card className="max-w-2xl mx-auto">
-            <CardContent className="pt-6">
-              <div className="text-center space-y-4">
-                <h1 className="text-3xl font-bold">No Random Quiz Available</h1>
-                <p className="text-muted-foreground">
-                  You&apos;ve either attempted all single-attempt quizzes or there are none available at the moment.
-                </p>
-                <Button asChild className="mt-6">
-                  <Link href="/quizzes">Browse All Quizzes</Link>
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </main>
-    );
+  if (!quiz) {
+    return renderNoRandomQuiz();
   }
-
-  const quiz = availableQuizzes[0];
 
   const category = quiz.topicConfigs?.[0]?.topic?.name ?? quiz.sport ?? "Featured";
   const durationLabel = formatQuizDuration(quiz.duration ?? quiz.timePerQuestion);
@@ -126,9 +147,14 @@ export default async function RandomQuizPage() {
           </Button>
         </Link>
 
-        <div className="mb-6 space-y-2">
-          <h1 className="text-3xl font-bold">Random Quiz Challenge</h1>
-          <p className="text-muted-foreground">
+        <div className="mb-10 space-y-4 text-center md:text-left">
+          <h1 className="text-4xl font-black uppercase tracking-tight text-foreground drop-shadow-[0_18px_45px_rgba(15,23,42,0.18)] sm:text-5xl">
+            <span className="bg-gradient-to-r from-amber-400 via-pink-500 to-purple-500 bg-clip-text text-transparent">
+              Random Quiz
+            </span>{" "}
+            Challenge
+          </h1>
+          <p className="mx-auto max-w-2xl text-sm text-muted-foreground/90 sm:text-base md:mx-0">
             Test your knowledge with this randomly selected quiz
           </p>
         </div>
@@ -144,15 +170,8 @@ export default async function RandomQuizPage() {
             ratingLabel={ratingLabel}
             coverImageUrl={quiz.descriptionImageUrl ?? undefined}
             accent={accent}
+            ctaHref={`/quizzes/${quiz.slug}`}
           />
-        </div>
-
-        <div className="mt-8 flex justify-center">
-          <Button size="lg" asChild>
-            <Link href={`/quizzes/${quiz.slug}`}>
-              Start Quiz
-            </Link>
-          </Button>
         </div>
       </div>
     </main>

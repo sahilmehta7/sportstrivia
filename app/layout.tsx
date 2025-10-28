@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 import { LayoutWrapper } from "@/components/LayoutWrapper";
-import { SessionProvider } from "next-auth/react";
 import { ThemeProvider } from "@/components/ThemeProvider";
+import { AppSessionProvider } from "@/components/providers/AppSessionProvider";
 import { getOrganizationSchema, getWebSiteSchema } from "@/lib/schema-utils";
 import React from "react";
 
@@ -76,10 +76,10 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className="font-sans">
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-          <SessionProvider>
+          <AppSessionProvider>
             <LayoutWrapper>{children}</LayoutWrapper>
             <Toaster />
-          </SessionProvider>
+          </AppSessionProvider>
         </ThemeProvider>
 
         {/* Global Structured Data */}

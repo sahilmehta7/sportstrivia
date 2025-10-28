@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import {
   ShowcasePage,
   ShowcaseTopNav,
@@ -20,11 +21,12 @@ import {
   ShowcaseMiniLeaderboard,
   ShowcasePerformanceSparkline,
   ShowcaseProgressTrackerRibbon,
+  ShowcaseSplitFeaturePanel,
+  ShowcaseReviewCard,
+  ShowcaseShareStrip,
   ShowcaseContinuePlayingQueue,
   ShowcaseTagCloud,
   ShowcaseQuickPreviewModal,
-  ShowcaseReviewCard,
-  ShowcaseShareStrip,
   ShowcaseDidYouKnowPanel,
   ShowcaseNewsletterSignup,
   ShowcaseFaqAccordion,
@@ -32,6 +34,7 @@ import {
   ShowcaseToast,
   ShowcaseFooter,
   ShowcaseOnboardingTooltipStack,
+  ShowcasePagination,
 } from "@/showcase/components";
 import type { ShowcaseFilterGroup } from "@/components/showcase/ui/FilterBar";
 import type { ShowcaseSearchChip } from "@/components/showcase/ui/SearchBar";
@@ -96,6 +99,19 @@ const onboardingSteps: OnboardingStep[] = [
   { id: "step-3", title: "Challenge friends", description: "Share your score instantly for a rematch.", icon: "3️⃣" },
 ];
 
+const sparklineData = {
+  values: [40, 65, 55, 80, 70, 90, 85, 95],
+  label: "Weekly Performance",
+  trend: "+15%",
+};
+
+const progressData = {
+  label: "Weekly Progress",
+  current: 12,
+  goal: 20,
+  milestoneLabel: "Expert Tier",
+};
+
 const quizCards = [
   {
     id: "q1",
@@ -128,18 +144,20 @@ interface ShowcaseUiPlaygroundContentProps {
 }
 
 export function ShowcaseUiPlaygroundContent({ filterGroups }: ShowcaseUiPlaygroundContentProps) {
+  const [currentPage, setCurrentPage] = useState(1);
+
   return (
     <ShowcasePage
       title="UI Playground"
       subtitle="Preview the reusable showcase components in light and dark themes"
       badge="SHOWCASE UI"
       variant="vibrant"
+      breadcrumbs={[{ label: "UI Components", href: "/showcase" }, { label: "UI Playground" }]}
       actions={<ShowcaseSavedFilters filters={[{ id: "preset-1", label: "My Clubs", emoji: "⚽" }, { id: "preset-2", label: "Live Events", emoji: "🎙️" }]} />}
     >
       <div className="space-y-10">
         <ShowcaseTopNav />
         <ShowcaseAnnouncementBanner message="Creator Week is live—new packs drop daily." href="#" />
-        <ShowcaseBreadcrumbs items={[{ label: "Discover", href: "/showcase" }, { label: "UI Playground" }]} />
 
         <ShowcaseSearchBar chips={searchChips} showAdvancedButton />
         <ShowcaseFilterBar groups={filterGroups} onReset={() => {}} />
@@ -185,6 +203,221 @@ export function ShowcaseUiPlaygroundContent({ filterGroups }: ShowcaseUiPlaygrou
             </ShowcaseQuickPreviewModal>
           ))}
         </ShowcaseMasonryGrid>
+
+        {/* Pagination Demo */}
+        <div className="space-y-6">
+          <ShowcaseSectionHeader
+            eyebrow="Navigation"
+            title="Pagination Component"
+            subtitle="Elegant page navigation with ellipsis support for large datasets."
+          />
+          
+          <div className="space-y-8">
+            {/* Basic Pagination */}
+            <div className="rounded-2xl border p-6" style={{ backgroundColor: 'rgba(255, 255, 255, 0.6)' }}>
+              <h3 className="mb-4 text-lg font-semibold">Basic Pagination</h3>
+              <ShowcasePagination
+                currentPage={currentPage}
+                totalPages={10}
+                onPageChange={setCurrentPage}
+              />
+            </div>
+
+            {/* Without First/Last */}
+            <div className="rounded-2xl border p-6" style={{ backgroundColor: 'rgba(255, 255, 255, 0.6)' }}>
+              <h3 className="mb-4 text-lg font-semibold">Without First/Last Buttons</h3>
+              <ShowcasePagination
+                currentPage={currentPage}
+                totalPages={10}
+                onPageChange={setCurrentPage}
+                showFirstLast={false}
+              />
+            </div>
+
+            {/* Without Page Numbers */}
+            <div className="rounded-2xl border p-6" style={{ backgroundColor: 'rgba(255, 255, 255, 0.6)' }}>
+              <h3 className="mb-4 text-lg font-semibold">Just Arrows</h3>
+              <ShowcasePagination
+                currentPage={currentPage}
+                totalPages={10}
+                onPageChange={setCurrentPage}
+                showPageNumbers={false}
+                showFirstLast={false}
+              />
+            </div>
+
+            {/* Large Dataset with Ellipsis */}
+            <div className="rounded-2xl border p-6" style={{ backgroundColor: 'rgba(255, 255, 255, 0.6)' }}>
+              <h3 className="mb-4 text-lg font-semibold">Large Dataset (50 pages)</h3>
+              <ShowcasePagination
+                currentPage={currentPage}
+                totalPages={50}
+                onPageChange={setCurrentPage}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Additional Showcase Components */}
+        <ShowcaseSectionHeader
+          eyebrow="Components"
+          title="Additional UI Elements"
+          subtitle="More showcase components for your application."
+        />
+
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {/* Topic Insight Widget */}
+          <ShowcaseTopicInsightWidget
+            title="Football"
+            totalQuizzes={42}
+            followers={12500}
+            accuracyPercent={87}
+            breakdown={[
+              { label: "Easy", value: 95 },
+              { label: "Medium", value: 78 },
+              { label: "Hard", value: 65 },
+            ]}
+          />
+
+          {/* Creator Spotlight */}
+          <ShowcaseCreatorSpotlightCard
+            name="Sports Guru"
+            bio="Creating legendary sports trivia"
+            followersLabel="18.5k followers"
+            topQuizLabel="NBA History Master"
+            accent="from-blue-500 via-purple-500 to-pink-500"
+          />
+
+          {/* Mini Leaderboard */}
+          <ShowcaseMiniLeaderboard entries={leaderboardEntries} />
+        </div>
+
+        {/* Performance & Progress Components */}
+        <div className="grid gap-6 md:grid-cols-2">
+          <ShowcasePerformanceSparkline 
+            label={sparklineData.label}
+            values={sparklineData.values}
+          />
+          <ShowcaseProgressTrackerRibbon 
+            label={progressData.label}
+            current={progressData.current}
+            goal={progressData.goal}
+            milestoneLabel={progressData.milestoneLabel}
+          />
+        </div>
+
+        {/* Feature Panels */}
+        <ShowcaseSplitFeaturePanel
+          title="Level Up Your Knowledge"
+          description="Track your progress across all sports"
+          points={[
+            "Deep insights into your performance",
+            "Compete with players worldwide",
+            "Unlock badges and milestones",
+          ]}
+          ctaLabel="Explore Features"
+          imageUrl="https://images.unsplash.com/photo-1551698618-1dfe5d97d256"
+        />
+
+        {/* Achievement & Review Components */}
+        <ShowcaseSectionHeader
+          eyebrow="Features"
+          title="Rewards & Feedback"
+          subtitle="Badges, reviews, and sharing components."
+        />
+
+        <div className="grid gap-6 md:grid-cols-2">
+          <ShowcaseAchievementBadgeCarousel
+            badges={[
+              { id: "b1", name: "First Win", icon: "🏅", unlocked: true },
+              { id: "b2", name: "Perfect Score", icon: "💯", unlocked: true },
+              { id: "b3", name: "Week Warrior", icon: "⚔️", unlocked: false },
+              { id: "b4", name: "Speed Demon", icon: "⚡", unlocked: true },
+            ]}
+          />
+
+          <ShowcaseReviewCard
+            reviewer={{
+              name: "Alex Johnson",
+              role: "Sports Enthusiast",
+              avatarUrl: null,
+            }}
+            rating={5}
+            quote="Amazing quiz! Challenging but fair. Learned a lot about NBA history."
+            dateLabel="2 days ago"
+          />
+        </div>
+
+        {/* Did You Know & Newsletter */}
+        <ShowcaseDidYouKnowPanel
+          fact="The fastest goal in World Cup history was scored in 11 seconds by Hakan Şükür in 2002."
+          sourceLabel="Did You Know"
+        />
+
+        <ShowcaseNewsletterSignup
+          title="Stay Updated"
+          description="Get notified about new quizzes, challenges, and exclusive content."
+          onSubmit={(email) => console.log(email)}
+        />
+
+        {/* FAQ Accordion */}
+        <ShowcaseSectionHeader
+          eyebrow="Support"
+          title="Frequently Asked Questions"
+          subtitle="Quick answers to common questions."
+        />
+
+        <ShowcaseFaqAccordion
+          items={[
+            {
+              question: "How do I create my own quiz?",
+              answer: "Use the Quiz Creator to build custom quizzes with your own questions and images.",
+            },
+            {
+              question: "Can I play quizzes offline?",
+              answer: "Currently, all quizzes require an active internet connection to load questions and sync progress.",
+            },
+            {
+              question: "How are points calculated?",
+              answer: "Points are based on correct answers, speed bonuses, and streak multipliers. The faster you answer, the more points you earn!",
+            },
+          ]}
+        />
+
+        {/* Share Strip */}
+        <ShowcaseShareStrip
+          url="https://sportstrivia.app/quiz/nba-legends"
+          title="Check out this amazing NBA quiz!"
+          onShare={(platform) => console.log(`Shared on ${platform}`)}
+        />
+
+        {/* Empty State & Toast */}
+        <ShowcaseSectionHeader
+          eyebrow="Feedback"
+          title="Empty States & Notifications"
+          subtitle="User feedback and state components."
+        />
+
+        <div className="grid gap-6 md:grid-cols-2">
+          <ShowcaseEmptyState
+            icon="📭"
+            title="No quizzes found"
+            description="Try adjusting your filters or check back later for new content."
+          />
+
+          <div>
+            <h3 className="mb-4 text-lg font-semibold">Toast Notifications</h3>
+            <ShowcaseToast
+              title="Success"
+              description="Your quiz was completed successfully!"
+              variant="default"
+              icon="✓"
+            />
+          </div>
+        </div>
+
+        {/* Onboarding Tooltips */}
+        <ShowcaseOnboardingTooltipStack steps={onboardingSteps} />
       </div>
     </ShowcasePage>
   );

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { formatPlayerCount, formatQuizDuration, getSportGradient } from "@/lib/quiz-formatters";
+import { GlassButton } from "@/components/showcase/ui";
 
 function formatTimeUntil(date?: Date | null) {
   if (!date) return "Soon";
@@ -181,19 +182,20 @@ export default async function QuizDetailShowcasePage() {
             </div>
 
             <div className="mt-12 flex flex-wrap justify-center gap-4 lg:justify-start">
-              <Link
-                href={`/quizzes/${quiz.slug}/play`}
-                className="group inline-flex items-center gap-3 rounded-full bg-gradient-to-r from-amber-400 to-pink-500 px-8 py-3 text-sm font-semibold uppercase tracking-widest text-slate-900 shadow-lg shadow-pink-500/25 transition-transform duration-200 ease-out hover:-translate-y-1 hover:shadow-amber-500/40"
+              <GlassButton asChild size="lg" className="group font-semibold uppercase tracking-[0.2em]">
+                <Link href={`/quizzes/${quiz.slug}/play`}>
+                  Start Quiz
+                  <span className="text-xs transition-transform duration-200 group-hover:translate-x-1">→</span>
+                </Link>
+              </GlassButton>
+              <GlassButton
+                asChild
+                className="text-white/80 hover:text-white"
               >
-                Start Quiz
-                <span className="text-xs transition-transform group-hover:translate-x-1">→</span>
-              </Link>
-              <Link
-                href={`/quizzes/${quiz.slug}`}
-                className="inline-flex items-center gap-2 rounded-full border border-white/30 px-6 py-3 text-sm font-medium text-white/80 transition hover:border-white/60 hover:text-white"
-              >
-                View details
-              </Link>
+                <Link href={`/quizzes/${quiz.slug}`}>
+                  View details
+                </Link>
+              </GlassButton>
             </div>
           </div>
 

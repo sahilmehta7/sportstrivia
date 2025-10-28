@@ -4,6 +4,7 @@ import { ShowcaseQuizExperienceToggle } from "@/components/quiz/ShowcaseQuizExpe
 import { ShowcaseThemeProvider } from "@/components/showcase/ShowcaseThemeProvider";
 import { ShowcaseLayout } from "@/components/showcase/ShowcaseLayout";
 import { type ShowcaseQuizExperienceQuestion } from "@/components/quiz/ShowcaseQuizExperience";
+import { shuffleArray } from "@/lib/utils";
 
 export default async function ShowcaseQuizExperiencePage() {
   let showcaseQuestions: ShowcaseQuizExperienceQuestion[] = [
@@ -110,6 +111,7 @@ export default async function ShowcaseQuizExperiencePage() {
         const simulatedTime = Math.max(baseTime - index * 12 - 5, lowerBound);
 
         const correctAnswer = question.answers.find((answer) => answer.isCorrect);
+        const shuffledAnswers = shuffleArray(question.answers);
 
         return {
           id: question.id,
@@ -117,7 +119,7 @@ export default async function ShowcaseQuizExperiencePage() {
           imageUrl: question.questionImageUrl,
           timeLimit: baseTime,
           timeRemaining: simulatedTime,
-          answers: question.answers.map((answer) => ({
+          answers: shuffledAnswers.map((answer) => ({
             id: answer.id,
             text: answer.answerText,
             imageUrl: answer.answerImageUrl,
@@ -144,6 +146,7 @@ export default async function ShowcaseQuizExperiencePage() {
         subtitle="Built on the live quiz attempt APIs, this question screen keeps the pressure on with beautiful gradients, subtle motion, and responsive answer states in light and dark"
         badge="EXPERIENCE SHOWCASE"
         variant="default"
+        breadcrumbs={[{ label: "Experience", href: "/showcase" }, { label: "Quiz Experience" }]}
       >
         <ShowcaseQuizExperienceToggle
           questions={showcaseQuestions}

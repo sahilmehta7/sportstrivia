@@ -87,11 +87,12 @@ async function getQuizLeaderboard(quizId: string) {
 
     return quizAttempts.map((attempt, index) => ({
       userId: attempt.userId,
-      userName: attempt.user.name,
-      userImage: attempt.user.image,
+      userName: attempt.user?.name ?? null,
+      userImage: attempt.user?.image ?? null,
       score: attempt.score || 0,
       totalPoints: attempt.totalPoints || 0,
       position: index + 1,
+      rank: index + 1,
     }));
   } catch (error) {
     console.error("Failed to fetch quiz leaderboard:", error);
@@ -109,6 +110,7 @@ export default async function QuizResultsShowcasePage() {
       subtitle="Interactive showcase of quiz results page with real data and light/dark mode support"
       badge="RESULTS SHOWCASE"
       variant="default"
+      breadcrumbs={[{ label: "Results", href: "/showcase" }, { label: "Quiz Results" }]}
     >
       {attempt && (
         <p className="text-sm text-center mb-6 opacity-60">

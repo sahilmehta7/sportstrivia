@@ -13,6 +13,7 @@ export default async function ShowcaseDailyStreakCardPage() {
         subtitle="Compare light and dark mode variants of the streak card component"
         badge="CARD SHOWCASE"
         variant="default"
+        breadcrumbs={[{ label: "Engagement", href: "/showcase" }, { label: "Daily Streak", href: "/showcase/daily-streak" }, { label: "Card Variant" }]}
       >
         <div className="flex w-full max-w-5xl flex-col gap-10 sm:flex-row sm:items-center sm:justify-between">
           <ShowcaseDailyStreakCard

@@ -1,224 +1,60 @@
-"use client";
+import { redirect } from "next/navigation";
+import { auth } from "@/lib/auth";
+import { getFriendDashboardData } from "@/lib/services/friend.service";
+import { FriendsClient } from "./FriendsClient";
 
-import { useState, useEffect, useCallback } from "react";
-import { PageHeader } from "@/components/shared/PageHeader";
-import { FriendsList } from "@/components/friends/FriendsList";
-import { FriendRequests } from "@/components/friends/FriendRequests";
-import { AddFriendForm } from "@/components/friends/AddFriendForm";
-import { Input } from "@/components/ui/input";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
-import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
-import { useToast } from "@/hooks/use-toast";
-import { Search, Users, Inbox, UserPlus } from "lucide-react";
+type FriendDashboardData = Awaited<ReturnType<typeof getFriendDashboardData>>;
+type FriendRecord = FriendDashboardData["friends"][number];
+type FriendRequestRecord =
+  | FriendDashboardData["receivedRequests"][number]
+  | FriendDashboardData["sentRequests"][number];
 
-export default function FriendsPage() {
-  const { toast } = useToast();
-  const [loading, setLoading] = useState(true);
-  const [friends, setFriends] = useState<any[]>([]);
-  const [receivedRequests, setReceivedRequests] = useState<any[]>([]);
-  const [sentRequests, setSentRequests] = useState<any[]>([]);
-  const [search, setSearch] = useState("");
+export default async function FriendsPage() {
+  const session = await auth();
 
-  const loadFriends = useCallback(async () => {
-    setLoading(true);
-    try {
-      const [friendsRes, receivedRes, sentRes] = await Promise.all([
-        fetch("/api/friends?type=friends"),
-        fetch("/api/friends?type=received"),
-        fetch("/api/friends?type=sent"),
-      ]);
+  if (!session?.user?.id) {
+    redirect("/auth/signin");
+  }
 
-      const [friendsData, receivedData, sentData] = await Promise.all([
-        friendsRes.json(),
-        receivedRes.json(),
-        sentRes.json(),
-      ]);
+  const userId = session.user.id;
 
-      setFriends(friendsData.data?.friendships || []);
-      setReceivedRequests(receivedData.data?.friendships || []);
-      setSentRequests(sentData.data?.friendships || []);
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to load friends",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  }, [toast]);
+  const { friends, receivedRequests, sentRequests } =
+    await getFriendDashboardData(userId);
 
-  useEffect(() => {
-    void loadFriends();
-  }, [loadFriends]);
+  const serializeFriend = (friendship: FriendRecord) => ({
+    id: friendship.id,
+    friend: {
+      id: friendship.friend.id,
+      name: friendship.friend.name,
+      email: friendship.friend.email,
+      image: friendship.friend.image,
+      currentStreak: friendship.friend.currentStreak ?? 0,
+      longestStreak: friendship.friend.longestStreak ?? 0,
+    },
+  });
 
-  const handleAccept = async (requestId: string) => {
-    try {
-      const response = await fetch(`/api/friends/${requestId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "accept" }),
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || "Failed to accept request");
-      }
-
-      toast({
-        title: "Success",
-        description: "Friend request accepted",
-      });
-
-      loadFriends();
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleDecline = async (requestId: string) => {
-    try {
-      const response = await fetch(`/api/friends/${requestId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "decline" }),
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || "Failed to decline request");
-      }
-
-      toast({
-        title: "Success",
-        description: "Friend request declined",
-      });
-
-      loadFriends();
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleRemove = async (friendshipId: string) => {
-    if (!confirm("Are you sure you want to remove this friend?")) {
-      return;
-    }
-
-    try {
-      const response = await fetch(`/api/friends/${friendshipId}`, {
-        method: "DELETE",
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || "Failed to remove friend");
-      }
-
-      toast({
-        title: "Success",
-        description: "Friend removed successfully",
-      });
-
-      loadFriends();
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
-    }
-  };
-
-  const filteredFriends = friends.filter((f) => {
-    if (!search) return true;
-    const searchLower = search.toLowerCase();
-    return (
-      f.friend.name?.toLowerCase().includes(searchLower) ||
-      f.friend.email.toLowerCase().includes(searchLower)
-    );
+  const serializeRequest = (request: FriendRequestRecord) => ({
+    id: request.id,
+    user: {
+      id: request.user.id,
+      name: request.user.name,
+      email: request.user.email,
+      image: request.user.image,
+    },
+    friend: {
+      id: request.friend.id,
+      name: request.friend.name,
+      email: request.friend.email,
+      image: request.friend.image,
+    },
+    createdAt: request.createdAt.toISOString(),
   });
 
   return (
-    <main className="min-h-screen bg-background py-8">
-      <div className="mx-auto max-w-6xl space-y-6 px-4">
-        <PageHeader
-          title="Friends"
-          description="Manage your friends and challenge them to quizzes"
-        />
-
-        {loading ? (
-          <div className="flex justify-center py-12">
-            <LoadingSpinner />
-          </div>
-        ) : (
-          <Tabs defaultValue="friends" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="friends" className="flex items-center gap-2">
-                <Users className="h-4 w-4" />
-                My Friends
-                <Badge variant="secondary">{friends.length}</Badge>
-              </TabsTrigger>
-              <TabsTrigger value="requests" className="flex items-center gap-2">
-                <Inbox className="h-4 w-4" />
-                Requests
-                {receivedRequests.length > 0 && (
-                  <Badge variant="default">{receivedRequests.length}</Badge>
-                )}
-              </TabsTrigger>
-              <TabsTrigger value="add" className="flex items-center gap-2">
-                <UserPlus className="h-4 w-4" />
-                Add Friend
-              </TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="friends" className="space-y-4">
-              {/* Search */}
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  placeholder="Search friends..."
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  className="pl-9"
-                />
-              </div>
-
-              {/* Friends List */}
-              <FriendsList
-                friends={filteredFriends}
-                onRemove={handleRemove}
-              />
-            </TabsContent>
-
-            <TabsContent value="requests">
-              <FriendRequests
-                received={receivedRequests}
-                sent={sentRequests}
-                onAccept={handleAccept}
-                onDecline={handleDecline}
-                onCancel={handleRemove}
-              />
-            </TabsContent>
-
-            <TabsContent value="add">
-              <AddFriendForm onSuccess={loadFriends} />
-            </TabsContent>
-          </Tabs>
-        )}
-      </div>
-    </main>
+    <FriendsClient
+      friends={friends.map(serializeFriend)}
+      receivedRequests={receivedRequests.map(serializeRequest)}
+      sentRequests={sentRequests.map(serializeRequest)}
+    />
   );
 }

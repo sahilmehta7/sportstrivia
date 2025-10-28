@@ -119,13 +119,40 @@ export async function POST(request: NextRequest) {
         });
       }
 
+      // Resolve sport to a canonical Level 0 Topic (root topic)
+      let canonicalSportName: string | undefined = undefined;
+      if (sport && sport.trim().length > 0) {
+        const sportName = sport.trim();
+        const existingRoot = await tx.topic.findFirst({
+          where: {
+            parentId: null,
+            name: { equals: sportName, mode: "insensitive" },
+          },
+          select: { id: true, name: true },
+        });
+
+        if (existingRoot) {
+          canonicalSportName = existingRoot.name; // preserve canonical casing
+        } else {
+          const createdRoot = await tx.topic.create({
+            data: {
+              name: sportName,
+              slug: await generateUniqueSlug(sportName, "topic"),
+              level: 0,
+            },
+            select: { name: true },
+          });
+          canonicalSportName = createdRoot.name;
+        }
+      }
+
       // Create the quiz
       const newQuiz = await tx.quiz.create({
         data: {
           title,
           slug,
           description,
-          sport,
+          sport: canonicalSportName,
           difficulty,
           duration,
           passingScore,

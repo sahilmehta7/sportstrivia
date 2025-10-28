@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { getRootTopics, getFeaturedTopics, getL2TopicsForPopularSports } from "@/lib/services/topic.service";
-import TopicsBrowse from "@/components/topics/TopicsBrowse";
+import { TopicsContent } from "@/components/topics/TopicsContent";
 import { ShowcaseThemeProvider } from "@/components/showcase/ShowcaseThemeProvider";
 
 export const metadata: Metadata = {
@@ -92,7 +92,7 @@ export default async function TopicsPage() {
   
   return (
     <ShowcaseThemeProvider>
-      <TopicsBrowse 
+      <TopicsContent 
         featured={featuredItems} 
         topics={allItems}
         l2TopicsByParent={l2ItemsByParent}

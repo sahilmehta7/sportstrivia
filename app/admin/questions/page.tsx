@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { AdminDataTable } from "@/components/admin/data-table/AdminDataTable";
 import { AdminFilterForm } from "@/components/admin/data-table/AdminFilterForm";
+import { AdminPaginationClient } from "@/components/admin/AdminPaginationClient";
 import { Difficulty, Prisma } from "@prisma/client";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { Plus } from "lucide-react";
@@ -77,14 +78,11 @@ export default async function QuestionsPage({ searchParams }: QuestionsPageProps
   const hasPrevious = page > 1;
   const hasNext = page < totalPages;
 
-  const buildPageLink = (targetPage: number) => {
-    const params = new URLSearchParams();
-    if (search) params.set("search", search);
-    if (topicFilter) params.set("topicId", topicFilter);
-    if (difficultyFilter) params.set("difficulty", difficultyFilter);
-    params.set("limit", limit.toString());
-    params.set("page", targetPage.toString());
-    return `/admin/questions?${params.toString()}`;
+  const filterParams = {
+    search: search || undefined,
+    topicId: topicFilter || undefined,
+    difficulty: difficultyFilter || undefined,
+    limit: limit.toString(),
   };
 
   return (
@@ -221,21 +219,14 @@ export default async function QuestionsPage({ searchParams }: QuestionsPageProps
           </span>{" "}
           of <span className="font-medium">{total}</span>
         </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" disabled={!hasPrevious} asChild>
-            <Link href={hasPrevious ? buildPageLink(page - 1) : "#"} aria-disabled={!hasPrevious}>
-              Previous
-            </Link>
-          </Button>
-          <span>
-            Page {page} of {totalPages}
-          </span>
-          <Button variant="outline" size="sm" disabled={!hasNext} asChild>
-            <Link href={hasNext ? buildPageLink(page + 1) : "#"} aria-disabled={!hasNext}>
-              Next
-            </Link>
-          </Button>
-        </div>
+        <AdminPaginationClient
+          currentPage={page}
+          totalPages={totalPages}
+          hasPrevious={hasPrevious}
+          hasNext={hasNext}
+          variant="server"
+          filterParams={filterParams}
+        />
       </div>
     </div>
   );

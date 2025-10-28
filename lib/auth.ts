@@ -68,7 +68,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   session: {
     strategy: "database",
   },
-  debug: true, // Enable debug on Vercel to see logs
+  debug: process.env.NODE_ENV !== "production",
   trustHost: true,
   cookies: {
     sessionToken: {

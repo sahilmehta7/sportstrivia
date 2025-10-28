@@ -113,8 +113,8 @@ export default function ImportPage() {
     passingScore: 70,
     seo: {
       title: "NBA Champions Quiz - Test Your Basketball Knowledge",
-      description: "Challenge yourself with questions about NBA championship history",
-      keywords: ["nba", "basketball", "champions", "quiz"]
+      description: "Challenge yourself with questions about NBA championship history and legendary teams. Test your knowledge of NBA Finals history, championship winners, and basketball legends.",
+      keywords: ["nba", "basketball", "champions", "quiz", "nba finals", "nba championship"]
     },
     questions: [
       {

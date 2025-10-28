@@ -13,6 +13,7 @@ export default async function ShowcaseDailyStreakPage() {
         subtitle="Track your learning progress with daily quiz streaks"
         badge="STREAK SHOWCASE"
         variant="default"
+        breadcrumbs={[{ label: "Engagement", href: "/showcase" }, { label: "Daily Streak" }]}
       >
         <ShowcaseDailyStreak
           currentStreak={streak.currentStreak}

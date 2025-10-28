@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, type FormEvent } from "react";
+import React, { useState, useEffect, useMemo, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { PageHeader } from "@/components/shared/PageHeader";
@@ -63,6 +63,32 @@ export default function EditQuizPage({ params }: EditQuizPageProps) {
   const [aiCoverLoading, setAiCoverLoading] = useState(false);
   const [attemptLimitEnabled, setAttemptLimitEnabled] = useState(false);
   const attemptResetOptions = ATTEMPT_RESET_PERIOD_OPTIONS;
+
+  interface RootTopic {
+    id: string;
+    name: string;
+  }
+  const [sports, setSports] = useState<RootTopic[]>([]);
+  const [loadingSports, setLoadingSports] = useState(true);
+
+  // Fetch root topics (level 0) to use as sports list
+  useEffect(() => {
+    async function fetchSports() {
+      try {
+        const response = await fetch("/api/topics");
+        if (response.ok) {
+          const data = await response.json();
+          const rootTopics = data.topics?.filter((t: any) => t.parentId === null) || [];
+          setSports(rootTopics);
+        }
+      } catch (error) {
+        console.error("Failed to fetch sports:", error);
+      } finally {
+        setLoadingSports(false);
+      }
+    }
+    fetchSports();
+  }, []);
 
   const [formData, setFormData] = useState({
     title: "",
@@ -664,35 +690,93 @@ export default function EditQuizPage({ params }: EditQuizPageProps) {
   }
 
   return (
-    <div>
-      <PageHeader
-        title={`Edit Quiz: ${formData.title}`}
-        description="Update quiz details and configuration"
-        action={
-          <div className="flex gap-2">
-            <Link href={`/admin/quizzes/${quizId}/questions`}>
-              <Button variant="secondary">
-                Manage Questions
-              </Button>
-            </Link>
-            <Button
-              variant="destructive"
-              onClick={() => setDeleteDialogOpen(true)}
-            >
-              <Trash2 className="mr-2 h-4 w-4" />
-              Delete
-            </Button>
+    <div className="relative min-h-screen">
+      {/* Sticky Action Bar */}
+      <div className="sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b shadow-sm">
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3">
+          <div className="flex items-center gap-3">
             <Link href="/admin/quizzes">
-              <Button variant="outline">
+              <Button variant="outline" size="sm">
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Back
               </Button>
             </Link>
+            <h1 className="text-lg font-semibold">Edit: {formData.title || "Quiz"}</h1>
           </div>
-        }
+          
+          <div className="flex items-center gap-2">
+            <Link href={`/admin/quizzes/${quizId}/questions`}>
+              <Button variant="secondary" size="sm">
+                Manage Questions
+              </Button>
+            </Link>
+
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={() => setDeleteDialogOpen(true)}
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+
+            {formData.status !== "PUBLISHED" && (
+              <Button
+                type="button"
+                variant="default"
+                size="sm"
+                onClick={handlePublish}
+                disabled={saving}
+              >
+                <CheckCircle className="mr-2 h-4 w-4" />
+                Publish
+              </Button>
+            )}
+
+            {formData.status === "PUBLISHED" && (
+              <>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  onClick={handleUnpublish}
+                  disabled={saving}
+                >
+                  <EyeOff className="mr-2 h-4 w-4" />
+                  Unpublish
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleArchive}
+                  disabled={saving}
+                >
+                  <Archive className="mr-2 h-4 w-4" />
+                  Archive
+                </Button>
+              </>
+            )}
+
+            <Button
+              type="submit"
+              form="quiz-edit-form"
+              size="default"
+              disabled={saving}
+            >
+              <Save className="mr-2 h-4 w-4" />
+              {saving ? "Saving..." : "Save Changes"}
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      <div className="mx-auto max-w-7xl px-4 py-6">
+      <PageHeader
+        title={`Edit Quiz: ${formData.title}`}
+        description="Update quiz details and configuration"
       />
 
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form id="quiz-edit-form" onSubmit={handleSubmit} className="space-y-6 pb-32">
         {/* Basic Information */}
         <Card>
           <CardHeader>
@@ -945,8 +1029,10 @@ export default function EditQuizPage({ params }: EditQuizPageProps) {
                     <Label htmlFor="attemptResetPeriod">Reset Schedule</Label>
                     <Select
                       value={formData.attemptResetPeriod}
-                      onValueChange={(value) => updateField("attemptResetPeriod", value)}
-                      disabled={!canConfigureReset}
+                      onValueChange={(value) => {
+                        updateField("attemptResetPeriod", value);
+                        updateField("recurringType", value === "NEVER" ? "NONE" : value);
+                      }}
                     >
                       <SelectTrigger id="attemptResetPeriod">
                         <SelectValue placeholder="Select reset cadence" />
@@ -956,23 +1042,13 @@ export default function EditQuizPage({ params }: EditQuizPageProps) {
                           <SelectItem
                             key={option.value}
                             value={option.value}
-                            disabled={
-                              !attemptLimitEnabled ||
-                              (formData.recurringType === "NONE" && option.value !== AttemptResetPeriod.NEVER)
-                            }
                           >
                             {option.label}
                           </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
-                    <p className="text-xs text-muted-foreground">
-                      {!attemptLimitEnabled
-                        ? "Attempts reset is disabled while the cap is off."
-                        : !canConfigureReset
-                          ? "Enable a recurring schedule to allow automatic resets."
-                          : attemptResetHelpText}
-                    </p>
+                    <p className="text-xs text-muted-foreground">{attemptResetHelpText}</p>
                   </div>
                 </div>
               ) : (
@@ -985,11 +1061,28 @@ export default function EditQuizPage({ params }: EditQuizPageProps) {
             <div className="grid gap-4 md:grid-cols-3">
               <div className="space-y-2">
                 <Label htmlFor="sport">Sport</Label>
-                <Input
-                  id="sport"
-                  value={formData.sport}
-                  onChange={(e) => updateField("sport", e.target.value)}
-                />
+                <Select
+                  value={formData.sport || undefined}
+                  onValueChange={(value) => updateField("sport", value)}
+                  disabled={loadingSports}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder={loadingSports ? "Loading..." : "Select sport (root topic)"} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {(() => {
+                      const list = sports;
+                      const cur = formData.sport?.trim();
+                      const exists = cur && list.some((t) => t.name.toLowerCase() === cur.toLowerCase());
+                      const merged = !cur || exists ? list : [{ id: "current", name: cur }, ...list];
+                      return merged;
+                    })().map((t) => (
+                      <SelectItem key={t.id} value={t.name}>
+                        {t.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               <div className="space-y-2">
@@ -1371,57 +1464,10 @@ export default function EditQuizPage({ params }: EditQuizPageProps) {
           </CardContent>
         </Card>
 
-        {/* Actions */}
-        <div className="flex flex-col sm:flex-row justify-between gap-4">
-          <div className="flex gap-2 flex-wrap">
-            {formData.status !== "PUBLISHED" && (
-              <Button 
-                type="button" 
-                onClick={handlePublish} 
-                disabled={saving}
-                variant="default"
-              >
-                <CheckCircle className="mr-2 h-4 w-4" />
-                Publish Quiz
-              </Button>
-            )}
-            {formData.status === "PUBLISHED" && (
-              <Button 
-                type="button" 
-                onClick={handleUnpublish} 
-                disabled={saving}
-                variant="outline"
-              >
-                <EyeOff className="mr-2 h-4 w-4" />
-                Unpublish
-              </Button>
-            )}
-            {formData.status === "PUBLISHED" && (
-              <Button 
-                type="button" 
-                onClick={handleArchive} 
-                disabled={saving}
-                variant="secondary"
-              >
-                <Archive className="mr-2 h-4 w-4" />
-                Archive Quiz
-              </Button>
-            )}
-          </div>
-
-          <div className="flex gap-2 justify-end">
-            <Link href="/admin/quizzes">
-              <Button type="button" variant="outline">
-                Cancel
-              </Button>
-            </Link>
-            <Button type="submit" disabled={saving}>
-              <Save className="mr-2 h-4 w-4" />
-              {saving ? "Saving..." : "Save Changes"}
-            </Button>
-          </div>
-        </div>
+        {/* Actions moved to sticky bar */}
       </form>
+
+      </div>
 
       {/* Delete Confirmation Dialog */}
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>

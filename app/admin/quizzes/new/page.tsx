@@ -1,13 +1,12 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
@@ -17,9 +16,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
-import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Save } from "lucide-react";
 import Link from "next/link";
@@ -33,24 +30,40 @@ import {
   FormDescription,
 } from "@/components/ui/form";
 import { QuizInput, quizSchema } from "@/lib/validations/quiz.schema";
-import {
-  Difficulty,
-  QuizStatus,
-  QuestionSelectionMode,
-  RecurringType,
-} from "@prisma/client";
-import {
-  AttemptResetPeriod,
-  ATTEMPT_RESET_PERIOD_OPTIONS,
-  ATTEMPT_RESET_PERIOD_LABELS,
-  ATTEMPT_RESET_PERIOD_HELP_TEXT,
-} from "@/constants/attempts";
+import { Difficulty, QuizStatus } from "@prisma/client";
 import { generateSlug } from "@/lib/seo-utils";
+import { CollapsibleSection } from "@/components/admin/quiz/StreamlinedQuizForm";
+
+interface RootTopic {
+  id: string;
+  name: string;
+}
 
 export default function NewQuizPage() {
   const router = useRouter();
   const { toast } = useToast();
   const slugManuallyEditedRef = useRef(false);
+  const [sports, setSports] = useState<RootTopic[]>([]);
+  const [loadingSports, setLoadingSports] = useState(true);
+
+  // Fetch root topics (level 0) for sport dropdown
+  useEffect(() => {
+    async function fetchSports() {
+      try {
+        const response = await fetch("/api/topics");
+        if (response.ok) {
+          const data = await response.json();
+          const rootTopics = data.topics?.filter((t: any) => t.parentId === null) || [];
+          setSports(rootTopics);
+        }
+      } catch (error) {
+        console.error("Failed to fetch sports:", error);
+      } finally {
+        setLoadingSports(false);
+      }
+    }
+    fetchSports();
+  }, []);
 
   const form = useForm({
     resolver: zodResolver(quizSchema),
@@ -58,72 +71,34 @@ export default function NewQuizPage() {
       title: "",
       slug: "",
       description: "",
-      descriptionImageUrl: "",
-      descriptionVideoUrl: "",
       sport: "",
       difficulty: Difficulty.MEDIUM,
       status: QuizStatus.DRAFT,
-      duration: undefined,
-      timePerQuestion: undefined,
+      duration: 600,
       passingScore: 70,
-      questionSelectionMode: QuestionSelectionMode.FIXED,
+      isFeatured: false,
+      // Advanced fields with defaults
+      questionSelectionMode: "FIXED",
       questionCount: undefined,
       randomizeQuestionOrder: false,
       showHints: true,
+      maxAttemptsPerUser: null,
+      attemptResetPeriod: "NEVER",
+      recurringType: "NONE",
+      // Scoring defaults
       negativeMarkingEnabled: false,
       penaltyPercentage: 25,
       timeBonusEnabled: false,
       bonusPointsPerSecond: 0,
+      // Optional fields
+      descriptionImageUrl: "",
       startTime: "",
       endTime: "",
-      answersRevealTime: "",
-      recurringType: RecurringType.NONE,
-      maxAttemptsPerUser: null,
-      attemptResetPeriod: AttemptResetPeriod.NEVER,
-      isFeatured: false,
-      isPublished: false,
       seoTitle: "",
       seoDescription: "",
       seoKeywords: [],
     },
   });
-
-  const attemptResetOptions = ATTEMPT_RESET_PERIOD_OPTIONS;
-
-  const maxAttemptsValue = form.watch("maxAttemptsPerUser");
-  const attemptLimitEnabled = maxAttemptsValue !== null && maxAttemptsValue !== undefined;
-  const attemptResetPeriodValue = form.watch("attemptResetPeriod");
-  const recurringTypeValue = form.watch("recurringType");
-  const timePerQuestionValue = form.watch("timePerQuestion");
-  const questionCountValue = form.watch("questionCount");
-  const canConfigureReset = attemptLimitEnabled && recurringTypeValue !== RecurringType.NONE;
-  const attemptResetLabel = ATTEMPT_RESET_PERIOD_LABELS[attemptResetPeriodValue];
-  const attemptResetHelpText = ATTEMPT_RESET_PERIOD_HELP_TEXT[attemptResetPeriodValue];
-  const attemptLimitSummary = attemptLimitEnabled
-    ? maxAttemptsValue && maxAttemptsValue > 0
-      ? attemptResetPeriodValue === AttemptResetPeriod.NEVER
-        ? `Limited to ${maxAttemptsValue} attempt${maxAttemptsValue === 1 ? "" : "s"} total`
-        : `Limited to ${maxAttemptsValue} attempt${maxAttemptsValue === 1 ? "" : "s"} per ${attemptResetLabel.toLowerCase()}`
-      : "Enter a limit to enforce the cap."
-    : "Unlimited attempts";
-
-  useEffect(() => {
-    if (recurringTypeValue === RecurringType.NONE && attemptResetPeriodValue !== AttemptResetPeriod.NEVER) {
-      form.setValue("attemptResetPeriod", AttemptResetPeriod.NEVER, { shouldDirty: false });
-    }
-  }, [form, recurringTypeValue, attemptResetPeriodValue]);
-
-  const handleAttemptLimitToggle = (checked: boolean) => {
-    if (checked) {
-      form.setValue("maxAttemptsPerUser", 3, { shouldDirty: true });
-      if (recurringTypeValue === RecurringType.NONE) {
-        form.setValue("attemptResetPeriod", AttemptResetPeriod.NEVER, { shouldDirty: false });
-      }
-    } else {
-      form.setValue("maxAttemptsPerUser", null, { shouldDirty: true });
-      form.setValue("attemptResetPeriod", AttemptResetPeriod.NEVER, { shouldDirty: true });
-    }
-  };
 
   const titleValue = form.watch("title");
   const slugValue = form.watch("slug");
@@ -145,37 +120,38 @@ export default function NewQuizPage() {
     }
   }, [form, slugValue, titleValue]);
 
-  // Auto-calculate total duration when timePerQuestion is set
-  useEffect(() => {
-    if (!timePerQuestionValue || timePerQuestionValue <= 0) return;
-    
-    if (questionCountValue && questionCountValue > 0) {
-      const calculatedDuration = questionCountValue * timePerQuestionValue;
-      form.setValue("duration", calculatedDuration, { shouldDirty: false });
-    }
-  }, [form, timePerQuestionValue, questionCountValue]);
-
   const onSubmit = form.handleSubmit(async (values) => {
     const payload: QuizInput = {
-      ...values,
-      duration: values.duration ?? undefined,
-      timePerQuestion: values.timePerQuestion ?? undefined,
-      questionCount: values.questionCount ?? undefined,
-      seoKeywords: values.seoKeywords?.filter((keyword) => keyword.trim().length > 0),
+      title: values.title,
+      slug: values.slug,
+      description: values.description,
+      sport: values.sport,
+      difficulty: values.difficulty,
+      status: values.status,
+      duration: values.duration ?? 600,
+      passingScore: values.passingScore ?? 70,
+      isFeatured: values.isFeatured,
+      isPublished: values.isPublished ?? false,
+      // Advanced fields
+      questionSelectionMode: values.questionSelectionMode,
+      questionCount: values.questionCount,
+      randomizeQuestionOrder: values.randomizeQuestionOrder,
+      showHints: values.showHints,
+      maxAttemptsPerUser: values.maxAttemptsPerUser,
+      attemptResetPeriod: values.attemptResetPeriod,
+      recurringType: values.recurringType,
+      negativeMarkingEnabled: values.negativeMarkingEnabled,
+      penaltyPercentage: values.penaltyPercentage,
+      timeBonusEnabled: values.timeBonusEnabled,
+      bonusPointsPerSecond: values.bonusPointsPerSecond,
+      // Optional
+      descriptionImageUrl: values.descriptionImageUrl || undefined,
       startTime: values.startTime || undefined,
       endTime: values.endTime || undefined,
-      answersRevealTime: values.answersRevealTime || undefined,
+      seoTitle: values.seoTitle || undefined,
+      seoDescription: values.seoDescription || undefined,
+      seoKeywords: values.seoKeywords?.filter((k: string) => k.trim().length > 0) || undefined,
     };
-
-    if (payload.maxAttemptsPerUser == null) {
-      payload.maxAttemptsPerUser = null;
-      payload.attemptResetPeriod = AttemptResetPeriod.NEVER;
-    } else {
-      payload.attemptResetPeriod =
-        payload.recurringType === RecurringType.NONE
-          ? AttemptResetPeriod.NEVER
-          : payload.attemptResetPeriod ?? AttemptResetPeriod.NEVER;
-    }
 
     try {
       const response = await fetch("/api/admin/quizzes", {
@@ -208,362 +184,258 @@ export default function NewQuizPage() {
   const isSubmitting = form.formState.isSubmitting;
 
   return (
-    <div>
-      <PageHeader
-        title="Create New Quiz"
-        description="Add a new quiz to your collection"
-        action={
-          <Link href="/admin/quizzes">
-            <Button variant="outline">
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to Quizzes
-            </Button>
-          </Link>
-        }
-      />
+    <div className="relative min-h-screen">
+      {/* Sticky Action Bar */}
+      <div className="sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
+          <div className="flex items-center gap-3">
+            <Link href="/admin/quizzes">
+              <Button variant="outline" size="sm">
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back
+              </Button>
+            </Link>
+            <h1 className="text-lg font-semibold">Create New Quiz</h1>
+          </div>
+          <Button
+            type="submit"
+            form="quiz-form"
+            disabled={isSubmitting}
+            size="default"
+          >
+            <Save className="mr-2 h-4 w-4" />
+            {isSubmitting ? "Creating..." : "Create Quiz"}
+          </Button>
+        </div>
+      </div>
 
-      <Form {...form}>
-        <form onSubmit={onSubmit} className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Basic Information</CardTitle>
-              <CardDescription>Essential quiz details</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid gap-4 md:grid-cols-2">
-                <FormField
-                  control={form.control}
-                  name="title"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Title *</FormLabel>
-                      <FormControl>
-                        <Input {...field} placeholder="e.g., NBA Champions Quiz" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="slug"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Slug</FormLabel>
-                      <FormControl>
-                        <Input
-                          {...field}
-                          onChange={(event) => {
-                            const value = event.target.value;
-                            slugManuallyEditedRef.current = value.length > 0;
-                            field.onChange(value);
-                          }}
-                          placeholder="e.g., nba-champions-quiz"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              <FormField
-                control={form.control}
-                name="description"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Description</FormLabel>
-                    <FormControl>
-                      <Textarea {...field} rows={3} placeholder="Brief description of the quiz" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <div className="grid gap-4 md:grid-cols-3">
-                <FormField
-                  control={form.control}
-                  name="sport"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Sport</FormLabel>
-                      <FormControl>
-                        <Input {...field} placeholder="e.g., Basketball" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="difficulty"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Difficulty *</FormLabel>
-                      <Select value={field.value} onValueChange={field.onChange}>
+      <div className="mx-auto max-w-6xl px-4 py-6">
+        <Form {...form}>
+          <form id="quiz-form" onSubmit={onSubmit} className="space-y-4 pb-32">
+            {/* Essential Fields - Always Visible */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Basic Information</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid gap-4 md:grid-cols-2">
+                  <FormField
+                    control={form.control}
+                    name="title"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Title *</FormLabel>
                         <FormControl>
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
+                          <Input {...field} placeholder="e.g., NBA Champions Quiz" />
                         </FormControl>
-                        <SelectContent>
-                          <SelectItem value={Difficulty.EASY}>Easy</SelectItem>
-                          <SelectItem value={Difficulty.MEDIUM}>Medium</SelectItem>
-                          <SelectItem value={Difficulty.HARD}>Hard</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-                <FormField
-                  control={form.control}
-                  name="status"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Status *</FormLabel>
-                      <Select value={field.value} onValueChange={field.onChange}>
+                  <FormField
+                    control={form.control}
+                    name="slug"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Slug</FormLabel>
                         <FormControl>
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
+                          <Input
+                            {...field}
+                            onChange={(event) => {
+                              const value = event.target.value;
+                              slugManuallyEditedRef.current = value.length > 0;
+                              field.onChange(value);
+                            }}
+                            placeholder="auto-generated"
+                          />
                         </FormControl>
-                        <SelectContent>
-                          <SelectItem value={QuizStatus.DRAFT}>Draft</SelectItem>
-                          <SelectItem value={QuizStatus.REVIEW}>Review</SelectItem>
-                          <SelectItem value={QuizStatus.PUBLISHED}>Published</SelectItem>
-                          <SelectItem value={QuizStatus.ARCHIVED}>Archived</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader>
-              <CardTitle>Attempt Limits</CardTitle>
-              <CardDescription>Restrict how often each user can take this quiz.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <Label htmlFor="attempt-limit-toggle" className="text-base">
-                    Enable Attempt Cap
-                  </Label>
-                  <p className="text-sm text-muted-foreground">
-                    {attemptLimitEnabled
-                      ? "Players will be stopped once they reach the configured limit."
-                      : "Leave disabled to allow unlimited attempts per user."}
-                  </p>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 </div>
-                <Switch
-                  id="attempt-limit-toggle"
-                  checked={attemptLimitEnabled}
-                  onCheckedChange={handleAttemptLimitToggle}
-                />
-              </div>
 
-              <div className="flex flex-wrap items-center gap-2">
-                <Badge variant={attemptLimitEnabled ? "secondary" : "outline"}>{attemptLimitSummary}</Badge>
-                {attemptLimitEnabled && (
-                  <Badge variant="outline">
-                    {attemptResetPeriodValue === AttemptResetPeriod.NEVER
-                      ? "No automatic reset"
-                      : `Resets ${attemptResetLabel.toLowerCase()}`}
-                  </Badge>
-                )}
-                {attemptLimitEnabled && recurringTypeValue !== RecurringType.NONE && (
-                  <Badge variant="outline">
-                    Quiz recurs {recurringTypeValue.toLowerCase()}
-                  </Badge>
-                )}
-              </div>
-
-              <div className="grid gap-4 md:grid-cols-2">
                 <FormField
                   control={form.control}
-                  name="maxAttemptsPerUser"
+                  name="description"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Attempts Allowed</FormLabel>
-                      <FormDescription>
-                        Users can start up to this many attempts before the lock applies.
-                      </FormDescription>
+                      <FormLabel>Description</FormLabel>
                       <FormControl>
-                        <Input
-                          type="number"
-                          min={1}
-                          value={field.value ?? ""}
-                          onChange={(event) => {
-                            const { value } = event.target;
-                            if (value === "") {
-                              field.onChange(null);
-                              return;
-                            }
-                            const parsed = Number(value);
-                            field.onChange(Number.isNaN(parsed) ? null : parsed);
-                          }}
-                          disabled={!attemptLimitEnabled}
-                        />
+                        <Textarea {...field} rows={2} placeholder="Brief description" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
 
-                <FormField
-                  control={form.control}
-                  name="attemptResetPeriod"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Reset Schedule</FormLabel>
-                      <FormDescription>
-                        {!attemptLimitEnabled
-                          ? "Attempts reset is disabled while the cap is off."
-                          : !canConfigureReset
-                            ? "Enable a recurring schedule to allow automatic resets."
-                            : attemptResetHelpText}
-                      </FormDescription>
-                      <Select
-                        value={field.value}
-                        onValueChange={field.onChange}
-                        disabled={!canConfigureReset}
-                      >
+                <div className="grid gap-4 md:grid-cols-3">
+                  <FormField
+                    control={form.control}
+                    name="sport"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Sport</FormLabel>
                         <FormControl>
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
+                          <Select
+                            value={field.value}
+                            onValueChange={field.onChange}
+                            disabled={loadingSports}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder={loadingSports ? "Loading..." : "Select sport (root topic)"} />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {sports.map((t) => (
+                                <SelectItem key={t.id} value={t.name}>
+                                  {t.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                         </FormControl>
-                        <SelectContent>
-                          {attemptResetOptions.map((option) => (
-                            <SelectItem
-                              key={option.value}
-                              value={option.value}
-                              disabled={
-                                !attemptLimitEnabled ||
-                                (recurringTypeValue === RecurringType.NONE &&
-                                  option.value !== AttemptResetPeriod.NEVER)
-                              }
-                            >
-                              {option.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-            </CardContent>
-          </Card>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Quiz Configuration</CardTitle>
-              <CardDescription>Time limits and passing criteria</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid gap-4 md:grid-cols-3">
-                <FormField
-                  control={form.control}
-                  name="duration"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>
-                        Total Duration (seconds)
-                        {timePerQuestionValue && (
-                          <span className="ml-2 text-xs font-normal text-muted-foreground">
-                            (auto-calculated)
-                          </span>
-                        )}
-                      </FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          min={1}
-                          value={field.value ?? ""}
-                          onChange={(event) =>
-                            field.onChange(
-                              event.target.value === "" ? undefined : Number(event.target.value)
-                            )
-                          }
-                          disabled={Boolean(timePerQuestionValue)}
-                          className={timePerQuestionValue ? "bg-muted" : ""}
-                        />
-                      </FormControl>
-                      <FormDescription>
-                        {timePerQuestionValue 
-                          ? "Auto-calculated from time per question × question count" 
-                          : "Total time for entire quiz"}
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                  <FormField
+                    control={form.control}
+                    name="difficulty"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Difficulty</FormLabel>
+                        <Select value={field.value} onValueChange={field.onChange}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value={Difficulty.EASY}>Easy</SelectItem>
+                            <SelectItem value={Difficulty.MEDIUM}>Medium</SelectItem>
+                            <SelectItem value={Difficulty.HARD}>Hard</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-                <FormField
-                  control={form.control}
-                  name="timePerQuestion"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Time per Question (seconds)</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          min={1}
-                          value={field.value ?? ""}
-                          onChange={(event) =>
-                            field.onChange(
-                              event.target.value === "" ? undefined : Number(event.target.value)
-                            )
-                          }
-                        />
-                      </FormControl>
-                      <FormDescription>
-                        Auto-calculates total duration when set
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                  <FormField
+                    control={form.control}
+                    name="status"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Status</FormLabel>
+                        <Select value={field.value} onValueChange={field.onChange}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value={QuizStatus.DRAFT}>Draft</SelectItem>
+                            <SelectItem value={QuizStatus.REVIEW}>Review</SelectItem>
+                            <SelectItem value={QuizStatus.PUBLISHED}>Published</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </CardContent>
+            </Card>
 
-                <FormField
-                  control={form.control}
-                  name="passingScore"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Passing Score (%)</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          min={0}
-                          max={100}
-                          value={field.value}
-                          onChange={(event) => field.onChange(Number(event.target.value))}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-            </CardContent>
-          </Card>
+            {/* Quick Settings - Always Visible */}
+            <div className="grid gap-4 md:grid-cols-3">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">Duration</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <FormField
+                    control={form.control}
+                    name="duration"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            min={1}
+                            value={field.value ?? ""}
+                            onChange={(event) =>
+                              field.onChange(
+                                event.target.value === "" ? undefined : Number(event.target.value)
+                              )
+                            }
+                            placeholder="seconds"
+                          />
+                        </FormControl>
+                        <FormDescription className="text-xs">Total quiz time</FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </CardContent>
+              </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Question Selection</CardTitle>
-              <CardDescription>How questions are added to each attempt</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">Passing Score</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <FormField
+                    control={form.control}
+                    name="passingScore"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            min={0}
+                            max={100}
+                            value={field.value}
+                            onChange={(event) => field.onChange(Number(event.target.value))}
+                            placeholder="70"
+                          />
+                        </FormControl>
+                        <FormDescription className="text-xs">Percentage</FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">Featured</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <FormField
+                    control={form.control}
+                    name="isFeatured"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormControl>
+                          <div className="flex items-center space-x-2">
+                            <Switch checked={field.value} onCheckedChange={field.onChange} />
+                            <label className="text-sm">Show on homepage</label>
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Advanced Sections - Collapsible */}
+            <CollapsibleSection title="Question Selection" description="How questions are added to attempts">
               <div className="grid gap-4 md:grid-cols-2">
                 <FormField
                   control={form.control}
@@ -578,25 +450,21 @@ export default function NewQuizPage() {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value={QuestionSelectionMode.FIXED}>Fixed order</SelectItem>
-                          <SelectItem value={QuestionSelectionMode.TOPIC_RANDOM}>
-                            Topic based random
-                          </SelectItem>
-                          <SelectItem value={QuestionSelectionMode.POOL_RANDOM}>
-                            Pool random
-                          </SelectItem>
+                          <SelectItem value="FIXED">Fixed Order</SelectItem>
+                          <SelectItem value="TOPIC_RANDOM">Topic Random</SelectItem>
+                          <SelectItem value="POOL_RANDOM">Pool Random</SelectItem>
                         </SelectContent>
                       </Select>
-                      <FormMessage />
                     </FormItem>
                   )}
                 />
+
                 <FormField
                   control={form.control}
                   name="questionCount"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Question Count (optional)</FormLabel>
+                      <FormLabel>Question Count (Optional)</FormLabel>
                       <FormControl>
                         <Input
                           type="number"
@@ -609,7 +477,6 @@ export default function NewQuizPage() {
                           }
                         />
                       </FormControl>
-                      <FormMessage />
                     </FormItem>
                   )}
                 />
@@ -621,12 +488,12 @@ export default function NewQuizPage() {
                 render={({ field }) => (
                   <FormItem className="flex items-center justify-between rounded-lg border p-4">
                     <div>
-                      <FormLabel>Randomize Question Order</FormLabel>
-                      <CardDescription>Shuffle questions each time the quiz runs.</CardDescription>
+                      <FormLabel>Randomize Order</FormLabel>
+                      <FormDescription className="text-xs">
+                        Shuffle questions each time
+                      </FormDescription>
                     </div>
-                    <FormControl>
-                      <Switch checked={field.value} onCheckedChange={field.onChange} />
-                    </FormControl>
+                    <Switch checked={field.value} onCheckedChange={field.onChange} />
                   </FormItem>
                 )}
               />
@@ -638,35 +505,29 @@ export default function NewQuizPage() {
                   <FormItem className="flex items-center justify-between rounded-lg border p-4">
                     <div>
                       <FormLabel>Show Hints</FormLabel>
-                      <CardDescription>Reveal hints when configured on questions.</CardDescription>
+                      <FormDescription className="text-xs">
+                        Reveal hints on questions
+                      </FormDescription>
                     </div>
-                    <FormControl>
-                      <Switch checked={field.value} onCheckedChange={field.onChange} />
-                    </FormControl>
+                    <Switch checked={field.value} onCheckedChange={field.onChange} />
                   </FormItem>
                 )}
               />
-            </CardContent>
-          </Card>
+            </CollapsibleSection>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Scoring</CardTitle>
-              <CardDescription>Fine tune the scoring model</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
+            <CollapsibleSection title="Scoring" description="Configure scoring rules">
               <FormField
                 control={form.control}
                 name="negativeMarkingEnabled"
                 render={({ field }) => (
                   <FormItem className="flex items-center justify-between rounded-lg border p-4">
                     <div>
-                      <FormLabel>Enable Negative Marking</FormLabel>
-                      <CardDescription>Deduct points for incorrect answers.</CardDescription>
+                      <FormLabel>Negative Marking</FormLabel>
+                      <FormDescription className="text-xs">
+                        Deduct points for wrong answers
+                      </FormDescription>
                     </div>
-                    <FormControl>
-                      <Switch checked={field.value} onCheckedChange={field.onChange} />
-                    </FormControl>
+                    <Switch checked={field.value} onCheckedChange={field.onChange} />
                   </FormItem>
                 )}
               />
@@ -677,7 +538,7 @@ export default function NewQuizPage() {
                   name="penaltyPercentage"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Penalty Percentage</FormLabel>
+                      <FormLabel>Penalty %</FormLabel>
                       <FormControl>
                         <Input
                           type="number"
@@ -687,7 +548,6 @@ export default function NewQuizPage() {
                           onChange={(event) => field.onChange(Number(event.target.value))}
                         />
                       </FormControl>
-                      <FormMessage />
                     </FormItem>
                   )}
                 />
@@ -697,7 +557,7 @@ export default function NewQuizPage() {
                   name="bonusPointsPerSecond"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Bonus Points per Second</FormLabel>
+                      <FormLabel>Bonus per Second</FormLabel>
                       <FormControl>
                         <Input
                           type="number"
@@ -707,7 +567,6 @@ export default function NewQuizPage() {
                           onChange={(event) => field.onChange(Number(event.target.value))}
                         />
                       </FormControl>
-                      <FormMessage />
                     </FormItem>
                   )}
                 />
@@ -719,146 +578,27 @@ export default function NewQuizPage() {
                 render={({ field }) => (
                   <FormItem className="flex items-center justify-between rounded-lg border p-4">
                     <div>
-                      <FormLabel>Enable Time Bonus</FormLabel>
-                      <CardDescription>Reward fast answers when bonus is configured.</CardDescription>
+                      <FormLabel>Time Bonus</FormLabel>
+                      <FormDescription className="text-xs">
+                        Reward fast answers
+                      </FormDescription>
                     </div>
-                    <FormControl>
-                      <Switch checked={field.value} onCheckedChange={field.onChange} />
-                    </FormControl>
+                    <Switch checked={field.value} onCheckedChange={field.onChange} />
                   </FormItem>
                 )}
               />
-            </CardContent>
-          </Card>
+            </CollapsibleSection>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Scheduling</CardTitle>
-              <CardDescription>Control when the quiz is available</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid gap-4 md:grid-cols-3">
-                <FormField
-                  control={form.control}
-                  name="startTime"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Start Time</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="datetime-local"
-                          value={field.value ?? ""}
-                          onChange={(event) => field.onChange(event.target.value)}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="endTime"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>End Time</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="datetime-local"
-                          value={field.value ?? ""}
-                          onChange={(event) => field.onChange(event.target.value)}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="answersRevealTime"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Answers Reveal Time</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="datetime-local"
-                          value={field.value ?? ""}
-                          onChange={(event) => field.onChange(event.target.value)}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              <FormField
-                control={form.control}
-                name="recurringType"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Recurring Schedule</FormLabel>
-                    <Select value={field.value} onValueChange={field.onChange}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value={RecurringType.NONE}>One-time</SelectItem>
-                        <SelectItem value={RecurringType.HOURLY}>Hourly</SelectItem>
-                        <SelectItem value={RecurringType.DAILY}>Daily</SelectItem>
-                        <SelectItem value={RecurringType.WEEKLY}>Weekly</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Visibility</CardTitle>
-              <CardDescription>Control how the quiz appears on the site</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <FormField
-                control={form.control}
-                name="isFeatured"
-                render={({ field }) => (
-                  <FormItem className="flex items-center justify-between rounded-lg border p-4">
-                    <div>
-                      <FormLabel>Feature this Quiz</FormLabel>
-                      <CardDescription>Include in the featured carousel for players.</CardDescription>
-                    </div>
-                    <FormControl>
-                      <Switch checked={field.value} onCheckedChange={field.onChange} />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>SEO</CardTitle>
-              <CardDescription>Improve how this quiz appears in search results</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
+            <CollapsibleSection title="SEO" description="Search engine optimization">
               <FormField
                 control={form.control}
                 name="seoTitle"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>SEO Title</FormLabel>
+                    <FormLabel>SEO Title (max 60 chars)</FormLabel>
                     <FormControl>
-                      <Input {...field} placeholder="Custom title for search engines" />
+                      <Input {...field} maxLength={60} placeholder="Custom title for search" />
                     </FormControl>
-                    <FormMessage />
                   </FormItem>
                 )}
               />
@@ -868,15 +608,10 @@ export default function NewQuizPage() {
                 name="seoDescription"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>SEO Description</FormLabel>
+                    <FormLabel>SEO Description (max 160 chars)</FormLabel>
                     <FormControl>
-                      <Textarea
-                        {...field}
-                        rows={3}
-                        placeholder="Short summary for search engines"
-                      />
+                      <Textarea {...field} rows={2} maxLength={160} placeholder="Description for search results" />
                     </FormControl>
-                    <FormMessage />
                   </FormItem>
                 )}
               />
@@ -886,37 +621,27 @@ export default function NewQuizPage() {
                 name="seoKeywords"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>SEO Keywords</FormLabel>
+                    <FormLabel>Keywords</FormLabel>
                     <FormControl>
                       <Input
                         value={field.value?.join(", ") ?? ""}
                         onChange={(event) => {
-                          const nextValue = event.target.value
+                          const keywords = event.target.value
                             .split(",")
-                            .map((keyword) => keyword.trim())
-                            .filter((keyword) => keyword.length > 0);
-                          field.onChange(nextValue);
+                            .map((k) => k.trim())
+                            .filter((k) => k.length > 0);
+                          field.onChange(keywords);
                         }}
-                        placeholder="Comma separated keywords"
+                        placeholder="nba, basketball, champions"
                       />
                     </FormControl>
-                    <FormMessage />
                   </FormItem>
                 )}
               />
-            </CardContent>
-          </Card>
-
-          <Separator />
-
-          <div className="flex justify-end">
-            <Button type="submit" disabled={isSubmitting}>
-              <Save className="mr-2 h-4 w-4" />
-              {isSubmitting ? "Creating..." : "Create Quiz"}
-            </Button>
-          </div>
-        </form>
-      </Form>
+            </CollapsibleSection>
+          </form>
+        </Form>
+      </div>
     </div>
   );
 }

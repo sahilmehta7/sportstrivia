@@ -109,6 +109,7 @@ export default async function QuizListingShowcasePage({
         subtitle="Modern quiz listing page with advanced filtering, search, and glassmorphism design"
         badge="LISTING SHOWCASE"
         variant="default"
+        breadcrumbs={[{ label: "Layouts", href: "/showcase" }, { label: "Quiz Listing" }]}
       >
         <ShowcaseQuizListing
           listing={listing}

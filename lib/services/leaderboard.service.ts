@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db";
+import { Prisma } from "@prisma/client";
 
 /**
  * Time period for leaderboards
@@ -59,8 +60,11 @@ export interface LeaderboardEntry {
  */
 export async function buildGlobalLeaderboard(
   period: LeaderboardPeriod,
-  limit: number = 100
+  limit = 100
 ): Promise<LeaderboardEntry[]> {
+  const MAX_LIMIT = 500;
+  const safeLimit = Math.max(1, Math.min(limit, MAX_LIMIT));
+
   const startDate = getDateRangeForPeriod(period);
 
   const whereClause: any = {
@@ -86,7 +90,7 @@ export async function buildGlobalLeaderboard(
       { _sum: { totalPoints: "desc" } },
       { _avg: { averageResponseTime: "asc" } },
     ],
-    take: limit,
+    take: safeLimit,
   });
 
   if (results.length === 0) {
@@ -128,9 +132,38 @@ export async function getUserGlobalPosition(
   userId: string,
   period: LeaderboardPeriod
 ): Promise<number | null> {
-  const leaderboard = await buildGlobalLeaderboard(period, 1000);
-  const userEntry = leaderboard.find((entry) => entry.userId === userId);
-  return userEntry?.rank || null;
+  const startDate = getDateRangeForPeriod(period);
+
+  const rankQuery = Prisma.sql`
+WITH leaderboard AS (
+  SELECT
+    "userId",
+    SUM("totalPoints") AS points,
+    AVG(COALESCE("averageResponseTime", 0)) AS avg_response
+  FROM "QuizAttempt"
+  WHERE "isPracticeMode" = false
+    AND "completedAt" IS NOT NULL
+    ${startDate ? Prisma.sql`AND "completedAt" >= ${startDate}` : Prisma.empty}
+  GROUP BY "userId"
+),
+ranked AS (
+  SELECT
+    "userId",
+    RANK() OVER (ORDER BY points DESC, avg_response ASC) AS rank
+  FROM leaderboard
+)
+SELECT rank
+FROM ranked
+WHERE "userId" = ${userId}
+`;
+
+  const result = await prisma.$queryRaw<{ rank: bigint }[]>(rankQuery);
+
+  if (result.length === 0) {
+    return null;
+  }
+
+  return Number(result[0].rank);
 }
 
 /**

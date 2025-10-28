@@ -10,6 +10,7 @@ export default function TopTopicsShowcasePage() {
         subtitle="Reusable widget showcasing the most popular quiz topics with customizable sorting and glassmorphism design"
         badge="TOPICS WIDGET SHOWCASE"
         variant="default"
+        breadcrumbs={[{ label: "Topics", href: "/showcase" }, { label: "Top Topics" }]}
       >
         <div className="space-y-12">
           {/* Default Configuration */}

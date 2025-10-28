@@ -1,7 +1,9 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
-import { useShowcaseTheme } from "@/components/showcase/ShowcaseThemeProvider";
+import { useTheme } from "next-themes";
+import type { ShowcaseTheme } from "@/components/showcase/ShowcaseThemeProvider";
 import { getSurfaceStyles, getTextColor, getChipStyles } from "@/lib/showcase-theme";
 
 interface TopicInsightWidgetProps {
@@ -21,7 +23,18 @@ export function ShowcaseTopicInsightWidget({
   breakdown = [],
   className,
 }: TopicInsightWidgetProps) {
-  const { theme } = useShowcaseTheme();
+  const { theme: nextTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Use dark theme as default during SSR to prevent hydration mismatch
+  const theme: ShowcaseTheme = mounted 
+    ? (nextTheme === "light" ? "light" : "dark")
+    : "dark";
+  
   const textPrimary = getTextColor(theme, "primary");
   const textSecondary = getTextColor(theme, "secondary");
 

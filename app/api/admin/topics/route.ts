@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/auth-helpers";
-import { handleError, successResponse, NotFoundError } from "@/lib/errors";
+import { handleError, successResponse, NotFoundError, BadRequestError } from "@/lib/errors";
 import { z } from "zod";
 
 const topicSchema = z.object({
@@ -94,7 +94,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (slugExists) {
-      throw new Error("A topic with this slug already exists");
+      throw new BadRequestError("A topic with this slug already exists");
     }
 
     // Check if name already exists
@@ -103,7 +103,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (nameExists) {
-      throw new Error("A topic with this name already exists");
+      throw new BadRequestError("A topic with this name already exists");
     }
 
     // Calculate level based on parent
@@ -149,4 +149,3 @@ export async function POST(request: NextRequest) {
     return handleError(error);
   }
 }
-

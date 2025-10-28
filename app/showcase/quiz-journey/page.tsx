@@ -9,6 +9,7 @@ import {
 import { ShowcaseQuizExperienceToggle } from "@/components/quiz/ShowcaseQuizExperienceToggle";
 import { ShowcaseQuizResults } from "@/components/quiz/ShowcaseQuizResults";
 import type { LeaderboardEntry } from "@/lib/services/leaderboard.service";
+import { shuffleArray } from "@/lib/utils";
 
 export const metadata: Metadata = {
   title: "Showcase | Quiz Journey",
@@ -109,6 +110,7 @@ async function getQuizJourneyData() {
       const simulatedTime = Math.max(baseTime - index * 12 - 5, lowerBound);
 
       const correctAnswer = question.answers.find((answer) => answer.isCorrect);
+      const shuffledAnswers = shuffleArray(question.answers);
 
       return {
         id: question.id,
@@ -116,7 +118,7 @@ async function getQuizJourneyData() {
         imageUrl: question.questionImageUrl,
         timeLimit: baseTime,
         timeRemaining: simulatedTime,
-        answers: question.answers.map((answer) => ({
+        answers: shuffledAnswers.map((answer) => ({
           id: answer.id,
           text: answer.answerText,
           imageUrl: answer.answerImageUrl,

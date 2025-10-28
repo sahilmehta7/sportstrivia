@@ -41,6 +41,7 @@ export default async function ShowcaseTopicCardsPage() {
         subtitle="Discover curated collections of quizzes by theme. Tap a card to dive into the topic detail page"
         badge="TOPIC SHOWCASE"
         variant="vibrant"
+        breadcrumbs={[{ label: "Topics", href: "/showcase" }, { label: "Topic Cards" }]}
       >
         <section className="space-y-6">
           <h2 className="text-center text-sm font-semibold uppercase tracking-[0.4em] opacity-70">

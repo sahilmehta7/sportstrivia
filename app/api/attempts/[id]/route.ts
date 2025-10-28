@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireAuth } from "@/lib/auth-helpers";
-import { handleError, successResponse, NotFoundError } from "@/lib/errors";
+import { handleError, successResponse, NotFoundError, UnauthorizedError } from "@/lib/errors";
 
 // GET /api/attempts/[id] - Get attempt results
 export async function GET(
@@ -56,7 +56,7 @@ export async function GET(
 
     // Verify ownership
     if (attempt.userId !== user.id) {
-      throw new Error("Unauthorized");
+      throw new UnauthorizedError();
     }
 
     // Check if answers should be revealed

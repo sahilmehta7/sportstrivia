@@ -26,6 +26,8 @@ export default function AIQuizGeneratorPage() {
   // Form state
   const [selectedTopic, setSelectedTopic] = useState("");
   const [selectedTopicName, setSelectedTopicName] = useState("");
+  const [customTheme, setCustomTheme] = useState("");
+  const [sourceUrl, setSourceUrl] = useState("");
   const [sport, setSport] = useState("");
   const [difficulty, setDifficulty] = useState("MEDIUM");
   const [numQuestions, setNumQuestions] = useState("10");
@@ -58,10 +60,24 @@ export default function AIQuizGeneratorPage() {
   }, []);
 
   const handleGenerate = async () => {
-    if (!selectedTopic || !numQuestions) {
+    const trimmedTheme = customTheme.trim();
+    const trimmedSourceUrl = sourceUrl.trim();
+    const resolvedTopic = trimmedTheme || selectedTopicName.trim();
+    const questionCount = parseInt(numQuestions, 10);
+
+    if (!Number.isFinite(questionCount) || questionCount < 1) {
+      toast({
+        title: "Invalid number of questions",
+        description: "Enter a valid number of questions (1-50).",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!resolvedTopic && !trimmedSourceUrl) {
       toast({
         title: "Missing fields",
-        description: "Please select a topic and enter number of questions",
+        description: "Provide a topic/theme or a source URL to generate a quiz.",
         variant: "destructive",
       });
       return;
@@ -74,15 +90,31 @@ export default function AIQuizGeneratorPage() {
     setOpenAIConfigured(null);
 
     try {
+      const payload: Record<string, unknown> = {
+        difficulty,
+        numQuestions: questionCount,
+      };
+
+      if (resolvedTopic) {
+        payload.topic = resolvedTopic;
+      }
+
+      if (sport.trim()) {
+        payload.sport = sport.trim();
+      }
+
+      if (trimmedTheme) {
+        payload.customTitle = trimmedTheme;
+      }
+
+      if (trimmedSourceUrl) {
+        payload.sourceUrl = trimmedSourceUrl;
+      }
+
       const response = await fetch("/api/admin/ai/generate-quiz", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          topic: selectedTopicName,
-          sport: sport || undefined,
-          difficulty,
-          numQuestions: parseInt(numQuestions),
-        }),
+        body: JSON.stringify(payload),
       });
 
       const result = await response.json();
@@ -229,7 +261,35 @@ export default function AIQuizGeneratorPage() {
                 </SelectContent>
               </Select>
               <p className="text-xs text-muted-foreground">
-                All questions will be about this topic
+                All questions will be about this topic. Leave blank if you provide a custom theme or URL.
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="customTheme">Custom Theme / Title</Label>
+              <Input
+                id="customTheme"
+                value={customTheme}
+                onChange={(e) => setCustomTheme(e.target.value)}
+                placeholder="e.g. Legends of the Premier League"
+              />
+              <p className="text-xs text-muted-foreground">
+                Overrides the topic name above. Use this to set the quiz title or theme manually.
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="sourceUrl">Source URL</Label>
+              <Input
+                id="sourceUrl"
+                type="url"
+                inputMode="url"
+                value={sourceUrl}
+                onChange={(e) => setSourceUrl(e.target.value)}
+                placeholder="https://example.com/article"
+              />
+              <p className="text-xs text-muted-foreground">
+                Provide a link and the AI will pull context from the page content.
               </p>
             </div>
 
@@ -280,7 +340,11 @@ export default function AIQuizGeneratorPage() {
 
             <Button
               onClick={handleGenerate}
-              disabled={generating || !selectedTopic || !numQuestions}
+              disabled={
+                generating ||
+                !numQuestions ||
+                (!customTheme.trim() && !selectedTopicName.trim() && !sourceUrl.trim())
+              }
               className="w-full"
               size="lg"
             >
@@ -301,6 +365,10 @@ export default function AIQuizGeneratorPage() {
               <div className="text-xs text-muted-foreground p-3 bg-muted rounded space-y-2">
                 <div className="grid grid-cols-2 gap-2">
                   <div>
+                    <span className="block text-muted-foreground mb-1">Topic / Theme:</span>
+                    <span className="font-mono break-words">{metadata.topic}</span>
+                  </div>
+                  <div>
                     <span className="block text-muted-foreground mb-1">Model:</span>
                     <span className="font-mono">{metadata.model}</span>
                   </div>
@@ -308,7 +376,32 @@ export default function AIQuizGeneratorPage() {
                     <span className="block text-muted-foreground mb-1">Tokens used:</span>
                     <span className="font-mono">{metadata.tokensUsed}</span>
                   </div>
+                  {metadata.customTitle && (
+                    <div>
+                      <span className="block text-muted-foreground mb-1">Custom title:</span>
+                      <span className="font-mono break-words">{metadata.customTitle}</span>
+                    </div>
+                  )}
+                  {metadata.sourceTitle && (
+                    <div>
+                      <span className="block text-muted-foreground mb-1">Source title:</span>
+                      <span className="font-mono break-words">{metadata.sourceTitle}</span>
+                    </div>
+                  )}
                 </div>
+                {metadata.sourceUrl && (
+                  <div className="pt-2 border-t">
+                    <span className="block text-muted-foreground mb-1">Source URL:</span>
+                    <a
+                      href={metadata.sourceUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="font-mono break-all text-primary underline"
+                    >
+                      {metadata.sourceUrl}
+                    </a>
+                  </div>
+                )}
                 {metadata.promptPreview && (
                   <div className="pt-2 border-t">
                     <div className="font-semibold mb-1">Prompt Used (preview):</div>
@@ -357,11 +450,24 @@ export default function AIQuizGeneratorPage() {
                       <span className="text-muted-foreground">Duration:</span>{" "}
                       <span className="font-medium">{generatedQuiz.duration ? `${generatedQuiz.duration}s` : "Not set"}</span>
                     </div>
-                    <div>
-                      <span className="text-muted-foreground">Questions:</span>{" "}
-                      <span className="font-medium">{generatedQuiz.questions?.length || 0}</span>
-                    </div>
+                  <div>
+                    <span className="text-muted-foreground">Questions:</span>{" "}
+                    <span className="font-medium">{generatedQuiz.questions?.length || 0}</span>
                   </div>
+                  {metadata?.sourceUrl && (
+                    <div className="col-span-2">
+                      <span className="text-muted-foreground">Source:</span>{" "}
+                      <a
+                        href={metadata.sourceUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="font-medium text-primary underline break-all"
+                      >
+                        {metadata.sourceTitle || metadata.sourceUrl}
+                      </a>
+                    </div>
+                  )}
+                </div>
 
                   <Separator />
 
@@ -493,4 +599,3 @@ export default function AIQuizGeneratorPage() {
     </div>
   );
 }
-

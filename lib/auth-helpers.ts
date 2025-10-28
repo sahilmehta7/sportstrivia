@@ -1,5 +1,6 @@
-import { auth } from "./auth";
+import { auth, signIn } from "./auth";
 import { UserRole } from "@prisma/client";
+import { UnauthorizedError, ForbiddenError } from "./errors";
 
 export async function getCurrentUser() {
   const session = await auth();
@@ -9,7 +10,7 @@ export async function getCurrentUser() {
 export async function requireAuth() {
   const user = await getCurrentUser();
   if (!user) {
-    throw new Error("Unauthorized");
+    throw new UnauthorizedError();
   }
   return user;
 }
@@ -17,7 +18,7 @@ export async function requireAuth() {
 export async function requireAdmin() {
   const user = await requireAuth();
   if (user.role !== UserRole.ADMIN) {
-    throw new Error("Forbidden: Admin access required");
+    throw new ForbiddenError("Admin access required");
   }
   return user;
 }
@@ -26,4 +27,3 @@ export async function isAdmin() {
   const user = await getCurrentUser();
   return user?.role === UserRole.ADMIN;
 }
-

@@ -7,12 +7,24 @@ import { getAIQuizPrompt, getAIModel } from "@/lib/services/settings.service";
 // Increase route timeout for AI generation (can take 30-60 seconds for large quizzes)
 export const maxDuration = 60; // seconds
 
-const generateQuizSchema = z.object({
-  topic: z.string().min(1),
-  sport: z.string().optional(),
-  difficulty: z.enum(["EASY", "MEDIUM", "HARD"]),
-  numQuestions: z.number().int().min(1).max(50),
-});
+const generateQuizSchema = z
+  .object({
+    topic: z.string().min(1).optional(),
+    customTitle: z.string().min(1).optional(),
+    sport: z.string().optional(),
+    difficulty: z.enum(["EASY", "MEDIUM", "HARD"]),
+    numQuestions: z.number().int().min(1).max(50),
+    sourceUrl: z.string().url().optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (!data.topic && !data.customTitle && !data.sourceUrl) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["topic"],
+        message: "Provide a topic, custom title, or source URL for quiz generation.",
+      });
+    }
+  });
 
 export async function POST(request: NextRequest) {
   try {
@@ -26,13 +38,31 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { topic, sport, difficulty, numQuestions } = generateQuizSchema.parse(body);
+    const { topic, customTitle, sport, difficulty, numQuestions, sourceUrl } =
+      generateQuizSchema.parse(body);
+
+    let effectiveTopic = (customTitle || topic || "").trim();
+
+    let sourceMaterial: SourceMaterial | null = null;
+    if (sourceUrl) {
+      sourceMaterial = await fetchSourceMaterial(sourceUrl);
+      if (!effectiveTopic && sourceMaterial?.derivedTopic) {
+        effectiveTopic = sourceMaterial.derivedTopic;
+      }
+    }
+
+    if (!effectiveTopic) {
+      throw new BadRequestError(
+        "Unable to determine a topic. Please provide a topic, custom title, or a descriptive source URL."
+      );
+    }
 
     // Determine sport from topic or use provided
-    const quizSport = sport || determineSportFromTopic(topic);
+    const derivedSportContext = `${effectiveTopic} ${sourceMaterial?.contentSnippet ?? ""}`;
+    const quizSport = sport || determineSportFromTopic(derivedSportContext);
 
     // Create slugified version of topic
-    const slugifiedTopic = topic
+    const slugifiedTopic = effectiveTopic
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/^-|-$/g, "");
@@ -46,7 +76,18 @@ export async function POST(request: NextRequest) {
     console.log("[AI Generator] Prompt source:", promptTemplate.substring(0, 100) + "...");
     
     // Build the prompt with placeholders replaced
-    const prompt = buildPrompt(promptTemplate, topic, quizSport, difficulty, numQuestions, slugifiedTopic);
+    const prompt = buildPrompt(
+      promptTemplate,
+      effectiveTopic,
+      quizSport,
+      difficulty,
+      numQuestions,
+      slugifiedTopic,
+      {
+        customTitle: customTitle?.trim(),
+        sourceMaterial,
+      }
+    );
 
     // Determine if model uses new parameter naming
     // GPT-5 and o1 series use max_completion_tokens instead of max_tokens
@@ -200,13 +241,20 @@ export async function POST(request: NextRequest) {
     return successResponse({
       quiz: generatedQuiz,
       metadata: {
-        topic,
+        topic: effectiveTopic,
         sport: quizSport,
         difficulty,
         numQuestions,
         model: aiModel,
         tokensUsed: completion.usage?.total_tokens || 0,
-        promptPreview: prompt.substring(0, 200) + "...", // First 200 chars of actual prompt used
+        promptPreview: `${prompt.substring(0, 200)}...`,
+        ...(customTitle ? { customTitle } : {}),
+        ...(sourceMaterial
+          ? {
+              sourceUrl: sourceMaterial.url,
+              sourceTitle: sourceMaterial.title,
+            }
+          : {}),
       },
     });
   } catch (error) {
@@ -220,10 +268,14 @@ function buildPrompt(
   sport: string,
   difficulty: string,
   numQuestions: number,
-  slugifiedTopic: string
+  slugifiedTopic: string,
+  options?: {
+    customTitle?: string | null;
+    sourceMaterial?: SourceMaterial | null;
+  }
 ): string {
   // Replace all placeholders in the template
-  return template
+  let prompt = template
     .replace(/\{\{TOPIC\}\}/g, topic)
     .replace(/\{\{TOPIC_LOWER\}\}/g, topic.toLowerCase())
     .replace(/\{\{SLUGIFIED_TOPIC\}\}/g, slugifiedTopic)
@@ -231,6 +283,19 @@ function buildPrompt(
     .replace(/\{\{DIFFICULTY\}\}/g, difficulty)
     .replace(/\{\{NUM_QUESTIONS\}\}/g, numQuestions.toString())
     .replace(/\{\{DURATION\}\}/g, (numQuestions * 60).toString());
+
+  if (options?.customTitle) {
+    prompt += `\n\nSet the quiz "title" field to "${options.customTitle}" and keep the overall theme aligned with this title.`;
+  }
+
+  if (options?.sourceMaterial) {
+    const { url, title, contentSnippet } = options.sourceMaterial;
+    prompt += `\n\nIncorporate the key facts from the following source when writing questions. Focus on accuracy and do not invent details not supported by the source.\nSource URL: ${url}${
+      title ? `\nSource Title: ${title}` : ""
+    }\nSource Content:\n"""\n${contentSnippet}\n"""`;
+  }
+
+  return prompt;
 }
 
 // Extract JSON from text that might have markdown wrappers or extra content
@@ -278,3 +343,87 @@ function determineSportFromTopic(topic: string): string {
   return "General";
 }
 
+interface SourceMaterial {
+  url: string;
+  title: string | null;
+  contentSnippet: string;
+  derivedTopic: string | null;
+}
+
+async function fetchSourceMaterial(sourceUrl: string): Promise<SourceMaterial | null> {
+  try {
+    const parsedUrl = new URL(sourceUrl);
+    const response = await fetch(parsedUrl.toString(), {
+      method: "GET",
+      headers: {
+        "User-Agent": "SportsTriviaAI/1.0 (+https://sportstrivia.ai)",
+        Accept: "text/html,application/xhtml+xml",
+      },
+      cache: "no-store",
+    });
+
+    if (!response.ok) {
+      console.warn("[AI Generator] Failed to fetch source URL:", sourceUrl, response.status);
+      return {
+        url: parsedUrl.toString(),
+        title: null,
+        contentSnippet: "",
+        derivedTopic: parsedUrl.hostname.replace(/^www\./, ""),
+      };
+    }
+
+    const rawContent = await response.text();
+    const titleMatch = rawContent.match(/<title[^>]*>([^<]*)<\/title>/i);
+    const title = titleMatch ? decodeHtmlEntities(titleMatch[1].trim()) : null;
+    const textContent = stripHtml(rawContent);
+    const contentSnippet = truncateText(textContent, 4000);
+    const derivedTopic = title || parsedUrl.hostname.replace(/^www\./, "");
+
+    return {
+      url: parsedUrl.toString(),
+      title,
+      contentSnippet,
+      derivedTopic,
+    };
+  } catch (error) {
+    console.warn("[AI Generator] Error fetching source URL:", sourceUrl, error);
+    try {
+      const fallbackUrl = new URL(sourceUrl);
+      return {
+        url: fallbackUrl.toString(),
+        title: null,
+        contentSnippet: "",
+        derivedTopic: fallbackUrl.hostname.replace(/^www\./, ""),
+      };
+    } catch {
+      return null;
+    }
+  }
+}
+
+function stripHtml(html: string): string {
+  return html
+    .replace(/<script[\s\S]*?<\/script>/gi, " ")
+    .replace(/<style[\s\S]*?<\/style>/gi, " ")
+    .replace(/<!--[\s\S]*?-->/g, " ")
+    .replace(/<\/?[^>]+(>|$)/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function truncateText(text: string, limit: number): string {
+  if (text.length <= limit) {
+    return text;
+  }
+  return `${text.slice(0, limit)}...`;
+}
+
+function decodeHtmlEntities(value: string): string {
+  return value
+    .replace(/&amp;/g, "&")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&nbsp;/g, " ");
+}

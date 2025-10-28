@@ -10,7 +10,7 @@ import {
   challengeInclude,
 } from "@/lib/dto/challenge-filters.dto";
 import { calculatePagination, buildPaginationResult } from "@/lib/dto/quiz-filters.dto";
-import { ChallengeStatus, FriendStatus } from "@prisma/client";
+import { ChallengeStatus, FriendStatus, Prisma } from "@prisma/client";
 import { createNotification } from "@/lib/services/notification.service";
 
 const createChallengeSchema = z.object({
@@ -56,12 +56,24 @@ export async function GET(request: NextRequest) {
       where = buildReceivedChallengesWhereClause(user.id, filters);
     }
 
+    const primaryOrder: Prisma.ChallengeOrderByWithRelationInput =
+      filters.sortBy === "expiresAt"
+        ? { expiresAt: filters.sortOrder }
+        : { createdAt: filters.sortOrder };
+
+    const secondaryOrder =
+      filters.sortBy === "expiresAt"
+        ? { createdAt: filters.sortOrder }
+        : undefined;
+
+    const orderBy = secondaryOrder ? [primaryOrder, secondaryOrder] : [primaryOrder];
+
     const [challenges, total] = await Promise.all([
       prisma.challenge.findMany({
         where,
         skip,
         take,
-        orderBy: { createdAt: filters.sortOrder },
+        orderBy,
         include: challengeInclude,
       }),
       prisma.challenge.count({ where }),
@@ -166,4 +178,3 @@ export async function POST(request: NextRequest) {
     return handleError(error);
   }
 }
-

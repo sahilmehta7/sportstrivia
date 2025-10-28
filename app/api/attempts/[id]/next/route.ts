@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireAuth } from "@/lib/auth-helpers";
 import { handleError, successResponse, NotFoundError, BadRequestError } from "@/lib/errors";
+import { shuffleArray } from "@/lib/utils";
 
 export async function GET(
   request: NextRequest,
@@ -69,9 +70,7 @@ export async function GET(
       answerAudioUrl: answer.answerAudioUrl,
     }));
 
-    const randomizedAnswers = question.randomizeAnswerOrder
-      ? [...answers].sort(() => Math.random() - 0.5)
-      : answers;
+    const randomizedAnswers = shuffleArray(answers);
 
     const correctAnswer = question.answers.find((answer) => answer.isCorrect);
 

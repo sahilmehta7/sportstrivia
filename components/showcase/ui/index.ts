@@ -30,3 +30,5 @@ export * from "./DidYouKnowPanel";
 export * from "./NewsletterSignup";
 export * from "./FaqAccordion";
 export * from "./TopNav";
+export * from "./Pagination";
+export * from "./GlassButton";

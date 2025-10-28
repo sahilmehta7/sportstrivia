@@ -58,6 +58,8 @@ async function getFilterGroups(): Promise<ShowcaseFilterGroup[]> {
   ];
 }
 
+export const dynamic = 'force-dynamic';
+
 export default async function ShowcaseUiPlaygroundPage() {
   const filterGroups = await getFilterGroups();
 

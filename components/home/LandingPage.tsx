@@ -44,58 +44,79 @@ export function LandingPage({ featuredQuizzes, topTopics, stats }: LandingPagePr
       </div>
 
       {/* Featured Quizzes with vibrant background */}
-      <div className={cn(
-        "relative",
-        getBackgroundVariant("vibrant", theme)
-      )}>
+      <div className={cn("relative", getBackgroundVariant("vibrant", theme))}>
+        {/* Animated blur circles */}
+        <div className="absolute inset-0 -z-10 opacity-70">
+          <div className={cn(`absolute -left-20 top-24 h-72 w-72 rounded-full blur-[120px]`, blurCircles.circle1)} />
+          <div className={cn(`absolute right-12 top-12 h-64 w-64 rounded-full blur-[100px]`, blurCircles.circle2)} />
+          <div className={cn(`absolute bottom-8 left-1/2 h-56 w-56 -translate-x-1/2 rounded-full blur-[90px]`, blurCircles.circle3)} />
+        </div>
         <FeaturedQuizzes quizzes={featuredQuizzes} />
       </div>
 
       {/* Popular Topics with cool background */}
-      <div className={cn(
-        "relative",
-        getBackgroundVariant("cool", theme)
-      )}>
+      <div className={cn("relative", getBackgroundVariant("cool", theme))}>
+        {/* Animated blur circles */}
+        <div className="absolute inset-0 -z-10 opacity-70">
+          <div className={cn(`absolute -left-20 top-24 h-72 w-72 rounded-full blur-[120px]`, blurCircles.circle1)} />
+          <div className={cn(`absolute right-12 top-12 h-64 w-64 rounded-full blur-[100px]`, blurCircles.circle2)} />
+          <div className={cn(`absolute bottom-8 left-1/2 h-56 w-56 -translate-x-1/2 rounded-full blur-[90px]`, blurCircles.circle3)} />
+        </div>
         <PopularTopics topics={topTopics} />
       </div>
 
       {/* Social Proof with default background */}
-      <div className={cn(
-        "relative",
-        getBackgroundVariant("default", theme)
-      )}>
+      <div className={cn("relative", getBackgroundVariant("default", theme))}>
+        {/* Animated blur circles */}
+        <div className="absolute inset-0 -z-10 opacity-70">
+          <div className={cn(`absolute -left-20 top-24 h-72 w-72 rounded-full blur-[120px]`, blurCircles.circle1)} />
+          <div className={cn(`absolute right-12 top-12 h-64 w-64 rounded-full blur-[100px]`, blurCircles.circle2)} />
+          <div className={cn(`absolute bottom-8 left-1/2 h-56 w-56 -translate-x-1/2 rounded-full blur-[90px]`, blurCircles.circle3)} />
+        </div>
         <SocialProof stats={stats} />
       </div>
 
       {/* How It Works with dark background */}
-      <div className={cn(
-        "relative",
-        getBackgroundVariant("dark", theme)
-      )}>
+      <div className={cn("relative", getBackgroundVariant("dark", theme))}>
+        {/* Animated blur circles */}
+        <div className="absolute inset-0 -z-10 opacity-70">
+          <div className={cn(`absolute -left-20 top-24 h-72 w-72 rounded-full blur-[120px]`, blurCircles.circle1)} />
+          <div className={cn(`absolute right-12 top-12 h-64 w-64 rounded-full blur-[100px]`, blurCircles.circle2)} />
+          <div className={cn(`absolute bottom-8 left-1/2 h-56 w-56 -translate-x-1/2 rounded-full blur-[90px]`, blurCircles.circle3)} />
+        </div>
         <HowItWorks />
       </div>
 
       {/* Features with vibrant background */}
-      <div className={cn(
-        "relative",
-        getBackgroundVariant("vibrant", theme)
-      )}>
+      <div className={cn("relative", getBackgroundVariant("vibrant", theme))}>
+        {/* Animated blur circles */}
+        <div className="absolute inset-0 -z-10 opacity-70">
+          <div className={cn(`absolute -left-20 top-24 h-72 w-72 rounded-full blur-[120px]`, blurCircles.circle1)} />
+          <div className={cn(`absolute right-12 top-12 h-64 w-64 rounded-full blur-[100px]`, blurCircles.circle2)} />
+          <div className={cn(`absolute bottom-8 left-1/2 h-56 w-56 -translate-x-1/2 rounded-full blur-[90px]`, blurCircles.circle3)} />
+        </div>
         <Features />
       </div>
 
       {/* Testimonials with cool background */}
-      <div className={cn(
-        "relative",
-        getBackgroundVariant("cool", theme)
-      )}>
+      <div className={cn("relative", getBackgroundVariant("cool", theme))}>
+        {/* Animated blur circles */}
+        <div className="absolute inset-0 -z-10 opacity-70">
+          <div className={cn(`absolute -left-20 top-24 h-72 w-72 rounded-full blur-[120px]`, blurCircles.circle1)} />
+          <div className={cn(`absolute right-12 top-12 h-64 w-64 rounded-full blur-[100px]`, blurCircles.circle2)} />
+          <div className={cn(`absolute bottom-8 left-1/2 h-56 w-56 -translate-x-1/2 rounded-full blur-[90px]`, blurCircles.circle3)} />
+        </div>
         <Testimonials />
       </div>
 
       {/* Final CTA with default background */}
-      <div className={cn(
-        "relative",
-        getBackgroundVariant("default", theme)
-      )}>
+      <div className={cn("relative", getBackgroundVariant("default", theme))}>
+        {/* Animated blur circles */}
+        <div className="absolute inset-0 -z-10 opacity-70">
+          <div className={cn(`absolute -left-20 top-24 h-72 w-72 rounded-full blur-[120px]`, blurCircles.circle1)} />
+          <div className={cn(`absolute right-12 top-12 h-64 w-64 rounded-full blur-[100px]`, blurCircles.circle2)} />
+          <div className={cn(`absolute bottom-8 left-1/2 h-56 w-56 -translate-x-1/2 rounded-full blur-[90px]`, blurCircles.circle3)} />
+        </div>
         <FinalCTA />
       </div>
     </div>

@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { UserAvatar } from "@/components/shared/UserAvatar";
 import { NotificationsDropdown } from "@/components/shared/NotificationsDropdown";
-import { Bell, User, LogOut, Settings, Users, Menu, X, Moon, Sun } from "lucide-react";
+import { Bell, User, LogOut, Settings, Menu, X, Moon, Sun, Shuffle, Trophy } from "lucide-react";
 import { useTheme } from "next-themes";
 import { signOut, useSession } from "next-auth/react";
 import { cn } from "@/lib/utils";
@@ -61,9 +61,8 @@ export function MainNavigation() {
 
   const navLinks = [
     { href: "/quizzes", label: "Quizzes" },
+    { href: "/topics", label: "Discover" },
     { href: "/leaderboard", label: "Leaderboard" },
-    { href: "/challenges", label: "Challenges" },
-    { href: "/friends", label: "Friends" },
   ];
 
   const isActive = (href: string) => pathname.startsWith(href);
@@ -118,6 +117,18 @@ export function MainNavigation() {
 
           {/* Right Section */}
           <div className="flex items-center gap-2">
+            {/* Random Quiz Button */}
+            <Link href="/random-quiz">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-9 w-9 rounded-full"
+                title="Random Quiz"
+              >
+                <Shuffle className="h-4 w-4" />
+              </Button>
+            </Link>
+
             {/* Notifications */}
             <NotificationsDropdown
               unreadCount={unreadCount}
@@ -178,15 +189,15 @@ export function MainNavigation() {
                     </Link>
 
                     <Link
-                      href="/friends"
+                      href="/challenges"
                       className={cn(
                         "flex items-center gap-3 rounded-xl px-3 py-2 text-sm transition",
                         "hover:bg-accent"
                       )}
                       onClick={() => setAvatarOpen(false)}
                     >
-                      <Users className="h-4 w-4" />
-                      <span>Friends</span>
+                      <Trophy className="h-4 w-4" />
+                      <span>Challenges</span>
                     </Link>
 
                     {session.user.role === "ADMIN" && (
@@ -268,6 +279,16 @@ export function MainNavigation() {
                 </Link>
               ))}
 
+              {/* Random Quiz Link */}
+              <Link
+                href="/random-quiz"
+                className="flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold uppercase tracking-[0.25em] transition hover:bg-accent"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                <Shuffle className="h-4 w-4" />
+                <span>Random Quiz</span>
+              </Link>
+
               {/* User Section */}
               <div className="border-t pt-3">
                 <div className="px-3 py-2 mb-2">
@@ -285,12 +306,12 @@ export function MainNavigation() {
                 </Link>
 
                 <Link
-                  href="/friends"
+                  href="/challenges"
                   className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm transition hover:bg-accent"
                   onClick={() => setMobileMenuOpen(false)}
                 >
-                  <Users className="h-4 w-4" />
-                  <span>Friends</span>
+                  <Trophy className="h-4 w-4" />
+                  <span>Challenges</span>
                 </Link>
 
                 {session.user.role === "ADMIN" && (

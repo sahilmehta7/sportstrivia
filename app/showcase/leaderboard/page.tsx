@@ -57,6 +57,7 @@ export default async function ShowcaseLeaderboardPage() {
         subtitle="Global leaderboards with daily and all-time rankings"
         badge="LEADERBOARD SHOWCASE"
         variant="cool"
+        breadcrumbs={[{ label: "Competition", href: "/showcase" }, { label: "Leaderboard" }]}
       >
         <ShowcaseLeaderboard title="Leaderboard" datasets={datasets} initialRange={daily.length > 0 ? "daily" : "all-time"} />
       </ShowcaseLayout>

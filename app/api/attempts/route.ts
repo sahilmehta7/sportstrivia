@@ -5,20 +5,12 @@ import { handleError, successResponse, NotFoundError, BadRequestError } from "@/
 import { z } from "zod";
 import { getTopicIdsWithDescendants } from "@/lib/services/topic.service";
 import { checkAttemptLimit } from "@/lib/services/attempt-limit.service";
+import { shuffleArray } from "@/lib/utils";
 
 const startAttemptSchema = z.object({
   quizId: z.string().cuid(),
   isPracticeMode: z.boolean().optional().default(false),
 });
-
-function shuffleArray<T>(items: T[]): T[] {
-  const result = [...items];
-  for (let i = result.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [result[i], result[j]] = [result[j], result[i]];
-  }
-  return result;
-}
 
 // POST /api/attempts - Start a new quiz attempt
 export async function POST(request: NextRequest) {
@@ -89,14 +81,10 @@ export async function POST(request: NextRequest) {
       // Use all questions in order
       selectedQuestionIds = quiz.questionPool.map((qp) => qp.questionId);
     } else if (quiz.questionSelectionMode === "TOPIC_RANDOM") {
-      // Select random questions from configured topics
-      // Use Promise.all to fetch questions from all topics in parallel
       const questionsByTopic = await Promise.all(
         quiz.topicConfigs.map(async (config) => {
-          // Get all descendant topics using cached service
           const topicIds = await getTopicIdsWithDescendants(config.topicId);
 
-          // Fetch ALL matching questions (not just take N)
           const allQuestions = await prisma.question.findMany({
             where: {
               topicId: { in: topicIds },
@@ -105,29 +93,23 @@ export async function POST(request: NextRequest) {
             select: { id: true },
           });
 
-          // Shuffle and select the required number
-          const shuffled = allQuestions.sort(() => Math.random() - 0.5);
-          return shuffled.slice(0, config.questionCount);
+          return shuffleArray(allQuestions).slice(0, config.questionCount);
         })
       );
 
-      // Flatten the results
-      selectedQuestionIds = questionsByTopic.flat().map((q) => q.id);
+      selectedQuestionIds = questionsByTopic.flat().map((question) => question.id);
     } else if (quiz.questionSelectionMode === "POOL_RANDOM") {
-      // Select random questions from quiz pool
       const poolSize = quiz.questionPool.length;
       const selectCount = quiz.questionCount || poolSize;
 
-      // Shuffle and select
-      const shuffled = quiz.questionPool.sort(() => Math.random() - 0.5);
-      selectedQuestionIds = shuffled
+      selectedQuestionIds = shuffleArray(quiz.questionPool)
         .slice(0, selectCount)
-        .map((qp) => qp.questionId);
+        .map((poolItem) => poolItem.questionId);
     }
 
     // Randomize question order if configured
     if (quiz.randomizeQuestionOrder) {
-      selectedQuestionIds = selectedQuestionIds.sort(() => Math.random() - 0.5);
+      selectedQuestionIds = shuffleArray(selectedQuestionIds);
     }
 
     if (selectedQuestionIds.length === 0) {
@@ -201,9 +183,7 @@ export async function POST(request: NextRequest) {
           answerAudioUrl: answer.answerAudioUrl,
         }));
 
-        const randomizedAnswers = question.randomizeAnswerOrder
-          ? shuffleArray(answers)
-          : answers;
+        const randomizedAnswers = shuffleArray(answers);
 
         const correctAnswer = question.answers.find((answer) => answer.isCorrect);
 

@@ -75,6 +75,7 @@ export default async function ShowcaseFeaturedQuizCardPage() {
       subtitle="A hero-style glassmorphism card that spotlights your marquee quiz"
       badge="FEATURED CARD"
       variant="vibrant"
+      breadcrumbs={[{ label: "Quiz Cards", href: "/showcase" }, { label: "Featured Quiz Card" }]}
     >
       <div className="mx-auto flex w-full max-w-5xl justify-center">
         <ShowcaseFeaturedQuizCard
@@ -87,6 +88,7 @@ export default async function ShowcaseFeaturedQuizCardPage() {
           ratingLabel={ratingLabel}
           coverImageUrl={quiz.descriptionImageUrl ?? undefined}
           accent={accent}
+          ctaHref={`/quizzes/${quiz.slug ?? "demo-cricket-venue"}`}
         />
       </div>
     </ShowcaseLayout>

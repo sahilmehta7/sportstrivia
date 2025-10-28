@@ -138,6 +138,15 @@ export default function ShowcaseIndexPage() {
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-12">
+        {/* Breadcrumbs */}
+        <div className="mb-8">
+          <nav className="flex items-center gap-2 text-sm text-muted-foreground">
+            <a href="/" className="hover:text-foreground transition-colors">Home</a>
+            <span>/</span>
+            <span>Showcase</span>
+          </nav>
+        </div>
+        
         {/* Header */}
         <div className="mb-12 text-center">
           <Badge className="mb-4" variant="outline">

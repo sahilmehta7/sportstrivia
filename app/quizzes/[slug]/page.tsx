@@ -180,8 +180,35 @@ export default async function QuizDetailPage({
     notFound();
   }
 
-  // Fetch reviews and unique users count in parallel (after quiz is confirmed to exist)
-  const [reviews, uniqueUsersCount] = await Promise.all([
+  const now = new Date();
+  const userId = session?.user?.id ?? null;
+  const isLoggedIn = Boolean(userId);
+
+  const attemptLimitStatusPromise =
+    userId && quiz.maxAttemptsPerUser
+      ? getAttemptLimitStatus(prisma, {
+          userId,
+          quiz: {
+            id: quiz.id,
+            maxAttemptsPerUser: quiz.maxAttemptsPerUser,
+            attemptResetPeriod: quiz.attemptResetPeriod,
+          },
+          referenceDate: now,
+        })
+      : Promise.resolve(null);
+
+  const latestCompletedAttemptPromise = userId
+    ? prisma.quizAttempt.findFirst({
+        where: {
+          userId,
+          quizId: quiz.id,
+          completedAt: { not: null },
+        },
+        orderBy: { completedAt: "desc" },
+      })
+    : Promise.resolve(null);
+
+  const [reviews, uniqueUsersCount, attemptLimitStatus, latestCompletedAttempt] = await Promise.all([
     prisma.quizReview.findMany({
       where: { quizId: quiz.id },
       include: {
@@ -197,42 +224,13 @@ export default async function QuizDetailPage({
       take: 10,
     }),
     prisma.quizAttempt.groupBy({
-      by: ['userId'],
+      by: ["userId"],
       where: { quizId: quiz.id },
-      _count: true,
-    }).then(results => results.length),
+      _count: { userId: true },
+    }).then((groups) => groups.length),
+    attemptLimitStatusPromise,
+    latestCompletedAttemptPromise,
   ]);
-
-  const isLoggedIn = Boolean(session?.user);
-  const now = new Date();
-
-  const userId = session?.user?.id ?? null;
-  const attemptLimitStatus = userId && quiz.maxAttemptsPerUser
-    ? await getAttemptLimitStatus(prisma, {
-        userId,
-        quiz: {
-          id: quiz.id,
-          maxAttemptsPerUser: quiz.maxAttemptsPerUser,
-          attemptResetPeriod: quiz.attemptResetPeriod,
-        },
-        referenceDate: now,
-      })
-    : null;
-
-  // Check if user has completed attempts for this quiz
-  const completedAttempts = userId
-    ? await prisma.quizAttempt.findMany({
-        where: {
-          userId,
-          quizId: quiz.id,
-          completedAt: { not: null },
-        },
-        orderBy: { completedAt: 'desc' },
-        take: 1,
-      })
-    : [];
-
-  const latestCompletedAttempt = completedAttempts.length > 0 ? completedAttempts[0] : null;
 
   const attemptLimitDetails = quiz.maxAttemptsPerUser
     ? {

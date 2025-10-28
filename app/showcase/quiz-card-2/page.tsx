@@ -109,6 +109,7 @@ export default async function ShowcaseQuizCard2Page() {
       subtitle="A compact creator-focused layout with category, difficulty, and coach details"
       badge="QUIZ CARD 2"
       variant="vibrant"
+      breadcrumbs={[{ label: "Quiz Cards", href: "/showcase" }, { label: "Quiz Card Variant" }]}
     >
       <div className="mx-auto flex w-full max-w-4xl flex-col gap-10">
         <div className="rounded-[2.5rem] border border-white/30 bg-white/80 p-8 shadow-[0_30px_90px_-40px_rgba(249,115,22,0.4)] backdrop-blur-xl">
