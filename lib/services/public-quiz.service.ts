@@ -274,7 +274,12 @@ export async function getDailyRecurringQuizzes(
   // Fetch daily recurring quizzes
   const dailyQuizzes = await prisma.quiz.findMany({
     where: {
-      recurringType: "DAILY",
+      // Backward compatibility: include quizzes that are marked daily either via
+      // the new recurringType or the older attemptResetPeriod flag
+      OR: [
+        { recurringType: "DAILY" },
+        { attemptResetPeriod: "DAILY" },
+      ],
       isPublished: true,
       status: "PUBLISHED",
     },
