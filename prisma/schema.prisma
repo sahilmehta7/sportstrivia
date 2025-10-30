@@ -39,6 +39,7 @@ model User {
   badges             UserBadge[]
   searchQueries      UserSearchQuery[]
   topicStats         UserTopicStats[]
+  completionAwards   QuizCompletionBonusAward[]
 
   @@index([email])
 }
@@ -114,6 +115,7 @@ model Quiz {
   duration               Int?
   timePerQuestion        Int?
   passingScore           Int                   @default(70)
+  completionBonus        Int                   @default(0)
   questionSelectionMode  QuestionSelectionMode @default(FIXED)
   questionCount          Int?
   randomizeQuestionOrder Boolean               @default(false)
@@ -147,12 +149,26 @@ model Quiz {
   reviews                QuizReview[]
   tags                   QuizTagRelation[]
   topicConfigs           QuizTopicConfig[]
+  completionAwards       QuizCompletionBonusAward[]
 
   @@index([slug])
   @@index([sport])
   @@index([difficulty])
   @@index([status])
   @@index([isPublished])
+}
+
+model QuizCompletionBonusAward {
+  id        String   @id @default(cuid())
+  quizId    String
+  userId    String
+  awardedAt DateTime @default(now())
+  quiz      Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([quizId, userId])
+  @@index([quizId])
+  @@index([userId])
 }
 
 model QuizTag {

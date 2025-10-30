@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { Bell, Menu, X, User, Moon, Sun } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
-import { Button } from "@/components/ui/button";
+import { ShowcaseIconButton } from "@/components/showcase/ui/buttons/IconButton";
 import { cn } from "@/lib/utils";
 import { useShowcaseTheme } from "@/components/showcase/ShowcaseThemeProvider";
 import { getSurfaceStyles, getTextColor } from "@/lib/showcase-theme";
@@ -72,22 +72,23 @@ export function ShowcaseTopNav({ links = defaultLinks, onNotificationsClick }: S
       </nav>
 
       <div className="flex items-center gap-2">
-        <Button variant="ghost" size="icon" className="hidden h-9 w-9 rounded-full lg:inline-flex" onClick={onNotificationsClick}>
+        <ShowcaseIconButton variant="ghost" size="sm" className="hidden lg:inline-flex" ariaLabel="Notifications" onClick={onNotificationsClick}>
           <Bell className="h-4 w-4" />
-        </Button>
+        </ShowcaseIconButton>
         
         {/* Avatar Dropdown */}
         <div className="relative" ref={avatarRef}>
-          <Button
+          <ShowcaseIconButton
             variant="ghost"
-            size="icon"
-            className="h-9 w-9 rounded-full hidden lg:flex"
+            size="sm"
+            className="hidden lg:flex"
+            ariaLabel="Account menu"
             onClick={() => setAvatarOpen(!avatarOpen)}
           >
             <div className="h-8 w-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center">
               <User className="h-4 w-4 text-white" />
             </div>
-          </Button>
+          </ShowcaseIconButton>
           
           {avatarOpen && (
             <div className={cn(
@@ -133,14 +134,15 @@ export function ShowcaseTopNav({ links = defaultLinks, onNotificationsClick }: S
           )}
         </div>
         
-        <Button
+        <ShowcaseIconButton
           variant="ghost"
-          size="icon"
-          className="ml-1 h-9 w-9 rounded-full lg:hidden"
+          size="md"
+          className="ml-1 lg:hidden"
+          ariaLabel="Toggle menu"
           onClick={() => setOpen((prev) => !prev)}
         >
           {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-        </Button>
+        </ShowcaseIconButton>
       </div>
 
       {open && (

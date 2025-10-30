@@ -25,6 +25,7 @@ export const quizSchema = z.object({
   duration: z.number().int().min(1).nullish(),
   timePerQuestion: z.number().int().min(1).nullish(),
   passingScore: z.number().int().min(0).max(100).optional().default(70),
+  completionBonus: z.number().int().min(0).optional().default(0),
   maxAttemptsPerUser: z
     .number()
     .int()

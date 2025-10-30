@@ -121,6 +121,16 @@ export async function POST(request: NextRequest) {
     
     const validatedData = quizSchema.parse(cleanedBody);
 
+    // If completionBonus not provided or zero, derive a default = 100 x question count
+    // For new quizzes, we only have questionCount (POOL_RANDOM) or explicit; otherwise leave 0
+    let completionBonus = validatedData.completionBonus ?? 0;
+    if (!completionBonus || completionBonus <= 0) {
+      const questionCount = typeof validatedData.questionCount === 'number' ? validatedData.questionCount : undefined;
+      if (questionCount && questionCount > 0) {
+        completionBonus = questionCount * 100;
+      }
+    }
+
     // Generate unique slug if not provided
     const slug = validatedData.slug
       ? await generateUniqueSlug(validatedData.slug, "quiz")
@@ -131,6 +141,11 @@ export async function POST(request: NextRequest) {
       ...validatedData,
       slug,
     };
+
+  // Apply derived completionBonus if computed
+  if (completionBonus && completionBonus > 0) {
+    quizData.completionBonus = completionBonus;
+  }
 
     if (validatedData.startTime) {
       quizData.startTime = new Date(validatedData.startTime);

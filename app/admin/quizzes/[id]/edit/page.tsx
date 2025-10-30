@@ -102,6 +102,7 @@ export default function EditQuizPage({ params }: EditQuizPageProps) {
     duration: "",
     timePerQuestion: "",
     passingScore: "70",
+    completionBonus: "0",
     questionSelectionMode: "FIXED",
     questionCount: "",
     randomizeQuestionOrder: false,
@@ -170,6 +171,7 @@ export default function EditQuizPage({ params }: EditQuizPageProps) {
           duration: quiz.duration?.toString() || "",
           timePerQuestion: quiz.timePerQuestion?.toString() || "",
           passingScore: quiz.passingScore?.toString() || "70",
+          completionBonus: (quiz.completionBonus ?? 0).toString(),
           questionSelectionMode: quiz.questionSelectionMode || "FIXED",
           questionCount: quiz.questionCount?.toString() || "",
           randomizeQuestionOrder: quiz.randomizeQuestionOrder || false,
@@ -303,6 +305,7 @@ export default function EditQuizPage({ params }: EditQuizPageProps) {
         duration: formData.duration ? parseInt(formData.duration) : null,
         timePerQuestion: formData.timePerQuestion ? parseInt(formData.timePerQuestion) : null,
         passingScore: parseInt(formData.passingScore),
+        completionBonus: parseInt(formData.completionBonus),
         questionCount: formData.questionCount ? parseInt(formData.questionCount) : null,
         penaltyPercentage: parseInt(formData.penaltyPercentage),
         bonusPointsPerSecond: parseFloat(formData.bonusPointsPerSecond),
@@ -1294,6 +1297,18 @@ export default function EditQuizPage({ params }: EditQuizPageProps) {
             <CardDescription>Configure how points are awarded</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="completionBonus">Completion Bonus</Label>
+              <Input
+                id="completionBonus"
+                type="number"
+                min="0"
+                value={formData.completionBonus}
+                onChange={(e) => updateField("completionBonus", e.target.value)}
+              />
+              <p className="text-xs text-muted-foreground">One-time bonus on first pass; also sets zero-time cap.</p>
+            </div>
+
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
                 <Label>Negative Marking</Label>

@@ -3,9 +3,10 @@ import Link from "next/link";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
+import { Prisma } from "@prisma/client";
 import { generateQuizMetaTags } from "@/lib/seo-utils";
 import { formatPlayerCount, formatQuizDuration, getSportGradient } from "@/lib/quiz-formatters";
-import { Button } from "@/components/ui/button";
+import { ShowcaseButton } from "@/components/showcase/ui/buttons/Button";
 import { ShowcaseReviewsPanel } from "@/components/showcase/ui";
 import { Star } from "lucide-react";
 import { ShowcaseThemeProvider } from "@/components/showcase/ShowcaseThemeProvider";
@@ -130,13 +131,13 @@ export default async function QuizDetailPage({ params }: QuizDetailPageProps) {
       notFound();
     }
     // Unique players count (distinct users who have played this quiz)
-    uniqueUsersCount = await prisma.quizAttempt
-      .groupBy({
-        by: ["userId"],
-        where: { quizId: quiz.id },
-        _count: { userId: true },
-      })
-      .then((groups) => groups.length);
+    // Count with distinct is not supported on count(); use findMany with distinct and take the length
+    const distinctUsers = await prisma.quizAttempt.findMany({
+      where: { quizId: quiz.id },
+      distinct: ["userId"],
+      select: { userId: true },
+    });
+    uniqueUsersCount = distinctUsers.length;
     // Fetch latest reviews for this quiz for the showcase panel
     const rawReviews = await prisma.quizReview.findMany({
       where: { quizId: quiz.id },
@@ -195,7 +196,8 @@ export default async function QuizDetailPage({ params }: QuizDetailPageProps) {
 
   // Calculate user's actual attempt limit status
   const now = new Date();
-  const attemptLimitStatus = user && quiz.maxAttemptsPerUser
+  const hasAttemptLimit = quiz.maxAttemptsPerUser != null;
+  const attemptLimitStatus = user && hasAttemptLimit
     ? await getAttemptLimitStatus(prisma, {
         userId: user.id,
         quiz: {
@@ -207,10 +209,19 @@ export default async function QuizDetailPage({ params }: QuizDetailPageProps) {
       })
     : null;
 
-  const maxAttempts = quiz.maxAttemptsPerUser || null;
+  const maxAttempts = quiz.maxAttemptsPerUser ?? null;
   const remainingAttempts = attemptLimitStatus?.remainingBeforeStart ?? maxAttempts;
-  const isLimitReached = attemptLimitStatus?.isLimitReached ?? false;
+  const isLimitReached =
+    attemptLimitStatus?.isLimitReached ??
+    (hasAttemptLimit && (remainingAttempts ?? 0) <= 0);
   const resetAt = attemptLimitStatus?.resetAt;
+  const attemptProgressPercent =
+    maxAttempts !== null && maxAttempts > 0
+      ? Math.max(
+          0,
+          Math.min(100, ((remainingAttempts ?? 0) / maxAttempts) * 100),
+        )
+      : 0;
 
   // Fetch user's best completed attempt if limit is reached
   let bestAttemptId: string | null = null;
@@ -233,14 +244,90 @@ export default async function QuizDetailPage({ params }: QuizDetailPageProps) {
     bestAttemptId = bestAttempt?.id ?? null;
   }
 
-  const leaderboardEntries = (quiz.leaderboard ?? []).map((entry: any, index: number) => ({
-    name:
-      entry.user?.name ||
-      entry.user?.email?.split("@")[0] ||
-      `Player ${index + 1}`,
-    score: Math.round(entry.bestScore || entry.bestPoints || 0),
-    rank: entry.rank && entry.rank < 999999 ? entry.rank : index + 1,
-  }));
+  // Build leaderboard (support recurring aggregation)
+  let sidebarLeaderboard: Array<{ name: string; score: number; rank: number }> = [];
+
+  if (quiz.recurringType === "DAILY" || quiz.recurringType === "WEEKLY") {
+    const isDaily = quiz.recurringType === "DAILY";
+    const rows = await prisma.$queryRaw<Array<{
+      userId: string;
+      bestPoints: number;
+      avg_response: number | null;
+      name: string | null;
+      email: string | null;
+    }>>(
+      isDaily
+        ? Prisma.sql`
+            WITH per_period_best AS (
+              SELECT
+                "userId",
+                date_trunc('day', "completedAt") AS period_start,
+                MAX("totalPoints") AS best_points,
+                AVG(COALESCE("averageResponseTime", 0)) AS avg_response
+              FROM "QuizAttempt"
+              WHERE "quizId" = ${quiz.id}
+                AND "isPracticeMode" = false
+                AND "completedAt" IS NOT NULL
+              GROUP BY "userId", date_trunc('day', "completedAt")
+            ),
+            aggregated AS (
+              SELECT
+                "userId",
+                SUM(best_points) AS sum_points,
+                AVG(avg_response) AS avg_response
+              FROM per_period_best
+              GROUP BY "userId"
+            )
+            SELECT a."userId", a.sum_points::int AS "bestPoints", a.avg_response, u.name, u.email
+            FROM aggregated a
+            JOIN "User" u ON u.id = a."userId"
+            ORDER BY a.sum_points DESC, a.avg_response ASC
+            LIMIT 3
+          `
+        : Prisma.sql`
+            WITH per_period_best AS (
+              SELECT
+                "userId",
+                date_trunc('week', "completedAt") AS period_start,
+                MAX("totalPoints") AS best_points,
+                AVG(COALESCE("averageResponseTime", 0)) AS avg_response
+              FROM "QuizAttempt"
+              WHERE "quizId" = ${quiz.id}
+                AND "isPracticeMode" = false
+                AND "completedAt" IS NOT NULL
+              GROUP BY "userId", date_trunc('week', "completedAt")
+            ),
+            aggregated AS (
+              SELECT
+                "userId",
+                SUM(best_points) AS sum_points,
+                AVG(avg_response) AS avg_response
+              FROM per_period_best
+              GROUP BY "userId"
+            )
+            SELECT a."userId", a.sum_points::int AS "bestPoints", a.avg_response, u.name, u.email
+            FROM aggregated a
+            JOIN "User" u ON u.id = a."userId"
+            ORDER BY a.sum_points DESC, a.avg_response ASC
+            LIMIT 3
+          `
+    );
+
+    sidebarLeaderboard = rows.map((r, index) => ({
+      name: r.name || r.email?.split("@")[0] || `Player ${index + 1}`,
+      score: r.bestPoints || 0,
+      rank: index + 1,
+    }));
+  } else {
+    sidebarLeaderboard = (quiz.leaderboard ?? []).map((entry: any, index: number) => ({
+      name:
+        entry.user?.name ||
+        entry.user?.email?.split("@")[0] ||
+        `Player ${index + 1}`,
+      score: Math.round(entry.bestScore || entry.bestPoints || 0),
+      rank: entry.rank && entry.rank < 999999 ? entry.rank : index + 1,
+    }));
+  }
 
   const highlightedTitle = quiz.title.split(" ");
   const firstWord = highlightedTitle.shift() ?? quiz.title;
@@ -361,31 +448,24 @@ export default async function QuizDetailPage({ params }: QuizDetailPageProps) {
 
             <div className="mt-8 flex flex-wrap justify-center gap-3 lg:justify-start">
               {isLimitReached && bestAttemptId ? (
-                <Button 
-                  asChild 
-                  className="rounded-full px-6 py-3 text-sm font-semibold uppercase tracking-[0.2em]"
-                >
-                  <Link href={`/quizzes/${quiz.slug}/results/${bestAttemptId}`}>
+                <Link href={`/quizzes/${quiz.slug}/results/${bestAttemptId}`}>
+                  <ShowcaseButton className="px-6 py-3 text-sm">
                     View Results
-                  </Link>
-                </Button>
+                  </ShowcaseButton>
+                </Link>
               ) : (
-                <Button 
-                  asChild 
-                  className="rounded-full px-6 py-3 text-sm font-semibold uppercase tracking-[0.2em]"
-                  disabled={isLimitReached}
-                >
-                  <Link href={`/quizzes/${quiz.slug}/play`}>
+                <Link href={`/quizzes/${quiz.slug}/play`}>
+                  <ShowcaseButton className="px-6 py-3 text-sm" disabled={isLimitReached}>
                     {isLimitReached ? "Attempt Limit Reached" : "Start Quiz"}
-                  </Link>
-                </Button>
+                  </ShowcaseButton>
+                </Link>
               )}
             </div>
 
             <div className="mt-3 lg:hidden">
               <div className="rounded-xl bg-gradient-to-r from-fuchsia-500/20 via-amber-400/25 to-emerald-400/25 p-[1px]">
                 <div className="rounded-xl bg-white/80 p-3 dark:bg-slate-900/80">
-                  {maxAttempts ? (
+                  {maxAttempts !== null ? (
                     <>
                       <p className="mb-2 text-center text-[10px] uppercase tracking-[0.25em] text-slate-600 dark:text-white/60">
                         Attempts Remaining
@@ -399,7 +479,7 @@ export default async function QuizDetailPage({ params }: QuizDetailPageProps) {
                                   ? "bg-gradient-to-r from-red-500 to-red-600 dark:from-red-400 dark:to-red-500"
                                   : "bg-gradient-to-r from-emerald-500 to-emerald-600 dark:from-emerald-400 dark:to-emerald-500"
                               }`}
-                              style={{ width: `${Math.max(0, Math.min(100, (remainingAttempts ?? 0) / (maxAttempts ?? 1) * 100))}%` }}
+                              style={{ width: `${attemptProgressPercent}%` }}
                             />
                           </div>
                         </div>
@@ -408,7 +488,7 @@ export default async function QuizDetailPage({ params }: QuizDetailPageProps) {
                             {remainingAttempts ?? 0}
                           </p>
                           <p className="text-[10px] uppercase tracking-[0.2em] text-slate-600 dark:text-white/60">
-                            {maxAttempts ? `of ${maxAttempts}` : "Max"}
+                            {`of ${maxAttempts}`}
                           </p>
                         </div>
                       </div>
@@ -450,8 +530,8 @@ export default async function QuizDetailPage({ params }: QuizDetailPageProps) {
               <span className="rounded-full bg-slate-200/70 px-3 py-1 text-xs text-slate-700 dark:bg-white/10 dark:text-white/70">Live</span>
             </div>
 
-            <div className="space-y-4 text-sm">
-              {(leaderboardEntries.length ? leaderboardEntries : [
+              <div className="space-y-4 text-sm">
+              {(sidebarLeaderboard.length ? sidebarLeaderboard : [
                 { name: "Be the first", score: 0, rank: "" },
               ]).map((player: any, index: number) => (
                 <div
@@ -472,7 +552,7 @@ export default async function QuizDetailPage({ params }: QuizDetailPageProps) {
 
             <div className="mt-auto hidden rounded-2xl bg-gradient-to-r from-fuchsia-500/20 via-amber-400/30 to-emerald-400/30 p-[1px] dark:from-fuchsia-500/30 dark:via-amber-400/40 dark:to-emerald-400/40 lg:block">
               <div className="rounded-2xl bg-white/70 p-6 dark:bg-slate-900/80">
-                {maxAttempts ? (
+                {maxAttempts !== null ? (
                   <>
                     <p className="mb-3 text-center text-xs uppercase tracking-[0.3em] text-slate-600 dark:text-white/50">
                       Attempts Remaining
@@ -486,7 +566,7 @@ export default async function QuizDetailPage({ params }: QuizDetailPageProps) {
                                 ? "bg-gradient-to-r from-red-500 to-red-600 dark:from-red-400 dark:to-red-500"
                                 : "bg-gradient-to-r from-emerald-500 to-emerald-600 dark:from-emerald-400 dark:to-emerald-500"
                             }`}
-                            style={{ width: `${Math.max(0, Math.min(100, (remainingAttempts ?? 0) / (maxAttempts ?? 1) * 100))}%` }}
+                            style={{ width: `${attemptProgressPercent}%` }}
                           />
                         </div>
                       </div>

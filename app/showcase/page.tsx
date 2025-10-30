@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { ShowcaseButton } from "@/components/showcase/ui/buttons/Button";
 import { 
   Sparkles, 
   Trophy, 
@@ -20,10 +20,19 @@ import {
   Star,
   Megaphone,
   BarChart3,
+  Gift,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const showcaseComponents = [
+  {
+    id: "buttons",
+    title: "Buttons",
+    description: "Glassmorphism buttons with variants, sizes, and states",
+    icon: Sparkles,
+    category: "UI Components",
+    featured: true,
+  },
   {
     id: "ui-playground",
     title: "UI Playground",
@@ -154,6 +163,14 @@ const showcaseComponents = [
     icon: Calendar,
     category: "Engagement",
   },
+  {
+    id: "points-reward",
+    title: "Points Reward",
+    description: "Celebratory animated components for points and achievements",
+    icon: Gift,
+    category: "UI Components",
+    featured: true,
+  },
 ];
 
 const categories = ["All Sports", "UI Components", "Quiz Cards", "Layouts", "Interactive", "Pages", "Experience", "Results", "Topics", "Competition", "Engagement"];
@@ -197,18 +214,15 @@ export default function ShowcaseIndexPage() {
         <div className="mb-8 overflow-x-auto pb-2 scrollbar-hide">
           <div className="flex gap-2 min-w-max">
             {categories.map((category) => (
-              <Button
+              <ShowcaseButton
                 key={category}
-                variant={selectedCategory === category ? "default" : "outline"}
+                variant={selectedCategory === category ? "secondary" : "outline"}
                 size="sm"
                 onClick={() => setSelectedCategory(category)}
-                className={cn(
-                  "whitespace-nowrap",
-                  selectedCategory === category && "bg-primary text-primary-foreground"
-                )}
+                className={cn("whitespace-nowrap")}
               >
                 {category}
-              </Button>
+              </ShowcaseButton>
             ))}
           </div>
         </div>
