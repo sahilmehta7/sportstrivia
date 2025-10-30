@@ -3,7 +3,7 @@
 import { useShowcaseTheme } from "@/components/showcase/ShowcaseThemeProvider";
 import { getBackgroundVariant, getBlurCircles } from "@/lib/showcase-theme";
 import { cn } from "@/lib/utils";
-import { HeroSection } from "./HeroSection";
+import { ShowcaseHeroSpotlight } from "@/components/showcase/ui/HeroVariants";
 import { FeaturedQuizzes } from "./FeaturedQuizzes";
 import { PopularTopics } from "./PopularTopics";
 import { SocialProof } from "./SocialProof";
@@ -23,7 +23,7 @@ interface LandingPageProps {
   };
 }
 
-export function LandingPage({ featuredQuizzes, topTopics, stats }: LandingPageProps) {
+export function LandingPage({ featuredQuizzes, topTopics: _topTopics, stats }: LandingPageProps) {
   const { theme } = useShowcaseTheme();
   const blurCircles = getBlurCircles(theme);
 
@@ -40,7 +40,31 @@ export function LandingPage({ featuredQuizzes, topTopics, stats }: LandingPagePr
           <div className={cn(`absolute right-12 top-12 h-64 w-64 rounded-full blur-[100px]`, blurCircles.circle2)} />
           <div className={cn(`absolute bottom-8 left-1/2 h-56 w-56 -translate-x-1/2 rounded-full blur-[90px]`, blurCircles.circle3)} />
         </div>
-        <HeroSection stats={stats} />
+        <div className="px-4 py-12 sm:px-6 sm:py-16 lg:py-24">
+          <div className="mx-auto max-w-6xl">
+            <ShowcaseHeroSpotlight
+              eyebrow="Sports Trivia"
+              title="Test Your"
+              highlightedText="Sports Knowledge"
+              subtitle="Compete with friends, climb the leaderboards, and become a sports trivia champion. Challenge yourself with thousands of questions across all major sports."
+              primaryAction={{
+                label: "Get Started",
+                href: "/auth/signin",
+              }}
+              secondaryAction={{
+                label: "Browse Quizzes",
+                href: "/quizzes",
+                variant: "secondary",
+              }}
+              stats={[
+                { label: "Quizzes Available", value: stats.totalQuizzes },
+                { label: "Active Players", value: stats.activeUsers },
+                { label: "Questions Answered", value: stats.questionsAnswered },
+                { label: "Average Rating", value: stats.averageRating.toFixed(1) },
+              ]}
+            />
+          </div>
+        </div>
       </div>
 
       {/* Featured Quizzes with vibrant background */}
@@ -62,7 +86,7 @@ export function LandingPage({ featuredQuizzes, topTopics, stats }: LandingPagePr
           <div className={cn(`absolute right-12 top-12 h-64 w-64 rounded-full blur-[100px]`, blurCircles.circle2)} />
           <div className={cn(`absolute bottom-8 left-1/2 h-56 w-56 -translate-x-1/2 rounded-full blur-[90px]`, blurCircles.circle3)} />
         </div>
-        <PopularTopics topics={topTopics} />
+        <PopularTopics />
       </div>
 
       {/* Social Proof with default background */}

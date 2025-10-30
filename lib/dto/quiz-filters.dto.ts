@@ -93,10 +93,51 @@ export function buildPublicQuizWhereClause(filters: PublicQuizFilters): Prisma.Q
 
   // Search filter
   if (filters.search) {
+    const searchTerm = filters.search.trim();
     andConditions.push({
       OR: [
-        { title: { contains: filters.search, mode: "insensitive" } },
-        { description: { contains: filters.search, mode: "insensitive" } },
+        { title: { contains: searchTerm, mode: "insensitive" } },
+        { description: { contains: searchTerm, mode: "insensitive" } },
+        { slug: { contains: searchTerm, mode: "insensitive" } },
+        { sport: { contains: searchTerm, mode: "insensitive" } },
+        {
+          tags: {
+            some: {
+              tag: {
+                OR: [
+                  { name: { contains: searchTerm, mode: "insensitive" } },
+                  { slug: { contains: searchTerm, mode: "insensitive" } },
+                ],
+              },
+            },
+          },
+        },
+        {
+          topicConfigs: {
+            some: {
+              topic: {
+                OR: [
+                  { name: { contains: searchTerm, mode: "insensitive" } },
+                  { slug: { contains: searchTerm, mode: "insensitive" } },
+                ],
+              },
+            },
+          },
+        },
+        {
+          questionPool: {
+            some: {
+              question: {
+                topic: {
+                  OR: [
+                    { name: { contains: searchTerm, mode: "insensitive" } },
+                    { slug: { contains: searchTerm, mode: "insensitive" } },
+                  ],
+                },
+              },
+            },
+          },
+        },
       ],
     });
   }

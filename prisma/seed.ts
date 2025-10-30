@@ -32,73 +32,79 @@ async function main() {
   // Create topics hierarchy
   const sports = await prisma.topic.upsert({
     where: { slug: "sports" },
-    update: {},
+    update: { displayEmoji: "🏅" } as any,
     create: {
       name: "Sports",
       slug: "sports",
       description: "General sports knowledge",
+      displayEmoji: "🏅",
       level: 0,
-    },
+    } as any,
   });
 
   const cricket = await prisma.topic.upsert({
     where: { slug: "cricket" },
-    update: {},
+    update: { displayEmoji: "🏏" } as any,
     create: {
       name: "Cricket",
       slug: "cricket",
       description: "Cricket trivia and facts",
       parentId: sports.id,
+      displayEmoji: "🏏",
       level: 1,
-    },
+    } as any,
   });
 
   const batting = await prisma.topic.upsert({
     where: { slug: "batting" },
-    update: {},
+    update: { displayEmoji: "🏏" } as any,
     create: {
       name: "Batting",
       slug: "batting",
       description: "Cricket batting techniques and records",
       parentId: cricket.id,
+      displayEmoji: "🏏",
       level: 2,
-    },
+    } as any,
   });
 
   const bowling = await prisma.topic.upsert({
     where: { slug: "bowling" },
-    update: {},
+    update: { displayEmoji: "🏏" } as any,
     create: {
       name: "Bowling",
       slug: "bowling",
       description: "Cricket bowling techniques and records",
       parentId: cricket.id,
+      displayEmoji: "🏏",
       level: 2,
-    },
+    } as any,
   });
 
   const basketball = await prisma.topic.upsert({
     where: { slug: "basketball" },
-    update: {},
+    update: { displayEmoji: "🏀" } as any,
     create: {
       name: "Basketball",
       slug: "basketball",
       description: "NBA and basketball trivia",
       parentId: sports.id,
+      displayEmoji: "🏀",
       level: 1,
-    },
+    } as any,
   });
 
   const _nba = await prisma.topic.upsert({
     where: { slug: "nba" },
-    update: {},
+    update: { displayEmoji: "🏀" } as any,
     create: {
       name: "NBA",
       slug: "nba",
       description: "National Basketball Association",
       parentId: basketball.id,
+      displayEmoji: "🏀",
       level: 2,
-    },
+    } as any,
   });
 
   console.log("✓ Created topic hierarchy");

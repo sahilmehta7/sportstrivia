@@ -24,7 +24,6 @@ async function generateUniqueTopicSlug(base) {
   const baseSlug = slugify(base) || 'topic';
   let candidate = baseSlug;
   let suffix = 1;
-  // eslint-disable-next-line no-constant-condition
   while (true) {
     const exists = await prisma.topic.findUnique({ where: { slug: candidate } });
     if (!exists) return candidate;

@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
 import { useTheme } from "next-themes";
 import type { ShowcaseTheme } from "@/components/showcase/ShowcaseThemeProvider";
-import { getChipStyles, getSurfaceStyles, getTextColor } from "@/lib/showcase-theme";
+import { getChipStyles, getTextColor } from "@/lib/showcase-theme";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
@@ -27,7 +27,7 @@ export function ShowcasePagination({
   maxPageNumbers = 5,
   className,
 }: ShowcasePaginationProps) {
-  const { theme: nextTheme, systemTheme } = useTheme();
+  const { theme: nextTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {

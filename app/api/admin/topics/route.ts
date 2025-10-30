@@ -9,6 +9,8 @@ const topicSchema = z.object({
   slug: z.string().min(2, "Slug must be at least 2 characters"),
   description: z.string().optional().nullable(),
   parentId: z.string().cuid().optional().nullable(),
+  displayEmoji: z.string().max(8).optional().nullable(),
+  displayImageUrl: z.string().url().optional().nullable(),
 });
 
 // GET /api/admin/topics - List all topics with advanced options
@@ -124,6 +126,8 @@ export async function POST(request: NextRequest) {
         name: validatedData.name,
         slug: validatedData.slug,
         description: validatedData.description,
+        displayEmoji: validatedData.displayEmoji ?? null,
+        displayImageUrl: validatedData.displayImageUrl ?? null,
         parentId: validatedData.parentId,
         level,
       },

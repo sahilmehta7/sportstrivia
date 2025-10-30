@@ -18,11 +18,9 @@ export function StartQuizButton({ slug, disabled, text = "Start Quiz", attemptId
       return;
     }
     
-    // If showing "View Results" and we have an attemptId, go to results page
     if (text === "View Results" && attemptId) {
       router.push(`/quizzes/${slug}/results/${attemptId}`);
     } else {
-      // Otherwise go to play page
       router.push(`/quizzes/${slug}/play`);
     }
   };

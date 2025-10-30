@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, type ReactNode, useContext, useEffect, useState } from "react";
+import { useTheme as useNextTheme } from "next-themes";
 
 export type ShowcaseTheme = "light" | "dark";
 
@@ -13,22 +14,18 @@ const ShowcaseThemeContext = createContext<ShowcaseThemeContextType | undefined>
 
 export function ShowcaseThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setTheme] = useState<ShowcaseTheme>("dark");
+  const { theme: nextTheme, setTheme: setNextTheme } = useNextTheme();
 
+  // Mirror next-themes into showcase theme to keep the whole home page in sync
   useEffect(() => {
-    // Load theme from localStorage on mount
-    const savedTheme = localStorage.getItem("showcase-theme") as ShowcaseTheme;
-    if (savedTheme && (savedTheme === "light" || savedTheme === "dark")) {
-      setTheme(savedTheme);
-    }
-  }, []);
-
-  useEffect(() => {
-    // Save theme to localStorage whenever it changes
-    localStorage.setItem("showcase-theme", theme);
-  }, [theme]);
+    const mapped = nextTheme === "light" ? "light" : "dark";
+    setTheme(mapped);
+  }, [nextTheme]);
 
   const toggleTheme = () => {
-    setTheme(prev => prev === "light" ? "dark" : "light");
+    const next = theme === "light" ? "dark" : "light";
+    setTheme(next);
+    setNextTheme(next);
   };
 
   return (

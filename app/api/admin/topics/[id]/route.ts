@@ -9,6 +9,8 @@ const topicUpdateSchema = z.object({
   slug: z.string().min(2).optional(),
   description: z.string().optional().nullable(),
   parentId: z.string().cuid().optional().nullable(),
+  displayEmoji: z.string().max(8).optional().nullable(),
+  displayImageUrl: z.string().url().optional().nullable(),
 });
 
 // GET /api/admin/topics/[id] - Get single topic

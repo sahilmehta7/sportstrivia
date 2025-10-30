@@ -2,7 +2,7 @@ import { prisma } from "@/lib/db";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Star, Edit, HelpCircle, Settings } from "lucide-react";
+import { Plus, Edit, HelpCircle } from "lucide-react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { AdminDataTable } from "@/components/admin/data-table/AdminDataTable";
@@ -127,7 +127,9 @@ export default async function QuizzesPage({ searchParams }: QuizzesPageProps) {
     }),
   ]);
 
-  const uniqueSports = Array.from(new Set(sports.map((s) => s.sport).filter(Boolean)));
+  const uniqueSports: string[] = Array.from(
+    new Set(sports.map((s) => s.sport).filter(Boolean))
+  ) as string[];
 
   return (
     <div>
@@ -291,7 +293,7 @@ export default async function QuizzesPage({ searchParams }: QuizzesPageProps) {
             <option value={RecurringType.NONE}>None</option>
             <option value={RecurringType.DAILY}>Daily</option>
             <option value={RecurringType.WEEKLY}>Weekly</option>
-            <option value={RecurringType.MONTHLY}>Monthly</option>
+            {/* Monthly not available in current RecurringType */}
           </select>
         </div>
       </AdminFilterForm>

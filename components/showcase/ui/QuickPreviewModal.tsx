@@ -20,9 +20,10 @@ interface QuickPreviewModalProps {
   durationLabel?: string;
   difficultyLabel?: string;
   onPlay?: () => void;
+  children?: ReactNode;
 }
 
-export function ShowcaseQuickPreviewModal({ trigger, title, description, coverImageUrl, durationLabel, difficultyLabel, onPlay }: QuickPreviewModalProps) {
+export function ShowcaseQuickPreviewModal({ trigger, title, description, coverImageUrl, durationLabel, difficultyLabel, onPlay, children }: QuickPreviewModalProps) {
   return (
     <Dialog>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
@@ -44,6 +45,7 @@ export function ShowcaseQuickPreviewModal({ trigger, title, description, coverIm
             {durationLabel && <span className="rounded-full bg-white/10 px-3 py-1 uppercase tracking-[0.3em]">⏱️ {durationLabel}</span>}
             {difficultyLabel && <span className="rounded-full bg-white/10 px-3 py-1 uppercase tracking-[0.3em]">🎯 {difficultyLabel}</span>}
           </div>
+          {children}
           <div className="flex items-center justify-end gap-3">
             <Button variant="ghost" className="rounded-full" onClick={() => onPlay?.()}>Bookmark</Button>
             <Button className="rounded-full" onClick={onPlay}>Play Now</Button>

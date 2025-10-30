@@ -1,5 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { LucideIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { glassText } from "@/components/showcase/ui/typography";
 
 interface StatsCardProps {
   title: string;
@@ -11,15 +13,24 @@ interface StatsCardProps {
 
 export function StatsCard({ title, value, subtitle, icon: Icon, className }: StatsCardProps) {
   return (
-    <Card className={className}>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium">{title}</CardTitle>
-        <Icon className="h-4 w-4 text-muted-foreground" />
+    <Card className={cn(
+      "relative overflow-hidden rounded-[1.75rem] border shadow-lg transition-all duration-200 hover:scale-105",
+      "bg-card/60 backdrop-blur-md border-border/60",
+      className
+    )}>
+      {/* Subtle background gradient */}
+      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5" />
+      
+      <CardHeader className="relative flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardTitle className={cn("text-sm font-medium", glassText.badge)}>{title}</CardTitle>
+        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
+          <Icon className="h-4 w-4 text-primary" />
+        </div>
       </CardHeader>
-      <CardContent>
-        <div className="text-2xl font-bold">{value}</div>
+      <CardContent className="relative">
+        <div className={cn("text-2xl font-bold", glassText.h3)}>{value}</div>
         {subtitle && (
-          <p className="text-xs text-muted-foreground">{subtitle}</p>
+          <p className={cn("text-xs", glassText.subtitle)}>{subtitle}</p>
         )}
       </CardContent>
     </Card>

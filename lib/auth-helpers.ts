@@ -1,4 +1,4 @@
-import { auth, signIn } from "./auth";
+import { auth } from "./auth";
 import { UserRole } from "@prisma/client";
 import { UnauthorizedError, ForbiddenError } from "./errors";
 

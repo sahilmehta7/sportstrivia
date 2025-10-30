@@ -1,13 +1,15 @@
 "use client";
 
-import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import { useSearchParams, useRouter } from "next/navigation";
+import { startTransition } from "react";
 import { ShowcaseQuizCard } from "@/components/quiz/ShowcaseQuizCard";
+import { glassText } from "@/components/showcase/ui/typography";
 import { QuizPagination } from "@/components/quizzes/quiz-pagination";
-import { ShowcaseFilterBar } from "@/components/showcase/ui/FilterBar";
+import { FilterBar } from "@/components/quizzes/filter-bar";
 import type { ShowcaseFilterGroup } from "@/components/showcase/ui/FilterBar";
 import type { PublicQuizListItem } from "@/lib/services/public-quiz.service";
-import { formatPlayerCount, formatQuizDuration, getSportGradient } from "@/lib/quiz-formatters";
+import { getSportGradient } from "@/lib/quiz-formatters";
 
 interface QuizzesContentProps {
   quizzes: PublicQuizListItem[];
@@ -18,6 +20,15 @@ interface QuizzesContentProps {
     total: number;
     limit: number;
   };
+}
+
+function hashString(value: string): number {
+  let hash = 0;
+  for (let i = 0; i < value.length; i += 1) {
+    hash = (hash << 5) - hash + value.charCodeAt(i);
+    hash |= 0;
+  }
+  return Math.abs(hash);
 }
 
 export function QuizzesContent({ quizzes, filterGroups, pagination }: QuizzesContentProps) {
@@ -38,35 +49,62 @@ export function QuizzesContent({ quizzes, filterGroups, pagination }: QuizzesCon
     
     params.delete("page"); // Reset to page 1 when filters change
     
-    // Use startTransition to prevent blocking the UI
-    router.push(`/quizzes?${params.toString()}`);
+    // Use startTransition for optimistic UI updates
+    startTransition(() => {
+      router.push(`/quizzes?${params.toString()}`);
+    });
+  };
+
+  const handlePageChange = (page: number) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("page", page.toString());
+    
+    // Use startTransition for optimistic UI updates
+    startTransition(() => {
+      router.push(`/quizzes?${params.toString()}`);
+    });
   };
 
   return (
     <>
-      {/* Showcase Filter Bar */}
-      <ShowcaseFilterBar 
-        groups={filterGroups} 
-        onChange={handleFilterChange}
-        className="mb-6"
-      />
-
-      {/* Quiz Grid */}
+      {/* All Quizzes Section */}
       <section className="mt-8">
+        <div className="mb-6">
+          <h2 className={glassText.h2}>All Quizzes</h2>
+          <p className={"mt-1 " + glassText.subtitle}>
+            Discover and play quizzes from all categories
+          </p>
+        </div>
+
+        {/* Filter Bar - Integrated styling */}
+        <div className="mb-6">
+          <FilterBar 
+            groups={filterGroups} 
+            onChange={handleFilterChange}
+            className="border-0 bg-transparent p-0"
+          />
+        </div>
+
         {quizzes.length > 0 ? (
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {quizzes.map((quiz) => (
-              <Link key={quiz.id} href={`/quizzes/${quiz.slug}`}>
-                <ShowcaseQuizCard
-                  title={quiz.title}
-                  durationLabel={formatQuizDuration(quiz.duration ?? quiz.timePerQuestion)}
-                  playersLabel={`${formatPlayerCount(quiz._count.attempts)} players`}
-                  accent={getSportGradient(quiz.sport)}
-                  coverImageUrl={quiz.descriptionImageUrl}
-                  className="w-full"
-                />
-              </Link>
-            ))}
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {quizzes.map((quiz) => {
+              const gradient = getSportGradient(quiz.sport, hashString(`${quiz.title}`));
+              const durationLabel = quiz.duration ? `${Math.round(quiz.duration / 60)} min` : "Flexible";
+              const playersLabel = `${quiz._count?.attempts || 0} players`;
+
+              return (
+                <Link key={quiz.id} href={`/quizzes/${quiz.slug}`} className="block">
+                  <ShowcaseQuizCard
+                    title={quiz.title}
+                    badgeLabel={quiz.sport || quiz.difficulty || "Quiz"}
+                    durationLabel={durationLabel}
+                    playersLabel={playersLabel}
+                    accent={gradient}
+                    coverImageUrl={quiz.descriptionImageUrl}
+                  />
+                </Link>
+              );
+            })}
           </div>
         ) : (
           <div className="flex min-h-[200px] flex-col items-center justify-center rounded-xl border border-dashed border-border/60 bg-card/60 p-12 text-center text-muted-foreground">
@@ -76,14 +114,18 @@ export function QuizzesContent({ quizzes, filterGroups, pagination }: QuizzesCon
             </p>
           </div>
         )}
-      </section>
 
-      <QuizPagination
-        page={pagination.page}
-        pages={pagination.pages}
-        total={pagination.total}
-        pageSize={pagination.limit}
-      />
+        {/* Pagination */}
+        <div className="mt-8">
+          <QuizPagination
+            page={pagination.page}
+            pages={pagination.pages}
+            total={pagination.total}
+            pageSize={pagination.limit}
+            onPageChange={handlePageChange}
+          />
+        </div>
+      </section>
     </>
   );
 }

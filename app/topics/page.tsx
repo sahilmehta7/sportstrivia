@@ -1,5 +1,11 @@
 import type { Metadata } from "next";
+import { SearchContext } from "@prisma/client";
+import { auth } from "@/lib/auth";
 import { getRootTopics, getFeaturedTopics, getL2TopicsForPopularSports } from "@/lib/services/topic.service";
+import {
+  getRecentSearchQueriesForUser,
+  getTrendingSearchQueries,
+} from "@/lib/services/search-query.service";
 import { TopicsContent } from "@/components/topics/TopicsContent";
 import { ShowcaseThemeProvider } from "@/components/showcase/ShowcaseThemeProvider";
 
@@ -36,9 +42,13 @@ const colorPairs = [
 ];
 
 export default async function TopicsPage() {
+  const session = await auth();
+  const userId = session?.user?.id;
   let featuredTopics = [];
   let allTopics = [];
   let l2Topics = [];
+  let trendingTopicQueries = [];
+  let recentTopicQueries: { query: string }[] = [];
 
   try {
     [featuredTopics, allTopics, l2Topics] = await Promise.all([
@@ -48,6 +58,17 @@ export default async function TopicsPage() {
     ]);
   } catch (error) {
     console.warn("[topics] Falling back to empty data due to fetch error", error);
+  }
+
+  try {
+    trendingTopicQueries = await getTrendingSearchQueries(SearchContext.TOPIC, { limit: 8 });
+    if (userId) {
+      recentTopicQueries = await getRecentSearchQueriesForUser(userId, SearchContext.TOPIC, {
+        limit: 4,
+      });
+    }
+  } catch (error) {
+    console.warn("[topics] Unable to load search telemetry", error);
   }
   
   // Map root topics to format with color pairs
@@ -89,6 +110,35 @@ export default async function TopicsPage() {
     });
     return acc;
   }, {} as Record<string, any[]>);
+
+  const formatChipLabel = (value: string) =>
+    value
+      .split(" ")
+      .map((word) => (word ? word[0].toUpperCase() + word.slice(1) : word))
+      .join(" ");
+
+  const chipMap = new Map<string, { value: string; label: string }>();
+
+  trendingTopicQueries.forEach((entry) => {
+    const label = formatChipLabel(entry.query);
+    chipMap.set(entry.query, { value: entry.query, label });
+  });
+
+  recentTopicQueries.forEach((entry) => {
+    if (!chipMap.has(entry.query)) {
+      const label = formatChipLabel(entry.query);
+      chipMap.set(entry.query, { value: entry.query, label });
+    }
+  });
+
+  if (chipMap.size === 0) {
+    allTopics.slice(0, 6).forEach((topic) => {
+      const key = topic.name.toLowerCase();
+      chipMap.set(key, { value: topic.name, label: topic.name });
+    });
+  }
+
+  const searchChips = Array.from(chipMap.values()).slice(0, 8);
   
   return (
     <ShowcaseThemeProvider>
@@ -96,6 +146,7 @@ export default async function TopicsPage() {
         featured={featuredItems} 
         topics={allItems}
         l2TopicsByParent={l2ItemsByParent}
+        suggestedChips={searchChips}
       />
     </ShowcaseThemeProvider>
   );

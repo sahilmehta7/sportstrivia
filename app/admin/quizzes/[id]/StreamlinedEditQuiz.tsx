@@ -1,19 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -22,10 +10,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Save, Trash2, CheckCircle, Archive, EyeOff } from "lucide-react";
 import Link from "next/link";
-import { CollapsibleSection } from "@/components/admin/quiz/StreamlinedQuizForm";
 
 interface StreamlinedEditQuizProps {
   quizId: string;
@@ -40,9 +26,9 @@ interface StreamlinedEditQuizProps {
 }
 
 export function StreamlinedEditQuiz({
-  quizId,
+  quizId: _quizId,
   initialData,
-  onSave,
+  onSave: _onSave,
   onPublish,
   onUnpublish,
   onArchive,
@@ -50,7 +36,6 @@ export function StreamlinedEditQuiz({
   loading,
   saving,
 }: StreamlinedEditQuizProps) {
-  const { toast } = useToast();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   if (loading) {
@@ -125,7 +110,7 @@ export function StreamlinedEditQuiz({
           <DialogHeader>
             <DialogTitle>Delete Quiz</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete "{initialData.title}"? This will archive the quiz.
+              Are you sure you want to delete &quot;{initialData.title}&quot;? This will archive the quiz.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>

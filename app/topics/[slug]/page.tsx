@@ -2,7 +2,7 @@ import { cache } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Prisma, Difficulty } from "@prisma/client";
+import { Prisma, Difficulty, SearchContext } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth-helpers";
 import { getTopicIdsWithDescendants } from "@/lib/services/topic.service";
@@ -23,6 +23,11 @@ import { QuizCard } from "@/components/quizzes/quiz-card";
 import { QuizPagination } from "@/components/quizzes/quiz-pagination";
 import { StreakIndicator } from "@/components/shared/StreakIndicator";
 import { AISuggestionModal } from "@/components/topics/ai-suggestion-modal";
+import { TopicQuizSearchBar } from "@/components/topics/topic-search-bar";
+import {
+  getRecentSearchQueriesForUser,
+  getTrendingSearchQueries,
+} from "@/lib/services/search-query.service";
 import { ChevronRight } from "lucide-react";
 
 const topicWithRelations = {
@@ -166,6 +171,7 @@ export default async function TopicDetailPage({
   const getParamValue = (value: string | string[] | undefined) =>
     Array.isArray(value) ? value[0] : value ?? undefined;
 
+  const searchTerm = getParamValue(sp.search);
   const pageParam = getParamValue(sp.page);
   const limitParam = getParamValue(sp.limit);
   const minRatingParam = getParamValue(sp.minRating);
@@ -190,25 +196,70 @@ export default async function TopicDetailPage({
   const sortOrderParam = sortOrderValue === "asc" || sortOrderValue === "desc" ? sortOrderValue : "desc";
 
   const [listing, filterOptions, heroFeaturedQuizzes, topRatedListing] = await Promise.all([
-    getPublicQuizList({
-      topic: slug,
-      page,
-      limit,
-      search: getParamValue(sp.search),
-      sport: getParamValue(sp.sport),
-      difficulty: difficultyParam,
-      tag: getParamValue(sp.tag),
-      minRating:
-        minRatingParam && !Number.isNaN(parseFloat(minRatingParam))
-          ? parseFloat(minRatingParam)
-          : undefined,
-      sortBy: sortByParam,
-      sortOrder: sortOrderParam,
-    }),
+    getPublicQuizList(
+      {
+        topic: slug,
+        page,
+        limit,
+        search: searchTerm,
+        sport: getParamValue(sp.sport),
+        difficulty: difficultyParam,
+        tag: getParamValue(sp.tag),
+        minRating:
+          minRatingParam && !Number.isNaN(parseFloat(minRatingParam))
+            ? parseFloat(minRatingParam)
+            : undefined,
+        sortBy: sortByParam,
+        sortOrder: sortOrderParam,
+      },
+      {
+        telemetryUserId: user?.id,
+      }
+    ),
     getPublicQuizFilterOptions(),
     heroFeaturedQuizzesPromise,
     getPublicQuizList({ topic: slug, sortBy: "rating", sortOrder: "desc", page: 1, limit: 10 }),
   ]);
+
+  let quizSearchSuggestions: { value: string; label: string }[] = [];
+  try {
+    const [trendingQuizSearches, recentQuizSearches] = await Promise.all([
+      getTrendingSearchQueries(SearchContext.QUIZ, { limit: 6 }),
+      user?.id
+        ? getRecentSearchQueriesForUser(user.id, SearchContext.QUIZ, { limit: 4 })
+        : Promise.resolve([]),
+    ]);
+
+    const formatChipLabel = (value: string) =>
+      value
+        .split(" ")
+        .map((word) => (word ? word[0].toUpperCase() + word.slice(1) : word))
+        .join(" ");
+
+    const suggestionMap = new Map<string, { value: string; label: string }>();
+
+    trendingQuizSearches.forEach((entry) => {
+      const label = formatChipLabel(entry.query);
+      suggestionMap.set(entry.query, { value: entry.query, label });
+    });
+
+    recentQuizSearches.forEach((entry) => {
+      if (!suggestionMap.has(entry.query)) {
+        const label = formatChipLabel(entry.query);
+        suggestionMap.set(entry.query, { value: entry.query, label });
+      }
+    });
+
+    const topicKey = topic.name.toLowerCase();
+    if (!suggestionMap.has(topicKey)) {
+      suggestionMap.set(topicKey, { value: topic.name, label: topic.name });
+    }
+
+    quizSearchSuggestions = Array.from(suggestionMap.values()).slice(0, 6);
+  } catch (error) {
+    console.warn("[topics] Unable to prepare quiz search suggestions", error);
+    quizSearchSuggestions = [{ value: topic.name, label: topic.name }];
+  }
 
   const appliedFilters = {
     ...listing.filters,
@@ -310,6 +361,11 @@ export default async function TopicDetailPage({
               : undefined
           }
           secondaryCta={listing.pagination.total > 0 ? { label: "View all quizzes", href: "#topic-quizzes" } : undefined}
+        />
+
+        <TopicQuizSearchBar
+          initialQuery={searchTerm ?? ""}
+          suggestions={quizSearchSuggestions}
         />
 
         {heroFeaturedQuizzes.length > 0 && (

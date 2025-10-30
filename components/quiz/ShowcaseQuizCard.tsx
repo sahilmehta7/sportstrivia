@@ -2,6 +2,7 @@
 
 import { cn } from "@/lib/utils";
 import { getSportGradient } from "@/lib/quiz-formatters";
+import { glassText } from "@/components/showcase/ui/typography";
 
 interface ShowcaseQuizCardProps {
   title: string;
@@ -34,9 +35,24 @@ export function ShowcaseQuizCard({
   const gradient = accent ?? getSportGradient(undefined, hashString(`${title}`));
   const label = (badgeLabel ?? "Featured").toUpperCase();
 
+  // Use design tokens for consistent SSR/CSR rendering
+  const cardClasses = cn(
+    "flex h-full flex-col overflow-hidden rounded-[2.25rem] shadow-lg",
+    "border border-border bg-card text-card-foreground"
+  );
+
+  const badgeClasses = cn(glassText.badge);
+
+  const titleClasses = cn("mt-2 leading-tight", glassText.h3);
+
+  const infoClasses = cn(
+    "mt-6 rounded-2xl px-4 py-3 text-xs",
+    "border border-border bg-muted text-muted-foreground"
+  );
+
   return (
     <div className={cn("w-[300px]", className)}>
-      <div className="flex h-full flex-col overflow-hidden rounded-[2.25rem] border border-white/10 bg-slate-950/80 text-white shadow-[0_30px_70px_-28px_rgba(0,0,0,0.8)]">
+      <div className={cardClasses}>
         <div className="relative aspect-[16/9] w-full overflow-hidden">
           <div className={cn("absolute inset-0", `bg-gradient-to-br ${gradient}`)} />
           {coverImageUrl && (
@@ -49,11 +65,11 @@ export function ShowcaseQuizCard({
         </div>
         <div className="flex flex-1 flex-col justify-between px-5 pb-5 pt-4">
           <div className="text-left">
-            <p className="text-[0.6rem] font-semibold uppercase tracking-[0.35em] text-white/50">{label}</p>
-            <p className="mt-2 text-lg font-bold leading-tight text-white">{title}</p>
+            <p className={badgeClasses}>{label}</p>
+            <p className={titleClasses}>{title}</p>
           </div>
 
-          <div className="mt-6 rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-xs text-white/70">
+          <div className={infoClasses}>
             <div className="flex items-center justify-between">
               <span className="flex items-center gap-2">
                 <span className="text-base">⏱️</span>

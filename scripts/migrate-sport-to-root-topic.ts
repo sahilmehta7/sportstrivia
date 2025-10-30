@@ -11,9 +11,7 @@
 */
 
 // Use require with CommonJS resolution to avoid ESM path issues when running with node -e
-// eslint-disable-next-line @typescript-eslint/no-var-requires
 const { prisma } = require("../lib/db");
-// eslint-disable-next-line @typescript-eslint/no-var-requires
 const { generateUniqueSlug } = require("../lib/services/slug.service");
 
 async function main() {
@@ -28,8 +26,8 @@ async function main() {
   });
 
   const sports = distinctSports
-    .map((r) => (r.sport || "").trim())
-    .filter((s) => s.length > 0);
+    .map((r: { sport: string | null }) => (r.sport || "").trim())
+    .filter((s: string) => s.length > 0);
 
   console.log(`Found ${sports.length} distinct sport values to normalize...`);
 
