@@ -2,9 +2,9 @@ export type DifficultyKey = 'EASY' | 'MEDIUM' | 'HARD' | 'easy' | 'medium' | 'ha
 
 export const scoringConfig = {
   difficultyWeights: {
-    easy: 1,
-    medium: 2,
-    hard: 3,
+    easy: 0.66,
+    medium: 1,
+    hard: 1.33,
   },
   floorPortion: 0.25,
   minTimeLimitSeconds: 3,
@@ -16,5 +16,4 @@ export function normalizeDifficultyKey(difficulty: string): 'easy' | 'medium' | 
   // Default to medium if unknown
   return 'medium';
 }
-
 

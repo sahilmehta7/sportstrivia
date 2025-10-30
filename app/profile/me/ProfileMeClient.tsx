@@ -35,6 +35,11 @@ import {
 import { cn } from "@/lib/utils";
 import { glassText } from "@/components/showcase/ui/typography";
 import { ShowcaseTopicWiseStats } from "@/showcase/components";
+import { ShowcaseProgressTrackerRibbon } from "@/components/showcase/ui/ProgressTrackerRibbon";
+import { pointsForLevel } from "@/lib/config/gamification";
+import { ShowcaseThemeProvider } from "@/components/showcase/ShowcaseThemeProvider";
+import Link from "next/link";
+import { formatPlayerCount } from "@/lib/quiz-formatters";
 
 interface ProfileData {
   id: string;
@@ -46,6 +51,12 @@ interface ProfileData {
   favoriteTeams: string[];
   totalPoints: number | null;
   experienceTier: string | null;
+  level?: number;
+  tierName?: string | null;
+  levelCurrentPointsRequired?: number;
+  nextLevelPoints?: number | null;
+  levelProgressPoints?: number;
+  levelSpanPoints?: number;
   currentStreak: number;
   longestStreak: number;
   createdAt: string;
@@ -313,12 +324,27 @@ export function ProfileMeClient({
                   icon={BarChart3}
                   subtitle={`${stats.stats.passRate.toFixed(0)}% pass rate`}
                 />
-                <StatsCard
-                  title="Total Points"
-                  value={profile.totalPoints?.toLocaleString() || "0"}
-                  icon={Target}
-                  subtitle={profile.experienceTier || "ROOKIE"}
-                />
+                {(() => {
+                  const totalPoints = profile.totalPoints ?? 0;
+                  const level = profile.level ?? 0;
+                  const currentReq = profile.levelCurrentPointsRequired ?? pointsForLevel(level);
+                  const nextReq = profile.nextLevelPoints ?? (level < 100 ? pointsForLevel(level + 1) : null);
+                  const span = profile.levelSpanPoints ?? (nextReq ? Math.max(nextReq - currentReq, 1) : 1);
+                  const progress = profile.levelProgressPoints ?? (nextReq ? Math.min(Math.max(totalPoints - currentReq, 0), span) : span);
+                  return (
+                    <ShowcaseThemeProvider>
+                      <ShowcaseProgressTrackerRibbon
+                        label={`${profile.tierName || profile.experienceTier || "Rookie"}`}
+                        current={progress}
+                        goal={span}
+                        rightTitle="Level"
+                        rightValue={level}
+                        milestoneLabel={undefined}
+                        footerRight={<Link href="/profile/me/points" className="underline">Points History</Link>}
+                      />
+                    </ShowcaseThemeProvider>
+                  );
+                })()}
                 <StatsCard
                   title="Current Streak"
                   value={`${stats.stats.currentStreak} days`}

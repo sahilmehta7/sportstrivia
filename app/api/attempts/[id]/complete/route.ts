@@ -8,6 +8,7 @@ import { computeQuestionScore } from "@/lib/scoring/computeQuestionScore";
 import { awardCompletionBonusIfEligible } from "@/lib/services/awardCompletionBonus";
 import type { Prisma } from "@prisma/client";
 import { checkAndAwardBadges } from "@/lib/services/badge.service";
+import { recomputeUserProgress } from "@/lib/services/gamification.service";
 
 // POST /api/attempts/[id]/complete - Complete quiz attempt and calculate score
 export async function POST(
@@ -49,11 +50,14 @@ export async function POST(
       (a, b) => a.createdAt.getTime() - b.createdAt.getTime()
     );
 
-    // Precompute quiz scale based on quiz completionBonus and selected questions' difficulties
-    const difficulties = orderedAnswers.map((ua) => ({ difficulty: ua.question.difficulty }));
+    // Precompute quiz scale based on quiz completionBonus and selected questions' configuration
+    const questionConfigs = orderedAnswers.map((ua) => ({
+      difficulty: ua.question.difficulty,
+      timeLimitSeconds: ua.question.timeLimit ?? attempt.quiz.timePerQuestion ?? 60,
+    }));
     const quizScale = computeQuizScale({
       completionBonus: attempt.quiz.completionBonus ?? 0,
-      questions: difficulties,
+      questions: questionConfigs,
     });
 
     let totalPoints = 0;
@@ -71,9 +75,10 @@ export async function POST(
       totalPoints: number;
     }[] = [];
 
-    for (const userAnswer of orderedAnswers) {
-      const questionTimeLimit =
-        userAnswer.question.timeLimit ?? attempt.quiz.timePerQuestion ?? 60;
+    for (let index = 0; index < orderedAnswers.length; index += 1) {
+      const userAnswer = orderedAnswers[index];
+      const questionConfig = questionConfigs[index];
+      const questionTimeLimit = questionConfig.timeLimitSeconds ?? attempt.quiz.timePerQuestion ?? 60;
 
       totalTimeSpent += userAnswer.timeSpent;
 
@@ -125,6 +130,8 @@ export async function POST(
         });
       } catch {}
     }
+
+    totalPoints = Math.round(totalPoints);
 
     const answeredCount = orderedAnswers.length;
     const averageResponseTime =
@@ -199,6 +206,12 @@ export async function POST(
       });
       if (completionBonusAwarded > 0) {
         totalPoints += completionBonusAwarded;
+        totalPoints = Math.round(totalPoints);
+        await prisma.quizAttempt.update({
+          where: { id: completedAttempt.id },
+          data: { totalPoints },
+        });
+        completedAttempt.totalPoints = totalPoints;
       }
     }
 
@@ -280,6 +293,10 @@ export async function POST(
 
     // Check and award badges
     const awardedBadges = await checkAndAwardBadges(user.id);
+    // Recompute level/tier after points and stats updates
+    try {
+      await recomputeUserProgress(user.id);
+    } catch {}
 
     return successResponse({
       ...results,

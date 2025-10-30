@@ -1,4 +1,11 @@
 import { PrismaClient, Difficulty, QuestionType } from "@prisma/client";
+import {
+  LEVELS_MAX,
+  TIERS_MAX,
+  DEFAULT_TIER_NAMES,
+  pointsForLevel,
+  slugifyTierName,
+} from "../lib/config/gamification";
 
 const prisma = new PrismaClient();
 
@@ -108,6 +115,48 @@ async function main() {
   });
 
   console.log("✓ Created topic hierarchy");
+
+  // Seed gamification Levels (curve + rounding) if not present
+  const levelCount = await prisma.level.count();
+  if (levelCount === 0) {
+    const levelData = Array.from({ length: LEVELS_MAX }, (_, i) => {
+      const level = i + 1;
+      return {
+        level,
+        pointsRequired: pointsForLevel(level),
+        isActive: true,
+      };
+    });
+    await prisma.level.createMany({ data: levelData });
+    console.log(`✓ Seeded ${LEVELS_MAX} levels`);
+  } else {
+    console.log("• Levels already seeded, skipping");
+  }
+
+  // Seed gamification Tiers (10-level bands) if not present
+  const tierCount = await prisma.tier.count();
+  if (tierCount === 0) {
+    const tiersToCreate = (DEFAULT_TIER_NAMES || []).slice(0, TIERS_MAX);
+    const levelsPerTier = Math.floor(LEVELS_MAX / TIERS_MAX);
+    const tierData = tiersToCreate.map((name, idx) => {
+      const startLevel = idx * levelsPerTier + 1;
+      const endLevel = idx === TIERS_MAX - 1 ? LEVELS_MAX : (idx + 1) * levelsPerTier;
+      return {
+        name,
+        slug: slugifyTierName(name),
+        description: `${name} tier (Levels ${startLevel}-${endLevel})`,
+        startLevel,
+        endLevel,
+        order: idx + 1,
+        color: undefined,
+        icon: undefined,
+      } as const;
+    });
+    await prisma.tier.createMany({ data: tierData as any });
+    console.log(`✓ Seeded ${TIERS_MAX} tiers`);
+  } else {
+    console.log("• Tiers already seeded, skipping");
+  }
 
   // Create quiz tags
   const triviaTag = await prisma.quizTag.upsert({

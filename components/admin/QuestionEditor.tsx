@@ -343,9 +343,9 @@ export function QuestionEditor({
             {fields.map((field, index) => (
               <div key={field.id} className="space-y-3 rounded-lg border p-4">
                 <div className="flex items-center justify-between">
-                  <FormLabel className="text-base font-semibold">
+                  <label className="text-base font-semibold">
                     Answer {String.fromCharCode(65 + index)}
-                  </FormLabel>
+                  </label>
                   <div className="flex items-center gap-2">
                     <div className="flex items-center gap-2">
                       <Switch
