@@ -26,8 +26,8 @@ async function main() {
   });
 
   const sports = distinctSports
-    .map((r) => (r.sport || "").trim())
-    .filter((s) => s.length > 0);
+    .map((r: { sport: string | null }) => (r.sport || "").trim())
+    .filter((s: string) => s.length > 0);
 
   console.log(`Found ${sports.length} distinct sport values to normalize...`);
 

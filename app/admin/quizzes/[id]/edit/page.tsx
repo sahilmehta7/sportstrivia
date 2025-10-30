@@ -43,6 +43,7 @@ import {
   ATTEMPT_RESET_PERIOD_LABELS,
   ATTEMPT_RESET_PERIOD_HELP_TEXT,
 } from "@/constants/attempts";
+import type { AttemptResetPeriodValue } from "@/constants/attempts";
 
 interface EditQuizPageProps {
   params: Promise<{ id: string }>;
@@ -125,7 +126,7 @@ export default function EditQuizPage({ params }: EditQuizPageProps) {
   const maxAttemptsValue = formData.maxAttemptsPerUser
     ? Number.parseInt(formData.maxAttemptsPerUser, 10)
     : null;
-  const attemptResetPeriodValue = formData.attemptResetPeriod as AttemptResetPeriod;
+  const attemptResetPeriodValue = formData.attemptResetPeriod as AttemptResetPeriodValue;
   const _canConfigureReset = attemptLimitEnabled && formData.recurringType !== "NONE";
   const attemptResetLabel = ATTEMPT_RESET_PERIOD_LABELS[attemptResetPeriodValue];
   const attemptResetHelpText = ATTEMPT_RESET_PERIOD_HELP_TEXT[attemptResetPeriodValue];
