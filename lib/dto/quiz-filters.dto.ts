@@ -93,20 +93,27 @@ export function buildPublicQuizWhereClause(filters: PublicQuizFilters): Prisma.Q
 
   // Search filter
   if (filters.search) {
-    const searchTerm = filters.search.trim();
-    andConditions.push({
+    const raw = filters.search.trim();
+    // Normalize: replace punctuation with spaces, collapse whitespace
+    const normalized = raw.replace(/[^a-z0-9]+/gi, " ").trim();
+    const tokens = normalized
+      .split(/\s+/)
+      .filter((t) => t.length >= 2 && /[a-z]/i.test(t)) // ignore 1-char and numeric-only tokens
+      .slice(0, 5); // cap tokens to keep query reasonable
+
+    const buildTokenOr = (token: string): Prisma.QuizWhereInput => ({
       OR: [
-        { title: { contains: searchTerm, mode: "insensitive" } },
-        { description: { contains: searchTerm, mode: "insensitive" } },
-        { slug: { contains: searchTerm, mode: "insensitive" } },
-        { sport: { contains: searchTerm, mode: "insensitive" } },
+        { title: { contains: token, mode: "insensitive" } },
+        { description: { contains: token, mode: "insensitive" } },
+        { slug: { contains: token, mode: "insensitive" } },
+        { sport: { contains: token, mode: "insensitive" } },
         {
           tags: {
             some: {
               tag: {
                 OR: [
-                  { name: { contains: searchTerm, mode: "insensitive" } },
-                  { slug: { contains: searchTerm, mode: "insensitive" } },
+                  { name: { contains: token, mode: "insensitive" } },
+                  { slug: { contains: token, mode: "insensitive" } },
                 ],
               },
             },
@@ -117,8 +124,8 @@ export function buildPublicQuizWhereClause(filters: PublicQuizFilters): Prisma.Q
             some: {
               topic: {
                 OR: [
-                  { name: { contains: searchTerm, mode: "insensitive" } },
-                  { slug: { contains: searchTerm, mode: "insensitive" } },
+                  { name: { contains: token, mode: "insensitive" } },
+                  { slug: { contains: token, mode: "insensitive" } },
                 ],
               },
             },
@@ -130,8 +137,8 @@ export function buildPublicQuizWhereClause(filters: PublicQuizFilters): Prisma.Q
               question: {
                 topic: {
                   OR: [
-                    { name: { contains: searchTerm, mode: "insensitive" } },
-                    { slug: { contains: searchTerm, mode: "insensitive" } },
+                    { name: { contains: token, mode: "insensitive" } },
+                    { slug: { contains: token, mode: "insensitive" } },
                   ],
                 },
               },
@@ -140,6 +147,15 @@ export function buildPublicQuizWhereClause(filters: PublicQuizFilters): Prisma.Q
         },
       ],
     });
+
+    if (tokens.length > 0) {
+      // Require all tokens to match somewhere (AND over tokens)
+      andConditions.push({ AND: tokens.map((t) => buildTokenOr(t)) });
+    } else {
+      // Fallback to original raw contains to avoid breaking behavior
+      const searchTerm = raw;
+      andConditions.push(buildTokenOr(searchTerm));
+    }
   }
 
   // Sport filter

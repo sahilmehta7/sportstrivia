@@ -2,7 +2,6 @@
 
 import type { ReactNode } from "react";
 import { useShowcaseTheme } from "./ShowcaseThemeProvider";
-import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { getBackgroundVariant, getBlurCircles, getTextColor, type BackgroundVariant } from "@/lib/showcase-theme";
 import { ShowcaseBreadcrumbs, type ShowcaseBreadcrumbItem } from "./ui/Breadcrumbs";
@@ -18,7 +17,7 @@ interface ShowcasePageProps {
 }
 
 export function ShowcasePage({ title, subtitle, badge, variant = "default", children, actions, breadcrumbs }: ShowcasePageProps) {
-  const { theme, toggleTheme } = useShowcaseTheme();
+  const { theme } = useShowcaseTheme();
   const blur = getBlurCircles(theme);
 
   return (
@@ -42,10 +41,7 @@ export function ShowcasePage({ title, subtitle, badge, variant = "default", chil
           )}
           <h1 className={cn("text-4xl font-black uppercase tracking-tight sm:text-5xl lg:text-6xl", getTextColor(theme, "primary"))}>{title}</h1>
           {subtitle && <p className={cn("mx-auto max-w-2xl text-sm", getTextColor(theme, "secondary"))}>{subtitle}</p>}
-          <div className="flex flex-col items-center justify-center gap-3 sm:flex-row sm:justify-between">
-            <Button onClick={toggleTheme} variant="outline" className="rounded-full">
-              {theme === "dark" ? "☀️" : "🌙"} Switch to {theme === "dark" ? "Light" : "Dark"}
-            </Button>
+          <div className="flex flex-col items-center justify-center gap-3 sm:flex-row sm:justify-end">
             {actions}
           </div>
         </header>

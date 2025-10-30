@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useShowcaseTheme } from "@/components/showcase/ShowcaseThemeProvider";
@@ -28,31 +27,19 @@ interface ShowcaseReviewsPanelProps {
 
 export function ShowcaseReviewsPanel({ reviews, onAddReview, className }: ShowcaseReviewsPanelProps) {
   const { theme } = useShowcaseTheme();
-  const [localReviews, setLocalReviews] = useState(reviews);
+  const canAddReview = typeof onAddReview === "function";
 
   const handleAdd = () => {
-    if (onAddReview) return onAddReview();
-    // Demo add: append a mock review
-    setLocalReviews((prev) => [
-      ...prev,
-      {
-        id: Math.random().toString(36).slice(2),
-        reviewer: { name: "New Reviewer" },
-        rating: 5,
-        quote: "Fantastic quiz! The questions were challenging and fun.",
-        dateLabel: "Just now",
-      },
-    ]);
+    onAddReview?.();
   };
 
-  if (localReviews.length === 0) {
+  if (reviews.length === 0) {
     return (
       <ShowcaseEmptyState
         icon="💬"
         title="No reviews yet"
         description="Be the first to share your thoughts about this quiz."
-        actionLabel="Add a review"
-        onAction={handleAdd}
+        {...(canAddReview ? { actionLabel: "Add a review", onAction: handleAdd } : {})}
         className={className}
       />
     );
@@ -61,13 +48,15 @@ export function ShowcaseReviewsPanel({ reviews, onAddReview, className }: Showca
   return (
     <div className={cn("rounded-[1.5rem] p-4 sm:p-6", getSurfaceStyles(theme, "base"), className)}>
       <div className="mb-3 sm:mb-4 flex items-center justify-between gap-2">
-        <h4 className={cn("text-sm sm:text-base font-semibold", getTextColor(theme, "primary"))}>Reviews ({localReviews.length})</h4>
-        <Button size="sm" className="rounded-full" onClick={handleAdd}>
-          Add review
-        </Button>
+        <h4 className={cn("text-sm sm:text-base font-semibold", getTextColor(theme, "primary"))}>Reviews ({reviews.length})</h4>
+        {canAddReview && (
+          <Button size="sm" className="rounded-full" onClick={handleAdd}>
+            Add review
+          </Button>
+        )}
       </div>
       <div className="space-y-4">
-        {localReviews.map((r) => (
+        {reviews.map((r) => (
           <ShowcaseReviewCard
             key={r.id}
             reviewer={r.reviewer}
@@ -80,5 +69,3 @@ export function ShowcaseReviewsPanel({ reviews, onAddReview, className }: Showca
     </div>
   );
 }
-
-

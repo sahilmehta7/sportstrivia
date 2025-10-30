@@ -3,6 +3,9 @@ import { prisma } from "@/lib/db";
 import { requireAuth } from "@/lib/auth-helpers";
 import { handleError, successResponse, NotFoundError, ForbiddenError, BadRequestError } from "@/lib/errors";
 import { applyProgression, type TierProgress } from "@/lib/services/progression.service";
+import { computeQuizScale } from "@/lib/scoring/computeQuizScale";
+import { computeQuestionScore } from "@/lib/scoring/computeQuestionScore";
+import { awardCompletionBonusIfEligible } from "@/lib/services/awardCompletionBonus";
 import type { Prisma } from "@prisma/client";
 import { checkAndAwardBadges } from "@/lib/services/badge.service";
 
@@ -46,27 +49,17 @@ export async function POST(
       (a, b) => a.createdAt.getTime() - b.createdAt.getTime()
     );
 
-    const questionPool = await prisma.quizQuestionPool.findMany({
-      where: {
-        quizId: attempt.quizId,
-        questionId: { in: attempt.selectedQuestionIds },
-      },
-      select: {
-        questionId: true,
-        points: true,
-      },
+    // Precompute quiz scale based on quiz completionBonus and selected questions' difficulties
+    const difficulties = orderedAnswers.map((ua) => ({ difficulty: ua.question.difficulty }));
+    const quizScale = computeQuizScale({
+      completionBonus: attempt.quiz.completionBonus ?? 0,
+      questions: difficulties,
     });
-
-    const questionPoints = new Map<string, number>(
-      questionPool.map((qp) => [qp.questionId, qp.points])
-    );
-
-    const defaultBasePoints = 100;
-    const streakBonusIncrement = 10;
 
     let totalPoints = 0;
     let totalTimeSpent = 0;
     let correctAnswers = 0;
+    // Streak is not part of the new scoring; keep for backward-compatible fields
     let currentStreak = 0;
     let longestStreak = 0;
 
@@ -79,7 +72,6 @@ export async function POST(
     }[] = [];
 
     for (const userAnswer of orderedAnswers) {
-      const questionBasePoints = questionPoints.get(userAnswer.questionId) ?? defaultBasePoints;
       const questionTimeLimit =
         userAnswer.question.timeLimit ?? attempt.quiz.timePerQuestion ?? 60;
 
@@ -91,24 +83,21 @@ export async function POST(
       let totalForQuestion = 0;
 
       if (userAnswer.isCorrect && !userAnswer.wasSkipped) {
-        basePoints = questionBasePoints;
-
-        if (attempt.quiz.timeBonusEnabled && attempt.quiz.bonusPointsPerSecond > 0) {
-          const timeSaved = Math.max(0, questionTimeLimit - userAnswer.timeSpent);
-          timeBonus = Math.max(
-            0,
-            Math.ceil(timeSaved * attempt.quiz.bonusPointsPerSecond)
-          );
-        }
-
-        currentStreak += 1;
-        if (currentStreak > 1) {
-          streakBonus = (currentStreak - 1) * streakBonusIncrement;
-        }
-        longestStreak = Math.max(longestStreak, currentStreak);
-
-        totalForQuestion = basePoints + timeBonus + streakBonus;
+        // New scoring formula: difficulty-weighted, time-decayed within limit
+        const computed = computeQuestionScore({
+          isCorrect: true,
+          responseTimeSeconds: userAnswer.timeSpent,
+          timeLimitSeconds: questionTimeLimit,
+          difficulty: userAnswer.question.difficulty,
+          quizScale,
+        });
+        // Store computed points in timeBonus for UI continuity; base/streak remain 0
+        timeBonus = computed;
+        totalForQuestion = computed;
         correctAnswers += 1;
+        // Maintain legacy streak tracking for stats, not scoring
+        currentStreak += 1;
+        longestStreak = Math.max(longestStreak, currentStreak);
       } else {
         currentStreak = 0;
       }
@@ -122,6 +111,19 @@ export async function POST(
         streakBonus,
         totalPoints: totalForQuestion,
       });
+      // Lightweight analytics logging (server-side)
+      try {
+        // eslint-disable-next-line no-console
+        console.info('[scoring]', {
+          attemptId: attempt.id,
+          quizId: attempt.quizId,
+          questionId: userAnswer.questionId,
+          difficulty: userAnswer.question.difficulty,
+          timeSpent: userAnswer.timeSpent,
+          timeLimit: questionTimeLimit,
+          awarded: totalForQuestion,
+        });
+      } catch {}
     }
 
     const answeredCount = orderedAnswers.length;
@@ -165,6 +167,7 @@ export async function POST(
               title: true,
               slug: true,
               passingScore: true,
+              completionBonus: true,
             },
           },
           userAnswers: {
@@ -177,6 +180,7 @@ export async function POST(
                   explanationImageUrl: true,
                   explanationVideoUrl: true,
                   timeLimit: true,
+                  difficulty: true,
                 },
               },
               answer: true,
@@ -186,7 +190,19 @@ export async function POST(
       });
     });
 
-    // Update user statistics
+    // Award one-time completion bonus if passed BEFORE stats/leaderboard
+    let completionBonusAwarded = 0;
+    if (passed && !attempt.isPracticeMode) {
+      completionBonusAwarded = await awardCompletionBonusIfEligible({
+        userId: user.id,
+        quizId: attempt.quizId,
+      });
+      if (completionBonusAwarded > 0) {
+        totalPoints += completionBonusAwarded;
+      }
+    }
+
+    // Update user statistics with final totalPoints (including bonus if awarded)
     const progression = await updateUserStatistics(
       user.id,
       attempt.quizId,
@@ -269,6 +285,7 @@ export async function POST(
       ...results,
       awardedBadges,
       progression,
+      completionBonusAwarded,
     });
   } catch (error) {
     return handleError(error);

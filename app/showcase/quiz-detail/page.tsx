@@ -3,7 +3,7 @@ import Image from "next/image";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { formatPlayerCount, formatQuizDuration, getSportGradient } from "@/lib/quiz-formatters";
-import { Button } from "@/components/ui/button";
+import { ShowcaseButton } from "@/components/showcase/ui/buttons/Button";
 import { ShowcaseReviewsPanel } from "@/components/showcase/ui";
 import { Star } from "lucide-react";
 
@@ -234,11 +234,11 @@ export default async function QuizDetailShowcasePage() {
             </div>
 
             <div className="mt-8 flex flex-wrap justify-center gap-3 lg:justify-start">
-              <Button asChild className="rounded-full px-6 py-3 text-sm font-semibold uppercase tracking-[0.2em]">
-                <Link href={`/quizzes/${quiz.slug}/play`}>
+              <Link href={`/quizzes/${quiz.slug}/play`}>
+                <ShowcaseButton className="px-6 py-3 text-sm">
                   Start Quiz
-                </Link>
-              </Button>
+                </ShowcaseButton>
+              </Link>
             </div>
 
             {/* Mobile: Compact Attempts bar just below CTA */}

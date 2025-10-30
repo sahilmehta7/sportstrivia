@@ -121,14 +121,14 @@ export function GlobalQuizSearch({ className, showOnMobile = false }: GlobalQuiz
   const trimmedSearch = searchTerm.trim();
 
   useEffect(() => {
-    if (!pathname.startsWith("/quizzes")) {
+    if (!(pathname.startsWith("/quizzes") || pathname.startsWith("/search"))) {
       setSearchTerm("");
       lastSyncedSearchRef.current = "";
     }
   }, [pathname]);
 
   useEffect(() => {
-    if (!pathname.startsWith("/quizzes")) {
+    if (!(pathname.startsWith("/quizzes") || pathname.startsWith("/search"))) {
       return;
     }
 
@@ -323,18 +323,21 @@ export function GlobalQuizSearch({ className, showOnMobile = false }: GlobalQuiz
 
   const interactiveItems = useMemo(() => {
     const items: DropdownItem[] = [];
-    items.push(...suggestionItems);
+    // Only show recent/trending suggestions when there is no active query
+    if (!trimmedSearch) {
+      items.push(...suggestionItems);
+    }
     items.push(...previewItems);
     if (seeAllItem) {
       const exists = items.some(
-        (item) => item.kind !== "preview" && item.kind !== "action" && item.value.toLowerCase() === seeAllItem.value.toLowerCase()
+        (item) => item.kind !== "preview" && item.kind !== "action" && (item as any).value?.toLowerCase?.() === seeAllItem.value.toLowerCase()
       );
       if (!exists) {
         items.push(seeAllItem);
       }
     }
     return items;
-  }, [previewItems, seeAllItem, suggestionItems]);
+  }, [previewItems, seeAllItem, suggestionItems, trimmedSearch]);
 
   const itemIndexMap = useMemo(() => {
     const map = new Map<string, number>();
@@ -377,7 +380,8 @@ export function GlobalQuizSearch({ className, showOnMobile = false }: GlobalQuiz
   const pushSearch = useCallback(
     (rawValue: string) => {
       const trimmed = rawValue.trim();
-      const params = pathname.startsWith("/quizzes")
+      const onSearchPage = pathname.startsWith("/search");
+      const params = (pathname.startsWith("/quizzes") || onSearchPage)
         ? new URLSearchParams(searchParams.toString())
         : new URLSearchParams();
 
@@ -389,9 +393,9 @@ export function GlobalQuizSearch({ className, showOnMobile = false }: GlobalQuiz
       params.delete("page");
 
       const queryString = params.toString();
-      const target = queryString ? `/quizzes?${queryString}` : "/quizzes";
+      const target = queryString ? `/search?${queryString}` : "/search";
 
-      if (pathname.startsWith("/quizzes")) {
+      if (onSearchPage) {
         const current = searchParams.get("search") ?? "";
         if (current === trimmed) {
           return;
@@ -554,12 +558,12 @@ export function GlobalQuizSearch({ className, showOnMobile = false }: GlobalQuiz
               aria-label="Search suggestions"
               className="max-h-80 overflow-y-auto py-2"
             >
-              {suggestionSections.recent.length > 0 && (
+              {!trimmedSearch && suggestionSections.recent.length > 0 && (
                 <li className="px-4 pb-1 pt-2 text-xs font-semibold uppercase tracking-[0.3em] text-muted-foreground">
                   Recent Searches
                 </li>
               )}
-              {suggestionSections.recent.map((item) => {
+              {!trimmedSearch && suggestionSections.recent.map((item) => {
                 const dropdownItem = suggestionItems.find(
                   (suggestion) => suggestion.value === item.value && suggestion.source === "recent"
                 );
@@ -594,12 +598,12 @@ export function GlobalQuizSearch({ className, showOnMobile = false }: GlobalQuiz
                 );
               })}
 
-              {suggestionSections.trending.length > 0 && (
+              {!trimmedSearch && suggestionSections.trending.length > 0 && (
                 <li className="px-4 pb-1 pt-3 text-xs font-semibold uppercase tracking-[0.3em] text-muted-foreground">
                   Trending Now
                 </li>
               )}
-              {suggestionSections.trending.map((item) => {
+              {!trimmedSearch && suggestionSections.trending.map((item) => {
                 const dropdownItem = suggestionItems.find(
                   (suggestion) => suggestion.value === item.value && suggestion.source === "trending"
                 );

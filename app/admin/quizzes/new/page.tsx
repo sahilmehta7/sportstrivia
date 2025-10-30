@@ -75,6 +75,7 @@ export default function NewQuizPage() {
       status: QuizStatus.DRAFT,
       duration: 600,
       passingScore: 70,
+      completionBonus: 0,
       isFeatured: false,
       // Advanced fields with defaults
       questionSelectionMode: "FIXED",
@@ -89,6 +90,7 @@ export default function NewQuizPage() {
       penaltyPercentage: 25,
       timeBonusEnabled: false,
       bonusPointsPerSecond: 0,
+      completionBonus: 0,
       // Optional fields
       descriptionImageUrl: "",
       startTime: "",
@@ -129,6 +131,7 @@ export default function NewQuizPage() {
       status: values.status,
       duration: values.duration ?? 600,
       passingScore: values.passingScore ?? 70,
+      completionBonus: values.completionBonus ?? 0,
       isFeatured: values.isFeatured,
       isPublished: values.isPublished ?? false,
       // Advanced fields
@@ -515,6 +518,29 @@ export default function NewQuizPage() {
             </CollapsibleSection>
 
             <CollapsibleSection title="Scoring" description="Configure scoring rules">
+              <div className="space-y-2">
+                <FormField
+                  control={form.control}
+                  name="completionBonus"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Completion Bonus</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          min={0}
+                          value={field.value}
+                          onChange={(event) => field.onChange(Number(event.target.value))}
+                        />
+                      </FormControl>
+                      <FormDescription className="text-xs">
+                        One-time bonus awarded on first pass. Also caps zero-time per-question total.
+                      </FormDescription>
+                    </FormItem>
+                  )}
+                />
+              </div>
+
               <FormField
                 control={form.control}
                 name="negativeMarkingEnabled"
