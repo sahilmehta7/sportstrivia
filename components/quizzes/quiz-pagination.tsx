@@ -8,20 +8,25 @@ interface QuizPaginationProps {
   pages: number;
   total: number;
   pageSize: number;
+  onPageChange?: (page: number) => void;
 }
 
-export function QuizPagination({ page, pages, total, pageSize }: QuizPaginationProps) {
+export function QuizPagination({ page, pages, total, pageSize, onPageChange }: QuizPaginationProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
   const goToPage = (nextPage: number) => {
-    const params = new URLSearchParams(searchParams.toString());
-    params.set("page", nextPage.toString());
-    const queryString = params.toString();
-    router.push(queryString ? `${pathname}?${queryString}` : pathname, {
-      scroll: true,
-    });
+    if (onPageChange) {
+      onPageChange(nextPage);
+    } else {
+      const params = new URLSearchParams(searchParams.toString());
+      params.set("page", nextPage.toString());
+      const queryString = params.toString();
+      router.push(queryString ? `${pathname}?${queryString}` : pathname, {
+        scroll: true,
+      });
+    }
   };
 
   const startResult = total === 0 ? 0 : (page - 1) * pageSize + 1;

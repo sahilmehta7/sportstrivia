@@ -1,4 +1,6 @@
+import { Prisma, SearchContext } from "@prisma/client";
 import { prisma } from "@/lib/db";
+import { recordSearchQuery } from "@/lib/services/search-query.service";
 
 /**
  * In-memory cache for topic hierarchies
@@ -286,4 +288,107 @@ export async function getTopicTree(parentId: string | null = null): Promise<any[
   }
 
   return result;
+}
+
+interface SearchTopicsInput {
+  query: string;
+  page?: number;
+  limit?: number;
+}
+
+interface SearchTopicsOptions {
+  telemetryUserId?: string;
+  telemetryEnabled?: boolean;
+}
+
+const MAX_TOPIC_SEARCH_LIMIT = 50;
+
+export async function searchTopics(
+  input: SearchTopicsInput,
+  options: SearchTopicsOptions = {}
+) {
+  const { query, page = 1, limit = 20 } = input;
+  const trimmedQuery = query.trim();
+  if (!trimmedQuery) {
+    return {
+      topics: [],
+      pagination: {
+        page: 1,
+        limit,
+        total: 0,
+        pages: 0,
+      },
+    };
+  }
+
+  const take = Math.min(Math.max(limit, 1), MAX_TOPIC_SEARCH_LIMIT);
+  const currentPage = Math.max(page, 1);
+  const skip = (currentPage - 1) * take;
+
+  const where: Prisma.TopicWhereInput = {
+    OR: [
+      { name: { contains: trimmedQuery, mode: "insensitive" } },
+      { slug: { contains: trimmedQuery, mode: "insensitive" } },
+      { description: { contains: trimmedQuery, mode: "insensitive" } },
+      {
+        parent: {
+          OR: [
+            { name: { contains: trimmedQuery, mode: "insensitive" } },
+            { slug: { contains: trimmedQuery, mode: "insensitive" } },
+          ],
+        },
+      },
+    ],
+  };
+
+  const [topics, total] = await Promise.all([
+    prisma.topic.findMany({
+      where,
+      skip,
+      take,
+      orderBy: [
+        { level: "asc" },
+        { name: "asc" },
+      ],
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        description: true,
+        level: true,
+        parent: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+          },
+        },
+        _count: {
+          select: {
+            quizTopicConfigs: true,
+          },
+        },
+      },
+    }),
+    prisma.topic.count({ where }),
+  ]);
+
+  if (options.telemetryEnabled !== false) {
+    await recordSearchQuery({
+      query: trimmedQuery,
+      context: SearchContext.TOPIC,
+      resultCount: total,
+      userId: options.telemetryUserId,
+    });
+  }
+
+  return {
+    topics,
+    pagination: {
+      page: currentPage,
+      limit: take,
+      total,
+      pages: Math.ceil(total / take),
+    },
+  };
 }

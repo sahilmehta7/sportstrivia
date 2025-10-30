@@ -37,6 +37,7 @@ model User {
   reviews            QuizReview[]
   sessions           Session[]
   badges             UserBadge[]
+  searchQueries      UserSearchQuery[]
   topicStats         UserTopicStats[]
 
   @@index([email])
@@ -477,6 +478,34 @@ model AppSettings {
   @@index([category])
 }
 
+model SearchQuery {
+  id              String            @id @default(cuid())
+  query           String
+  context         SearchContext
+  timesSearched   Int               @default(0)
+  lastResultCount Int?
+  lastSearchedAt  DateTime          @default(now())
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  userEntries     UserSearchQuery[]
+
+  @@unique([query, context])
+  @@index([context, lastSearchedAt])
+}
+
+model UserSearchQuery {
+  id             String      @id @default(cuid())
+  userId         String
+  searchQueryId  String
+  timesSearched  Int         @default(0)
+  lastSearchedAt DateTime    @default(now())
+  searchQuery    SearchQuery @relation(fields: [searchQueryId], references: [id], onDelete: Cascade)
+  user           User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, searchQueryId])
+  @@index([userId, lastSearchedAt])
+}
+
 enum UserRole {
   USER
   ADMIN
@@ -553,4 +582,9 @@ enum MediaType {
   IMAGE
   VIDEO
   AUDIO
+}
+
+enum SearchContext {
+  QUIZ
+  TOPIC
 }

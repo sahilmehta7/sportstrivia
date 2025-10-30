@@ -32,3 +32,4 @@ export * from "./FaqAccordion";
 export * from "./TopNav";
 export * from "./Pagination";
 export * from "./GlassButton";
+export * from "./HeroVariants";

@@ -30,7 +30,10 @@ import {
   LayoutDashboard,
   Settings,
   Award,
+  Sparkles,
 } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { glassText } from "@/components/showcase/ui/typography";
 
 interface ProfileData {
   id: string;
@@ -226,33 +229,68 @@ export function ProfileMeClient({
   };
 
   return (
-    <main className="min-h-screen bg-background py-8">
-      <div className="mx-auto max-w-6xl space-y-6 px-4">
+    <main className="relative min-h-screen bg-background py-8">
+      {/* Background blur circles */}
+      <div className="absolute inset-0 -z-10 opacity-70">
+        <div className="absolute -left-20 top-24 h-72 w-72 rounded-full bg-blue-500/20 blur-[120px]" />
+        <div className="absolute right-12 top-12 h-64 w-64 rounded-full bg-emerald-500/20 blur-[100px]" />
+        <div className="absolute bottom-8 left-1/2 h-56 w-56 -translate-x-1/2 rounded-full bg-purple-500/20 blur-[90px]" />
+      </div>
+      
+      <div className="relative mx-auto max-w-6xl space-y-8 px-4">
         <ProfileHeader user={profile} isOwnProfile />
 
-        <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4 lg:w-auto lg:inline-grid">
-            <TabsTrigger value="overview" className="gap-2">
+        <Tabs defaultValue="overview" className="space-y-8">
+          <TabsList className={cn(
+            "grid w-full grid-cols-4 rounded-[1.5rem] border shadow-lg",
+            "bg-card/60 backdrop-blur-md border-border/60",
+            "lg:w-auto lg:inline-grid"
+          )}>
+            <TabsTrigger 
+              value="overview" 
+              className={cn(
+                "gap-2 rounded-[1rem] transition-all",
+                "data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+              )}
+            >
               <LayoutDashboard className="h-4 w-4" />
               <span className="hidden sm:inline">Overview</span>
             </TabsTrigger>
-            <TabsTrigger value="activity" className="gap-2">
+            <TabsTrigger 
+              value="activity" 
+              className={cn(
+                "gap-2 rounded-[1rem] transition-all",
+                "data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+              )}
+            >
               <Activity className="h-4 w-4" />
               <span className="hidden sm:inline">Activity</span>
             </TabsTrigger>
-            <TabsTrigger value="achievements" className="gap-2">
+            <TabsTrigger 
+              value="achievements" 
+              className={cn(
+                "gap-2 rounded-[1rem] transition-all",
+                "data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+              )}
+            >
               <Award className="h-4 w-4" />
               <span className="hidden sm:inline">Achievements</span>
             </TabsTrigger>
-            <TabsTrigger value="settings" className="gap-2">
+            <TabsTrigger 
+              value="settings" 
+              className={cn(
+                "gap-2 rounded-[1rem] transition-all",
+                "data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+              )}
+            >
               <Settings className="h-4 w-4" />
               <span className="hidden sm:inline">Settings</span>
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="overview" className="space-y-6">
+          <TabsContent value="overview" className="space-y-8">
             {stats && (
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
                 <StatsCard
                   title="Total Quizzes"
                   value={stats.stats.totalAttempts}
@@ -280,31 +318,40 @@ export function ProfileMeClient({
               </div>
             )}
 
-            <div className="grid gap-6 lg:grid-cols-2">
+            <div className="grid gap-8 lg:grid-cols-2">
               {stats && <TopTopics topics={stats.topTopics || []} />}
 
-              <Card>
-                <CardHeader>
-                  <CardTitle>Profile Info</CardTitle>
+              <Card className="relative overflow-hidden rounded-[2rem] border shadow-xl bg-card/80 backdrop-blur-lg border-border/60">
+                {/* Background blur circles */}
+                <div className="absolute -top-20 -right-14 h-56 w-56 rounded-full bg-orange-500/20 blur-[160px]" />
+                <div className="absolute -bottom-24 -left-10 h-64 w-64 rounded-full bg-blue-500/15 blur-[160px]" />
+                
+                <CardHeader className="relative">
+                  <CardTitle className={cn("flex items-center gap-2", glassText.h2)}>
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-r from-orange-500/30 to-pink-500/30">
+                      <Sparkles className="h-4 w-4 text-orange-100" />
+                    </div>
+                    Profile Info
+                  </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-3">
+                <CardContent className="relative space-y-4">
                   {profile.bio && (
                     <div>
-                      <p className="text-sm text-muted-foreground">Bio</p>
-                      <p className="mt-1 text-sm">{profile.bio}</p>
+                      <p className={cn("text-sm", glassText.badge)}>Bio</p>
+                      <p className={cn("mt-2", glassText.subtitle)}>{profile.bio}</p>
                     </div>
                   )}
                   {profile.favoriteTeams.length > 0 && (
                     <div>
-                      <p className="text-sm text-muted-foreground">Favorite Teams</p>
-                      <p className="mt-1 text-sm">
+                      <p className={cn("text-sm", glassText.badge)}>Favorite Teams</p>
+                      <p className={cn("mt-2", glassText.subtitle)}>
                         {profile.favoriteTeams.join(", ")}
                       </p>
                     </div>
                   )}
                   <div>
-                    <p className="text-sm text-muted-foreground">Member since</p>
-                    <p className="mt-1 text-sm">
+                    <p className={cn("text-sm", glassText.badge)}>Member since</p>
+                    <p className={cn("mt-2", glassText.subtitle)}>
                       {new Intl.DateTimeFormat("en-US", {
                         month: "long",
                         year: "numeric",
@@ -312,50 +359,61 @@ export function ProfileMeClient({
                     </p>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Email</p>
-                    <p className="mt-1 text-sm">{profile.email}</p>
+                    <p className={cn("text-sm", glassText.badge)}>Email</p>
+                    <p className={cn("mt-2", glassText.subtitle)}>{profile.email}</p>
                   </div>
                 </CardContent>
               </Card>
             </div>
           </TabsContent>
 
-          <TabsContent value="activity" className="space-y-6">
+          <TabsContent value="activity" className="space-y-8">
             {stats && <ActivityFeed attempts={stats.recentAttempts || []} />}
           </TabsContent>
 
-          <TabsContent value="achievements" className="space-y-6">
+          <TabsContent value="achievements" className="space-y-8">
             <BadgeShowcase badges={badges} />
 
             {stats && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Performance Summary</CardTitle>
-                  <CardDescription>Your overall quiz performance metrics</CardDescription>
+              <Card className="relative overflow-hidden rounded-[2rem] border shadow-xl bg-card/80 backdrop-blur-lg border-border/60">
+                {/* Background blur circles */}
+                <div className="absolute -top-20 -right-14 h-56 w-56 rounded-full bg-orange-500/20 blur-[160px]" />
+                <div className="absolute -bottom-24 -left-10 h-64 w-64 rounded-full bg-blue-500/15 blur-[160px]" />
+                
+                <CardHeader className="relative">
+                  <CardTitle className={cn("flex items-center gap-2", glassText.h2)}>
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-r from-orange-500/30 to-pink-500/30">
+                      <BarChart3 className="h-4 w-4 text-orange-100" />
+                    </div>
+                    Performance Summary
+                  </CardTitle>
+                  <CardDescription className={cn(glassText.subtitle)}>
+                    Your overall quiz performance metrics
+                  </CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid gap-4 sm:grid-cols-2">
+                <CardContent className="relative space-y-6">
+                  <div className="grid gap-6 sm:grid-cols-2">
                     <div className="space-y-2">
-                      <p className="text-sm text-muted-foreground">Total Questions Answered</p>
-                      <p className="text-2xl font-bold">
+                      <p className={cn("text-sm", glassText.badge)}>Total Questions Answered</p>
+                      <p className={cn("text-2xl font-bold", glassText.h3)}>
                         {stats.stats.totalAttempts * 10 || 0}
                       </p>
                     </div>
                     <div className="space-y-2">
-                      <p className="text-sm text-muted-foreground">Accuracy Rate</p>
-                      <p className="text-2xl font-bold text-primary">
+                      <p className={cn("text-sm", glassText.badge)}>Accuracy Rate</p>
+                      <p className={cn("text-2xl font-bold text-primary", glassText.h3)}>
                         {stats.stats.averageScore.toFixed(1)}%
                       </p>
                     </div>
                     <div className="space-y-2">
-                      <p className="text-sm text-muted-foreground">Perfect Scores</p>
-                      <p className="text-2xl font-bold">
+                      <p className={cn("text-sm", glassText.badge)}>Perfect Scores</p>
+                      <p className={cn("text-2xl font-bold", glassText.h3)}>
                         {stats.perfectScores || 0}
                       </p>
                     </div>
                     <div className="space-y-2">
-                      <p className="text-sm text-muted-foreground">Badges Earned</p>
-                      <p className="text-2xl font-bold">
+                      <p className={cn("text-sm", glassText.badge)}>Badges Earned</p>
+                      <p className={cn("text-2xl font-bold", glassText.h3)}>
                         {badges.filter((b) => b.earned || b.earnedAt).length} / {badges.length}
                       </p>
                     </div>
@@ -365,16 +423,27 @@ export function ProfileMeClient({
             )}
           </TabsContent>
 
-          <TabsContent value="settings" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Edit Profile</CardTitle>
-                <CardDescription>Update your profile information</CardDescription>
+          <TabsContent value="settings" className="space-y-8">
+            <Card className="relative overflow-hidden rounded-[2rem] border shadow-xl bg-card/80 backdrop-blur-lg border-border/60">
+              {/* Background blur circles */}
+              <div className="absolute -top-20 -right-14 h-56 w-56 rounded-full bg-orange-500/20 blur-[160px]" />
+              <div className="absolute -bottom-24 -left-10 h-64 w-64 rounded-full bg-blue-500/15 blur-[160px]" />
+              
+              <CardHeader className="relative">
+                <CardTitle className={cn("flex items-center gap-2", glassText.h2)}>
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-r from-orange-500/30 to-pink-500/30">
+                    <Settings className="h-4 w-4 text-orange-100" />
+                  </div>
+                  Edit Profile
+                </CardTitle>
+                <CardDescription className={cn(glassText.subtitle)}>
+                  Update your profile information
+                </CardDescription>
               </CardHeader>
-              <CardContent>
-                <form onSubmit={handleSubmit} className="space-y-4">
+              <CardContent className="relative">
+                <form onSubmit={handleSubmit} className="space-y-6">
                   <div className="space-y-2">
-                    <Label htmlFor="name">Name</Label>
+                    <Label htmlFor="name" className={cn(glassText.badge)}>Name</Label>
                     <Input
                       id="name"
                       value={formData.name}
@@ -382,11 +451,12 @@ export function ProfileMeClient({
                         setFormData({ ...formData, name: e.target.value })
                       }
                       placeholder="Your name"
+                      className="rounded-[1rem] border-border/60 bg-background/60 backdrop-blur-sm"
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="bio">Bio</Label>
+                    <Label htmlFor="bio" className={cn(glassText.badge)}>Bio</Label>
                     <Textarea
                       id="bio"
                       value={formData.bio}
@@ -395,11 +465,12 @@ export function ProfileMeClient({
                       }
                       placeholder="Tell us about yourself..."
                       rows={3}
+                      className="rounded-[1rem] border-border/60 bg-background/60 backdrop-blur-sm"
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="favoriteTeams">Favorite Teams</Label>
+                    <Label htmlFor="favoriteTeams" className={cn(glassText.badge)}>Favorite Teams</Label>
                     <Input
                       id="favoriteTeams"
                       value={formData.favoriteTeams}
@@ -407,14 +478,19 @@ export function ProfileMeClient({
                         setFormData({ ...formData, favoriteTeams: e.target.value })
                       }
                       placeholder="Team 1, Team 2, Team 3"
+                      className="rounded-[1rem] border-border/60 bg-background/60 backdrop-blur-sm"
                     />
-                    <p className="text-xs text-muted-foreground">
+                    <p className={cn("text-xs", glassText.subtitle)}>
                       Comma-separated list of your favorite teams
                     </p>
                   </div>
 
                   <div className="flex gap-3">
-                    <Button type="submit" disabled={saving}>
+                    <Button 
+                      type="submit" 
+                      disabled={saving}
+                      className="rounded-full bg-gradient-to-r from-orange-400 to-pink-500 px-6 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-white shadow-[0_12px_30px_-16px_rgba(249,115,22,0.55)] transition hover:-translate-y-0.5"
+                    >
                       <Save className="mr-2 h-4 w-4" />
                       {saving ? "Saving..." : "Save Changes"}
                     </Button>
@@ -423,27 +499,38 @@ export function ProfileMeClient({
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Account Information</CardTitle>
-                <CardDescription>Your account details</CardDescription>
+            <Card className="relative overflow-hidden rounded-[2rem] border shadow-xl bg-card/80 backdrop-blur-lg border-border/60">
+              {/* Background blur circles */}
+              <div className="absolute -top-20 -right-14 h-56 w-56 rounded-full bg-orange-500/20 blur-[160px]" />
+              <div className="absolute -bottom-24 -left-10 h-64 w-64 rounded-full bg-blue-500/15 blur-[160px]" />
+              
+              <CardHeader className="relative">
+                <CardTitle className={cn("flex items-center gap-2", glassText.h2)}>
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-r from-orange-500/30 to-pink-500/30">
+                    <Sparkles className="h-4 w-4 text-orange-100" />
+                  </div>
+                  Account Information
+                </CardTitle>
+                <CardDescription className={cn(glassText.subtitle)}>
+                  Your account details
+                </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-3">
+              <CardContent className="relative space-y-4">
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">Email</span>
-                  <span className="font-medium">{profile.email}</span>
+                  <span className={cn(glassText.badge)}>Email</span>
+                  <span className={cn("font-medium", glassText.subtitle)}>{profile.email}</span>
                 </div>
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">Role</span>
-                  <span className="font-medium">{profile.role}</span>
+                  <span className={cn(glassText.badge)}>Role</span>
+                  <span className={cn("font-medium", glassText.subtitle)}>{profile.role}</span>
                 </div>
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">Experience Tier</span>
-                  <span className="font-medium">{profile.experienceTier || "ROOKIE"}</span>
+                  <span className={cn(glassText.badge)}>Experience Tier</span>
+                  <span className={cn("font-medium", glassText.subtitle)}>{profile.experienceTier || "ROOKIE"}</span>
                 </div>
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">Total Points</span>
-                  <span className="font-medium">
+                  <span className={cn(glassText.badge)}>Total Points</span>
+                  <span className={cn("font-medium", glassText.subtitle)}>
                     {profile.totalPoints?.toLocaleString() || "0"}
                   </span>
                 </div>

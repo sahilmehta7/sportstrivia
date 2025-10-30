@@ -2,15 +2,15 @@
 
 import { FeaturedQuizzesHero } from "@/components/quizzes/featured-quizzes-hero";
 import { ComingSoonWidget } from "@/components/quizzes/coming-soon-widget";
-import { DailyQuizWidget } from "@/components/quizzes/daily-quiz-widget";
+import { ShowcaseDailyCarousel } from "@/components/showcase/ShowcaseDailyCarousel";
 import { QuizzesContent } from "./QuizzesContent";
 import type { ShowcaseFilterGroup } from "@/components/showcase/ui/FilterBar";
-import type { PublicQuizListItem, DailyRecurringQuiz, ComingSoonQuiz } from "@/lib/services/public-quiz.service";
+import type { PublicQuizListItem, DailyQuizItem, ComingSoonQuiz } from "@/lib/services/public-quiz.service";
 
 interface QuizzesPageContentProps {
   quizzes: PublicQuizListItem[];
   featuredQuizzes: PublicQuizListItem[];
-  dailyQuizzes: DailyRecurringQuiz[];
+  dailyQuizzes: DailyQuizItem[];
   comingSoonQuizzes: ComingSoonQuiz[];
   filterGroups: ShowcaseFilterGroup[];
   pagination: {
@@ -38,7 +38,7 @@ export function QuizzesPageContent({
         )}
 
         {/* Daily Recurring Quizzes */}
-        <DailyQuizWidget dailyQuizzes={dailyQuizzes} />
+        <ShowcaseDailyCarousel dailyQuizzes={dailyQuizzes} />
 
         {/* Coming Soon Widget */}
         <ComingSoonWidget quizzes={comingSoonQuizzes} />

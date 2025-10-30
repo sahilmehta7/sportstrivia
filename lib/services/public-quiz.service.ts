@@ -1,4 +1,4 @@
-import { Difficulty, Prisma } from "@prisma/client";
+import { Difficulty, Prisma, SearchContext } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import {
   buildPaginationResult,
@@ -9,6 +9,7 @@ import {
   type PublicQuizFilters,
 } from "@/lib/dto/quiz-filters.dto";
 import { getTopicIdsWithDescendants } from "@/lib/services/topic.service";
+import { recordSearchQuery } from "@/lib/services/search-query.service";
 
 export const publicQuizCardSelect = {
   id: true,
@@ -68,8 +69,14 @@ export interface PublicQuizListResponse {
   };
 }
 
+interface PublicQuizListOptions {
+  telemetryUserId?: string;
+  telemetryEnabled?: boolean;
+}
+
 export async function getPublicQuizList(
-  input: PublicQuizFilters
+  input: PublicQuizFilters,
+  options: PublicQuizListOptions = {}
 ): Promise<PublicQuizListResponse> {
   const page = input.page && input.page > 0 ? input.page : 1;
   const limit = input.limit && input.limit > 0 ? Math.min(input.limit, 50) : 12;
@@ -79,6 +86,7 @@ export async function getPublicQuizList(
     page,
     limit,
   };
+  const { telemetryUserId, telemetryEnabled = true } = options;
 
   if (filters.topic) {
     const topic = await prisma.topic.findUnique({
@@ -106,6 +114,15 @@ export async function getPublicQuizList(
     }),
     prisma.quiz.count({ where }),
   ]);
+
+  if (filters.search && telemetryEnabled) {
+    await recordSearchQuery({
+      query: filters.search,
+      context: SearchContext.QUIZ,
+      resultCount: total,
+      userId: telemetryUserId,
+    });
+  }
 
   return {
     quizzes,
@@ -224,6 +241,7 @@ export interface DailyQuizItem {
   description: string | null;
   completedToday: boolean;
   streakCount: number;
+  userRank?: number;
 }
 
 /**
@@ -296,7 +314,7 @@ export async function getDailyRecurringQuizzes(
     orderBy: {
       isFeatured: "desc", // Featured quizzes first
     },
-    take: 5, // Limit to 5 daily quizzes
+    take: 12, // Increased limit for daily quizzes
   });
 
   if (!userId) {
@@ -317,7 +335,7 @@ export async function getDailyRecurringQuizzes(
   // Fetch user's attempts for these quizzes
   const quizIds = dailyQuizzes.map((q) => q.id);
   
-  const [todayAttempts, userStreaks] = await Promise.all([
+  const [todayAttempts, userStreaks, userRanks] = await Promise.all([
     // Check if user completed any of these quizzes today
     prisma.quizAttempt.findMany({
       where: {
@@ -389,14 +407,27 @@ export async function getDailyRecurringQuizzes(
         return { quizId, streak };
       })
     ),
+    // Get user ranks for these quizzes
+    prisma.quizLeaderboard.findMany({
+      where: {
+        userId,
+        quizId: { in: quizIds },
+      },
+      select: {
+        quizId: true,
+        rank: true,
+      },
+    }),
   ]);
 
   const completedQuizIds = new Set(todayAttempts.map((a) => a.quizId));
   const streakMap = new Map(userStreaks.map((s) => [s.quizId, s.streak]));
+  const rankMap = new Map(userRanks.map((r) => [r.quizId, r.rank]));
 
   return dailyQuizzes.map((quiz) => ({
     ...quiz,
     completedToday: completedQuizIds.has(quiz.id),
     streakCount: streakMap.get(quiz.id) ?? 0,
+    userRank: rankMap.get(quiz.id),
   }));
 }

@@ -210,7 +210,9 @@ export default async function QuizzesPage({
   const session = await auth();
   const userId = session?.user?.id;
 
-  const listingPromise = getPublicQuizList(filters);
+  const listingPromise = getPublicQuizList(filters, {
+    telemetryUserId: userId,
+  });
   const dailyQuizzesPromise = getDailyRecurringQuizzes(userId);
   const comingSoonPromise = getComingSoonQuizzes(6);
   const filterGroupsPromise = getFilterGroups(params || {});
@@ -229,11 +231,16 @@ export default async function QuizzesPage({
   let featuredQuizzes = inlineFeatured.slice(0, HERO_SECTION_LIMIT);
 
   if (featuredQuizzes.length < HERO_SECTION_LIMIT) {
-    const featuredListing = await getPublicQuizList({
-      isFeatured: true,
-      limit: HERO_SECTION_LIMIT,
-      page: 1,
-    });
+    const featuredListing = await getPublicQuizList(
+      {
+        isFeatured: true,
+        limit: HERO_SECTION_LIMIT,
+        page: 1,
+      },
+      {
+        telemetryEnabled: false,
+      }
+    );
 
     for (const quiz of featuredListing.quizzes) {
       if (seenFeaturedIds.has(quiz.id)) {
@@ -298,4 +305,3 @@ export default async function QuizzesPage({
     </>
   );
 }
-

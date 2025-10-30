@@ -17,7 +17,8 @@ import {
   FileText,
   Zap,
   Award,
-  Star
+  Star,
+  Megaphone,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -36,6 +37,14 @@ const showcaseComponents = [
     description: "Premium quiz card design for featured content",
     icon: Star,
     category: "Quiz Cards",
+  },
+  {
+    id: "hero-variants",
+    title: "Hero Variations",
+    description: "Spotlight, split, banner, and deck hero layouts",
+    icon: Megaphone,
+    category: "UI Components",
+    featured: true,
   },
   {
     id: "quiz-card",

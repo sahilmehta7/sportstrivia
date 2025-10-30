@@ -6,10 +6,11 @@ import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { UserAvatar } from "@/components/shared/UserAvatar";
 import { NotificationsDropdown } from "@/components/shared/NotificationsDropdown";
-import { Bell, User, LogOut, Settings, Menu, X, Moon, Sun, Shuffle, Trophy } from "lucide-react";
+import { User, LogOut, Settings, Menu, X, Moon, Sun, Shuffle, Trophy } from "lucide-react";
 import { useTheme } from "next-themes";
 import { signOut, useSession } from "next-auth/react";
 import { cn } from "@/lib/utils";
+import { GlobalQuizSearch } from "@/components/shared/GlobalQuizSearch";
 
 export function MainNavigation() {
   const pathname = usePathname();
@@ -88,35 +89,38 @@ export function MainNavigation() {
     <nav className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="mx-auto flex max-w-7xl items-center gap-4 px-4 py-3">
         {/* Header with rounded-full styling */}
-        <header className={cn(
-          "flex w-full items-center justify-between rounded-full px-6 py-3",
-          "bg-card border border-border shadow-sm"
-        )}>
-          <div className="flex items-center gap-3">
+        <header
+          className={cn(
+            "flex w-full items-center gap-4 rounded-full px-6 py-3",
+            "bg-card border border-border shadow-sm"
+          )}
+        >
+          <div className="flex flex-shrink-0 items-center gap-6">
             <Link href="/" className="text-sm font-black uppercase tracking-[0.35em]">
               Sports Trivia
             </Link>
+            {/* Nav Links - Desktop */}
+            <nav className="hidden items-center gap-6 text-sm font-semibold uppercase tracking-[0.25em] lg:flex">
+              {navLinks.map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className={cn(
+                    "transition hover:opacity-80",
+                    isActive(link.href) && "opacity-100 underline",
+                    !isActive(link.href) && "opacity-70"
+                  )}
+                >
+                  {link.label}
+                </Link>
+              ))}
+            </nav>
           </div>
 
-          {/* Nav Links - Desktop */}
-          <nav className="hidden items-center gap-6 text-sm font-semibold uppercase tracking-[0.25em] lg:flex">
-            {navLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className={cn(
-                  "transition hover:opacity-80",
-                  isActive(link.href) && "opacity-100 underline",
-                  !isActive(link.href) && "opacity-70"
-                )}
-              >
-                {link.label}
-              </Link>
-            ))}
-          </nav>
+          <GlobalQuizSearch className="flex-1 max-w-xl" />
 
           {/* Right Section */}
-          <div className="flex items-center gap-2">
+          <div className="flex flex-shrink-0 items-center gap-2">
             {/* Random Quiz Button */}
             <Link href="/random-quiz">
               <Button
@@ -263,6 +267,10 @@ export function MainNavigation() {
         {mobileMenuOpen && (
           <div className="absolute left-0 top-full mt-3 w-full rounded-3xl border bg-card p-4 shadow-xl lg:hidden">
             <div className="flex flex-col gap-3">
+              <div className="pb-2">
+                <GlobalQuizSearch showOnMobile className="w-full" />
+              </div>
+
               {/* Navigation Links */}
               {navLinks.map((link) => (
                 <Link

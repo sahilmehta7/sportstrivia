@@ -1,6 +1,7 @@
 "use client";
 
 import { ShowcaseMasonryGrid } from "@/components/showcase/ui/MasonryGrid";
+import { glassText } from "@/components/showcase/ui/typography";
 import { ShowcaseQuizSummaryCard } from "@/components/showcase/ui/QuizSummaryCard";
 import type { PublicQuizListItem } from "@/lib/services/public-quiz.service";
 
@@ -16,8 +17,8 @@ export function FeaturedQuizzesHero({ featuredQuizzes }: FeaturedQuizzesHeroProp
   return (
     <section className="mb-12">
       <div className="mb-6">
-        <h2 className="text-2xl font-bold">Featured Quizzes</h2>
-        <p className="mt-2 text-sm text-muted-foreground">
+        <h2 className={glassText.h2}>Featured Quizzes</h2>
+        <p className={"mt-2 " + glassText.subtitle}>
           Explore our handpicked selection of top trivia challenges
         </p>
       </div>
