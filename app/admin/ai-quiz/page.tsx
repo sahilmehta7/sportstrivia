@@ -36,6 +36,7 @@ export default function AIQuizGeneratorPage() {
   const [generatedQuiz, setGeneratedQuiz] = useState<any>(null);
   const [generatedJSON, setGeneratedJSON] = useState("");
   const [metadata, setMetadata] = useState<any>(null);
+  const [lastTaskId, setLastTaskId] = useState<string | null>(null);
 
   // Check if OpenAI is configured
   const [openAIConfigured, setOpenAIConfigured] = useState<boolean | null>(null);
@@ -88,6 +89,7 @@ export default function AIQuizGeneratorPage() {
     setGeneratedJSON("");
     setMetadata(null);
     setOpenAIConfigured(null);
+    setLastTaskId(null);
 
     try {
       const payload: Record<string, unknown> = {
@@ -111,11 +113,18 @@ export default function AIQuizGeneratorPage() {
         payload.sourceUrl = trimmedSourceUrl;
       }
 
-      const response = await fetch("/api/admin/ai/generate-quiz", {
+      const responsePromise = fetch("/api/admin/ai/generate-quiz", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
+
+      toast({
+        title: "AI generation started",
+        description: "Saved to AI Background Tasks. You can keep working while we prepare the quiz.",
+      });
+
+      const response = await responsePromise;
 
       const result = await response.json();
 
@@ -131,10 +140,11 @@ export default function AIQuizGeneratorPage() {
       setGeneratedQuiz(result.data.quiz);
       setGeneratedJSON(JSON.stringify(result.data.quiz, null, 2));
       setMetadata(result.data.metadata);
+      setLastTaskId(result.data.taskId ?? null);
 
       toast({
         title: "Quiz generated!",
-        description: `Generated ${result.data.quiz.questions?.length || 0} questions using AI`,
+        description: `Generated ${result.data.quiz.questions?.length || 0} questions using AI. Saved to Background Tasks.`,
       });
     } catch (error: any) {
       toast({
@@ -213,6 +223,20 @@ export default function AIQuizGeneratorPage() {
           </Link>
         }
       />
+
+      {lastTaskId && (
+        <div className="mb-6 flex flex-col items-start justify-between gap-3 rounded-xl border border-dashed border-primary/40 bg-primary/5 px-4 py-3 sm:flex-row sm:items-center">
+          <div>
+            <p className="font-semibold text-primary">Saved as background task</p>
+            <p className="text-sm text-muted-foreground">
+              Review and import this quiz later from the AI Background Tasks dashboard.
+            </p>
+          </div>
+          <Button asChild size="sm" variant="outline">
+            <Link href={`/admin/ai-tasks/${lastTaskId}`}>Open task</Link>
+          </Button>
+        </div>
+      )}
 
       {openAIConfigured === false && (
         <Card className="mb-6 border-yellow-500 bg-yellow-50 dark:bg-yellow-950">

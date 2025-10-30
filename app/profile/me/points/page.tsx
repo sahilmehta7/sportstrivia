@@ -10,15 +10,16 @@ import { PointsPaginationClient } from "@/components/profile/PointsPaginationCli
 
 const PAGE_SIZE = 20;
 
-export default async function PointsHistoryPage({ searchParams }: { searchParams?: Record<string, string | string[] | undefined> }) {
+export default async function PointsHistoryPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const session = await auth();
   if (!session?.user?.id) {
     redirect("/auth/signin");
   }
 
   const userId = session.user.id;
-
-  const page = Math.max(1, Number(Array.isArray(searchParams?.page) ? searchParams?.page[0] : searchParams?.page) || 1);
+  const sp = await searchParams;
+  const pageParam = Array.isArray(sp?.page) ? sp?.page[0] : sp?.page;
+  const page = Math.max(1, Number(pageParam) || 1);
   const skip = (page - 1) * PAGE_SIZE;
 
   const [attempts, total] = await Promise.all([

@@ -2,8 +2,9 @@
 
 import { cn } from "@/lib/utils";
 import { useShowcaseTheme } from "@/components/showcase/ShowcaseThemeProvider";
-import { getSurfaceStyles, getTextColor } from "@/lib/showcase-theme";
-import { Card } from "@/components/ui/card";
+import { getTextColor } from "@/lib/showcase-theme";
+// Intentionally not using Card wrapper here so we can exactly match the
+// requested class list for background/shadow behavior.
 
 interface ProgressTrackerRibbonProps {
   label: string;
@@ -26,12 +27,13 @@ export function ShowcaseProgressTrackerRibbon({ label, current, goal, milestoneL
     compact ? new Intl.NumberFormat("en", { notation: "compact", maximumFractionDigits: 1 }).format(n) : String(n);
 
   return (
-    <Card className={cn(
-      "relative overflow-hidden rounded-[1.75rem] border shadow-lg transition-all duration-200 hover:scale-105",
-      "bg-card/60 backdrop-blur-md border-border/60",
-      getSurfaceStyles(theme, "raised"),
-      className
-    )}>
+    <div
+      className={cn(
+        // Exact class list requested to match other cards + stronger hover shadow
+        "text-card-foreground relative overflow-hidden rounded-[1.75rem] border shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105 bg-card/60 backdrop-blur-md border-border/60",
+        className
+      )}
+    >
       <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5" />
       <div className="relative p-4 sm:p-5">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
@@ -69,6 +71,6 @@ export function ShowcaseProgressTrackerRibbon({ label, current, goal, milestoneL
         </div>
       )}
       </div>
-    </Card>
+    </div>
   );
 }

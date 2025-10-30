@@ -45,6 +45,7 @@ export default function EditTopicPage({ params }: EditTopicPageProps) {
   const [generating, setGenerating] = useState(false);
   const [importing, setImporting] = useState(false);
   const [generatedQuestions, setGeneratedQuestions] = useState<any[] | null>(null);
+  const [lastTaskId, setLastTaskId] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -203,18 +204,28 @@ export default function EditTopicPage({ params }: EditTopicPageProps) {
 
     setGenerating(true);
     setGeneratedQuestions(null);
+    setLastTaskId(null);
     try {
-      const res = await fetch(`/api/admin/topics/${topicId}/ai/generate-questions`, {
+      const fetchPromise = fetch(`/api/admin/topics/${topicId}/ai/generate-questions`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ easyCount, mediumCount, hardCount }),
       });
+      toast({
+        title: "Question generation started",
+        description: "Saved to AI Background Tasks. Feel free to continue editing while we work.",
+      });
+      const res = await fetchPromise;
       const data = await res.json();
       if (!res.ok) {
         throw new Error(data?.error || "Failed to generate questions");
       }
       setGeneratedQuestions(data.data.questions || []);
-      toast({ title: "AI ready", description: `Generated ${data.data.questions?.length || 0} questions` });
+      setLastTaskId(data.data.taskId ?? null);
+      toast({
+        title: "AI ready",
+        description: `Generated ${data.data.questions?.length || 0} questions. Saved to Background Tasks.`,
+      });
     } catch (err: any) {
       toast({ title: "Generation failed", description: err.message, variant: "destructive" });
     } finally {
@@ -503,6 +514,15 @@ export default function EditTopicPage({ params }: EditTopicPageProps) {
                 </Button>
               </div>
             </div>
+
+            {lastTaskId && (
+              <div className="flex flex-col gap-2 rounded-lg border border-dashed border-primary/40 bg-primary/5 px-3 py-2 text-xs text-primary sm:flex-row sm:items-center sm:justify-between sm:text-sm">
+                <span className="font-medium">Saved to Background Tasks</span>
+                <Button asChild variant="outline" size="sm">
+                  <Link href={`/admin/ai-tasks/${lastTaskId}`}>Open task</Link>
+                </Button>
+              </div>
+            )}
 
             {generatedQuestions && generatedQuestions.length > 0 && (
               <div className="rounded border p-3 text-sm">

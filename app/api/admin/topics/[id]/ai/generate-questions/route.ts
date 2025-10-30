@@ -4,6 +4,13 @@ import { requireAdmin } from "@/lib/auth-helpers";
 import { handleError, successResponse, BadRequestError, NotFoundError } from "@/lib/errors";
 import { z } from "zod";
 import { getAIModel, getAIQuizPrompt } from "@/lib/services/settings.service";
+import {
+  createBackgroundTask,
+  markBackgroundTaskCompleted,
+  markBackgroundTaskFailed,
+  markBackgroundTaskInProgress,
+} from "@/lib/services/background-task.service";
+import { BackgroundTaskType } from "@prisma/client";
 
 // Increase route timeout for AI generation
 export const maxDuration = 60;
@@ -20,8 +27,9 @@ const generationSchema = z
   });
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  let taskId: string | null = null;
   try {
-    await requireAdmin();
+    const admin = await requireAdmin();
 
     if (!process.env.OPENAI_API_KEY) {
       throw new BadRequestError("OpenAI API key is not configured. Please add OPENAI_API_KEY to your environment variables.");
@@ -38,10 +46,25 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     }
 
     const total = easyCount + mediumCount + hardCount;
-
-    // Use the existing editable prompt as a base and adapt it to produce only questions
-    const baseTemplate = await getAIQuizPrompt();
     const aiModel = await getAIModel();
+    const baseTemplate = await getAIQuizPrompt();
+
+    const backgroundTask = await createBackgroundTask({
+      userId: admin.id,
+      type: BackgroundTaskType.AI_TOPIC_QUESTION_GENERATION,
+      label: `AI Questions • ${topic.name}`,
+      input: {
+        topicId: id,
+        topicName: topic.name,
+        easyCount,
+        mediumCount,
+        hardCount,
+        total,
+        model: aiModel,
+      },
+    });
+    taskId = backgroundTask.id;
+    await markBackgroundTaskInProgress(taskId);
 
     const slugifiedTopic = topic.name
       .toLowerCase()
@@ -136,7 +159,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     }
 
     // Normalize to expected shape
-    const normalized = questionsRaw.map((q: any, index: number) => ({
+    const normalized = questionsRaw.map((q: any) => ({
       questionText: q.questionText || q.text || "",
       difficulty: String(q.difficulty || "MEDIUM").toUpperCase(),
       hint: q.hint || undefined,
@@ -151,7 +174,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       })),
     }));
 
-    return successResponse({
+    const resultPayload = {
       topicId: id,
       topicName: topic.name,
       model: aiModel,
@@ -159,8 +182,29 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       questions: normalized,
       tokensUsed: completion.usage?.total_tokens || 0,
       promptPreview: `${prompt.substring(0, 200)}...`,
+    };
+
+    if (taskId) {
+      try {
+        await markBackgroundTaskCompleted(taskId, resultPayload);
+      } catch (taskError) {
+        console.error("[AI Question Generator] Failed to mark background task completed:", taskError);
+      }
+    }
+
+    return successResponse({
+      taskId,
+      ...resultPayload,
     });
   } catch (error) {
+    if (taskId) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      try {
+        await markBackgroundTaskFailed(taskId, message);
+      } catch (taskError) {
+        console.error("[AI Question Generator] Failed to update background task status:", taskError);
+      }
+    }
     return handleError(error);
   }
 }
@@ -220,5 +264,3 @@ function extractJSON(content: string): string {
   const jsonMatch = content.match(/(\{[\s\S]*\})/);
   return jsonMatch ? jsonMatch[1].trim() : content;
 }
-
-
