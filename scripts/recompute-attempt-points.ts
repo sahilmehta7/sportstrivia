@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/db';
+import { Prisma } from '@prisma/client';
 import { computeQuizScale } from '@/lib/scoring/computeQuizScale';
 import { computeQuestionScore } from '@/lib/scoring/computeQuestionScore';
 
@@ -23,7 +24,7 @@ async function main() {
     });
 
     let perQuestionTotal = 0;
-    const updates: Promise<any>[] = [];
+    const updates: Prisma.PrismaPromise<any>[] = [];
     for (const ua of orderedAnswers) {
       const L = ua.question.timeLimit ?? attempt.quiz.timePerQuestion ?? 60;
       const computed = computeQuestionScore({
