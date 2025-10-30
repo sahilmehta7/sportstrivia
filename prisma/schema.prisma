@@ -8,27 +8,79 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
+/// Gamification Levels and Tiers
+model Level {
+  id             Int      @id @default(autoincrement())
+  level          Int      @unique
+  pointsRequired Int
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model Tier {
+  id          Int      @id @default(autoincrement())
+  name        String
+  slug        String   @unique
+  description String?
+  startLevel  Int
+  endLevel    Int
+  color       String?
+  icon        String?
+  order       Int      @unique
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Back relation
+  userTierHistory UserTierHistory[]
+}
+
+model UserLevel {
+  id        Int      @id @default(autoincrement())
+  userId    String
+  level     Int
+  reachedAt DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, level])
+  @@index([level])
+}
+
+model UserTierHistory {
+  id        Int      @id @default(autoincrement())
+  userId    String
+  tierId    Int
+  reachedAt DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tier Tier @relation(fields: [tierId], references: [id], onDelete: Cascade)
+
+  @@index([userId, tierId])
+  @@index([tierId])
+}
+
 model User {
-  id                 String            @id @default(cuid())
-  email              String            @unique
+  id                 String                     @id @default(cuid())
+  email              String                     @unique
   emailVerified      DateTime?
   name               String?
   image              String?
   bio                String?
   favoriteTeams      String[]
-  role               UserRole          @default(USER)
-  currentStreak      Int               @default(0)
-  longestStreak      Int               @default(0)
+  role               UserRole                   @default(USER)
+  currentStreak      Int                        @default(0)
+  longestStreak      Int                        @default(0)
   lastActiveDate     DateTime?
-  createdAt          DateTime          @default(now())
-  updatedAt          DateTime          @updatedAt
-  experienceTier     ExperienceTier    @default(ROOKIE)
-  totalPoints        Int               @default(0)
+  createdAt          DateTime                   @default(now())
+  updatedAt          DateTime                   @updatedAt
+  experienceTier     ExperienceTier             @default(ROOKIE)
+  totalPoints        Int                        @default(0)
   accounts           Account[]
-  challengesReceived Challenge[]       @relation("Challenged")
-  challengesSent     Challenge[]       @relation("Challenger")
-  friendOf           Friend[]          @relation("FriendOf")
-  friends            Friend[]          @relation("UserFriends")
+  challengesReceived Challenge[]                @relation("Challenged")
+  challengesSent     Challenge[]                @relation("Challenger")
+  friendOf           Friend[]                   @relation("FriendOf")
+  friends            Friend[]                   @relation("UserFriends")
   mediaUploads       Media[]
   notifications      Notification[]
   reports            QuestionReport[]
@@ -40,6 +92,9 @@ model User {
   searchQueries      UserSearchQuery[]
   topicStats         UserTopicStats[]
   completionAwards   QuizCompletionBonusAward[]
+  // Back relations for gamification
+  levelHistory       UserLevel[]
+  tierHistory        UserTierHistory[]
 
   @@index([email])
 }
@@ -103,44 +158,44 @@ model Topic {
 }
 
 model Quiz {
-  id                     String                @id @default(cuid())
+  id                     String                     @id @default(cuid())
   title                  String
-  slug                   String                @unique
+  slug                   String                     @unique
   description            String?
   descriptionImageUrl    String?
   descriptionVideoUrl    String?
   sport                  String?
-  difficulty             Difficulty            @default(MEDIUM)
-  status                 QuizStatus            @default(DRAFT)
+  difficulty             Difficulty                 @default(MEDIUM)
+  status                 QuizStatus                 @default(DRAFT)
   duration               Int?
   timePerQuestion        Int?
-  passingScore           Int                   @default(70)
-  completionBonus        Int                   @default(0)
-  questionSelectionMode  QuestionSelectionMode @default(FIXED)
+  passingScore           Int                        @default(70)
+  completionBonus        Int                        @default(0)
+  questionSelectionMode  QuestionSelectionMode      @default(FIXED)
   questionCount          Int?
-  randomizeQuestionOrder Boolean               @default(false)
-  showHints              Boolean               @default(true)
-  negativeMarkingEnabled Boolean               @default(false)
-  penaltyPercentage      Int                   @default(25)
-  timeBonusEnabled       Boolean               @default(false)
-  bonusPointsPerSecond   Float                 @default(0)
+  randomizeQuestionOrder Boolean                    @default(false)
+  showHints              Boolean                    @default(true)
+  negativeMarkingEnabled Boolean                    @default(false)
+  penaltyPercentage      Int                        @default(25)
+  timeBonusEnabled       Boolean                    @default(false)
+  bonusPointsPerSecond   Float                      @default(0)
   startTime              DateTime?
   endTime                DateTime?
   answersRevealTime      DateTime?
-  recurringType          RecurringType         @default(NONE)
+  recurringType          RecurringType              @default(NONE)
   lastRefreshedAt        DateTime?
-  isDuplicated           Boolean               @default(false)
+  isDuplicated           Boolean                    @default(false)
   originalQuizId         String?
-  averageRating          Float                 @default(0)
-  totalReviews           Int                   @default(0)
+  averageRating          Float                      @default(0)
+  totalReviews           Int                        @default(0)
   seoTitle               String?
   seoDescription         String?
   seoKeywords            String[]
-  isPublished            Boolean               @default(false)
-  createdAt              DateTime              @default(now())
-  updatedAt              DateTime              @updatedAt
-  isFeatured             Boolean               @default(false)
-  attemptResetPeriod     AttemptResetPeriod    @default(NEVER)
+  isPublished            Boolean                    @default(false)
+  createdAt              DateTime                   @default(now())
+  updatedAt              DateTime                   @updatedAt
+  isFeatured             Boolean                    @default(false)
+  attemptResetPeriod     AttemptResetPeriod         @default(NEVER)
   maxAttemptsPerUser     Int?
   challenges             Challenge[]
   attempts               QuizAttempt[]

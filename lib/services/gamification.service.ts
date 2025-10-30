@@ -1,0 +1,204 @@
+import { PrismaClient } from "@prisma/client";
+import {
+  LEVELS_MAX,
+  TIERS_MAX,
+  DEFAULT_TIER_NAMES,
+  pointsForLevel,
+  slugifyTierName,
+} from "../config/gamification";
+
+const prisma = new PrismaClient();
+
+export type ComputedLevel = {
+  level: number;
+  nextLevelPoints: number | null;
+  progressPct: number; // 0-100 relative to current level span
+};
+
+export async function ensureSeededDefaults(): Promise<void> {
+  const [levelCount, tierCount] = await Promise.all([
+    prisma.level.count(),
+    prisma.tier.count(),
+  ]);
+  if (levelCount === 0) {
+    const levelData = Array.from({ length: LEVELS_MAX }, (_, i) => {
+      const level = i + 1;
+      return {
+        level,
+        pointsRequired: pointsForLevel(level),
+        isActive: true,
+      };
+    });
+    await prisma.level.createMany({ data: levelData });
+  }
+  if (tierCount === 0) {
+    const names = (DEFAULT_TIER_NAMES || []).slice(0, TIERS_MAX);
+    const levelsPerTier = Math.floor(LEVELS_MAX / TIERS_MAX);
+    const tierData = names.map((name, idx) => {
+      const startLevel = idx * levelsPerTier + 1;
+      const endLevel = idx === TIERS_MAX - 1 ? LEVELS_MAX : (idx + 1) * levelsPerTier;
+      return {
+        name,
+        slug: slugifyTierName(name),
+        description: `${name} tier (Levels ${startLevel}-${endLevel})`,
+        startLevel,
+        endLevel,
+        order: idx + 1,
+      };
+    });
+    await prisma.tier.createMany({ data: tierData });
+  }
+}
+
+export async function listLevels() {
+  return prisma.level.findMany({ orderBy: { level: "asc" } });
+}
+
+export async function getLevel(levelNumber: number) {
+  return prisma.level.findUnique({ where: { level: levelNumber } });
+}
+
+export async function upsertLevel(levelNumber: number, pointsRequired: number, isActive: boolean = true) {
+  return prisma.level.upsert({
+    where: { level: levelNumber },
+    update: { pointsRequired, isActive },
+    create: { level: levelNumber, pointsRequired, isActive },
+  });
+}
+
+export async function deleteLevel(levelNumber: number) {
+  if (levelNumber === 1) throw new Error("Cannot delete level 1");
+  await prisma.level.delete({ where: { level: levelNumber } });
+}
+
+export async function listTiers() {
+  return prisma.tier.findMany({ orderBy: { order: "asc" } });
+}
+
+export async function getTierForLevel(level: number) {
+  return prisma.tier.findFirst({
+    where: { startLevel: { lte: level }, endLevel: { gte: level } },
+    orderBy: { order: "asc" },
+  });
+}
+
+export async function upsertTier(input: {
+  id?: number;
+  name: string;
+  slug?: string;
+  description?: string | null;
+  startLevel: number;
+  endLevel: number;
+  color?: string | null;
+  icon?: string | null;
+  order: number;
+}) {
+  const { id, name, slug, description, startLevel, endLevel, color, icon, order } = input;
+  if (startLevel < 1 || endLevel < startLevel) {
+    throw new Error("Invalid tier level range");
+  }
+  const data = {
+    name,
+    slug: slug ?? slugifyTierName(name),
+    description: description ?? null,
+    startLevel,
+    endLevel,
+    color: color ?? null,
+    icon: icon ?? null,
+    order,
+  };
+  if (id) {
+    return prisma.tier.update({ where: { id }, data });
+  } else {
+    return prisma.tier.create({ data });
+  }
+}
+
+export async function deleteTier(id: number) {
+  await prisma.tier.delete({ where: { id } });
+}
+
+export async function computeLevelFromPoints(totalPoints: number): Promise<ComputedLevel> {
+  let levels: Array<{ level: number; pointsRequired: number; isActive: boolean }> = [];
+  try {
+    // If Prisma is not generated or model not migrated, this may throw; fallback to curve
+    // @ts-ignore runtime safety
+    if ((prisma as any)?.level?.findMany) {
+      levels = await prisma.level.findMany({ orderBy: { level: "asc" } });
+    }
+  } catch {}
+
+  if (!levels || levels.length === 0) {
+    // Fallback to on-the-fly curve if DB empty
+    let level = 0;
+    for (let i = 1; i <= LEVELS_MAX; i++) {
+      if (pointsForLevel(i) <= totalPoints) level = i;
+    }
+    const nextLevel = Math.min(level + 1, LEVELS_MAX);
+    const currentReq = pointsForLevel(level);
+    const nextReq = nextLevel > level ? pointsForLevel(nextLevel) : null;
+    const span = nextReq ? Math.max(nextReq - currentReq, 1) : 1;
+    const progress = nextReq ? Math.min(Math.max(totalPoints - currentReq, 0), span) : 0;
+    return { level, nextLevelPoints: nextReq, progressPct: Math.round((progress / span) * 100) };
+  }
+  let achievedLevel = 0;
+  for (const l of levels) {
+    if (l.isActive && l.pointsRequired <= totalPoints) achievedLevel = l.level;
+  }
+  // Safety: if we didn't pick any level but user meets the first threshold, set to level 1
+  const firstActive = levels.find((l) => l.isActive) ?? levels[0];
+  if (achievedLevel === 0 && firstActive && totalPoints >= firstActive.pointsRequired) {
+    achievedLevel = firstActive.level;
+  }
+  const next = levels.find((l) => l.level === achievedLevel + 1) || null;
+  const currentReq = levels.find((l) => l.level === achievedLevel)?.pointsRequired ?? 0;
+  const nextReq = next?.pointsRequired ?? null;
+  const span = nextReq ? Math.max(nextReq - currentReq, 1) : 1;
+  const progress = nextReq ? Math.min(Math.max(totalPoints - currentReq, 0), span) : 0;
+  return { level: achievedLevel, nextLevelPoints: nextReq, progressPct: Math.round((progress / span) * 100) };
+}
+
+export async function recomputeUserProgress(userId: string) {
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user) return;
+  const { level } = await computeLevelFromPoints(user.totalPoints ?? 0);
+  const existingLatest = await prisma.userLevel.findFirst({
+    where: { userId },
+    orderBy: { reachedAt: "desc" },
+  });
+  if (!existingLatest || existingLatest.level !== level) {
+    await prisma.userLevel.create({ data: { userId, level, reachedAt: new Date() } });
+  }
+  const tier = await getTierForLevel(level);
+  if (tier) {
+    const latestTier = await prisma.userTierHistory.findFirst({
+      where: { userId },
+      orderBy: { reachedAt: "desc" },
+    });
+    if (!latestTier || latestTier.tierId !== tier.id) {
+      await prisma.userTierHistory.create({ data: { userId, tierId: tier.id, reachedAt: new Date() } });
+    }
+  }
+  return { level, tierId: tier?.id ?? null };
+}
+
+export async function recomputeAllUsers(batchSize: number = 200) {
+  let cursor: string | null = null;
+  // simple batching using createdAt ordering
+  // fallback if no createdAt index: iterate by id
+  // @ts-ignore createdAt exists on User
+  for (;;) {
+    const users = await prisma.user.findMany({
+      take: batchSize,
+      ...(cursor ? { skip: 1, cursor: { id: cursor } } : {}),
+      orderBy: { id: "asc" },
+    });
+    if (users.length === 0) break;
+    for (const u of users) {
+      await recomputeUserProgress(u.id);
+    }
+    cursor = users[users.length - 1].id;
+  }
+}
+
+

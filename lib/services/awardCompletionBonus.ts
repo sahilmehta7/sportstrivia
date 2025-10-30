@@ -14,15 +14,8 @@ export async function awardCompletionBonusIfEligible(params: {
   });
   if (existing) return 0;
 
-  await prisma.$transaction([
-    prisma.quizCompletionBonusAward.create({ data: { quizId, userId } }),
-    prisma.user.update({
-      where: { id: userId },
-      data: { totalPoints: { increment: quiz.completionBonus } },
-    }),
-  ]);
+  await prisma.quizCompletionBonusAward.create({ data: { quizId, userId } });
 
   return quiz.completionBonus;
 }
-
 

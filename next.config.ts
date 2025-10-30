@@ -48,6 +48,10 @@ const nextConfig: NextConfig = {
       bodySizeLimit: "10mb",
     },
   },
+  env: {
+    NEXT_PUBLIC_GAMIFICATION_ENABLED:
+      process.env.NEXT_PUBLIC_GAMIFICATION_ENABLED ?? "true",
+  },
 };
 
 export default nextConfig;

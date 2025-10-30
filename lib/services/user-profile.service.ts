@@ -12,6 +12,12 @@ export interface UserProfileInfo {
   favoriteTeams: string[];
   totalPoints: number | null;
   experienceTier: string | null;
+  level?: number;
+  tierName?: string | null;
+  levelCurrentPointsRequired?: number;
+  nextLevelPoints?: number | null;
+  levelProgressPoints?: number; // points earned within current level
+  levelSpanPoints?: number; // points needed to reach next level from current
   currentStreak: number;
   longestStreak: number;
   createdAt: Date;
@@ -36,7 +42,7 @@ export interface UserProfileStats {
       id: string;
       name: string;
       slug: string;
-      emoji?: string | null;
+      displayEmoji?: string | null;
     };
   }>;
   recentAttempts: Array<{
@@ -65,7 +71,7 @@ export interface UserProfileStats {
 }
 
 export async function getUserProfileInfo(userId: string): Promise<UserProfileInfo | null> {
-  return prisma.user.findUnique({
+  const user = await prisma.user.findUnique({
     where: { id: userId },
     select: {
       id: true,
@@ -83,6 +89,34 @@ export async function getUserProfileInfo(userId: string): Promise<UserProfileInf
       lastActiveDate: true,
     },
   });
+  if (!user) return null;
+  try {
+    const { computeLevelFromPoints, getTierForLevel } = await import("@/lib/services/gamification.service");
+    const computed = await computeLevelFromPoints(user.totalPoints ?? 0);
+    const tier = await getTierForLevel(computed.level);
+    // Determine current level points from DB override if available
+    let currentLevelPointsRequired = 0;
+    try {
+      const currentLevel = await prisma.level.findUnique({ where: { level: computed.level } });
+      currentLevelPointsRequired = currentLevel?.pointsRequired ?? 0;
+    } catch {
+      currentLevelPointsRequired = 0;
+    }
+    const totalPoints = user.totalPoints ?? 0;
+    const span = computed.nextLevelPoints ? Math.max(computed.nextLevelPoints - currentLevelPointsRequired, 1) : 1;
+    const progressInLevel = computed.nextLevelPoints ? Math.min(Math.max(totalPoints - currentLevelPointsRequired, 0), span) : span;
+    return {
+      ...user,
+      level: computed.level,
+      tierName: tier?.name ?? null,
+      levelCurrentPointsRequired: currentLevelPointsRequired,
+      nextLevelPoints: computed.nextLevelPoints ?? null,
+      levelProgressPoints: progressInLevel,
+      levelSpanPoints: span,
+    } as UserProfileInfo;
+  } catch {
+    return user as UserProfileInfo;
+  }
 }
 
 export async function getUserProfileStats(userId: string): Promise<UserProfileStats> {
@@ -116,11 +150,11 @@ export async function getUserProfileStats(userId: string): Promise<UserProfileSt
           orderBy: { successRate: "desc" },
           take: 5,
           include: {
-            topic: { select: { id: true, name: true, slug: true, emoji: true } as any } as any,
+            topic: { select: { id: true, name: true, slug: true, displayEmoji: true } as any } as any,
           },
         })) as any;
       } catch {
-        // Fallback without emoji if Prisma client doesn't have the field yet
+        // Fallback without displayEmoji if Prisma client doesn't have the field yet
         return prisma.userTopicStats.findMany({
           where: { userId },
           orderBy: { successRate: "desc" },

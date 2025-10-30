@@ -16,11 +16,11 @@ export async function GET() {
 					{ questionsAnswered: "desc" },
 				],
 				include: {
-					topic: { select: { id: true, name: true, slug: true, emoji: true } as any } as any,
+						topic: { select: { id: true, name: true, slug: true, displayEmoji: true } as any } as any,
 				},
 			})) as any[];
 		} catch {
-			// Fallback without emoji if Prisma client doesn't have the field yet
+				// Fallback without displayEmoji if Prisma client doesn't have the field yet
 			topicStats = await prisma.userTopicStats.findMany({
 				where: { userId: user.id },
 				orderBy: [

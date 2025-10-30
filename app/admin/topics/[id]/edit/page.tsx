@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Save, Trash2 } from "lucide-react";
+import { ArrowLeft, Save, Trash2, Wand2, Loader2, Upload } from "lucide-react";
 import Link from "next/link";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { Badge } from "@/components/ui/badge";
@@ -37,6 +37,14 @@ export default function EditTopicPage({ params }: EditTopicPageProps) {
   const [currentTopic, setCurrentTopic] = useState<any>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
+
+  // AI generation state
+  const [easyCount, setEasyCount] = useState(3);
+  const [mediumCount, setMediumCount] = useState(3);
+  const [hardCount, setHardCount] = useState(3);
+  const [generating, setGenerating] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const [generatedQuestions, setGeneratedQuestions] = useState<any[] | null>(null);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -185,6 +193,83 @@ export default function EditTopicPage({ params }: EditTopicPageProps) {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
+  const handleGenerateQuestions = async () => {
+    if (!topicId) return;
+    const total = (easyCount || 0) + (mediumCount || 0) + (hardCount || 0);
+    if (total < 1) {
+      toast({ title: "Nothing to generate", description: "Set at least one question to generate.", variant: "destructive" });
+      return;
+    }
+
+    setGenerating(true);
+    setGeneratedQuestions(null);
+    try {
+      const res = await fetch(`/api/admin/topics/${topicId}/ai/generate-questions`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ easyCount, mediumCount, hardCount }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data?.error || "Failed to generate questions");
+      }
+      setGeneratedQuestions(data.data.questions || []);
+      toast({ title: "AI ready", description: `Generated ${data.data.questions?.length || 0} questions` });
+    } catch (err: any) {
+      toast({ title: "Generation failed", description: err.message, variant: "destructive" });
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  const handleImportQuestions = async () => {
+    if (!generatedQuestions || generatedQuestions.length === 0) return;
+    setImporting(true);
+    let created = 0;
+    try {
+      for (const q of generatedQuestions) {
+        const payload = {
+          type: "MULTIPLE_CHOICE",
+          topicId,
+          difficulty: q.difficulty || "MEDIUM",
+          questionText: q.questionText,
+          questionImageUrl: "",
+          questionVideoUrl: "",
+          questionAudioUrl: "",
+          hint: q.hint || undefined,
+          explanation: q.explanation || undefined,
+          explanationImageUrl: "",
+          explanationVideoUrl: "",
+          randomizeAnswerOrder: false,
+          timeLimit: undefined,
+          answers: (q.answers || []).map((a: any, idx: number) => ({
+            answerText: a.answerText,
+            answerImageUrl: "",
+            answerVideoUrl: "",
+            answerAudioUrl: "",
+            isCorrect: !!a.isCorrect,
+            displayOrder: idx,
+          })),
+        };
+        const resp = await fetch(`/api/admin/questions`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        if (resp.ok) {
+          created += 1;
+        }
+      }
+      toast({ title: "Questions imported", description: `Created ${created} question(s)` });
+      setGeneratedQuestions(null);
+      router.refresh();
+    } catch (err: any) {
+      toast({ title: "Import failed", description: err.message, variant: "destructive" });
+    } finally {
+      setImporting(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -331,6 +416,110 @@ export default function EditTopicPage({ params }: EditTopicPageProps) {
                 Changing parent will update this topic&apos;s level and all descendants
               </p>
             </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>AI Question Generator</CardTitle>
+            <CardDescription>Generate more unique questions for this topic</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid gap-4 md:grid-cols-3">
+              <div className="space-y-2">
+                <Label htmlFor="easyCount">Easy</Label>
+                <Input
+                  id="easyCount"
+                  type="number"
+                  min={0}
+                  max={50}
+                  value={easyCount}
+                  onChange={(e) => setEasyCount(Math.max(0, Math.min(50, parseInt(e.target.value || "0", 10))))}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="mediumCount">Medium</Label>
+                <Input
+                  id="mediumCount"
+                  type="number"
+                  min={0}
+                  max={50}
+                  value={mediumCount}
+                  onChange={(e) => setMediumCount(Math.max(0, Math.min(50, parseInt(e.target.value || "0", 10))))}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="hardCount">Hard</Label>
+                <Input
+                  id="hardCount"
+                  type="number"
+                  min={0}
+                  max={50}
+                  value={hardCount}
+                  onChange={(e) => setHardCount(Math.max(0, Math.min(50, parseInt(e.target.value || "0", 10))))}
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div className="text-sm text-muted-foreground">
+                Total to generate: {(easyCount || 0) + (mediumCount || 0) + (hardCount || 0)}
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={handleGenerateQuestions}
+                  disabled={generating || ((easyCount + mediumCount + hardCount) < 1)}
+                >
+                  {generating ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Generating...
+                    </>
+                  ) : (
+                    <>
+                      <Wand2 className="mr-2 h-4 w-4" />
+                      Generate with AI
+                    </>
+                  )}
+                </Button>
+                <Button
+                  type="button"
+                  onClick={handleImportQuestions}
+                  disabled={importing || !generatedQuestions || generatedQuestions.length === 0}
+                >
+                  {importing ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Importing...
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="mr-2 h-4 w-4" />
+                      Import Generated
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+
+            {generatedQuestions && generatedQuestions.length > 0 && (
+              <div className="rounded border p-3 text-sm">
+                <div className="font-medium mb-2">Preview ({generatedQuestions.length})</div>
+                <div className="space-y-2">
+                  {generatedQuestions.slice(0, 3).map((q, idx) => (
+                    <div key={idx} className="border rounded p-2">
+                      <div className="font-medium">{idx + 1}. {q.questionText}</div>
+                      <div className="text-xs text-muted-foreground mt-1">{q.answers?.length || 0} answers • {q.difficulty}</div>
+                    </div>
+                  ))}
+                  {generatedQuestions.length > 3 && (
+                    <div className="text-xs text-muted-foreground text-center">... and {generatedQuestions.length - 3} more</div>
+                  )}
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
 

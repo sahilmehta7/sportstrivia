@@ -45,6 +45,7 @@ import type { OnboardingStep } from "@/components/showcase/ui/OnboardingTooltipS
 import Link from "next/link";
 import { GlassButton } from "@/components/showcase/ui/GlassButton";
 import React from "react";
+import { pointsForLevel, DEFAULT_TIER_NAMES, LEVELS_MAX, TIERS_MAX } from "@/lib/config/gamification";
 
 function SkeletonWidget() {
   return (
@@ -144,11 +145,12 @@ const sparklineData = {
   trend: "+15%",
 };
 
-const progressData = {
-  label: "Weekly Progress",
-  current: 12,
-  goal: 20,
-  milestoneLabel: "Expert Tier",
+// Level Progress (initialized with placeholder; replaced after fetch)
+const initialProgressData = {
+  label: "Level Progress",
+  current: 0,
+  goal: 100,
+  milestoneLabel: "Next Level",
 };
 
 const quizCards = [
@@ -187,6 +189,7 @@ export function ShowcaseUiPlaygroundContent({ filterGroups }: ShowcaseUiPlaygrou
   const [topTopics, setTopTopics] = useState<any[] | null>(null);
   const [loadingTopics, setLoadingTopics] = useState(true);
   const [unauth, setUnauth] = useState(false);
+  const [levelProgress, setLevelProgress] = useState(initialProgressData);
 
   // Fetch real top topics for current user
   React.useEffect(() => {
@@ -206,6 +209,30 @@ export function ShowcaseUiPlaygroundContent({ filterGroups }: ShowcaseUiPlaygrou
         // ignore fetch errors in showcase preview
       } finally {
         setLoadingTopics(false);
+      }
+    })();
+  }, []);
+
+  // Fetch user gamification (server-computed) for the ribbon
+  React.useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch("/api/users/me/gamification", { cache: "no-store" });
+        if (!res.ok) return;
+        const json = await res.json();
+        const data = json?.data ?? json;
+        const totalPoints: number = data?.totalPoints ?? 0;
+        const progress: number = data?.progress ?? 0;
+        const span: number = data?.span ?? 100;
+        const tierName: string = data?.tierName ?? "Rookie";
+        setLevelProgress({
+          label: `${tierName}`,
+          current: progress,
+          goal: span,
+          milestoneLabel: data?.nextRequired ? `Level ${Math.min(100, (data?.level ?? 0) + 1)}` : "Max Level",
+        });
+      } catch {
+        // ignore errors in showcase
       }
     })();
   }, []);
@@ -429,10 +456,10 @@ export function ShowcaseUiPlaygroundContent({ filterGroups }: ShowcaseUiPlaygrou
             values={sparklineData.values}
           />
           <ShowcaseProgressTrackerRibbon 
-            label={progressData.label}
-            current={progressData.current}
-            goal={progressData.goal}
-            milestoneLabel={progressData.milestoneLabel}
+            label={levelProgress.label}
+            current={levelProgress.current}
+            goal={levelProgress.goal}
+            milestoneLabel={levelProgress.milestoneLabel}
           />
         </div>
 
