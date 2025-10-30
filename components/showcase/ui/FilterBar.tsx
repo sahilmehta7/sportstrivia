@@ -27,10 +27,9 @@ interface ShowcaseFilterBarProps {
   className?: string;
   condensed?: boolean;
   onChange?: (groupId: string, option: ShowcaseFilterOption) => void;
-  onReset?: () => void;
 }
 
-export function ShowcaseFilterBar({ groups, className, condensed = false, onChange, onReset }: ShowcaseFilterBarProps) {
+export function ShowcaseFilterBar({ groups, className, condensed = false, onChange }: ShowcaseFilterBarProps) {
   const { theme: themeMode } = useTheme();
   const [mounted, setMounted] = useState(false);
 

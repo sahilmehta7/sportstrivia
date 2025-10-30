@@ -36,13 +36,14 @@ export interface UserProfileStats {
       id: string;
       name: string;
       slug: string;
+      emoji?: string | null;
     };
   }>;
   recentAttempts: Array<{
     id: string;
     score: number | null;
     passed: boolean | null;
-    completedAt: Date;
+    completedAt: Date | null;
     quiz: {
       id: string;
       title: string;
@@ -88,8 +89,8 @@ export async function getUserProfileStats(userId: string): Promise<UserProfileSt
   const [
     attemptStats,
     passedCount,
-    topTopics,
-    recentAttempts,
+    topTopicsRaw,
+    recentAttemptsRaw,
     leaderboardPositions,
     userData,
     perfectScores,
@@ -108,20 +109,28 @@ export async function getUserProfileStats(userId: string): Promise<UserProfileSt
         passed: true,
       },
     }),
-    prisma.userTopicStats.findMany({
-      where: { userId },
-      orderBy: { successRate: "desc" },
-      take: 5,
-      include: {
-        topic: {
-          select: {
-            id: true,
-            name: true,
-            slug: true,
+    (async () => {
+      try {
+        return (await prisma.userTopicStats.findMany({
+          where: { userId },
+          orderBy: { successRate: "desc" },
+          take: 5,
+          include: {
+            topic: { select: { id: true, name: true, slug: true, emoji: true } as any } as any,
           },
-        },
-      },
-    }),
+        })) as any;
+      } catch {
+        // Fallback without emoji if Prisma client doesn't have the field yet
+        return prisma.userTopicStats.findMany({
+          where: { userId },
+          orderBy: { successRate: "desc" },
+          take: 5,
+          include: {
+            topic: { select: { id: true, name: true, slug: true } },
+          },
+        }) as any;
+      }
+    })(),
     prisma.quizAttempt.findMany({
       where: {
         userId,
@@ -171,6 +180,9 @@ export async function getUserProfileStats(userId: string): Promise<UserProfileSt
 
   const totalAttempts = attemptStats._count;
   const averageScore = attemptStats._avg.score || 0;
+
+  const topTopics = topTopicsRaw as UserProfileStats["topTopics"];
+  const recentAttempts = recentAttemptsRaw as UserProfileStats["recentAttempts"];
 
   return {
     stats: {

@@ -34,4 +34,3 @@ export function ChallengeButton({ quizId, disabled }: ChallengeButtonProps) {
     </>
   );
 }
-

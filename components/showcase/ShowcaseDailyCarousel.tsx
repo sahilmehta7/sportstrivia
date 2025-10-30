@@ -19,28 +19,55 @@ export function ShowcaseDailyCarousel({
 }: ShowcaseDailyCarouselProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
-  const dragState = useRef({ startX: 0, scrollLeft: 0 });
+  const dragState = useRef({ startX: 0, scrollLeft: 0, moved: false, target: null as HTMLElement | null });
+  const DRAG_THRESHOLD_PX = 10; // Ignore tiny movements so clicks still work
 
   const handlePointerDown = (event: PointerEvent<HTMLDivElement>) => {
     if (!containerRef.current) return;
-    setIsDragging(true);
+    
+    // Check if the click target is a Link or inside a Link
+    const target = event.target as HTMLElement;
+    const isLink = target.closest('a');
+    
+    // Don't capture pointer events for Links - let them handle clicks normally
+    if (isLink) {
+      return;
+    }
+    
+    setIsDragging(false);
     dragState.current = {
       startX: event.clientX,
       scrollLeft: containerRef.current.scrollLeft,
+      moved: false,
+      target: target,
     };
     containerRef.current.setPointerCapture(event.pointerId);
   };
 
   const handlePointerMove = (event: PointerEvent<HTMLDivElement>) => {
-    if (!isDragging || !containerRef.current) return;
+    if (!containerRef.current || !dragState.current.target) return;
+    
     const delta = event.clientX - dragState.current.startX;
-    containerRef.current.scrollLeft = dragState.current.scrollLeft - delta;
+    // Only treat as a drag after a small threshold so clicks still register
+    if (!isDragging && Math.abs(delta) > DRAG_THRESHOLD_PX) {
+      setIsDragging(true);
+      dragState.current.moved = true;
+    }
+    if (isDragging) {
+      containerRef.current.scrollLeft = dragState.current.scrollLeft - delta;
+    }
   };
 
   const handlePointerUp = (event: PointerEvent<HTMLDivElement>) => {
     if (!containerRef.current) return;
     containerRef.current.releasePointerCapture(event.pointerId);
-    setIsDragging(false);
+    
+    // Reset after a short delay to allow click events to process first
+    setTimeout(() => {
+      setIsDragging(false);
+      dragState.current.moved = false;
+      dragState.current.target = null;
+    }, 0);
   };
 
   if (dailyQuizzes.length === 0) {
@@ -105,6 +132,7 @@ export function ShowcaseDailyCarousel({
                     fill
                     className="object-cover transition-transform duration-300 group-hover:scale-105"
                     sizes="(max-width: 768px) 240px, 240px"
+                    draggable={false}
                   />
                 ) : (
                   <div className="h-full w-full bg-gradient-to-br from-muted to-muted/80" />

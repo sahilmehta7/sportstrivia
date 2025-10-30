@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useMemo, type FormEvent } from "react";
+import React, { useState, useEffect, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { PageHeader } from "@/components/shared/PageHeader";
@@ -126,7 +126,7 @@ export default function EditQuizPage({ params }: EditQuizPageProps) {
     ? Number.parseInt(formData.maxAttemptsPerUser, 10)
     : null;
   const attemptResetPeriodValue = formData.attemptResetPeriod as AttemptResetPeriod;
-  const canConfigureReset = attemptLimitEnabled && formData.recurringType !== "NONE";
+  const _canConfigureReset = attemptLimitEnabled && formData.recurringType !== "NONE";
   const attemptResetLabel = ATTEMPT_RESET_PERIOD_LABELS[attemptResetPeriodValue];
   const attemptResetHelpText = ATTEMPT_RESET_PERIOD_HELP_TEXT[attemptResetPeriodValue];
   const attemptLimitSummary = attemptLimitEnabled

@@ -27,10 +27,11 @@ export function AdminPaginationClient({
   variant = "client",
   filterParams = {},
 }: AdminPaginationClientProps) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
   if (variant === "client") {
-    const router = useRouter();
-    const pathname = usePathname();
-    const searchParams = useSearchParams();
 
     const goToPage = (page: number) => {
       const params = new URLSearchParams(searchParams.toString());

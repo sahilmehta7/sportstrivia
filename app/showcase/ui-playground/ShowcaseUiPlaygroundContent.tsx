@@ -5,7 +5,6 @@ import {
   ShowcasePage,
   ShowcaseTopNav,
   ShowcaseAnnouncementBanner,
-  ShowcaseBreadcrumbs,
   ShowcaseSearchBar,
   ShowcaseFilterBar,
   ShowcaseFilterDrawer,
@@ -32,9 +31,9 @@ import {
   ShowcaseFaqAccordion,
   ShowcaseEmptyState,
   ShowcaseToast,
-  ShowcaseFooter,
   ShowcaseOnboardingTooltipStack,
   ShowcasePagination,
+  ShowcaseTopicWiseStats,
 } from "@/showcase/components";
 import type { ShowcaseFilterGroup } from "@/components/showcase/ui/FilterBar";
 import type { ShowcaseSearchChip } from "@/components/showcase/ui/SearchBar";
@@ -43,6 +42,46 @@ import type { ContinuePlayingItem } from "@/components/showcase/ui/ContinuePlayi
 import type { TagCloudTag } from "@/components/showcase/ui/TagCloud";
 import type { MiniLeaderboardEntry } from "@/components/showcase/ui/MiniLeaderboard";
 import type { OnboardingStep } from "@/components/showcase/ui/OnboardingTooltipStack";
+import Link from "next/link";
+import { GlassButton } from "@/components/showcase/ui/GlassButton";
+import React from "react";
+
+function SkeletonWidget() {
+  return (
+    <div className="rounded-[22px] p-4 backdrop-blur-xl ring-1 ring-white/10 bg-white/5">
+      <div className="mb-3 flex items-center justify-between">
+        <div className="space-y-1">
+          <div className="h-4 w-36 animate-pulse rounded bg-white/20" />
+          <div className="h-3 w-48 animate-pulse rounded bg-white/10" />
+        </div>
+        <div className="h-8 w-20 animate-pulse rounded-full bg-white/10" />
+      </div>
+      <div className="space-y-3">
+        {Array.from({ length: 3 }).map((_, i) => (
+          <div key={i} className="rounded-xl border border-white/10 bg-white/5 p-3">
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="h-8 w-8 animate-pulse rounded-lg bg-white/10" />
+                <div className="space-y-1">
+                  <div className="h-3 w-28 animate-pulse rounded bg-white/20" />
+                  <div className="h-2.5 w-24 animate-pulse rounded bg-white/10" />
+                </div>
+              </div>
+              <div className="w-32 space-y-1">
+                <div className="flex items-center justify-between text-[10px] text-white/40">
+                  <span>Accuracy</span>
+                  <span>—</span>
+                </div>
+                <div className="h-1 w-full animate-pulse rounded-full bg-white/10" />
+              </div>
+              <div className="h-5 w-16 animate-pulse rounded-full bg-white/10" />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 const searchChips: ShowcaseSearchChip[] = [
   { value: "new", label: "New", emoji: "✨", active: true },
@@ -145,6 +184,39 @@ interface ShowcaseUiPlaygroundContentProps {
 
 export function ShowcaseUiPlaygroundContent({ filterGroups }: ShowcaseUiPlaygroundContentProps) {
   const [currentPage, setCurrentPage] = useState(1);
+  const [topTopics, setTopTopics] = useState<any[] | null>(null);
+  const [loadingTopics, setLoadingTopics] = useState(true);
+  const [unauth, setUnauth] = useState(false);
+
+  // Fetch real top topics for current user
+  React.useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch("/api/users/me/stats", { cache: "no-store" });
+        if (res.status === 401) {
+          setUnauth(true);
+          return;
+        }
+        if (!res.ok) return;
+        const json = await res.json();
+        if (json?.success && Array.isArray(json.data?.topTopics)) {
+          setTopTopics(json.data.topTopics);
+        }
+      } catch {
+        // ignore fetch errors in showcase preview
+      } finally {
+        setLoadingTopics(false);
+      }
+    })();
+  }, []);
+
+  const topicsMapped = (topTopics ?? []).map((t: any) => ({
+    id: t.id,
+    label: t.topic?.name ?? "",
+    accuracyPercent: Math.round(t.successRate ?? 0),
+    quizzesTaken: t.questionsAnswered ?? 0,
+    icon: t.topic?.emoji ?? "🏷️",
+  }));
 
   return (
     <ShowcasePage
@@ -203,6 +275,64 @@ export function ShowcaseUiPlaygroundContent({ filterGroups }: ShowcaseUiPlaygrou
             </ShowcaseQuickPreviewModal>
           ))}
         </ShowcaseMasonryGrid>
+
+        {/* Topic Wise Stats Demo */}
+        <ShowcaseSectionHeader
+          eyebrow="Insights"
+          title="Topic Wise Stats"
+          subtitle="Top topics summary with glassmorphism in light & dark."
+        />
+        <div className="grid gap-6 md:grid-cols-2">
+          {unauth ? (
+            <div className="col-span-2 rounded-[22px] p-6 text-center backdrop-blur-xl ring-1 ring-white/10 bg-white/5">
+              <p className="mb-4 text-sm">Sign in to see your topic-wise performance.</p>
+              <GlassButton asChild>
+                <Link href="/auth/signin">Sign in</Link>
+              </GlassButton>
+            </div>
+          ) : loadingTopics ? (
+            <>
+              <SkeletonWidget />
+              <SkeletonWidget />
+            </>
+          ) : (
+            <>
+              <ShowcaseTopicWiseStats
+                topics={
+                  topicsMapped.length > 0
+                    ? topicsMapped
+                    : [
+                        { id: "t1", label: "Premier League", accuracyPercent: 88, quizzesTaken: 34, streak: 4, icon: "⚽" },
+                        { id: "t2", label: "NBA", accuracyPercent: 76, quizzesTaken: 21, streak: 2, icon: "🏀" },
+                        { id: "t3", label: "Cricket", accuracyPercent: 69, quizzesTaken: 18, streak: 3, icon: "🏏" },
+                        { id: "t4", label: "Formula 1", accuracyPercent: 82, quizzesTaken: 12, streak: 1, icon: "🏎️" },
+                        { id: "t5", label: "NFL", accuracyPercent: 64, quizzesTaken: 15, icon: "🏈" },
+                      ]
+                }
+                limit={3}
+                viewAllHref="/showcase/topic-wise-stats-complete"
+              />
+
+              <ShowcaseTopicWiseStats
+                title="Top 5 Topics"
+                description="Performance snapshot"
+                topics={
+                  topicsMapped.length > 0
+                    ? topicsMapped
+                    : [
+                        { id: "t1", label: "Tennis", accuracyPercent: 91, quizzesTaken: 27, icon: "🎾" },
+                        { id: "t2", label: "La Liga", accuracyPercent: 79, quizzesTaken: 14, icon: "⚽" },
+                        { id: "t3", label: "Olympics", accuracyPercent: 72, quizzesTaken: 10, icon: "🏅" },
+                        { id: "t4", label: "Baseball", accuracyPercent: 65, quizzesTaken: 9, icon: "⚾" },
+                        { id: "t5", label: "Rugby", accuracyPercent: 58, quizzesTaken: 6, icon: "🏉" },
+                      ]
+                }
+                limit={5}
+                viewAllHref="/showcase/topic-wise-stats-complete"
+              />
+            </>
+          )}
+        </div>
 
         {/* Pagination Demo */}
         <div className="space-y-6">
@@ -386,8 +516,8 @@ export function ShowcaseUiPlaygroundContent({ filterGroups }: ShowcaseUiPlaygrou
 
         {/* Share Strip */}
         <ShowcaseShareStrip
-          url="https://sportstrivia.app/quiz/nba-legends"
-          title="Check out this amazing NBA quiz!"
+          shareUrl="https://sportstrivia.app/quiz/nba-legends"
+          message="Check out this amazing NBA quiz!"
           onShare={(platform) => console.log(`Shared on ${platform}`)}
         />
 
@@ -410,7 +540,6 @@ export function ShowcaseUiPlaygroundContent({ filterGroups }: ShowcaseUiPlaygrou
             <ShowcaseToast
               title="Success"
               description="Your quiz was completed successfully!"
-              variant="default"
               icon="✓"
             />
           </div>

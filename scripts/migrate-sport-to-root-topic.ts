@@ -11,9 +11,7 @@
 */
 
 // Use require with CommonJS resolution to avoid ESM path issues when running with node -e
-// eslint-disable-next-line @typescript-eslint/no-var-requires
 const { prisma } = require("../lib/db");
-// eslint-disable-next-line @typescript-eslint/no-var-requires
 const { generateUniqueSlug } = require("../lib/services/slug.service");
 
 async function main() {

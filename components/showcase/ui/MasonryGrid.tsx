@@ -5,11 +5,10 @@ import { cn } from "@/lib/utils";
 
 interface ShowcaseMasonryGridProps {
   children: ReactNode;
-  columns?: number;
   className?: string;
 }
 
-export function ShowcaseMasonryGrid({ children, columns = 3, className }: ShowcaseMasonryGridProps) {
+export function ShowcaseMasonryGrid({ children, className }: ShowcaseMasonryGridProps) {
   return (
     <div className={cn(
       "flex gap-4 overflow-x-auto pb-4 scrollbar-hide snap-x snap-mandatory",

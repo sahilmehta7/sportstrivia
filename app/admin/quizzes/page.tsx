@@ -2,7 +2,7 @@ import { prisma } from "@/lib/db";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Star, Edit, HelpCircle, Settings } from "lucide-react";
+import { Plus, Edit, HelpCircle } from "lucide-react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { AdminDataTable } from "@/components/admin/data-table/AdminDataTable";

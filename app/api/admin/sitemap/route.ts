@@ -4,9 +4,9 @@ import { isAdmin } from "@/lib/auth-helpers";
 import { handleError, successResponse, ForbiddenError } from "@/lib/errors";
 
 // POST /api/admin/sitemap - Regenerate sitemap
-export async function POST(request: NextRequest) {
+export async function POST(_request: NextRequest) {
   try {
-    const user = await requireAuth();
+    await requireAuth();
     
     // Check if user is admin
     const userIsAdmin = await isAdmin();

@@ -475,15 +475,24 @@ async function updateQuizLeaderboard(
   }
 
   // Update rankings - must handle unique constraint on [quizId, rank]
-  // Strategy: First reset all ranks to placeholder values, then assign correct ranks
+  // Strategy: First reset all ranks to unique temporary values, then assign correct ranks
   await prisma.$transaction(async (tx) => {
-    // Step 1: Reset all ranks to temporary values to avoid constraint conflicts
-    await tx.quizLeaderboard.updateMany({
+    // Step 1: Fetch all entries first
+    const allEntries = await tx.quizLeaderboard.findMany({
       where: { quizId },
-      data: { rank: 999999 },
+      select: { id: true },
     });
 
-    // Step 2: Fetch sorted leaderboard and assign correct ranks
+    // Step 2: Reset each rank to a unique temporary value to avoid constraint conflicts
+    // Use negative numbers to ensure they don't conflict with real ranks
+    for (let i = 0; i < allEntries.length; i++) {
+      await tx.quizLeaderboard.update({
+        where: { id: allEntries[i].id },
+        data: { rank: -(i + 1) }, // Use negative values as temporary ranks
+      });
+    }
+
+    // Step 3: Fetch sorted leaderboard and assign correct ranks
     const leaderboard = await tx.quizLeaderboard.findMany({
       where: { quizId },
       orderBy: [
@@ -494,7 +503,7 @@ async function updateQuizLeaderboard(
       select: { id: true },
     });
 
-    // Step 3: Update each entry with its correct rank
+    // Step 4: Update each entry with its correct rank
     for (let i = 0; i < leaderboard.length; i++) {
       await tx.quizLeaderboard.update({
         where: { id: leaderboard[i].id },

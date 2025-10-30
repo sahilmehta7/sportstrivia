@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Bell, Menu, X, User, Moon, Sun, ChevronDown } from "lucide-react";
+import { Bell, Menu, X, User, Moon, Sun } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";

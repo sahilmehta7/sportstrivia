@@ -85,6 +85,8 @@ model Topic {
   name             String            @unique
   slug             String            @unique
   description      String?
+  displayEmoji     String?
+  displayImageUrl  String?
   parentId         String?
   level            Int               @default(0)
   createdAt        DateTime          @default(now())

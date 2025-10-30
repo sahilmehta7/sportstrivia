@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
 import { startTransition } from "react";
 import { ShowcaseQuizCard } from "@/components/quiz/ShowcaseQuizCard";
@@ -8,7 +9,6 @@ import { QuizPagination } from "@/components/quizzes/quiz-pagination";
 import { FilterBar } from "@/components/quizzes/filter-bar";
 import type { ShowcaseFilterGroup } from "@/components/showcase/ui/FilterBar";
 import type { PublicQuizListItem } from "@/lib/services/public-quiz.service";
-import { cn } from "@/lib/utils";
 import { getSportGradient } from "@/lib/quiz-formatters";
 
 interface QuizzesContentProps {
@@ -91,17 +91,18 @@ export function QuizzesContent({ quizzes, filterGroups, pagination }: QuizzesCon
               const gradient = getSportGradient(quiz.sport, hashString(`${quiz.title}`));
               const durationLabel = quiz.duration ? `${Math.round(quiz.duration / 60)} min` : "Flexible";
               const playersLabel = `${quiz._count?.attempts || 0} players`;
-              
+
               return (
-                <ShowcaseQuizCard
-                  key={quiz.id}
-                  title={quiz.title}
-                  badgeLabel={quiz.sport || quiz.difficulty || "Quiz"}
-                  durationLabel={durationLabel}
-                  playersLabel={playersLabel}
-                  accent={gradient}
-                  coverImageUrl={quiz.descriptionImageUrl}
-                />
+                <Link key={quiz.id} href={`/quizzes/${quiz.slug}`} className="block">
+                  <ShowcaseQuizCard
+                    title={quiz.title}
+                    badgeLabel={quiz.sport || quiz.difficulty || "Quiz"}
+                    durationLabel={durationLabel}
+                    playersLabel={playersLabel}
+                    accent={gradient}
+                    coverImageUrl={quiz.descriptionImageUrl}
+                  />
+                </Link>
               );
             })}
           </div>

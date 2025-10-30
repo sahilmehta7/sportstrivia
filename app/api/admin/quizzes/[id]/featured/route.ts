@@ -15,7 +15,7 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const user = await requireAuth();
+    await requireAuth();
     
     // Check if user is admin
     const userIsAdmin = await isAdmin();

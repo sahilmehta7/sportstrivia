@@ -23,7 +23,7 @@ interface LandingPageProps {
   };
 }
 
-export function LandingPage({ featuredQuizzes, topTopics, stats }: LandingPageProps) {
+export function LandingPage({ featuredQuizzes, topTopics: _topTopics, stats }: LandingPageProps) {
   const { theme } = useShowcaseTheme();
   const blurCircles = getBlurCircles(theme);
 

@@ -9,10 +9,9 @@ interface FilterBarProps {
   groups: ShowcaseFilterGroup[];
   className?: string;
   onChange?: (groupId: string, option: ShowcaseFilterOption) => void;
-  onReset?: () => void;
 }
 
-export function FilterBar({ groups, className, onChange, onReset }: FilterBarProps) {
+export function FilterBar({ groups, className, onChange }: FilterBarProps) {
   return (
     <div className={cn("w-full rounded-xl border bg-card p-4", className)}>
       <div className="flex flex-col gap-4">

@@ -2,9 +2,7 @@
 
 import { useState, type ReactNode } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { ChevronDown, ChevronUp } from "lucide-react";
-import { cn } from "@/lib/utils";
 
 interface StreamlinedQuizFormProps {
   children: ReactNode;

@@ -43,6 +43,8 @@ export default function EditTopicPage({ params }: EditTopicPageProps) {
     slug: "",
     description: "",
     parentId: "",
+    displayEmoji: "",
+    displayImageUrl: "",
   });
 
   useEffect(() => {
@@ -80,6 +82,8 @@ export default function EditTopicPage({ params }: EditTopicPageProps) {
           slug: topic.slug || "",
           description: topic.description || "",
           parentId: topic.parentId || "",
+          displayEmoji: topic.displayEmoji || "",
+          displayImageUrl: topic.displayImageUrl || "",
         });
       } catch (error: any) {
         toast({
@@ -106,6 +110,8 @@ export default function EditTopicPage({ params }: EditTopicPageProps) {
         slug: formData.slug,
         description: formData.description || null,
         parentId: formData.parentId || null,
+        displayEmoji: formData.displayEmoji || null,
+        displayImageUrl: formData.displayImageUrl || null,
       };
 
       const response = await fetch(`/api/admin/topics/${topicId}`, {
@@ -266,6 +272,30 @@ export default function EditTopicPage({ params }: EditTopicPageProps) {
               <p className="text-xs text-muted-foreground">
                 URL-friendly identifier (lowercase, hyphens)
               </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="displayEmoji">Display Emoji</Label>
+              <Input
+                id="displayEmoji"
+                placeholder="e.g., 🏀"
+                value={formData.displayEmoji}
+                onChange={(e) => updateField("displayEmoji", e.target.value)}
+                maxLength={8}
+              />
+              <p className="text-xs text-muted-foreground">Optional. Single emoji recommended.</p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="displayImageUrl">Display Image URL</Label>
+              <Input
+                id="displayImageUrl"
+                placeholder="https://..."
+                value={formData.displayImageUrl}
+                onChange={(e) => updateField("displayImageUrl", e.target.value)}
+                type="url"
+              />
+              <p className="text-xs text-muted-foreground">Optional. Used when you prefer an image over emoji.</p>
             </div>
 
             <div className="space-y-2">

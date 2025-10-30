@@ -6,7 +6,7 @@ import { ProfileHeader } from "@/components/profile/ProfileHeader";
 import { StatsCard } from "@/components/profile/StatsCard";
 import { BadgeShowcase } from "@/components/profile/BadgeShowcase";
 import { ActivityFeed } from "@/components/profile/ActivityFeed";
-import { TopTopics } from "@/components/profile/TopTopics";
+// import { TopTopics } from "@/components/profile/TopTopics";
 import {
   Card,
   CardContent,
@@ -34,6 +34,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { glassText } from "@/components/showcase/ui/typography";
+import { ShowcaseTopicWiseStats } from "@/showcase/components";
 
 interface ProfileData {
   id: string;
@@ -68,6 +69,7 @@ interface ProfileStats {
       id: string;
       name: string;
       slug: string;
+      emoji?: string | null;
     };
   }>;
   recentAttempts: Array<{
@@ -228,6 +230,14 @@ export function ProfileMeClient({
     }
   };
 
+  const mappedTopTopics = (stats?.topTopics ?? []).map((t) => ({
+    id: t.id,
+    label: t.topic.name,
+    accuracyPercent: Math.round(t.successRate),
+    quizzesTaken: t.questionsAnswered,
+    icon: t.topic.emoji ?? "🏷️",
+  }));
+
   return (
     <main className="relative min-h-screen bg-background py-8">
       {/* Background blur circles */}
@@ -319,7 +329,15 @@ export function ProfileMeClient({
             )}
 
             <div className="grid gap-8 lg:grid-cols-2">
-              {stats && <TopTopics topics={stats.topTopics || []} />}
+              {stats && (
+                <ShowcaseTopicWiseStats
+                  title="Top Topics"
+                  description="Your best-performing topics"
+                  topics={mappedTopTopics}
+                  limit={5}
+                  viewAllHref="/showcase/topic-wise-stats-complete"
+                />
+              )}
 
               <Card className="relative overflow-hidden rounded-[2rem] border shadow-xl bg-card/80 backdrop-blur-lg border-border/60">
                 {/* Background blur circles */}

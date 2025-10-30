@@ -1,77 +1,22 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
-import Image from "next/image";
 import Link from "next/link";
+import Image from "next/image";
+import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
-import { auth } from "@/lib/auth";
 import { generateQuizMetaTags } from "@/lib/seo-utils";
-import { getQuizSchema, getQuizHowToSchema, getBreadcrumbSchema } from "@/lib/schema-utils";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { formatPlayerCount, formatQuizDuration, getSportGradient } from "@/lib/quiz-formatters";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
-import { StartQuizButton } from "./start-quiz-button";
-import { ChallengeButton } from "./challenge-button";
-import { StarRating } from "@/components/ui/star-rating";
-import { ReviewsList } from "@/components/quiz/ReviewsList";
-import { AttemptLimitBanner } from "@/components/quiz/AttemptLimitBanner";
+import { ShowcaseReviewsPanel } from "@/components/showcase/ui";
+import { Star } from "lucide-react";
+import { ShowcaseThemeProvider } from "@/components/showcase/ShowcaseThemeProvider";
+import { getCurrentUser } from "@/lib/auth-helpers";
 import { getAttemptLimitStatus } from "@/lib/services/attempt-limit.service";
-import {
-  Clock,
-  HelpCircle,
-  Target,
-  Users,
-  Calendar,
-  Award,
-  Zap,
-  Play,
-  Shield,
-  Star,
-} from "lucide-react";
 
 interface QuizDetailPageProps {
   params: Promise<{ slug: string }>;
 }
 
-function formatDuration(seconds?: number | null) {
-  if (!seconds) {
-    return "Flexible";
-  }
-
-  const minutes = Math.floor(seconds / 60);
-  const remainingSeconds = seconds % 60;
-
-  if (!minutes) {
-    return `${remainingSeconds} sec`;
-  }
-
-  if (remainingSeconds === 0) {
-    return `${minutes} min`;
-  }
-
-  return `${minutes} min ${remainingSeconds} sec`;
-}
-
-function formatDateTime(date?: Date | null) {
-  if (!date) {
-    return "No schedule";
-  }
-
-  return new Intl.DateTimeFormat("en-US", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(date);
-}
-
-const difficultyConfig = {
-  EASY: { color: "bg-emerald-500/10 text-emerald-600 border-emerald-500/30", icon: "🟢" },
-  MEDIUM: { color: "bg-amber-500/10 text-amber-600 border-amber-500/30", icon: "🟡" },
-  HARD: { color: "bg-rose-500/10 text-rose-600 border-rose-500/30", icon: "🔴" },
-};
-
-export async function generateMetadata({
-  params,
-}: QuizDetailPageProps): Promise<Metadata> {
+export async function generateMetadata({ params }: QuizDetailPageProps): Promise<Metadata> {
   const { slug } = await params;
   const quiz = await prisma.quiz.findUnique({
     where: { slug },
@@ -110,17 +55,13 @@ export async function generateMetadata({
       description: meta.ogDescription,
       type: "article",
       ...(canonicalUrl ? { url: canonicalUrl } : {}),
-      ...(quiz.descriptionImageUrl
-        ? { images: [{ url: quiz.descriptionImageUrl }] }
-        : {}),
+      ...(quiz.descriptionImageUrl ? { images: [{ url: quiz.descriptionImageUrl }] } : {}),
     },
     twitter: {
       card: quiz.descriptionImageUrl ? "summary_large_image" : "summary",
       title: meta.ogTitle,
       description: meta.ogDescription,
-      ...(quiz.descriptionImageUrl
-        ? { images: [quiz.descriptionImageUrl] }
-        : {}),
+      ...(quiz.descriptionImageUrl ? { images: [quiz.descriptionImageUrl] } : {}),
     },
     ...(canonicalUrl
       ? {
@@ -132,89 +73,76 @@ export async function generateMetadata({
   };
 }
 
-export default async function QuizDetailPage({
-  params,
-}: QuizDetailPageProps) {
+export default async function QuizDetailPage({ params }: QuizDetailPageProps) {
   const { slug } = await params;
-  // Fetch session first (doesn't use DB connection)
-  const session = await auth();
-  
-  // Then fetch quiz data with all related data in a single optimized query
-  const quiz = await prisma.quiz.findUnique({
+  const user = await getCurrentUser();
+  let quiz: any;
+  let showcaseReviews: Array<{ id: string; reviewer: { name: string; avatarUrl?: string | null; role?: string }; rating: number; quote: string; dateLabel?: string } > = [];
+  let uniqueUsersCount: number = 0;
+
+  try {
+    quiz = await prisma.quiz.findUnique({
       where: { slug },
       include: {
-        tags: {
-          select: {
-            tag: {
-              select: {
-                id: true,
-                name: true,
-                slug: true,
-              },
-            },
-          },
-        },
-      topicConfigs: {
-        select: {
-          questionCount: true,
-          topic: {
-            select: {
-              id: true,
-              name: true,
-              slug: true,
-            },
-          },
-        },
-      },
         _count: {
           select: {
-            questionPool: true,
             attempts: true,
             reviews: true,
           },
         },
-      },
-  });
-
-  if (!quiz || !quiz.isPublished || quiz.status !== "PUBLISHED") {
-    notFound();
-  }
-
-  const now = new Date();
-  const userId = session?.user?.id ?? null;
-  const isLoggedIn = Boolean(userId);
-
-  const attemptLimitStatusPromise =
-    userId && quiz.maxAttemptsPerUser
-      ? getAttemptLimitStatus(prisma, {
-          userId,
-          quiz: {
-            id: quiz.id,
-            maxAttemptsPerUser: quiz.maxAttemptsPerUser,
-            attemptResetPeriod: quiz.attemptResetPeriod,
+        leaderboard: {
+          take: 3,
+          orderBy: [
+            {
+              bestScore: "desc",
+            },
+            {
+              averageResponseTime: "asc",
+            },
+          ],
+          include: {
+            user: {
+              select: {
+                name: true,
+                email: true,
+                image: true,
+              },
+            },
           },
-          referenceDate: now,
-        })
-      : Promise.resolve(null);
-
-  const latestCompletedAttemptPromise = userId
-    ? prisma.quizAttempt.findFirst({
-        where: {
-          userId,
-          quizId: quiz.id,
-          completedAt: { not: null },
         },
-        orderBy: { completedAt: "desc" },
-      })
-    : Promise.resolve(null);
+        topicConfigs: {
+          include: {
+            topic: {
+              select: {
+                name: true,
+              },
+            },
+          },
+          orderBy: {
+            createdAt: "asc",
+          },
+          take: 1,
+        },
+      },
+    });
 
-  const [reviews, uniqueUsersCount, attemptLimitStatus, latestCompletedAttempt] = await Promise.all([
-    prisma.quizReview.findMany({
+    if (!quiz || !quiz.isPublished || quiz.status !== "PUBLISHED") {
+      notFound();
+    }
+    // Unique players count (distinct users who have played this quiz)
+    uniqueUsersCount = await prisma.quizAttempt
+      .groupBy({
+        by: ["userId"],
+        where: { quizId: quiz.id },
+        _count: { userId: true },
+      })
+      .then((groups) => groups.length);
+    // Fetch latest reviews for this quiz for the showcase panel
+    const rawReviews = await prisma.quizReview.findMany({
       where: { quizId: quiz.id },
       include: {
         user: {
           select: {
-            id: true,
             name: true,
             image: true,
           },
@@ -222,592 +150,385 @@ export default async function QuizDetailPage({
       },
       orderBy: { createdAt: "desc" },
       take: 10,
-    }),
-    prisma.quizAttempt.groupBy({
-      by: ["userId"],
-      where: { quizId: quiz.id },
-      _count: { userId: true },
-    }).then((groups) => groups.length),
-    attemptLimitStatusPromise,
-    latestCompletedAttemptPromise,
-  ]);
+    });
+    showcaseReviews = rawReviews.map((r) => ({
+      id: r.id,
+      reviewer: { name: r.user?.name || "Anonymous", avatarUrl: r.user?.image },
+      rating: r.rating,
+      quote: r.comment ?? "",
+      dateLabel: r.createdAt.toLocaleDateString(),
+    }));
+  } catch (error) {
+    console.warn(`[quizzes/${slug}] Using fallback data`, error);
+    quiz = {
+      id: "demo-quiz",
+      title: "Ultimate Cricket Venue Challenge",
+      description: "An immersive sprint through global cricket arenas.",
+      descriptionImageUrl: "https://images.unsplash.com/photo-1531415074968-036ba1b575da?w=800",
+      slug,
+      sport: "Cricket",
+      difficulty: "MEDIUM",
+      duration: 1200,
+      timePerQuestion: 60,
+      timeBonusEnabled: true,
+      bonusPointsPerSecond: 1.2,
+      maxAttemptsPerUser: 3,
+      attemptResetPeriod: "DAILY",
+      isPublished: true,
+      status: "PUBLISHED",
+      averageRating: 4.3,
+      totalReviews: 128,
+      _count: { attempts: 12345, reviews: 128 },
+      topicConfigs: [{ topic: { name: "Cricket" } }],
+      leaderboard: [
+        { user: { name: "Alex Johnson", email: "alex@example.com" }, bestScore: 96.0, bestPoints: 9600, rank: 1 },
+        { user: { name: "Priya Singh", email: "priya@example.com" }, bestScore: 93.2, bestPoints: 9320, rank: 2 },
+        { user: { name: "Diego Morales", email: "diego@example.com" }, bestScore: 92.1, bestPoints: 9210, rank: 3 },
+      ],
+    };
+  }
 
-  const attemptLimitDetails = quiz.maxAttemptsPerUser
-    ? {
-        maxAttempts: quiz.maxAttemptsPerUser,
-        period: quiz.attemptResetPeriod,
-        attemptsRemaining: isLoggedIn
-          ? attemptLimitStatus?.remainingBeforeStart ?? quiz.maxAttemptsPerUser
-          : null,
-        attemptsUsed: isLoggedIn ? attemptLimitStatus?.used ?? 0 : null,
-        resetAt: attemptLimitStatus?.resetAt
-          ? attemptLimitStatus.resetAt.toISOString()
-          : null,
-        isLocked: isLoggedIn ? attemptLimitStatus?.isLimitReached ?? false : false,
-      }
+  const durationLabel = formatQuizDuration(quiz.duration ?? quiz.timePerQuestion);
+  const playersLabel = formatPlayerCount(uniqueUsersCount);
+  const badgeLabel =
+    quiz.topicConfigs?.[0]?.topic?.name ?? quiz.sport ?? quiz.difficulty ?? "Featured";
+
+  // Calculate user's actual attempt limit status
+  const now = new Date();
+  const attemptLimitStatus = user && quiz.maxAttemptsPerUser
+    ? await getAttemptLimitStatus(prisma, {
+        userId: user.id,
+        quiz: {
+          id: quiz.id,
+          maxAttemptsPerUser: quiz.maxAttemptsPerUser,
+          attemptResetPeriod: quiz.attemptResetPeriod,
+        },
+        referenceDate: now,
+      })
     : null;
-  const hasStarted = !quiz.startTime || quiz.startTime <= now;
-  const hasEnded = Boolean(quiz.endTime && quiz.endTime < now);
-  const isLive = hasStarted && !hasEnded;
 
-  let availabilityStatus: "upcoming" | "live" | "ended" = "live";
-  let availabilityMessage = "This quiz is live and ready to play.";
+  const maxAttempts = quiz.maxAttemptsPerUser || null;
+  const remainingAttempts = attemptLimitStatus?.remainingBeforeStart ?? maxAttempts;
+  const isLimitReached = attemptLimitStatus?.isLimitReached ?? false;
+  const resetAt = attemptLimitStatus?.resetAt;
 
-  if (hasEnded) {
-    availabilityStatus = "ended";
-    availabilityMessage = `This quiz ended on ${formatDateTime(quiz.endTime)}.`;
-  } else if (!hasStarted) {
-    availabilityStatus = "upcoming";
-    availabilityMessage = `This quiz will be available on ${formatDateTime(quiz.startTime)}.`;
+  // Fetch user's best completed attempt if limit is reached
+  let bestAttemptId: string | null = null;
+  if (isLimitReached && user) {
+    const bestAttempt = await prisma.quizAttempt.findFirst({
+      where: {
+        userId: user.id,
+        quizId: quiz.id,
+        completedAt: { not: null },
+        isPracticeMode: false,
+      },
+      orderBy: [
+        { score: "desc" },
+        { completedAt: "desc" },
+      ],
+      select: {
+        id: true,
+      },
+    });
+    bestAttemptId = bestAttempt?.id ?? null;
   }
 
-  const tags = quiz.tags.map((relation) => relation.tag);
-  // Deduplicate topics (multiple configs can reference same topic with different difficulties)
-  const topicsMap = new Map(
-    quiz.topicConfigs.map((config) => [config.topic.id, config.topic])
-  );
-  const topics = Array.from(topicsMap.values());
+  const leaderboardEntries = (quiz.leaderboard ?? []).map((entry: any, index: number) => ({
+    name:
+      entry.user?.name ||
+      entry.user?.email?.split("@")[0] ||
+      `Player ${index + 1}`,
+    score: Math.round(entry.bestScore || entry.bestPoints || 0),
+    rank: entry.rank && entry.rank < 999999 ? entry.rank : index + 1,
+  }));
 
-  // Calculate actual number of questions user will answer
-  let actualQuestionCount = quiz._count.questionPool;
-  
-  if (quiz.questionSelectionMode === "TOPIC_RANDOM") {
-    // Sum up questionCount from all topic configs
-    actualQuestionCount = quiz.topicConfigs.reduce((sum, config) => sum + config.questionCount, 0);
-  } else if (quiz.questionSelectionMode === "POOL_RANDOM") {
-    // Use the specified questionCount
-    actualQuestionCount = quiz.questionCount || quiz._count.questionPool;
-  }
-  // FIXED mode uses _count.questionPool (default from above)
+  const highlightedTitle = quiz.title.split(" ");
+  const firstWord = highlightedTitle.shift() ?? quiz.title;
+  const remainderTitle = highlightedTitle.join(" ");
 
-  const difficultyInfo = difficultyConfig[quiz.difficulty as keyof typeof difficultyConfig];
+  const averageRating =
+    typeof quiz.averageRating === "number"
+      ? quiz.averageRating
+      : typeof quiz.avgRating === "number"
+        ? quiz.avgRating
+        : 0;
 
-  const limitBlocksPlay = attemptLimitDetails?.isLocked ?? false;
-  const hasCompletedAttempts = latestCompletedAttempt !== null;
-  
-  // Show "View Results" if locked AND has completed attempts
-  const showViewResults = limitBlocksPlay && hasCompletedAttempts;
-  
-  const startDisabled = !isLive || (limitBlocksPlay && !showViewResults);
-  const challengeDisabled = !isLive || (limitBlocksPlay && !showViewResults);
-  const startButtonText = showViewResults 
-    ? "View Results" 
-    : limitBlocksPlay 
-      ? "Attempts Locked" 
-      : "Start Quiz";
-
-  // Generate structured data
-  const quizSchema = getQuizSchema(quiz);
-  const howToSchema = getQuizHowToSchema(quiz);
-  const breadcrumbSchema = getBreadcrumbSchema([
-    { name: "Home", url: "/" },
-    { name: "Quizzes", url: "/quizzes" },
-    { name: quiz.title },
-  ]);
+  const totalReviews =
+    typeof quiz.totalReviews === "number"
+      ? quiz.totalReviews
+      : quiz._count?.reviews ?? 0;
 
   return (
-    <main className="min-h-screen bg-background">
-      {/* Hero Section with Image Background */}
-      <section className="relative overflow-hidden bg-gradient-to-b from-primary/5 via-background to-background">
-        {/* Background Image with Overlay */}
-        {quiz.descriptionImageUrl && (
-          <div className="absolute inset-0 z-0">
-            <Image
-              src={quiz.descriptionImageUrl}
-              alt={`${quiz.title} background`}
-              fill
-              className="object-cover opacity-10 blur-sm"
-              priority
-            />
-            <div className="absolute inset-0 bg-gradient-to-b from-background/80 via-background/90 to-background" />
-          </div>
-        )}
+    <ShowcaseThemeProvider>
+    <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-gradient-to-br from-white via-slate-50 to-blue-50 px-4 py-12 dark:from-slate-900 dark:via-purple-900 dark:to-amber-500 sm:px-6 lg:py-16">
+      <div className="absolute inset-0 -z-10 opacity-70">
+        <div className="absolute -left-20 top-24 h-72 w-72 rounded-full bg-emerald-400/20 blur-[120px] dark:bg-emerald-400/40" />
+        <div className="absolute right-12 top-12 h-64 w-64 rounded-full bg-pink-500/20 blur-[100px] dark:bg-pink-500/40" />
+        <div className="absolute bottom-8 left-1/2 h-56 w-56 -translate-x-1/2 rounded-full bg-blue-500/15 blur-[90px] dark:bg-blue-500/30" />
+      </div>
 
-        <div className="relative z-10 mx-auto max-w-7xl px-4 py-12">
-          <div className="grid gap-8 lg:grid-cols-5">
-            {/* Left: Image Card */}
-            <div className="lg:col-span-2">
-              {quiz.descriptionImageUrl ? (
-                <div className="group relative overflow-hidden rounded-2xl border border-border/50 bg-card shadow-2xl transition-transform hover:scale-[1.02]">
-                  <div className="aspect-[4/3] w-full">
-                    <Image
-                      src={quiz.descriptionImageUrl}
-                      alt={quiz.title}
-                      fill
-                      className="object-cover"
-                      sizes="(min-width: 1024px) 40vw, 100vw"
-                      priority
-                    />
-                  </div>
-                  {/* Featured Badge */}
-                  {quiz.isFeatured && (
-                    <div className="absolute left-4 top-4">
-                      <Badge className="bg-primary px-3 py-1 text-sm font-semibold shadow-lg">
-                        <Star className="mr-1 h-3 w-3 fill-current" />
-                        Featured
-                      </Badge>
-                    </div>
-                  )}
-                  {/* Stats Overlay */}
-                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-background via-background/80 to-transparent p-6">
-                    <div className="flex items-center justify-between text-sm">
-                      <div className="flex items-center gap-2">
-                        <Users className="h-4 w-4 text-muted-foreground" />
-                        <span className="font-medium text-foreground">
-                          {quiz._count.attempts.toLocaleString()}
-                        </span>
-                        <span className="text-muted-foreground">attempts</span>
-                      </div>
-                      {quiz.totalReviews > 0 && (
-                        <div className="flex items-center gap-1">
-                          <Star className="h-4 w-4 fill-primary text-primary" />
-                          <span className="font-medium text-foreground">
-                            {quiz.averageRating.toFixed(1)}
-                          </span>
-                          <span className="text-muted-foreground">
-                            ({quiz.totalReviews})
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div className="flex aspect-[4/3] w-full items-center justify-center rounded-2xl border border-dashed border-border bg-muted/30">
-                  <Play className="h-16 w-16 text-muted-foreground/30" />
-                </div>
-            )}
-          </div>
-
-            {/* Right: Quiz Info */}
-            <div className="space-y-6 lg:col-span-3">
-              {/* Badges Row */}
-              <div className="flex flex-wrap items-center gap-2">
-                {quiz.sport && (
-                  <Badge variant="secondary" className="px-3 py-1">
-                    {quiz.sport}
-                  </Badge>
-                )}
-                <Badge
-                  className={`border px-3 py-1 ${difficultyInfo.color}`}
-                >
-                  {difficultyInfo.icon} {quiz.difficulty}
-                </Badge>
-            <Badge
-              variant={
-                availabilityStatus === "live"
-                  ? "default"
-                  : availabilityStatus === "upcoming"
-                    ? "secondary"
-                    : "destructive"
-              }
-                  className="px-3 py-1"
-            >
-              {availabilityStatus === "live"
-                    ? "● Live now"
-                : availabilityStatus === "upcoming"
-                  ? "Upcoming"
-                  : "Closed"}
-            </Badge>
-                {topics.map((topic) => (
-                  <Link key={topic.id} href={`/topics/${topic.slug}`}>
-                    <Badge
-                      variant="secondary"
-                      className="cursor-pointer px-3 py-1 transition-colors hover:bg-primary hover:text-primary-foreground"
-                    >
-                      📚 {topic.name}
-                    </Badge>
-                  </Link>
-                ))}
-                {tags.map((tag) => (
-                  <Badge
-                    key={tag.id}
-                    variant="outline"
-                    className="px-3 py-1 capitalize"
-                  >
-                    #{tag.name}
-                  </Badge>
-                ))}
-              </div>
-
-              {/* Title */}
-              <div>
-                <h1 className="text-4xl font-bold tracking-tight text-foreground lg:text-5xl">
-                  {quiz.title}
-                </h1>
-                {quiz.description && (
-                  <p className="mt-4 text-lg leading-relaxed text-muted-foreground">
-                    {quiz.description}
-                  </p>
-                )}
-              </div>
-
-              {/* Quick Stats Grid */}
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                <div className="flex items-center gap-3 rounded-lg border border-border/50 bg-card/50 p-3 backdrop-blur">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-                    <HelpCircle className="h-5 w-5 text-primary" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground">Questions</p>
-                    <p className="font-bold">{actualQuestionCount}</p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3 rounded-lg border border-border/50 bg-card/50 p-3 backdrop-blur">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-                    <Clock className="h-5 w-5 text-primary" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground">Duration</p>
-                    <p className="font-bold text-sm">{formatDuration(quiz.duration)}</p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3 rounded-lg border border-border/50 bg-card/50 p-3 backdrop-blur">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-                    <Target className="h-5 w-5 text-primary" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground">Pass</p>
-                    <p className="font-bold">{quiz.passingScore}%</p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3 rounded-lg border border-border/50 bg-card/50 p-3 backdrop-blur">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-                    <Users className="h-5 w-5 text-primary" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground">Players</p>
-                    <p className="font-bold">{uniqueUsersCount.toLocaleString()}</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex flex-wrap items-center gap-3">
-                {isLoggedIn ? (
-                  <>
-                    <StartQuizButton
-                      slug={quiz.slug}
-                      disabled={startDisabled}
-                      text={startButtonText}
-                      attemptId={showViewResults ? latestCompletedAttempt?.id : null}
-                    />
-                    <ChallengeButton quizId={quiz.id} disabled={challengeDisabled} />
-                  </>
-                ) : (
-                  <Link href="/auth/signin">
-                    <Button size="lg" className="gap-2 shadow-lg">
-                      <Play className="h-5 w-5" />
-                      Sign up to play
-                    </Button>
-                  </Link>
-                )}
-              </div>
-
-              {attemptLimitDetails && (
-                <AttemptLimitBanner
-                  maxAttempts={attemptLimitDetails.maxAttempts}
-                  period={attemptLimitDetails.period}
-                  attemptsRemaining={attemptLimitDetails.attemptsRemaining}
-                  attemptsUsed={attemptLimitDetails.attemptsUsed}
-                  resetAt={attemptLimitDetails.resetAt}
-                  requiresLogin={!isLoggedIn}
-                  className="mt-4"
+      <div className="relative w-full max-w-5xl rounded-[1.75rem] border border-slate-200/60 bg-gradient-to-br from-white/90 via-slate-50/80 to-blue-50/80 p-6 shadow-[0_40px_120px_-40px_rgba(59,130,246,0.15)] backdrop-blur-xl dark:border-white/10 dark:from-black/70 dark:via-slate-900/60 dark:to-indigo-900/80 dark:shadow-[0_40px_120px_-40px_rgba(0,0,0,0.8)] sm:p-8 lg:p-10">
+        <div className="flex flex-col gap-10 lg:flex-row lg:items-stretch">
+          <div className="flex-1 text-center lg:text-left">
+            {quiz.descriptionImageUrl && (
+              <div className="relative mb-4 w-full overflow-hidden rounded-2xl lg:hidden h-48">
+                <Image
+                  src={quiz.descriptionImageUrl}
+                  alt={quiz.title}
+                  fill
+                  sizes="(max-width: 1024px) 100vw, 50vw"
+                  className="object-cover"
                 />
-              )}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent dark:from-black/30" />
+              </div>
+            )}
+            <div className="inline-flex items-center gap-2 rounded-full border border-slate-300/40 bg-white/60 px-4 py-1 text-xs uppercase tracking-[0.35em] text-slate-600 dark:border-white/20 dark:bg-white/10 dark:text-white/70">
+              {badgeLabel.toUpperCase()}
+            </div>
 
-              {/* Availability Message */}
-              {availabilityStatus !== "live" && (
-                <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-4">
-                  <p className="text-sm text-amber-700 dark:text-amber-400">
-                    <Calendar className="mr-2 inline h-4 w-4" />
-                    {availabilityMessage}
-                  </p>
+            <h1 className="mt-6 text-4xl font-black uppercase tracking-tight text-slate-900 drop-shadow-[0_16px_32px_rgba(32,32,48,0.15)] dark:text-white sm:text-5xl lg:text-6xl">
+              {firstWord}
+              {remainderTitle && <span className="text-emerald-600 dark:text-emerald-300"> {remainderTitle}</span>}
+            </h1>
+
+            <p className="mt-4 mx-auto max-w-2xl text-xs text-slate-700 dark:text-white/75 sm:text-sm lg:mx-0">
+              {quiz.description
+                ? quiz.description
+                : "Blitz through fresh trivia curated for diehard fans. Battle against the clock and climb your league leaderboard."}
+            </p>
+
+            <div className="mt-8 flex flex-wrap items-center justify-center gap-6 lg:justify-start">
+              <div>
+                <p className="text-[0.65rem] uppercase tracking-[0.35em] text-slate-600 dark:text-white/50">Time</p>
+                <p className="text-3xl font-semibold text-slate-900 dark:text-white">{durationLabel}</p>
+              </div>
+              <div>
+                <p className="text-[0.65rem] uppercase tracking-[0.35em] text-slate-600 dark:text-white/50">Difficulty</p>
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl">
+                    {Array.from({ length: 3 }).map((_, index) => (
+                      <span
+                        key={index}
+                        className={
+                          index < (quiz.difficulty === "HARD" ? 3 : quiz.difficulty === "MEDIUM" ? 2 : 1)
+                            ? "opacity-100"
+                            : "opacity-30"
+                        }
+                      >
+                        🏆
+                      </span>
+                    ))}
+                  </span>
                 </div>
+              </div>
+              <div>
+                <p className="text-[0.65rem] uppercase tracking-[0.35em] text-slate-600 dark:text-white/50">Players</p>
+                <p className="text-3xl font-semibold text-emerald-600 dark:text-emerald-300">{playersLabel}</p>
+              </div>
+            </div>
+
+            <div className="mt-10 flex flex-wrap items-center justify-center gap-3 sm:gap-4 lg:justify-start">
+              <div className="flex -space-x-2 sm:-space-x-3">
+                {[getSportGradient(quiz.sport, 0), getSportGradient(quiz.sport, 1), getSportGradient(quiz.sport, 2)].map((gradient, index) => (
+                  <div
+                    key={`${gradient}-${index}`}
+                    className={`relative h-8 w-8 rounded-full border-2 border-slate-300/60 bg-gradient-to-br dark:border-white/30 sm:h-9 sm:w-9 lg:h-10 lg:w-10 ${gradient}`}
+                  >
+                    <div className="absolute inset-0 rounded-full bg-black/10 dark:bg-black/20" />
+                  </div>
+                ))}
+              </div>
+              <div className="flex items-center gap-2 sm:gap-3">
+                <p className="text-xs text-slate-700 dark:text-white/70">
+                  Join <span className="font-semibold text-slate-900 dark:text-white">{playersLabel}</span> players competing
+                </p>
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-0.5 text-amber-500 dark:text-amber-300">
+                    {Array.from({ length: 5 }).map((_, index) => (
+                      <Star
+                        key={index}
+                        className={`h-3.5 w-3.5 sm:h-4 sm:w-4 ${index < Math.round(averageRating) ? "fill-current" : "opacity-30"}`}
+                        fill={index < Math.round(averageRating) ? "currentColor" : "none"}
+                      />
+                    ))}
+                  </div>
+                  <span className="text-xs text-slate-800 dark:text-white/80">
+                    {averageRating.toFixed(1)} ({totalReviews})
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-8 flex flex-wrap justify-center gap-3 lg:justify-start">
+              {isLimitReached && bestAttemptId ? (
+                <Button 
+                  asChild 
+                  className="rounded-full px-6 py-3 text-sm font-semibold uppercase tracking-[0.2em]"
+                >
+                  <Link href={`/quizzes/${quiz.slug}/results/${bestAttemptId}`}>
+                    View Results
+                  </Link>
+                </Button>
+              ) : (
+                <Button 
+                  asChild 
+                  className="rounded-full px-6 py-3 text-sm font-semibold uppercase tracking-[0.2em]"
+                  disabled={isLimitReached}
+                >
+                  <Link href={`/quizzes/${quiz.slug}/play`}>
+                    {isLimitReached ? "Attempt Limit Reached" : "Start Quiz"}
+                  </Link>
+                </Button>
               )}
             </div>
-          </div>
-        </div>
-      </section>
 
-      {/* Content Section */}
-      <section className="mx-auto max-w-7xl px-4 py-12">
-        <div className="grid gap-8 lg:grid-cols-3">
-          {/* Main Content */}
-          <div className="space-y-6 lg:col-span-2">
-            {/* Features Card */}
-          <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Zap className="h-5 w-5 text-primary" />
-                  Quiz Features
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <div className="flex items-start gap-3 rounded-lg border border-border/50 p-4">
-                    <Shield className="mt-0.5 h-5 w-5 text-primary" />
-              <div>
-                      <p className="font-medium">Hints Available</p>
-                      <p className="text-sm text-muted-foreground">
-                        {quiz.showHints
-                          ? "Get helpful hints for each question"
-                          : "No hints - pure knowledge test"}
-                </p>
-              </div>
-                  </div>
-
-                  <div className="flex items-start gap-3 rounded-lg border border-border/50 p-4">
-                    <Target className="mt-0.5 h-5 w-5 text-primary" />
-              <div>
-                      <p className="font-medium">Scoring</p>
-                      <p className="text-sm text-muted-foreground">
-                        {quiz.negativeMarkingEnabled
-                          ? `Penalties apply (-${quiz.penaltyPercentage}%)`
-                          : "No negative marking"}
-                </p>
-              </div>
-              </div>
-
-                  <div className="flex items-start gap-3 rounded-lg border border-border/50 p-4">
-                    <Clock className="mt-0.5 h-5 w-5 text-primary" />
-              <div>
-                      <p className="font-medium">Time Bonus</p>
-                      <p className="text-sm text-muted-foreground">
-                        {quiz.timeBonusEnabled
-                          ? `${quiz.bonusPointsPerSecond} pts/sec saved`
-                          : "No time bonus"}
-                </p>
-              </div>
-                  </div>
-
-                  <div className="flex items-start gap-3 rounded-lg border border-border/50 p-4">
-                    <HelpCircle className="mt-0.5 h-5 w-5 text-primary" />
-              <div>
-                      <p className="font-medium">Question Order</p>
-                      <p className="text-sm text-muted-foreground">
-                        {quiz.randomizeQuestionOrder ? "Randomized" : "Fixed order"}
+            <div className="mt-3 lg:hidden">
+              <div className="rounded-xl bg-gradient-to-r from-fuchsia-500/20 via-amber-400/25 to-emerald-400/25 p-[1px]">
+                <div className="rounded-xl bg-white/80 p-3 dark:bg-slate-900/80">
+                  {maxAttempts ? (
+                    <>
+                      <p className="mb-2 text-center text-[10px] uppercase tracking-[0.25em] text-slate-600 dark:text-white/60">
+                        Attempts Remaining
                       </p>
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1">
+                          <div className="h-2 overflow-hidden rounded-full bg-slate-300/50 dark:bg-white/10">
+                            <div
+                              className={`h-full transition-all duration-500 ${
+                                isLimitReached 
+                                  ? "bg-gradient-to-r from-red-500 to-red-600 dark:from-red-400 dark:to-red-500"
+                                  : "bg-gradient-to-r from-emerald-500 to-emerald-600 dark:from-emerald-400 dark:to-emerald-500"
+                              }`}
+                              style={{ width: `${Math.max(0, Math.min(100, (remainingAttempts ?? 0) / (maxAttempts ?? 1) * 100))}%` }}
+                            />
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <p className={`text-base font-black ${isLimitReached ? "text-red-600 dark:text-red-400" : "text-slate-900 dark:text-white"}`}>
+                            {remainingAttempts ?? 0}
+                          </p>
+                          <p className="text-[10px] uppercase tracking-[0.2em] text-slate-600 dark:text-white/60">
+                            {maxAttempts ? `of ${maxAttempts}` : "Max"}
+                          </p>
+                        </div>
+                      </div>
+                      {isLimitReached && resetAt && (
+                        <p className="mt-2 text-center text-[10px] text-slate-600 dark:text-white/60">
+                          Resets {new Date(resetAt).toLocaleDateString()}
+                        </p>
+                      )}
+                    </>
+                  ) : (
+                    <div className="text-center">
+                      <p className="text-[10px] uppercase tracking-[0.25em] text-slate-600 dark:text-white/60">
+                        Unlimited Attempts
+                      </p>
+                      <p className="mt-1 text-xl font-black text-slate-900 dark:text-white">∞</p>
                     </div>
-                  </div>
-              </div>
-            </CardContent>
-          </Card>
-
-            {/* How to Play */}
-          <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Award className="h-5 w-5 text-primary" />
-                  How to Play
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ol className="space-y-3">
-                  <li className="flex gap-3">
-                    <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
-                      1
-                    </span>
-                    <p className="text-sm text-muted-foreground">
-                      Click &ldquo;Start Quiz&rdquo; to begin. You&apos;ll need to answer at least{" "}
-                      {quiz.passingScore}% correctly to pass.
-                    </p>
-                  </li>
-                  {quiz.timePerQuestion ? (
-                    <li className="flex gap-3">
-                      <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
-                        2
-                      </span>
-                      <p className="text-sm text-muted-foreground">
-                        You have {formatDuration(quiz.timePerQuestion)} for each question.
-                        Answer before time runs out!
-                      </p>
-                  </li>
-                ) : (
-                    <li className="flex gap-3">
-                      <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
-                        2
-                      </span>
-                      <p className="text-sm text-muted-foreground">
-                        Manage your total time of {formatDuration(quiz.duration)} wisely
-                        across all questions.
-                      </p>
-                    </li>
                   )}
-                  {quiz.negativeMarkingEnabled && (
-                    <li className="flex gap-3">
-                      <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
-                        3
-                      </span>
-                      <p className="text-sm text-muted-foreground">
-                        Be careful! Wrong answers reduce your score by{" "}
-                        {quiz.penaltyPercentage}% of the question value.
-                      </p>
-                  </li>
-                )}
-                  {quiz.timeBonusEnabled && (
-                    <li className="flex gap-3">
-                      <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
-                        {quiz.negativeMarkingEnabled ? 4 : 3}
-                      </span>
-                      <p className="text-sm text-muted-foreground">
-                        Answer quickly to earn bonus points! You&apos;ll get{" "}
-                        {quiz.bonusPointsPerSecond} points for each second you save.
-                      </p>
-                  </li>
-                  )}
-                  <li className="flex gap-3">
-                    <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
-                      {quiz.negativeMarkingEnabled && quiz.timeBonusEnabled
-                        ? 5
-                        : quiz.negativeMarkingEnabled || quiz.timeBonusEnabled
-                          ? 4
-                          : 3}
-                    </span>
-                    <p className="text-sm text-muted-foreground">
-                      Review your results, earn badges, and climb the leaderboard!
-                    </p>
-                  </li>
-                </ol>
-            </CardContent>
-          </Card>
-        </div>
-
-          {/* Sidebar */}
-          <div className="space-y-6">
-            {/* Schedule Card */}
-            {(quiz.startTime || quiz.endTime) && (
-          <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-lg">
-                    <Calendar className="h-5 w-5 text-primary" />
-                    Schedule
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-              <div>
-                <p className="text-sm text-muted-foreground">Opens</p>
-                <p className="font-medium">
-                  {quiz.startTime ? formatDateTime(quiz.startTime) : "Available now"}
-                </p>
-              </div>
-                  <Separator />
-              <div>
-                <p className="text-sm text-muted-foreground">Closes</p>
-                <p className="font-medium">
-                  {quiz.endTime ? formatDateTime(quiz.endTime) : "No end date"}
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-            )}
-
-            {/* Community Stats */}
-          <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  <Users className="h-5 w-5 text-primary" />
-                  Community
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Total Attempts</span>
-                  <span className="font-bold">
-                    {quiz._count.attempts.toLocaleString()}
-                </span>
-              </div>
-                <Separator />
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Average Rating</span>
-                  <span className="font-bold">
-                  {quiz.totalReviews > 0
-                      ? `${quiz.averageRating.toFixed(1)} ★`
-                      : "No ratings"}
-                </span>
-              </div>
-                <Separator />
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Reviews</span>
-                  <span className="font-bold">{quiz._count.reviews}</span>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
+          </div>
 
-            {/* CTA for non-logged in users */}
-            {!isLoggedIn && (
-              <Card className="border-primary/50 bg-primary/5">
-                <CardContent className="pt-6">
-                  <div className="space-y-3 text-center">
-                    <Award className="mx-auto h-12 w-12 text-primary" />
-                    <h3 className="font-semibold">Join the Competition</h3>
-                    <p className="text-sm text-muted-foreground">
-                      Create a free account to save your progress, earn badges, and
-                      compete on the leaderboard.
+          <div className="relative flex w-full max-w-md flex-col items-stretch gap-6 rounded-[1.75rem] border border-slate-200/60 bg-white/80 p-6 text-slate-900 shadow-[0_40px_80px_-40px_rgba(59,130,246,0.15)] backdrop-blur-3xl dark:border-white/10 dark:bg-white/5 dark:text-white dark:shadow-[0_40px_80px_-40px_rgba(15,15,35,0.7)] sm:p-8 lg:max-w-sm">
+            {quiz.descriptionImageUrl && (
+              <div className="relative hidden w-full overflow-hidden rounded-2xl lg:block h-48">
+                <Image 
+                  src={quiz.descriptionImageUrl} 
+                  alt={quiz.title}
+                  fill
+                  sizes="(max-width: 1200px) 100vw, 600px"
+                  className="object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent dark:from-black/40" />
+              </div>
+            )}
+
+            <div className="flex items-center justify-between">
+              <span className="text-xs uppercase tracking-[0.35em] text-slate-600 dark:text-white/50">Leaderboard</span>
+              <span className="rounded-full bg-slate-200/70 px-3 py-1 text-xs text-slate-700 dark:bg-white/10 dark:text-white/70">Live</span>
+            </div>
+
+            <div className="space-y-4 text-sm">
+              {(leaderboardEntries.length ? leaderboardEntries : [
+                { name: "Be the first", score: 0, rank: "" },
+              ]).map((player: any, index: number) => (
+                <div
+                  key={`${player.name}-${index}`}
+                  className="flex items-center justify-between rounded-2xl bg-slate-100/70 px-4 py-3 shadow-[inset_0_1px_0_rgba(0,0,0,0.04)] dark:bg-white/5 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.12)]"
+                >
+                  <div>
+                    <p className="font-semibold text-slate-900 dark:text-white">{player.name}</p>
+                    <p className="text-[0.65rem] uppercase tracking-[0.3em] text-slate-600 dark:text-white/40">Score</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-lg font-bold text-emerald-700 dark:text-emerald-300">{player.score}</p>
+                    <p className="text-xs text-amber-600 dark:text-amber-300">{player.rank ? `#${player.rank}` : "Join"}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-auto hidden rounded-2xl bg-gradient-to-r from-fuchsia-500/20 via-amber-400/30 to-emerald-400/30 p-[1px] dark:from-fuchsia-500/30 dark:via-amber-400/40 dark:to-emerald-400/40 lg:block">
+              <div className="rounded-2xl bg-white/70 p-6 dark:bg-slate-900/80">
+                {maxAttempts ? (
+                  <>
+                    <p className="mb-3 text-center text-xs uppercase tracking-[0.3em] text-slate-600 dark:text-white/50">
+                      Attempts Remaining
                     </p>
-                    <Link href="/auth/signin">
-                      <Button className="w-full">Sign Up Free</Button>
-                    </Link>
+                    <div className="flex items-center gap-3">
+                      <div className="flex-1">
+                        <div className="h-3 overflow-hidden rounded-full bg-slate-300/40 dark:bg-white/10">
+                          <div 
+                            className={`h-full transition-all duration-500 ${
+                              isLimitReached 
+                                ? "bg-gradient-to-r from-red-500 to-red-600 dark:from-red-400 dark:to-red-500"
+                                : "bg-gradient-to-r from-emerald-500 to-emerald-600 dark:from-emerald-400 dark:to-emerald-500"
+                            }`}
+                            style={{ width: `${Math.max(0, Math.min(100, (remainingAttempts ?? 0) / (maxAttempts ?? 1) * 100))}%` }}
+                          />
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className={`text-2xl font-black ${isLimitReached ? "text-red-600 dark:text-red-400" : "text-slate-900 dark:text-white"}`}>
+                          {remainingAttempts ?? 0}
+                        </p>
+                        <p className="text-[0.65rem] uppercase tracking-[0.2em] text-slate-600 dark:text-white/50">
+                          of {maxAttempts}
+                        </p>
+                      </div>
+                    </div>
+                    <p className="mt-3 text-center text-xs text-slate-700 dark:text-white/60">
+                      {isLimitReached && resetAt
+                        ? `Resets ${new Date(resetAt).toLocaleDateString()}`
+                        : quiz.attemptResetPeriod === "NEVER" 
+                          ? "Limit applies forever"
+                          : `Resets ${quiz.attemptResetPeriod?.toLowerCase() || "daily"}`}
+                    </p>
+                  </>
+                ) : (
+                  <div className="text-center">
+                    <p className="text-xs uppercase tracking-[0.3em] text-slate-600 dark:text-white/50">
+                      Unlimited Attempts
+                    </p>
+                    <p className="mt-2 text-2xl font-black text-slate-900 dark:text-white">∞</p>
+                    <p className="mt-3 text-xs text-slate-700 dark:text-white/60">
+                      Take the quiz as many times as you want
+                    </p>
+                  </div>
+                )}
               </div>
-            </CardContent>
-          </Card>
-            )}
+            </div>
+
+            {/* Removed ratings/breakdown blocks from sidebar per design */}
           </div>
         </div>
-      </section>
-
-      {/* Reviews Section */}
-      <section className="border-t bg-muted/30 py-12">
-        <div className="mx-auto max-w-7xl px-4">
-        <div className="space-y-6">
-          <div>
-              <h2 className="text-3xl font-bold tracking-tight">Reviews & Ratings</h2>
-            {quiz._count.reviews > 0 ? (
-              <div className="mt-4 flex items-center gap-4">
-                  <StarRating value={quiz.averageRating} readonly size="lg" showValue />
-                <span className="text-sm text-muted-foreground">
-                  Based on {quiz._count.reviews}{" "}
-                  {quiz._count.reviews === 1 ? "review" : "reviews"}
-                </span>
-              </div>
-            ) : (
-              <p className="mt-2 text-sm text-muted-foreground">
-                No reviews yet. Be the first to review this quiz!
-              </p>
-            )}
-          </div>
-
-          <ReviewsList
-            quizSlug={quiz.slug}
-            quizTitle={quiz.title}
-            initialReviews={reviews.map((r) => ({
-              ...r,
-              createdAt: r.createdAt.toISOString(),
-            }))}
-            initialTotal={quiz._count.reviews}
-            initialPage={1}
-            currentUserId={session?.user?.id}
-          />
-          </div>
-        </div>
-      </section>
-
-      {/* Structured Data */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(quizSchema) }}
-      />
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(howToSchema) }}
-      />
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
-      />
-    </main>
+      </div>
+      <div className="mx-auto mt-6 w-full max-w-5xl rounded-[1.75rem] bg-gradient-to-br from-white/90 via-slate-50/80 to-blue-50/80 p-4 text-slate-900 shadow-[0_40px_120px_-40px_rgba(59,130,246,0.15)] backdrop-blur-xl dark:from-black/70 dark:via-slate-900/60 dark:to-indigo-900/80 dark:text-white sm:p-5 lg:p-6">
+        <ShowcaseReviewsPanel reviews={showcaseReviews} className="bg-transparent border-0 p-0" />
+      </div>
+    </div>
+    </ShowcaseThemeProvider>
   );
 }

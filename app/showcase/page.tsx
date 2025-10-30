@@ -19,6 +19,7 @@ import {
   Award,
   Star,
   Megaphone,
+  BarChart3,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -43,6 +44,14 @@ const showcaseComponents = [
     title: "Hero Variations",
     description: "Spotlight, split, banner, and deck hero layouts",
     icon: Megaphone,
+    category: "UI Components",
+    featured: true,
+  },
+  {
+    id: "quiz-ratings-reviews",
+    title: "Quiz Ratings & Reviews",
+    description: "Ratings summary, breakdown, reviews, and empty states",
+    icon: Star,
     category: "UI Components",
     featured: true,
   },
@@ -117,6 +126,21 @@ const showcaseComponents = [
     category: "Topics",
   },
   {
+    id: "topic-wise-stats",
+    title: "Topic Wise Stats",
+    description: "Compact top topics performance widget",
+    icon: BarChart3,
+    category: "Topics",
+    featured: true,
+  },
+  {
+    id: "topic-wise-stats-complete",
+    title: "Complete Topic Wise Stats",
+    description: "Full-page stats breakdown across all topics",
+    icon: BarChart3,
+    category: "Topics",
+  },
+  {
     id: "leaderboard",
     title: "Leaderboard",
     description: "Competition rankings and scores",
@@ -150,7 +174,7 @@ export default function ShowcaseIndexPage() {
         {/* Breadcrumbs */}
         <div className="mb-8">
           <nav className="flex items-center gap-2 text-sm text-muted-foreground">
-            <a href="/" className="hover:text-foreground transition-colors">Home</a>
+            <Link href="/" className="hover:text-foreground transition-colors">Home</Link>
             <span>/</span>
             <span>Showcase</span>
           </nav>
