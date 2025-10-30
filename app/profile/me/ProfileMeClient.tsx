@@ -34,7 +34,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { glassText } from "@/components/showcase/ui/typography";
-import { ShowcaseTopicWiseStats } from "@/showcase/components";
+import { ShowcaseTopicWiseStats, ShowcaseContinuePlayingQueue } from "@/showcase/components";
 import { ShowcaseProgressTrackerRibbon } from "@/components/showcase/ui/ProgressTrackerRibbon";
 import { pointsForLevel } from "@/lib/config/gamification";
 import { ShowcaseThemeProvider } from "@/components/showcase/ShowcaseThemeProvider";
@@ -137,6 +137,7 @@ export function ProfileMeClient({
 
   const [profile, setProfile] = useState(initialProfile);
   const [saving, setSaving] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
   const [formData, setFormData] = useState({
     name: initialProfile.name ?? "",
     bio: initialProfile.bio ?? "",
@@ -249,6 +250,55 @@ export function ProfileMeClient({
     icon: t.topic.emoji ?? "🏷️",
   }));
 
+  const continueItems = (() => {
+    const attempts = (stats?.recentAttempts ?? []).filter(
+      (a) => a.quiz && (a.quiz as any).recurringType && (a.quiz as any).recurringType !== "NONE" && a.completedAt
+    );
+    // Group by quiz slug
+    const map = new Map<string, { slug: string; title: string; dates: number[]; lastCompletedAt: number }>();
+    for (const a of attempts) {
+      const slug = a.quiz.slug;
+      const title = a.quiz.title;
+      const dayTs = new Date(a.completedAt as any).setHours(0, 0, 0, 0);
+      const ts = new Date(a.completedAt as any).getTime();
+      const entry = map.get(slug) ?? { slug, title, dates: [], lastCompletedAt: 0 };
+      entry.dates.push(dayTs);
+      entry.lastCompletedAt = Math.max(entry.lastCompletedAt, ts);
+      map.set(slug, entry);
+    }
+    // Create items sorted by latest activity, limited to 5
+    const now = new Date();
+    const last7 = Array.from({ length: 7 }).map((_, i) => {
+      const d = new Date(now);
+      d.setDate(now.getDate() - (6 - i));
+      d.setHours(0, 0, 0, 0);
+      return d.getTime();
+    });
+    return Array.from(map.values())
+      .sort((a, b) => b.lastCompletedAt - a.lastCompletedAt)
+      .slice(0, 5)
+      .map((g) => {
+        const uniqueDaysDesc = Array.from(new Set(g.dates)).sort((a, b) => b - a);
+        const daysOfWeek = last7.map((t) => uniqueDaysDesc.includes(t));
+        let streak = 0;
+        if (uniqueDaysDesc.length > 0) {
+          streak = 1;
+          for (let i = 1; i < uniqueDaysDesc.length; i++) {
+            if (uniqueDaysDesc[i - 1] - uniqueDaysDesc[i] === 24 * 60 * 60 * 1000) streak += 1; else break;
+          }
+        }
+        return {
+          id: g.slug,
+          title: g.title,
+          progress: 0,
+          lastPlayedLabel: new Intl.DateTimeFormat("en-US", { dateStyle: "medium" }).format(new Date(g.lastCompletedAt)),
+          slug: g.slug,
+          daysOfWeek,
+          streak,
+        };
+      });
+  })();
+
   return (
     <main className="relative min-h-screen bg-background py-8">
       {/* Background blur circles */}
@@ -259,7 +309,7 @@ export function ProfileMeClient({
       </div>
       
       <div className="relative mx-auto max-w-6xl space-y-8 px-4">
-        <ProfileHeader user={profile} isOwnProfile />
+        <ProfileHeader user={profile} isOwnProfile showEditButton={false} />
 
         <Tabs defaultValue="overview" className="space-y-8">
           <TabsList className={cn(
@@ -305,7 +355,7 @@ export function ProfileMeClient({
               )}
             >
               <Settings className="h-4 w-4" />
-              <span className="hidden sm:inline">Settings</span>
+              <span className="hidden sm:inline">Profile Info</span>
             </TabsTrigger>
           </TabsList>
 
@@ -354,61 +404,38 @@ export function ProfileMeClient({
               </div>
             )}
 
-            <div className="grid gap-8 lg:grid-cols-2">
-              {stats && (
-                <ShowcaseTopicWiseStats
-                  title="Top Topics"
-                  description="Your best-performing topics"
-                  topics={mappedTopTopics}
-                  limit={5}
-                  viewAllHref="/showcase/topic-wise-stats-complete"
-                />
-              )}
-
-              <Card className="relative overflow-hidden rounded-[2rem] border shadow-xl bg-card/80 backdrop-blur-lg border-border/60">
-                {/* Background blur circles */}
-                <div className="absolute -top-20 -right-14 h-56 w-56 rounded-full bg-orange-500/20 blur-[160px]" />
-                <div className="absolute -bottom-24 -left-10 h-64 w-64 rounded-full bg-blue-500/15 blur-[160px]" />
-                
-                <CardHeader className="relative">
-                  <CardTitle className={cn("flex items-center gap-2", glassText.h2)}>
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-r from-orange-500/30 to-pink-500/30">
-                      <Sparkles className="h-4 w-4 text-orange-100" />
-                    </div>
-                    Profile Info
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="relative space-y-4">
-                  {profile.bio && (
-                    <div>
-                      <p className={cn("text-sm", glassText.badge)}>Bio</p>
-                      <p className={cn("mt-2", glassText.subtitle)}>{profile.bio}</p>
-                    </div>
-                  )}
-                  {profile.favoriteTeams.length > 0 && (
-                    <div>
-                      <p className={cn("text-sm", glassText.badge)}>Favorite Teams</p>
-                      <p className={cn("mt-2", glassText.subtitle)}>
-                        {profile.favoriteTeams.join(", ")}
-                      </p>
-                    </div>
-                  )}
-                  <div>
-                    <p className={cn("text-sm", glassText.badge)}>Member since</p>
-                    <p className={cn("mt-2", glassText.subtitle)}>
-                      {new Intl.DateTimeFormat("en-US", {
-                        month: "long",
-                        year: "numeric",
-                      }).format(new Date(profile.createdAt))}
-                    </p>
-                  </div>
-                  <div>
-                    <p className={cn("text-sm", glassText.badge)}>Email</p>
-                    <p className={cn("mt-2", glassText.subtitle)}>{profile.email}</p>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
+            {(continueItems.length > 0 || stats) && (
+              <div className="grid gap-8 md:grid-cols-2">
+                {stats && (
+                  <ShowcaseTopicWiseStats
+                    title="Top Topics"
+                    description="Your best-performing topics"
+                    topics={mappedTopTopics}
+                    limit={5}
+                    viewAllHref="/showcase/topic-wise-stats-complete"
+                    className="col-span-2 md:col-span-1"
+                  />
+                )}
+                {continueItems.length > 0 && (
+                  <Card className="relative overflow-hidden rounded-[2rem] border shadow-xl bg-card/80 backdrop-blur-lg border-border/60 col-span-2 md:col-span-1">
+                    <CardHeader className="relative pb-2">
+                      <CardTitle className={cn("flex items-center gap-2", glassText.h2)}>
+                        Continue Playing
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="relative pt-0">
+                      <ShowcaseThemeProvider>
+                        <ShowcaseContinuePlayingQueue
+                          embedded
+                          items={continueItems.map(({ slug, ...rest }) => rest as any)}
+                          onResume={(item: any) => router.push(`/quizzes/${continueItems.find((i:any)=>i.id===item.id)?.slug}`)}
+                        />
+                      </ShowcaseThemeProvider>
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
+            )}
           </TabsContent>
 
           <TabsContent value="activity" className="space-y-8">
@@ -468,6 +495,55 @@ export function ProfileMeClient({
           </TabsContent>
 
           <TabsContent value="settings" className="space-y-8">
+            {/* Profile Info widget moved here, read-only by default */}
+            <Card className="relative overflow-hidden rounded-[2rem] border shadow-xl bg-card/80 backdrop-blur-lg border-border/60">
+              {/* Background blur circles */}
+              <div className="absolute -top-20 -right-14 h-56 w-56 rounded-full bg-orange-500/20 blur-[160px]" />
+              <div className="absolute -bottom-24 -left-10 h-64 w-64 rounded-full bg-blue-500/15 blur-[160px]" />
+              
+              <CardHeader className="relative flex-row items-center justify-between">
+                <CardTitle className={cn("flex items-center gap-2", glassText.h2)}>
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-r from-orange-500/30 to-pink-500/30">
+                    <Sparkles className="h-4 w-4 text-orange-100" />
+                  </div>
+                  Profile Info
+                </CardTitle>
+                <Button onClick={() => setEditOpen(true)} className="rounded-full">
+                  Edit Profile
+                </Button>
+              </CardHeader>
+              <CardContent className="relative space-y-4">
+                {profile.bio && (
+                  <div>
+                    <p className={cn("text-sm", glassText.badge)}>Bio</p>
+                    <p className={cn("mt-2", glassText.subtitle)}>{profile.bio}</p>
+                  </div>
+                )}
+                {profile.favoriteTeams.length > 0 && (
+                  <div>
+                    <p className={cn("text-sm", glassText.badge)}>Favorite Teams</p>
+                    <p className={cn("mt-2", glassText.subtitle)}>
+                      {profile.favoriteTeams.join(", ")}
+                    </p>
+                  </div>
+                )}
+                <div>
+                  <p className={cn("text-sm", glassText.badge)}>Member since</p>
+                  <p className={cn("mt-2", glassText.subtitle)}>
+                    {new Intl.DateTimeFormat("en-US", {
+                      month: "long",
+                      year: "numeric",
+                    }).format(new Date(profile.createdAt))}
+                  </p>
+                </div>
+                <div>
+                  <p className={cn("text-sm", glassText.badge)}>Email</p>
+                  <p className={cn("mt-2", glassText.subtitle)}>{profile.email}</p>
+                </div>
+              </CardContent>
+            </Card>
+
+            {editOpen && (
             <Card className="relative overflow-hidden rounded-[2rem] border shadow-xl bg-card/80 backdrop-blur-lg border-border/60">
               {/* Background blur circles */}
               <div className="absolute -top-20 -right-14 h-56 w-56 rounded-full bg-orange-500/20 blur-[160px]" />
@@ -538,10 +614,14 @@ export function ProfileMeClient({
                       <Save className="mr-2 h-4 w-4" />
                       {saving ? "Saving..." : "Save Changes"}
                     </Button>
+                    <Button type="button" variant="outline" onClick={() => setEditOpen(false)} className="rounded-full">
+                      Cancel
+                    </Button>
                   </div>
                 </form>
               </CardContent>
             </Card>
+            )}
 
             <Card className="relative overflow-hidden rounded-[2rem] border shadow-xl bg-card/80 backdrop-blur-lg border-border/60">
               {/* Background blur circles */}

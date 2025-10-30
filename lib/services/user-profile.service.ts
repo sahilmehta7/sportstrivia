@@ -54,6 +54,7 @@ export interface UserProfileStats {
       id: string;
       title: string;
       slug: string;
+      recurringType?: string;
     };
   }>;
   leaderboardPositions: Array<{
@@ -178,6 +179,7 @@ export async function getUserProfileStats(userId: string): Promise<UserProfileSt
             id: true,
             title: true,
             slug: true,
+            recurringType: true,
           },
         },
       },

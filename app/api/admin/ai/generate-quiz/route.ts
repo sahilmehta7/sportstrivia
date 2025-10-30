@@ -3,6 +3,13 @@ import { requireAdmin } from "@/lib/auth-helpers";
 import { handleError, successResponse, BadRequestError } from "@/lib/errors";
 import { z } from "zod";
 import { getAIQuizPrompt, getAIModel } from "@/lib/services/settings.service";
+import {
+  createBackgroundTask,
+  markBackgroundTaskCompleted,
+  markBackgroundTaskFailed,
+  markBackgroundTaskInProgress,
+} from "@/lib/services/background-task.service";
+import { BackgroundTaskType } from "@prisma/client";
 
 // Increase route timeout for AI generation (can take 30-60 seconds for large quizzes)
 export const maxDuration = 60; // seconds
@@ -27,8 +34,9 @@ const generateQuizSchema = z
   });
 
 export async function POST(request: NextRequest) {
+  let taskId: string | null = null;
   try {
-    await requireAdmin();
+    const admin = await requireAdmin();
 
     // Check if OpenAI API key is configured
     if (!process.env.OPENAI_API_KEY) {
@@ -60,6 +68,24 @@ export async function POST(request: NextRequest) {
     // Determine sport from topic or use provided
     const derivedSportContext = `${effectiveTopic} ${sourceMaterial?.contentSnippet ?? ""}`;
     const quizSport = sport || determineSportFromTopic(derivedSportContext);
+
+    const backgroundTask = await createBackgroundTask({
+      userId: admin.id,
+      type: BackgroundTaskType.AI_QUIZ_GENERATION,
+      label: `AI Quiz • ${effectiveTopic}`,
+      input: {
+        topic,
+        customTitle,
+        sport,
+        difficulty,
+        numQuestions,
+        sourceUrl,
+        effectiveTopic,
+        quizSport,
+      },
+    });
+    taskId = backgroundTask.id;
+    await markBackgroundTaskInProgress(taskId);
 
     // Create slugified version of topic
     const slugifiedTopic = effectiveTopic
@@ -238,26 +264,48 @@ export async function POST(request: NextRequest) {
       }));
     }
 
+    const metadata = {
+      topic: effectiveTopic,
+      sport: quizSport,
+      difficulty,
+      numQuestions,
+      model: aiModel,
+      tokensUsed: completion.usage?.total_tokens || 0,
+      promptPreview: `${prompt.substring(0, 200)}...`,
+      ...(customTitle ? { customTitle } : {}),
+      ...(sourceMaterial
+        ? {
+            sourceUrl: sourceMaterial.url,
+            sourceTitle: sourceMaterial.title,
+          }
+        : {}),
+    };
+
+    if (taskId) {
+      try {
+        await markBackgroundTaskCompleted(taskId, {
+          quiz: generatedQuiz,
+          metadata,
+        });
+      } catch (taskError) {
+        console.error("[AI Generator] Failed to mark background task completed:", taskError);
+      }
+    }
+
     return successResponse({
+      taskId,
       quiz: generatedQuiz,
-      metadata: {
-        topic: effectiveTopic,
-        sport: quizSport,
-        difficulty,
-        numQuestions,
-        model: aiModel,
-        tokensUsed: completion.usage?.total_tokens || 0,
-        promptPreview: `${prompt.substring(0, 200)}...`,
-        ...(customTitle ? { customTitle } : {}),
-        ...(sourceMaterial
-          ? {
-              sourceUrl: sourceMaterial.url,
-              sourceTitle: sourceMaterial.title,
-            }
-          : {}),
-      },
+      metadata,
     });
   } catch (error) {
+    if (taskId) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      try {
+        await markBackgroundTaskFailed(taskId, message);
+      } catch (taskError) {
+        console.error("[AI Generator] Failed to update background task status:", taskError);
+      }
+    }
     return handleError(error);
   }
 }

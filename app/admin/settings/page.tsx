@@ -57,8 +57,20 @@ export default function SettingsPage() {
           setAiModel(modelSetting.value);
           setOriginalModel(modelSetting.value);
           setAvailableModels(modelSetting.availableModels || []);
-          setStoredInDatabase(modelSetting.storedInDatabase || false);
         }
+
+        let promptPersisted = false;
+        try {
+          const promptMetaResponse = await fetch("/api/admin/settings?key=ai_quiz_prompt");
+          const promptMetaResult = await promptMetaResponse.json();
+          if (promptMetaResponse.ok && promptMetaResult?.data) {
+            promptPersisted = Boolean(promptMetaResult.data.storedInDatabase);
+          }
+        } catch {
+          promptPersisted = Boolean(promptSetting?.storedInDatabase);
+        }
+
+        setStoredInDatabase(promptPersisted);
       }
     } catch {
       toast({
@@ -97,6 +109,7 @@ export default function SettingsPage() {
       setOriginalPrompt(aiPrompt);
       setIsDefault(false);
       setMigrationNeeded(false);
+      setStoredInDatabase(true);
 
       toast({
         title: "Settings saved!",
@@ -584,4 +597,3 @@ export default function SettingsPage() {
     </div>
   );
 }
-

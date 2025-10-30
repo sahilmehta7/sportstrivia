@@ -22,6 +22,7 @@ interface ProfileHeaderProps {
   onAddFriend?: () => void;
   onRemoveFriend?: () => void;
   onChallenge?: () => void;
+  showEditButton?: boolean;
 }
 
 export function ProfileHeader({
@@ -31,6 +32,7 @@ export function ProfileHeader({
   onAddFriend,
   onRemoveFriend,
   onChallenge,
+  showEditButton = true,
 }: ProfileHeaderProps) {
   const getRoleBadgeVariant = (role: string) => {
     switch (role) {
@@ -98,6 +100,7 @@ export function ProfileHeader({
                 <Button 
                   variant="default"
                   className="rounded-full bg-gradient-to-r from-orange-400 to-pink-500 px-6 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-white shadow-[0_12px_30px_-16px_rgba(249,115,22,0.55)] transition hover:-translate-y-0.5"
+                  style={{ display: showEditButton ? undefined : "none" }}
                 >
                   <Edit className="mr-2 h-4 w-4" />
                   Edit Profile
