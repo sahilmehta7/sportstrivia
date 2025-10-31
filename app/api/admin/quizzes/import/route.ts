@@ -6,6 +6,9 @@ import { handleError, successResponse, BadRequestError } from "@/lib/errors";
 import { generateUniqueSlug } from "@/lib/services/slug.service";
 import { Prisma, Difficulty, QuestionType } from "@prisma/client";
 
+// Use Node.js runtime for long-running import operations
+export const runtime = 'nodejs';
+
 // Increase route timeout for large quiz imports (100+ questions can take 30-60 seconds)
 export const maxDuration = 60; // seconds
 

@@ -246,19 +246,25 @@ function normalizeQuizForImport(rawQuiz: any): NormalizedQuiz | null {
   const seoKeywords =
     ensureArrayOfStrings(rawQuiz.seoKeywords) || ensureArrayOfStrings(rawSeo.keywords);
 
-  const seoTitle =
+  const seoTitleRaw =
     typeof rawQuiz.seoTitle === "string" && rawQuiz.seoTitle.trim()
       ? rawQuiz.seoTitle.trim()
       : typeof rawSeo.title === "string" && (rawSeo.title as string).trim()
         ? (rawSeo.title as string).trim()
         : undefined;
+  
+  // Truncate to max 60 characters for SEO title
+  const seoTitle = seoTitleRaw ? seoTitleRaw.substring(0, 60) : undefined;
 
-  const seoDescription =
+  const seoDescriptionRaw =
     typeof rawQuiz.seoDescription === "string" && rawQuiz.seoDescription.trim()
       ? rawQuiz.seoDescription.trim()
       : typeof rawSeo.description === "string" && (rawSeo.description as string).trim()
         ? (rawSeo.description as string).trim()
         : undefined;
+  
+  // Truncate to max 160 characters for SEO description
+  const seoDescription = seoDescriptionRaw ? seoDescriptionRaw.substring(0, 160) : undefined;
 
   const seo =
     seoTitle || seoDescription || seoKeywords

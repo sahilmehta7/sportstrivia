@@ -20,6 +20,15 @@ export default async function AdminLayout({
     { name: "Questions", href: "/admin/questions", icon: "HelpCircle" as const },
     { name: "Topics", href: "/admin/topics", icon: "FolderTree" as const },
     { name: "Users", href: "/admin/users", icon: "Users" as const },
+    {
+      name: "Gamification",
+      href: "/admin/gamification",
+      icon: "Trophy" as const,
+      children: [
+        { name: "Levels", href: "/admin/gamification/levels", icon: "ListOrdered" as const },
+        { name: "Tiers", href: "/admin/gamification/tiers", icon: "Medal" as const },
+      ],
+    },
     { name: "AI Quiz Generator", href: "/admin/ai-quiz", icon: "Sparkles" as const },
     { name: "AI Tasks", href: "/admin/ai-tasks", icon: "History" as const },
     { name: "Import Quiz", href: "/admin/import", icon: "Upload" as const },

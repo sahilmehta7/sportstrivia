@@ -9,6 +9,12 @@ const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000;
 const RATE_LIMIT_MAX = 3;
 const rateStore = new Map<string, { count: number; resetAt: number }>();
 
+// Use Node.js runtime for long-running AI operations
+export const runtime = 'nodejs';
+
+// Increase route timeout for AI generation
+export const maxDuration = 60;
+
 const suggestQuizSchema = z.object({
   topic: z.string().min(1),
   sport: z.string().optional(),
@@ -74,9 +80,9 @@ export async function POST(request: NextRequest) {
       requestBody.temperature = 0.7;
     }
     if (usesNewParams) {
-      requestBody.max_completion_tokens = 8000;
+      requestBody.max_completion_tokens = 16000;  // Higher limit for GPT-5 reasoning models
     } else {
-      requestBody.max_tokens = 3000;
+      requestBody.max_tokens = 4000;  // Increased from 3000 for larger question sets
     }
     if (!aiModel.startsWith("o1")) {
       requestBody.response_format = { type: "json_object" };

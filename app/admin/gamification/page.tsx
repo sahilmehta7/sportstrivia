@@ -1,14 +1,39 @@
 import Link from "next/link";
-import { successResponse } from "@/lib/errors"; // type only usage keeps style consistent
+import { prisma } from "@/lib/db";
+import { LEVELS_MAX, pointsForLevel } from "@/lib/config/gamification";
+
+async function getPreview(limit: number = LEVELS_MAX) {
+  try {
+    const overrides = await prisma.level.findMany({ orderBy: { level: "asc" } });
+    const mapOverride = new Map(overrides.map((l) => [l.level, l.pointsRequired]));
+    const rows = Array.from({ length: Math.min(limit, LEVELS_MAX) }, (_, i) => {
+      const level = i + 1;
+      const curve = pointsForLevel(level);
+      const override = mapOverride.get(level) ?? null;
+      const effective = override ?? curve;
+      return { level, curve, override, effective };
+    });
+    return rows;
+  } catch (error) {
+    console.error("Error getting preview:", error);
+    return [];
+  }
+}
 
 export default async function GamificationAdminPage() {
+  const preview = await getPreview(50);
+
   return (
     <div className="p-6 space-y-6">
       <div>
         <h1 className="text-2xl font-semibold">Gamification</h1>
         <p className="text-sm text-muted-foreground">Manage levels, tiers and backfills</p>
       </div>
-      <div className="grid md:grid-cols-3 gap-4">
+      <div className="grid md:grid-cols-4 gap-4">
+        <Link href="/admin/gamification/users" className="border rounded p-4 hover:bg-accent">
+          <div className="font-medium">User Progress</div>
+          <div className="text-sm text-muted-foreground">View user levels and tiers</div>
+        </Link>
         <Link href="/admin/gamification/levels" className="border rounded p-4 hover:bg-accent">
           <div className="font-medium">Levels</div>
           <div className="text-sm text-muted-foreground">Edit points required per level</div>
@@ -25,42 +50,29 @@ export default async function GamificationAdminPage() {
       </div>
       <div className="border rounded p-4">
         <div className="font-medium mb-2">Curve Preview</div>
-        <PreviewTable />
+        <div className="overflow-auto">
+          <table className="min-w-full text-sm">
+            <thead>
+              <tr className="text-left">
+                <th className="p-2">Level</th>
+                <th className="p-2">Curve</th>
+                <th className="p-2">Override</th>
+                <th className="p-2">Effective</th>
+              </tr>
+            </thead>
+            <tbody>
+              {preview.map((row) => (
+                <tr key={row.level} className="border-t">
+                  <td className="p-2">{row.level}</td>
+                  <td className="p-2">{row.curve}</td>
+                  <td className="p-2">{row.override ?? "-"}</td>
+                  <td className="p-2 font-medium">{row.effective}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
-    </div>
-  );
-}
-
-async function getPreview() {
-  const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL ?? ""}/api/admin/gamification/preview`, { cache: "no-store" });
-  if (!res.ok) return { preview: [] } as any;
-  return res.json();
-}
-
-async function PreviewTable() {
-  const { preview } = await getPreview();
-  return (
-    <div className="overflow-auto">
-      <table className="min-w-full text-sm">
-        <thead>
-          <tr className="text-left">
-            <th className="p-2">Level</th>
-            <th className="p-2">Curve</th>
-            <th className="p-2">Override</th>
-            <th className="p-2">Effective</th>
-          </tr>
-        </thead>
-        <tbody>
-          {preview?.slice(0, 50)?.map((row: any) => (
-            <tr key={row.level} className="border-t">
-              <td className="p-2">{row.level}</td>
-              <td className="p-2">{row.curve}</td>
-              <td className="p-2">{row.override ?? "-"}</td>
-              <td className="p-2 font-medium">{row.effective}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
     </div>
   );
 }

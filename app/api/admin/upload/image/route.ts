@@ -3,6 +3,9 @@ import { requireAdmin } from "@/lib/auth-helpers";
 import { handleError, successResponse, BadRequestError } from "@/lib/errors";
 import { getSupabaseClient, isSupabaseConfigured, QUIZ_IMAGES_BUCKET } from "@/lib/supabase";
 
+// Use Node.js runtime for long-running operations
+export const runtime = 'nodejs';
+
 // Increase route timeout for large file uploads
 export const maxDuration = 30; // seconds
 

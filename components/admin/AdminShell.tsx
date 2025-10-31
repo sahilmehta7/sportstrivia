@@ -18,6 +18,10 @@ import {
   FolderInput,
   Sparkles,
   History,
+  Trophy,
+  ListOrdered,
+  Medal,
+  ChevronDown,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -34,12 +38,16 @@ const iconComponents = {
   FolderInput,
   Sparkles,
   History,
+  Trophy,
+  ListOrdered,
+  Medal,
 };
 
 interface NavigationItem {
   name: string;
   href: string;
   icon: keyof typeof iconComponents;
+  children?: NavigationItem[];
 }
 
 interface AdminShellProps {
@@ -50,15 +58,19 @@ interface AdminShellProps {
 export function AdminShell({ navigation, children }: AdminShellProps) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
 
   const isActive = (href: string) => {
     return pathname === href || pathname.startsWith(`${href}/`);
   };
 
-  const renderNavigation = (className?: string) =>
-    navigation.map((item) => {
-      const Icon = iconComponents[item.icon] ?? LayoutDashboard;
-      const active = isActive(item.href);
+  const renderItem = (item: NavigationItem, depth = 0) => {
+    const Icon = iconComponents[item.icon] ?? LayoutDashboard;
+    const hasChildren = Array.isArray(item.children) && item.children.length > 0;
+    const active = isActive(item.href);
+    const open = openGroups[item.href] ?? true;
+
+    if (!hasChildren) {
       return (
         <Link
           key={item.name}
@@ -67,8 +79,7 @@ export function AdminShell({ navigation, children }: AdminShellProps) {
             "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
             active
               ? "bg-primary text-primary-foreground"
-              : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
-            className
+              : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
           )}
           onClick={() => setMobileOpen(false)}
         >
@@ -76,7 +87,33 @@ export function AdminShell({ navigation, children }: AdminShellProps) {
           {item.name}
         </Link>
       );
-    });
+    }
+
+    return (
+      <div key={item.name} className="space-y-1">
+        <div
+          className={cn(
+            "flex items-center justify-between rounded-lg px-3 py-2 text-sm font-medium cursor-pointer",
+            active ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+          )}
+          onClick={() => setOpenGroups((s) => ({ ...s, [item.href]: !(s[item.href] ?? true) }))}
+        >
+          <div className="flex items-center gap-3">
+            <Icon className="h-5 w-5" />
+            <Link href={item.href} onClick={() => setMobileOpen(false)}>{item.name}</Link>
+          </div>
+          <ChevronDown className={cn("h-4 w-4 transition-transform", open ? "rotate-0" : "-rotate-90")} />
+        </div>
+        {open && (
+          <div className="ml-8 space-y-1">
+            {item.children!.map((child) => renderItem(child, depth + 1))}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const renderNavigation = () => navigation.map((item) => renderItem(item));
 
   const handleSignOut = () => {
     void signOut({ callbackUrl: "/auth/signin" });
@@ -108,7 +145,7 @@ export function AdminShell({ navigation, children }: AdminShellProps) {
               Sports Trivia Admin
             </Link>
           </div>
-          <nav className="flex-1 space-y-1 px-3 py-4">{renderNavigation()}</nav>
+          <nav className="flex-1 space-y-2 px-3 py-4">{renderNavigation()}</nav>
           <div className="border-t p-4 space-y-2">
             <Link href="/" className="flex items-center justify-between text-sm font-medium text-muted-foreground hover:text-foreground">
               View Site

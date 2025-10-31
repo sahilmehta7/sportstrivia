@@ -6,6 +6,7 @@ import {
   pointsForLevel,
   slugifyTierName,
 } from "../config/gamification";
+import { notifyLevelUp, notifyTierUpgrade } from "./notification.service";
 
 const prisma = new PrismaClient();
 
@@ -166,8 +167,17 @@ export async function recomputeUserProgress(userId: string) {
     where: { userId },
     orderBy: { reachedAt: "desc" },
   });
-  if (!existingLatest || existingLatest.level !== level) {
+  const levelChanged = !existingLatest || existingLatest.level !== level;
+  if (levelChanged) {
     await prisma.userLevel.create({ data: { userId, level, reachedAt: new Date() } });
+    // Notify only if this is a level increase (not first level assignment)
+    if (existingLatest && level > existingLatest.level) {
+      try {
+        await notifyLevelUp(userId, level);
+      } catch {
+        // Silently fail notifications - don't block progress tracking
+      }
+    }
   }
   const tier = await getTierForLevel(level);
   if (tier) {
@@ -175,8 +185,17 @@ export async function recomputeUserProgress(userId: string) {
       where: { userId },
       orderBy: { reachedAt: "desc" },
     });
-    if (!latestTier || latestTier.tierId !== tier.id) {
+    const tierChanged = !latestTier || latestTier.tierId !== tier.id;
+    if (tierChanged) {
       await prisma.userTierHistory.create({ data: { userId, tierId: tier.id, reachedAt: new Date() } });
+      // Notify only if this is a tier upgrade (not first tier assignment)
+      if (latestTier) {
+        try {
+          await notifyTierUpgrade(userId, tier.id, tier.name);
+        } catch {
+          // Silently fail notifications - don't block progress tracking
+        }
+      }
     }
   }
   return { level, tierId: tier?.id ?? null };

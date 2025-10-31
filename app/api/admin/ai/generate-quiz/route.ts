@@ -11,6 +11,9 @@ import {
 } from "@/lib/services/background-task.service";
 import { BackgroundTaskType } from "@prisma/client";
 
+// Use Node.js runtime for long-running AI operations
+export const runtime = 'nodejs';
+
 // Increase route timeout for AI generation (can take 30-60 seconds for large quizzes)
 export const maxDuration = 60; // seconds
 

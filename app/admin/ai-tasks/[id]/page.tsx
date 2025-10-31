@@ -2,20 +2,20 @@ import { notFound } from "next/navigation";
 import { requireAdmin } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/db";
 import { PageHeader } from "@/components/shared/PageHeader";
-import { History } from "lucide-react";
 import {
   TaskDetailClient,
   SerializedBackgroundTask,
 } from "@/components/admin/ai-tasks/TaskDetailClient";
 
 interface AiTaskDetailPageProps {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
 export default async function AiTaskDetailPage({ params }: AiTaskDetailPageProps) {
+  const { id } = await params;
   const admin = await requireAdmin();
   const task = await prisma.adminBackgroundTask.findUnique({
-    where: { id: params.id },
+    where: { id },
   });
 
   if (!task) {
@@ -45,7 +45,6 @@ export default async function AiTaskDetailPage({ params }: AiTaskDetailPageProps
       <PageHeader
         title="AI Background Task"
         description="Review generated output and import it into your content library."
-        icon={<History className="h-8 w-8" />}
       />
       <TaskDetailClient task={serializedTask} />
     </div>

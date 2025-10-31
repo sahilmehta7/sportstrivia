@@ -164,11 +164,13 @@ const isO1Model = aiModel.startsWith("o1");
 - Example: 4000 reasoning + 4000 output = 8000 total
 - Higher limit ensures content is generated
 - Don't hit limit during internal reasoning
+- Used for all quiz/question generation tasks
 
 **GPT-4o/GPT-4/GPT-3.5 Models: 4,000 tokens**
 - Direct output generation
 - No reasoning tokens
 - 4000 is sufficient for 50 questions
+- Increased from 3000 to handle larger question sets
 
 **Important:** GPT-5/o1 models consume tokens differently:
 - Reasoning tokens: Internal thinking (not visible)

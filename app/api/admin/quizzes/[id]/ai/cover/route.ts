@@ -5,6 +5,9 @@ import { prisma } from "@/lib/db";
 import { getSupabaseClient, isSupabaseConfigured, QUIZ_IMAGES_BUCKET } from "@/lib/supabase";
 import sharp from "sharp";
 
+// Use Node.js runtime for long-running AI operations
+export const runtime = 'nodejs';
+
 // Increase route timeout for AI image generation (can take 30-60 seconds)
 export const maxDuration = 60; // seconds
 
