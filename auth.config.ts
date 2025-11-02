@@ -20,21 +20,35 @@ export default {
   },
   callbacks: {
     async jwt({ token, user }) {
-      // Transfer user ID and role from user to token on initial sign in
+      // On initial sign in, transfer user ID and role to token
       if (user) {
         token.id = user.id;
         token.role = user.role;
       }
+      // Otherwise, just return the existing token (which should already have id and role from lib/auth.ts)
       return token;
     },
     async session({ session, token }) {
       // Transfer user ID and role from token to session
-      if (session.user) {
+      if (session.user && token.id) {
         session.user.id = token.id as string;
         session.user.role = token.role as string;
       }
       return session;
     },
   },
+  cookies: {
+    sessionToken: {
+      name:
+        process.env.NODE_ENV === "production"
+          ? "__Secure-next-auth.session-token"
+          : "next-auth.session-token",
+      options: {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        secure: process.env.NODE_ENV === "production",
+      },
+    },
+  },
 } satisfies NextAuthConfig
-

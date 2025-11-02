@@ -13,11 +13,13 @@ interface ShowcaseThemeContextType {
 const ShowcaseThemeContext = createContext<ShowcaseThemeContextType | undefined>(undefined);
 
 export function ShowcaseThemeProvider({ children }: { children: ReactNode }) {
+  const [mounted, setMounted] = useState(false);
   const [theme, setTheme] = useState<ShowcaseTheme>("dark");
   const { theme: nextTheme, setTheme: setNextTheme } = useNextTheme();
 
   // Mirror next-themes into showcase theme to keep the whole home page in sync
   useEffect(() => {
+    setMounted(true);
     const mapped = nextTheme === "light" ? "light" : "dark";
     setTheme(mapped);
   }, [nextTheme]);
@@ -28,8 +30,11 @@ export function ShowcaseThemeProvider({ children }: { children: ReactNode }) {
     setNextTheme(next);
   };
 
+  // During SSR, always use "dark" to prevent hydration mismatch
+  const effectiveTheme = mounted ? theme : "dark";
+
   return (
-    <ShowcaseThemeContext.Provider value={{ theme, toggleTheme }}>
+    <ShowcaseThemeContext.Provider value={{ theme: effectiveTheme, toggleTheme }}>
       {children}
     </ShowcaseThemeContext.Provider>
   );

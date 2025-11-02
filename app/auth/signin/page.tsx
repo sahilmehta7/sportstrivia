@@ -6,13 +6,22 @@ import { Trophy, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTheme } from "next-themes";
 import { getBlurCircles, getGlassCard } from "@/lib/showcase-theme";
+import { useEffect, useState } from "react";
 
 export const dynamic = "force-dynamic";
 
 export default function SignInPage() {
   const { theme } = useTheme();
-  const blur = getBlurCircles(theme);
-  const backgroundVariant = theme === "light"
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Use theme if mounted, otherwise default to dark to prevent hydration mismatch
+  const effectiveTheme = mounted && theme ? theme : "dark";
+  const blur = getBlurCircles(effectiveTheme);
+  const backgroundVariant = effectiveTheme === "light"
     ? "bg-gradient-to-br from-white/80 via-slate-50/90 to-blue-50/80"
     : "bg-slate-950";
 
@@ -30,8 +39,8 @@ export default function SignInPage() {
         <div className={cn(
           "rounded-[2rem] border p-6 sm:p-8 md:p-10",
           "backdrop-blur-2xl shadow-2xl",
-          getGlassCard(theme),
-          theme === "light"
+          getGlassCard(effectiveTheme),
+          effectiveTheme === "light"
             ? "shadow-[0_40px_120px_-40px_rgba(59,130,246,0.25)]"
             : "shadow-[0_40px_120px_-40px_rgba(0,0,0,0.8)]"
         )}>
@@ -40,19 +49,19 @@ export default function SignInPage() {
             <div className={cn(
               "relative rounded-2xl p-4 sm:p-5 shadow-lg transition-all duration-300",
               "backdrop-blur-sm",
-              theme === "light"
+              effectiveTheme === "light"
                 ? "bg-white/60 border border-slate-200/50 shadow-[0_16px_40px_-24px_rgba(59,130,246,0.3)]"
                 : "bg-white/10 border border-white/20 shadow-[0_16px_40px_-24px_rgba(34,197,94,0.4)]"
             )}>
               <Trophy className={cn(
                 "h-10 w-10 sm:h-12 sm:w-12 transition-colors",
-                theme === "light" ? "text-blue-600" : "text-emerald-300"
+                effectiveTheme === "light" ? "text-blue-600" : "text-emerald-300"
               )} />
               
               {/* Decorative sparkle */}
               <Sparkles className={cn(
                 "absolute -top-1 -right-1 h-5 w-5 animate-pulse",
-                theme === "light" ? "text-blue-400/70" : "text-emerald-400/70"
+                effectiveTheme === "light" ? "text-blue-400/70" : "text-emerald-400/70"
               )} />
             </div>
           </div>
@@ -60,7 +69,7 @@ export default function SignInPage() {
           {/* Title */}
           <h1 className={cn(
             "mb-3 text-center text-2xl sm:text-3xl font-bold",
-            theme === "light" ? "text-slate-900" : "text-white"
+            effectiveTheme === "light" ? "text-slate-900" : "text-white"
           )}>
             Welcome to Sports Trivia
           </h1>
@@ -68,7 +77,7 @@ export default function SignInPage() {
           {/* Subtitle */}
           <p className={cn(
             "mb-6 sm:mb-8 text-center text-sm sm:text-base",
-            theme === "light" ? "text-slate-600" : "text-white/70"
+            effectiveTheme === "light" ? "text-slate-600" : "text-white/70"
           )}>
             Test your sports knowledge and compete with friends
           </p>
@@ -81,7 +90,7 @@ export default function SignInPage() {
                 "w-full h-12 text-base font-semibold rounded-xl",
                 "transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]",
                 "shadow-lg",
-                theme === "light"
+                effectiveTheme === "light"
                   ? "bg-blue-600 hover:bg-blue-700 shadow-[0_12px_32px_-16px_rgba(59,130,246,0.5)]"
                   : "bg-blue-500 hover:bg-blue-400 shadow-[0_12px_32px_-16px_rgba(59,130,246,0.4)]"
               )}
@@ -112,7 +121,7 @@ export default function SignInPage() {
           {/* Footer text */}
           <p className={cn(
             "mt-6 text-center text-xs sm:text-sm",
-            theme === "light" ? "text-slate-500" : "text-white/50"
+            effectiveTheme === "light" ? "text-slate-500" : "text-white/50"
           )}>
             By signing in, you agree to our{" "}
             <a href="/terms" className="underline hover:opacity-70 transition-opacity">
