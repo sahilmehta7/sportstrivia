@@ -17,6 +17,44 @@ interface QuizDetailPageProps {
   params: Promise<{ slug: string }>;
 }
 
+// Route segment config - enable ISR for popular quizzes
+export const dynamic = 'auto';
+export const revalidate = 300; // Revalidate every 5 minutes
+
+// Generate static params for top 100 popular quizzes
+export async function generateStaticParams() {
+  try {
+    // Get quizzes with attempt counts
+    const quizzes = await prisma.quiz.findMany({
+      where: {
+        isPublished: true,
+        status: "PUBLISHED",
+      },
+      select: {
+        slug: true,
+        _count: {
+          select: {
+            attempts: true,
+          },
+        },
+      },
+      take: 1000, // Get more than we need to sort
+    });
+
+    // Sort by attempt count descending and take top 100
+    const topQuizzes = quizzes
+      .sort((a, b) => b._count.attempts - a._count.attempts)
+      .slice(0, 100);
+
+    return topQuizzes.map((quiz) => ({
+      slug: quiz.slug,
+    }));
+  } catch (error) {
+    console.error('Error generating static params for quizzes:', error);
+    return [];
+  }
+}
+
 export async function generateMetadata({ params }: QuizDetailPageProps): Promise<Metadata> {
   const { slug } = await params;
   const quiz = await prisma.quiz.findUnique({
@@ -365,6 +403,7 @@ export default async function QuizDetailPage({ params }: QuizDetailPageProps) {
                   fill
                   sizes="(max-width: 1024px) 100vw, 50vw"
                   className="object-cover"
+                  priority
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent dark:from-black/30" />
               </div>

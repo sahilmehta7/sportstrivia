@@ -8,6 +8,8 @@ import { Badge } from "@/components/ui/badge";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { useToast } from "@/hooks/use-toast";
+import { PushSubscriptionCard } from "@/components/notifications/PushSubscriptionCard";
+import { DigestPreferencesCard } from "@/components/notifications/DigestPreferencesCard";
 import {
   Bell,
   BellOff,
@@ -182,17 +184,21 @@ export default function NotificationsPage() {
   return (
     <main className="min-h-screen bg-background py-8">
       <div className="mx-auto max-w-4xl space-y-6 px-4">
-        <div className="flex items-center justify-between">
-          <PageHeader
-            title="Notifications"
-            description={`${unreadCount} unread notifications`}
-          />
-          {unreadCount > 0 && (
-            <Button variant="outline" size="sm" onClick={markAllAsRead}>
-              <Check className="mr-2 h-4 w-4" />
-              Mark all as read
-            </Button>
-          )}
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center justify-between gap-2">
+            <PageHeader
+              title="Notifications"
+              description={`${unreadCount} unread notifications`}
+            />
+            {unreadCount > 0 && (
+              <Button variant="outline" size="sm" onClick={markAllAsRead}>
+                <Check className="mr-2 h-4 w-4" />
+                Mark all as read
+              </Button>
+            )}
+          </div>
+          <PushSubscriptionCard />
+          <DigestPreferencesCard />
         </div>
 
         {loading ? (

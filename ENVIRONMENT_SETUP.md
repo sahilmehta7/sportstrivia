@@ -55,6 +55,22 @@ Get credentials from: Supabase Dashboard → Settings → API
 3. Set bucket to Public
 4. Configure storage policies (see docs/COVER_IMAGE_UPLOAD.md)
 
+### Push Notifications & Email Digests
+```bash
+NEXT_PUBLIC_PUSH_PUBLIC_KEY="generated-vapid-public-key"
+PUSH_PUBLIC_KEY="generated-vapid-public-key"
+PUSH_PRIVATE_KEY="generated-vapid-private-key"
+PUSH_SUBJECT="mailto:support@sportstrivia.in"
+RESEND_API_KEY="your-resend-api-key"
+NOTIFICATION_DIGEST_FROM="notifications@sportstrivia.in"
+NOTIFICATION_DIGEST_REPLY_TO="support@sportstrivia.in"
+NOTIFICATIONS_PUSH_ENABLED="true"
+```
+
+- Generate VAPID keys with `npm run notifications:vapid`
+- `PUSH_SUBJECT` must be a `mailto:` or `https://` URL per Web Push spec
+- `NOTIFICATION_DIGEST_FROM` should match a verified sender in Resend
+
 ## Setting Up Your .env File
 
 1. Copy the template above
@@ -82,4 +98,3 @@ For Vercel/production environments, add these variables in:
 - ✅ Never commit secrets to git
 - ✅ Rotate API keys regularly
 - ✅ Use different keys for dev/prod environments
-

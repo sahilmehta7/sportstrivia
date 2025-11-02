@@ -9,6 +9,7 @@ import { awardCompletionBonusIfEligible } from "@/lib/services/awardCompletionBo
 import type { Prisma } from "@prisma/client";
 import { checkAndAwardBadges } from "@/lib/services/badge.service";
 import { recomputeUserProgress } from "@/lib/services/gamification.service";
+import { createNotification } from "@/lib/services/notification.service";
 
 // POST /api/attempts/[id]/complete - Complete quiz attempt and calculate score
 export async function POST(
@@ -336,8 +337,11 @@ async function updateUserStatistics(
     lastActive.setHours(0, 0, 0, 0);
   }
 
-  let newStreak = user?.currentStreak ?? 0;
-  let newLongestStreak = user?.longestStreak ?? 0;
+  const previousStreak = user?.currentStreak ?? 0;
+  const previousLongestStreak = user?.longestStreak ?? 0;
+
+  let newStreak = previousStreak;
+  let newLongestStreak = previousLongestStreak;
 
   if (!lastActive || lastActive.getTime() !== today.getTime()) {
     if (lastActive) {
@@ -442,6 +446,36 @@ async function updateUserStatistics(
 
   // Execute all updates and creates in parallel
   await Promise.all([...updates, ...creates]);
+
+  if (newStreak > previousStreak) {
+    const body =
+      newLongestStreak > previousLongestStreak
+        ? `New personal best! You're on a ${newStreak}-day streak.`
+        : newStreak === 1
+            ? "Streak started! Come back tomorrow to keep it alive."
+            : `Your ${newStreak}-day streak is alive. Keep it going!`;
+
+    await createNotification(
+      userId,
+      "STREAK_UPDATED",
+      {
+        streak: newStreak,
+        longestStreak: newLongestStreak,
+      },
+      {
+        push: {
+          title: "Streak update",
+          body,
+          url: "/profile/me",
+          tag: `streak:${today.toISOString().slice(0, 10)}`,
+          data: {
+            streak: newStreak,
+            longestStreak: newLongestStreak,
+          },
+        },
+      }
+    );
+  }
 
   const progression = await applyProgression(
     userId,

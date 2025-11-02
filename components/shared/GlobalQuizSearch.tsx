@@ -226,14 +226,31 @@ export function GlobalQuizSearch({ className, showOnMobile = false }: GlobalQuiz
         const params = new URLSearchParams({ search: query, limit: "3" });
         const response = await fetch(`/api/quizzes?${params.toString()}`, {
           signal: controller.signal,
+          // Don't cache preview results - they should be fresh
+          cache: "no-store",
         });
 
+        // Handle rate limiting and other errors gracefully
         if (!response.ok) {
+          // For rate limiting or server errors, just show no preview results
+          // The search will still work when user navigates to search page
+          if (response.status === 429 || response.status >= 500) {
+            console.warn(`[global-search] Preview fetch failed (${response.status}), continuing without preview`);
+            setPreviewResults([]);
+            return;
+          }
           throw new Error(`Failed to load preview results: ${response.status}`);
         }
 
         const json = await response.json();
         if (controller.signal.aborted) {
+          return;
+        }
+
+        // Check if response indicates an error
+        if (!json.success) {
+          console.warn("[global-search] API returned error:", json.error);
+          setPreviewResults([]);
           return;
         }
 
@@ -249,6 +266,7 @@ export function GlobalQuizSearch({ className, showOnMobile = false }: GlobalQuiz
         setPreviewResults(quizzes);
       } catch (error) {
         if ((error as Error).name !== "AbortError") {
+          // Only log errors that aren't aborts
           console.warn("[global-search] Unable to fetch preview results", error);
         }
         setPreviewResults([]);
@@ -257,7 +275,7 @@ export function GlobalQuizSearch({ className, showOnMobile = false }: GlobalQuiz
           setIsPreviewLoading(false);
         }
       }
-    }, 250);
+    }, 300); // Slightly increased debounce to reduce API calls
 
     return () => {
       controller.abort();

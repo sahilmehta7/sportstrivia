@@ -12,10 +12,7 @@ export default async function QuizPlayPage({ params }: QuizPlayPageProps) {
   const { slug } = await params;
   const session = await auth();
 
-  if (!session?.user) {
-    redirect(`/auth/signin?callbackUrl=${encodeURIComponent(`/quizzes/${slug}/play`)}`);
-  }
-
+  // Middleware ensures session exists, so we can safely use it
   const quiz = await prisma.quiz.findUnique({
     where: { slug },
     select: {
@@ -33,7 +30,7 @@ export default async function QuizPlayPage({ params }: QuizPlayPageProps) {
   }
 
   const now = new Date();
-  const userId = session.user.id;
+  const userId = session!.user!.id;
   const attemptLimitStatus = quiz.maxAttemptsPerUser
     ? await getAttemptLimitStatus(prisma, {
         userId,

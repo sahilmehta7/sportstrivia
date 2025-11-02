@@ -1,10 +1,26 @@
 import { GET, POST } from "@/app/api/admin/levels/route";
 
+jest.mock("next/server", () => ({
+  NextResponse: {
+    json: (body: any, init?: ResponseInit) => ({
+      status: init?.status ?? 200,
+      json: async () => body,
+    }),
+  },
+  NextRequest: class {},
+}));
+
 jest.mock("@/lib/auth-helpers", () => ({
   requireAdmin: jest.fn().mockResolvedValue({ id: "admin", role: "ADMIN" }),
 }));
 
-let prismaMock: any;
+var prismaMock: {
+  level: {
+    findMany: jest.Mock;
+    upsert: jest.Mock;
+  };
+};
+
 jest.mock("@/lib/db", () => {
   prismaMock = {
     level: {
@@ -19,11 +35,16 @@ jest.mock("@/lib/db", () => {
 });
 
 describe("/api/admin/levels", () => {
+  beforeEach(() => {
+    prismaMock.level.findMany.mockClear();
+    prismaMock.level.upsert.mockClear();
+  });
+
   it("GET lists levels", async () => {
     const res = await GET();
     const json = await (res as any).json();
-    expect(Array.isArray(json.levels)).toBe(true);
-    expect(json.levels[0].level).toBe(1);
+    expect(Array.isArray(json.data.levels)).toBe(true);
+    expect(json.data.levels[0].level).toBe(1);
   });
 
   it("POST bulk upserts levels", async () => {
@@ -37,8 +58,7 @@ describe("/api/admin/levels", () => {
     };
     const res = await POST(req);
     expect(prismaMock.level.upsert).toHaveBeenCalledTimes(2);
-    expect((await (res as any).json()).levels.length).toBeGreaterThan(0);
+    const json = await (res as any).json();
+    expect(json.data.levels.length).toBeGreaterThan(0);
   });
 });
-
-

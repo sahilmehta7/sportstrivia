@@ -28,6 +28,7 @@ import {
   getRecentSearchQueriesForUser,
   getTrendingSearchQueries,
 } from "@/lib/services/search-query.service";
+import { ShowcaseThemeProvider } from "@/components/showcase/ShowcaseThemeProvider";
 import { ChevronRight } from "lucide-react";
 
 const topicWithRelations = {
@@ -363,10 +364,12 @@ export default async function TopicDetailPage({
           secondaryCta={listing.pagination.total > 0 ? { label: "View all quizzes", href: "#topic-quizzes" } : undefined}
         />
 
+        <ShowcaseThemeProvider>
         <TopicQuizSearchBar
           initialQuery={searchTerm ?? ""}
           suggestions={quizSearchSuggestions}
         />
+        </ShowcaseThemeProvider>
 
         {heroFeaturedQuizzes.length > 0 && (
           <FeaturedQuizzesHero featuredQuizzes={heroFeaturedQuizzes} />

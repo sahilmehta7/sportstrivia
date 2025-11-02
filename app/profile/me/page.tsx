@@ -11,11 +11,8 @@ import { ProfileMeClient } from "./ProfileMeClient";
 export default async function MyProfilePage() {
   const session = await auth();
 
-  if (!session?.user?.id) {
-    redirect("/auth/signin");
-  }
-
-  const userId = session.user.id;
+  // Middleware ensures session exists, so we can safely use it
+  const userId = session!.user!.id;
 
   const [profileInfo, statsData, badgeProgress] = await Promise.all([
     getUserProfileInfo(userId),

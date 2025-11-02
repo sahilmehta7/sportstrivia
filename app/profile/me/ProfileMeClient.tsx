@@ -40,6 +40,8 @@ import { pointsForLevel } from "@/lib/config/gamification";
 import { ShowcaseThemeProvider } from "@/components/showcase/ShowcaseThemeProvider";
 import Link from "next/link";
 import { formatPlayerCount } from "@/lib/quiz-formatters";
+import { PushSubscriptionCard } from "@/components/notifications/PushSubscriptionCard";
+import { DigestPreferencesCard } from "@/components/notifications/DigestPreferencesCard";
 
 interface ProfileData {
   id: string;
@@ -495,6 +497,8 @@ export function ProfileMeClient({
           </TabsContent>
 
           <TabsContent value="settings" className="space-y-8">
+            <PushSubscriptionCard />
+            <DigestPreferencesCard />
             {/* Profile Info widget moved here, read-only by default */}
             <Card className="relative overflow-hidden rounded-[2rem] border shadow-xl bg-card/80 backdrop-blur-lg border-border/60">
               {/* Background blur circles */}

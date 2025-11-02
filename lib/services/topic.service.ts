@@ -325,53 +325,59 @@ export async function searchTopics(
   const currentPage = Math.max(page, 1);
   const skip = (currentPage - 1) * take;
 
-  const where: Prisma.TopicWhereInput = {
-    OR: [
-      { name: { contains: trimmedQuery, mode: "insensitive" } },
-      { slug: { contains: trimmedQuery, mode: "insensitive" } },
-      { description: { contains: trimmedQuery, mode: "insensitive" } },
-      {
-        parent: {
-          OR: [
-            { name: { contains: trimmedQuery, mode: "insensitive" } },
-            { slug: { contains: trimmedQuery, mode: "insensitive" } },
-          ],
-        },
-      },
-    ],
-  };
+  // Use full-text search with ranking for better performance and relevance
+  // First, get topic IDs matching the search query with ranking
+  const searchResults = await prisma.$queryRaw<Array<{ id: string; rank: number }>>`
+    SELECT 
+      t.id,
+      ts_rank(t.fts, plainto_tsquery('english', ${trimmedQuery})) as rank
+    FROM "Topic" t
+    WHERE t.fts @@ plainto_tsquery('english', ${trimmedQuery})
+    ORDER BY rank DESC, t.level ASC, t.name ASC
+    LIMIT ${take}
+    OFFSET ${skip}
+  `;
 
-  const [topics, total] = await Promise.all([
-    prisma.topic.findMany({
-      where,
-      skip,
-      take,
-      orderBy: [
-        { level: "asc" },
-        { name: "asc" },
-      ],
-      select: {
-        id: true,
-        name: true,
-        slug: true,
-        description: true,
-        level: true,
-        parent: {
-          select: {
-            id: true,
-            name: true,
-            slug: true,
-          },
-        },
-        _count: {
-          select: {
-            quizTopicConfigs: true,
-          },
+  const totalResult = await prisma.$queryRaw<Array<{ count: bigint }>>`
+    SELECT COUNT(*)::bigint as count
+    FROM "Topic"
+    WHERE fts @@ plainto_tsquery('english', ${trimmedQuery})
+  `;
+
+  const total = Number(totalResult[0]?.count || 0);
+  const topicIds = searchResults.map((r) => r.id);
+
+  // Fetch full topic records with relations
+  const topics = await prisma.topic.findMany({
+    where: {
+      id: { in: topicIds },
+    },
+    select: {
+      id: true,
+      name: true,
+      slug: true,
+      description: true,
+      level: true,
+      parent: {
+        select: {
+          id: true,
+          name: true,
+          slug: true,
         },
       },
-    }),
-    prisma.topic.count({ where }),
-  ]);
+      _count: {
+        select: {
+          quizTopicConfigs: true,
+        },
+      },
+    },
+  });
+
+  // Reorder topics to match full-text search ranking (highest rank first)
+  const topicMap = new Map(topics.map((t) => [t.id, t]));
+  const orderedTopics = topicIds
+    .map((id) => topicMap.get(id))
+    .filter((t): t is NonNullable<typeof t> => t !== undefined);
 
   if (options.telemetryEnabled !== false) {
     await recordSearchQuery({
@@ -383,7 +389,7 @@ export async function searchTopics(
   }
 
   return {
-    topics,
+    topics: orderedTopics,
     pagination: {
       page: currentPage,
       limit: take,

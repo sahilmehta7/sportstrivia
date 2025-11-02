@@ -1,8 +1,9 @@
-import { cache } from "react";
+import { cache, Suspense } from "react";
 import type { Metadata } from "next";
 import { QuizzesPageHeader } from "@/components/quizzes/quizzes-page-header";
 import { QuizzesPageContent } from "./QuizzesPageContent";
 import { prisma } from "@/lib/db";
+import { QuizListSkeleton } from "@/components/shared/skeletons";
 import {
   getPublicQuizList,
   getDailyRecurringQuizzes,
@@ -32,6 +33,9 @@ const sportEmojiMap: Record<string, string> = {
   Baseball: "⚾",
   Hockey: "🏒",
 };
+
+// Route segment config
+export const dynamic = 'auto';
 
 export const metadata: Metadata = {
   title: "Browse Sports Trivia Quizzes | Sports Trivia Platform",
@@ -199,7 +203,8 @@ async function getFilterGroups(searchParams: SearchParams): Promise<ShowcaseFilt
   ];
 }
 
-export default async function QuizzesPage({
+// Server Component for quizzes listing data
+async function QuizzesData({
   searchParams,
 }: {
   searchParams?: Promise<SearchParams>;
@@ -283,10 +288,6 @@ export default async function QuizzesPage({
 
   return (
     <>
-      <div className="container mx-auto px-4 pt-12">
-        <QuizzesPageHeader />
-      </div>
-
       <QuizzesPageContent
         quizzes={listing.quizzes}
         featuredQuizzes={featuredQuizzes}
@@ -302,6 +303,36 @@ export default async function QuizzesPage({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
       )}
+    </>
+  );
+}
+
+// Fallback for quizzes loading
+function QuizzesFallback() {
+  return (
+    <div className="container mx-auto px-4 pt-12">
+      <div className="mb-8">
+        <div className="h-10 w-64 rounded bg-muted animate-pulse mb-4" />
+        <div className="h-4 w-96 rounded bg-muted animate-pulse" />
+      </div>
+      <QuizListSkeleton count={12} />
+    </div>
+  );
+}
+
+export default async function QuizzesPage({
+  searchParams,
+}: {
+  searchParams?: Promise<SearchParams>;
+}) {
+  return (
+    <>
+      <div className="container mx-auto px-4 pt-12">
+        <QuizzesPageHeader />
+      </div>
+      <Suspense fallback={<QuizzesFallback />}>
+        <QuizzesData searchParams={searchParams} />
+      </Suspense>
     </>
   );
 }

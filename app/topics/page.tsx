@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { SearchContext } from "@prisma/client";
 import { auth } from "@/lib/auth";
 import { getRootTopics, getFeaturedTopics, getL2TopicsForPopularSports } from "@/lib/services/topic.service";
@@ -8,6 +9,7 @@ import {
 } from "@/lib/services/search-query.service";
 import { TopicsContent } from "@/components/topics/TopicsContent";
 import { ShowcaseThemeProvider } from "@/components/showcase/ShowcaseThemeProvider";
+import { TopicCardSkeleton } from "@/components/shared/skeletons";
 
 export const metadata: Metadata = {
   title: "Sports Topics - Explore by Category",
@@ -29,6 +31,9 @@ export const metadata: Metadata = {
   },
 };
 
+// Route segment config
+export const dynamic = 'auto';
+
 // Color pairs matching the showcase design
 const colorPairs = [
   { dark: "#7c2d12", light: "#fde68a" },
@@ -41,13 +46,14 @@ const colorPairs = [
   { dark: "#92400e", light: "#fed7aa" },
 ];
 
-export default async function TopicsPage() {
+// Server Component for topics data
+async function TopicsData() {
   const session = await auth();
   const userId = session?.user?.id;
-  let featuredTopics = [];
-  let allTopics = [];
-  let l2Topics = [];
-  let trendingTopicQueries = [];
+  let featuredTopics: any[] = [];
+  let allTopics: any[] = [];
+  let l2Topics: any[] = [];
+  let trendingTopicQueries: any[] = [];
   let recentTopicQueries: { query: string }[] = [];
 
   try {
@@ -141,13 +147,38 @@ export default async function TopicsPage() {
   const searchChips = Array.from(chipMap.values()).slice(0, 8);
   
   return (
+    <TopicsContent 
+      featured={featuredItems} 
+      topics={allItems}
+      l2TopicsByParent={l2ItemsByParent}
+      suggestedChips={searchChips}
+    />
+  );
+}
+
+// Fallback for topics loading
+function TopicsFallback() {
+  return (
+    <div className="container mx-auto px-4 py-8">
+      <div className="mb-8">
+        <div className="h-10 w-64 rounded bg-muted animate-pulse mb-4" />
+        <div className="h-4 w-96 rounded bg-muted animate-pulse" />
+      </div>
+      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        {Array.from({ length: 6 }).map((_, index) => (
+          <TopicCardSkeleton key={index} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export default async function TopicsPage() {
+  return (
     <ShowcaseThemeProvider>
-      <TopicsContent 
-        featured={featuredItems} 
-        topics={allItems}
-        l2TopicsByParent={l2ItemsByParent}
-        suggestedChips={searchChips}
-      />
+      <Suspense fallback={<TopicsFallback />}>
+        <TopicsData />
+      </Suspense>
     </ShowcaseThemeProvider>
   );
 }

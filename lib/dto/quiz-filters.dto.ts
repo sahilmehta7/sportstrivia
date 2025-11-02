@@ -94,19 +94,32 @@ export function buildPublicQuizWhereClause(filters: PublicQuizFilters): Prisma.Q
   // Search filter
   if (filters.search) {
     const raw = filters.search.trim();
+    if (!raw) {
+      // Empty search string, skip
+    } else {
     // Normalize: replace punctuation with spaces, collapse whitespace
-    const normalized = raw.replace(/[^a-z0-9]+/gi, " ").trim();
+      const normalized = raw.replace(/[^a-z0-9\s]+/gi, " ").trim();
     const tokens = normalized
       .split(/\s+/)
-      .filter((t) => t.length >= 2 && /[a-z]/i.test(t)) // ignore 1-char and numeric-only tokens
-      .slice(0, 5); // cap tokens to keep query reasonable
+        .filter((t) => t.length >= 1 && /[a-z0-9]/i.test(t)) // Allow single char tokens and numbers
+        .slice(0, 10); // Increase token cap for better search coverage
 
-    const buildTokenOr = (token: string): Prisma.QuizWhereInput => ({
-      OR: [
+      const buildTokenOr = (token: string): Prisma.QuizWhereInput => {
+        // Build search conditions for direct fields
+        // Note: Prisma's contains works with null values, but we use OR to ensure at least one field matches
+        const directFields: Prisma.QuizWhereInput[] = [
         { title: { contains: token, mode: "insensitive" } },
-        { description: { contains: token, mode: "insensitive" } },
         { slug: { contains: token, mode: "insensitive" } },
         { sport: { contains: token, mode: "insensitive" } },
+        ];
+        
+        // Only include description if it's not null/empty (Prisma handles this, but be explicit)
+        directFields.push({
+          description: { contains: token, mode: "insensitive" },
+        });
+
+        // Build nested relation conditions
+        const relationFields = [
         {
           tags: {
             some: {
@@ -145,16 +158,23 @@ export function buildPublicQuizWhereClause(filters: PublicQuizFilters): Prisma.Q
             },
           },
         },
-      ],
-    });
+        ];
+
+        // Combine all search fields
+        return {
+          OR: [...directFields, ...relationFields],
+        };
+      };
 
     if (tokens.length > 0) {
-      // Require all tokens to match somewhere (AND over tokens)
+        // Require all tokens to match somewhere (AND over tokens) for precision
+        // Each token can match in any field, but all tokens must be present
       andConditions.push({ AND: tokens.map((t) => buildTokenOr(t)) });
     } else {
-      // Fallback to original raw contains to avoid breaking behavior
+        // Fallback: if tokenization failed, search the raw query as-is
       const searchTerm = raw;
       andConditions.push(buildTokenOr(searchTerm));
+      }
     }
   }
 

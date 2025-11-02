@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { ShowcaseThemeProvider } from "@/components/showcase/ShowcaseThemeProvider";
 import { LandingPage } from "@/components/home/LandingPage";
+import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 
 export const metadata: Metadata = {
   title: "Home",
@@ -47,8 +49,8 @@ async function fetchTopTopics() {
   }
 }
 
-export default async function Home() {
-  // Fetch data for the landing page
+// Server Component wrapper for data fetching
+async function HomePageData() {
   const [featuredQuizzes, topTopics] = await Promise.all([
     fetchFeaturedQuizzes(),
     fetchTopTopics(),
@@ -63,13 +65,29 @@ export default async function Home() {
   };
 
   return (
-    <ShowcaseThemeProvider>
-      <LandingPage 
-        featuredQuizzes={featuredQuizzes}
-        topTopics={topTopics}
-        stats={stats}
-      />
-    </ShowcaseThemeProvider>
+    <LandingPage 
+      featuredQuizzes={featuredQuizzes}
+      topTopics={topTopics}
+      stats={stats}
+    />
   );
 }
 
+// Loading fallback
+function HomePageFallback() {
+  return (
+    <div className="flex min-h-screen items-center justify-center">
+      <LoadingSpinner size="lg" />
+    </div>
+  );
+}
+
+export default function Home() {
+  return (
+    <ShowcaseThemeProvider>
+      <Suspense fallback={<HomePageFallback />}>
+        <HomePageData />
+      </Suspense>
+    </ShowcaseThemeProvider>
+  );
+}

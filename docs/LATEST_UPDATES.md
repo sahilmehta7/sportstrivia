@@ -1,19 +1,62 @@
-# Latest Updates - Quiz Attempt Limits
+# Latest Update — Realtime Notifications & Digests
 
-## 🚦 NEW FEATURE: Quiz Attempt Caps & Reset Messaging
+## 🚀 Highlights
 
-**What’s new:** Admins can now cap the number of attempts per user, choose a reset cadence, and players see clear banners/countdowns when they’re close to (or have hit) the limit.
+- Web push delivered for challenge events and streak milestones (service worker + push queue).
+- Notification preferences UX with push opt-in tracking and configurable email cadences.
+- Digest emails powered by Resend with daily/weekly schedulers (`npm run notifications:digest:*`).
+- Expanded notification service to route in-app, push, and digest channels with user opt-ins.
+- Added automated tests covering subscription endpoints, preferences API, and digest job.
 
-- Admin create/edit forms include an “Attempt Limits” card with toggle, input, and cadence dropdown that locks to `NEVER` for non-recurring quizzes.
-- Quiz list view displays an “Attempt Cap” column summarising the configured rule (`3 attempts / daily`, `Unlimited`, etc.).
-- `/api/attempts` returns attempt-limit metadata with every start and now emits `ATTEMPT_LIMIT_REACHED` payloads containing `limit`, `period`, and `resetAt`.
-- Player quiz detail and play flows surface a new `AttemptLimitBanner` component with progression dots, UTC countdown, and lockout messaging.
+## ✅ Action Items
 
-> ✨ See `docs/QUIZ_ATTEMPT_LIMITS.md` for the full breakdown, testing checklist, and rollout notes.
+- Generate VAPID keys (`npm run notifications:vapid`) and add new env vars before deploying.
+- Expose `NEXT_PUBLIC_PUSH_PUBLIC_KEY` for client registration.
+- Configure Resend sender (`NOTIFICATION_DIGEST_FROM`) prior to enabling digests in production.
+- Run `npm run notifications:digest:daily` in staging to validate email output.
+- Follow QA checklist at `docs/qa/notifications-push-checklist.md` for browser verification.
 
 ---
 
-# Previous Update - Question Pool Manager
+# Previous Update — Full Player Experience Launch
+
+## ✨ What Shipped
+
+- **Quiz Play**: Production-ready play experience with answer feedback, timers, skips, time bonuses, review prompts, and results breakdown. Attempt limits surface countdowns and lockouts inline.
+- **Discovery & Detail**: `/quizzes`, `/topics/[slug]`, `/random-quiz`, and `/quizzes/[slug]` now drive discovery with hero rows, filters, leaderboards, and badges.
+- **Social & Dashboards**: `/friends`, `/challenges`, `/leaderboard`, and `/profile/*` deliver the friend graph, head-to-head challenges, badges, streak tracking, and activity feeds.
+- **Notifications**: `/notifications` center with mark-read, bulk mark, delete, and contextual CTAs.
+- **Documentation Refresh**: README and core docs rewritten to reflect production readiness, new API surface (70 handlers), and consolidated status matrix.
+
+## 🔨 Supporting Enhancements
+
+- Added `GET /api/attempts/[id]/next` for incremental question retrieval.
+- Expanded leaderboard services for daily/all-time aggregations and recurring quiz rollups.
+- Enriched public APIs with SEO metadata, unique player counts, and rating aggregations.
+- New showcase components for hero rows, leaderboard widgets, review panels, and AI suggestion flows.
+
+## ✅ Action Items
+
+- Validate OAuth + Supabase credentials ahead of production launch.
+- Run `npm test` and the `test-*.sh` scripts to verify critical APIs.
+- Update downstream integrations to use the new endpoints listed in `docs/API_REFERENCE.md`.
+
+---
+
+# Previous Update — Quiz Attempt Caps & Reset Messaging
+
+**What’s new:** Admins can cap attempts per user, define reset cadence, and players see banners/countdowns when near or at the limit.
+
+- Admin quiz forms include an “Attempt Limits” card with toggle, input, and cadence dropdown (locks to `NEVER` for non-recurring quizzes).
+- Quiz list view displays an “Attempt Cap” column summarising configured limits (`3 attempts / daily`, `Unlimited`, etc.).
+- `/api/attempts` returns attempt-limit metadata with every start and emits `ATTEMPT_LIMIT_REACHED` payloads (`limit`, `period`, `resetAt`).
+- Quiz detail/play flows show the new `AttemptLimitBanner` with progression dots, UTC countdown, and lockout messaging.
+
+> See `docs/QUIZ_ATTEMPT_LIMITS.md` for rollout notes and QA checklist.
+
+---
+
+# Earlier Update — Question Pool Manager
 
 ## 🎉 NEW FEATURE: Question Pool Management
 
@@ -402,6 +445,8 @@ Edit Quiz → [Manage Questions] → Question Pool Manager
 ---
 
 ## 📈 Updated Project Stats
+
+_Historical snapshot at the time of release. See `docs/CURRENT_PROJECT_STATUS.md` for current totals._
 
 **Total API Endpoints:** 26 (was 22, +4)  
 **Total Admin Pages:** 13 (was 12, +1)  

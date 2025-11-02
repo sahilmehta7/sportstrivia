@@ -27,44 +27,61 @@ export async function GET(request: NextRequest) {
       where: {
         parentId: null,
       },
-      include: {
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        description: true,
+        displayImageUrl: true,
         _count: {
           select: {
             quizTopicConfigs: true,
             children: true,
           },
         },
+        children: {
+          select: {
+            id: true,
+          },
+        },
       },
     });
 
     const topicIds = topics.map((topic) => topic.id);
+    // Get all child topic IDs for aggregating user stats
+    const allChildTopicIds = topics.flatMap((topic) => 
+      topic.children.map((child) => child.id)
+    );
+    const allTopicIds = [...topicIds, ...allChildTopicIds];
 
-    const [childCounts, userCounts] = await Promise.all([
-      prisma.topic.findMany({
-        where: {
-          parentId: { in: topicIds },
-        },
-        select: {
-          parentId: true,
-          _count: {
-            select: {
-              quizTopicConfigs: true,
+    // Build queries conditionally to handle empty arrays
+    const [childCounts, userStatsByTopic] = await Promise.all([
+      topicIds.length > 0
+        ? prisma.topic.findMany({
+            where: {
+              parentId: { in: topicIds },
             },
-          },
-        },
-      }),
-      prisma.userTopicStats.groupBy({
-        by: ["topicId"],
-        where: {
-          topicId: { in: topicIds },
-        },
-        _sum: {
-          questionsAnswered: true,
-        },
-        _count: {
-          topicId: true,
-        },
-      }),
+            select: {
+              parentId: true,
+              _count: {
+                select: {
+                  quizTopicConfigs: true,
+                },
+              },
+            },
+          })
+        : Promise.resolve([] as Array<{ parentId: string | null; _count: { quizTopicConfigs: number } }>),
+      allTopicIds.length > 0
+        ? prisma.userTopicStats.findMany({
+            where: {
+              topicId: { in: allTopicIds },
+            },
+            select: {
+              topicId: true,
+              userId: true,
+            },
+          })
+        : Promise.resolve([] as Array<{ topicId: string; userId: string }>),
     ]);
 
     const quizCountMap = new Map<string, number>(
@@ -80,23 +97,43 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const userCountMap = new Map<string, number>();
-    for (const aggregate of userCounts) {
-      const totalUsers = aggregate._count.topicId;
-      userCountMap.set(aggregate.topicId, totalUsers);
+    // Create a map of child topic to parent topic ID
+    const childToParentMap = new Map<string, string>();
+    topics.forEach((topic) => {
+      topic.children.forEach((child) => {
+        childToParentMap.set(child.id, topic.id);
+      });
+    });
+
+    // Aggregate unique users per parent topic
+    // Count unique users per parent topic (rolling up child topic stats)
+    const uniqueUsersByParent = new Map<string, Set<string>>();
+    for (const stat of userStatsByTopic) {
+      const topicId = stat.topicId;
+      const parentId = childToParentMap.get(topicId) || topicId;
+      if (!uniqueUsersByParent.has(parentId)) {
+        uniqueUsersByParent.set(parentId, new Set());
+      }
+      uniqueUsersByParent.get(parentId)!.add(stat.userId);
+    }
+
+    // Convert sets to counts
+    const finalUserCountMap = new Map<string, number>();
+    for (const [parentId, userIds] of uniqueUsersByParent.entries()) {
+      finalUserCountMap.set(parentId, userIds.size);
     }
 
     const sortedTopics = [...topics]
       .map((topic) => {
         const totalQuizCount = quizCountMap.get(topic.id) ?? 0;
-        const totalUserCount = userCountMap.get(topic.id) ?? 0;
+        const totalUserCount = finalUserCountMap.get(topic.id) ?? 0;
 
         return {
           id: topic.id,
           name: topic.name,
           slug: topic.slug,
           description: topic.description,
-          imageUrl: null,
+          imageUrl: topic.displayImageUrl,
           quizCount: totalQuizCount,
           userCount: totalUserCount,
         };

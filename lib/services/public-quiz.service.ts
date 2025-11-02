@@ -335,7 +335,11 @@ export async function getDailyRecurringQuizzes(
   // Fetch user's attempts for these quizzes
   const quizIds = dailyQuizzes.map((q) => q.id);
   
-  const [todayAttempts, userStreaks, userRanks] = await Promise.all([
+  // Get last 30 days for streak calculations
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+  
+  const [todayAttempts, allStreakAttempts, userRanks] = await Promise.all([
     // Check if user completed any of these quizzes today
     prisma.quizAttempt.findMany({
       where: {
@@ -350,63 +354,23 @@ export async function getDailyRecurringQuizzes(
         quizId: true,
       },
     }),
-    // Calculate streak for each quiz (consecutive days completed)
-    Promise.all(
-      quizIds.map(async (quizId) => {
-        // Get last 30 days of attempts to calculate streak
-        const thirtyDaysAgo = new Date();
-        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-
-        const attempts = await prisma.quizAttempt.findMany({
-          where: {
-            userId,
-            quizId,
-            completedAt: {
-              gte: thirtyDaysAgo,
-            },
-          },
-          select: {
-            completedAt: true,
-          },
-          orderBy: {
-            completedAt: "desc",
-          },
-        });
-
-        // Calculate consecutive days streak
-        let streak = 0;
-        const attemptDates = attempts
-          .map((a) => {
-            if (!a.completedAt) return null;
-            const date = new Date(a.completedAt);
-            date.setHours(0, 0, 0, 0);
-            return date.getTime();
-          })
-          .filter((d): d is number => d !== null);
-
-        // Remove duplicate dates (multiple attempts on same day)
-        const uniqueDates = [...new Set(attemptDates)].sort((a, b) => b - a);
-
-        // Check for consecutive days
-        const todayTime = today.getTime();
-        const yesterdayTime = todayTime - 86400000; // 24 hours in ms
-
-        for (let i = 0; i < uniqueDates.length; i++) {
-          const expectedDate = todayTime - i * 86400000;
-          
-          // Allow for today or yesterday as starting point
-          if (i === 0 && (uniqueDates[i] === todayTime || uniqueDates[i] === yesterdayTime)) {
-            streak++;
-          } else if (uniqueDates[i] === expectedDate) {
-            streak++;
-          } else {
-            break;
-          }
-        }
-
-        return { quizId, streak };
-      })
-    ),
+    // Fetch all attempts for all quizIds in a single query (fixes N+1)
+    prisma.quizAttempt.findMany({
+      where: {
+        userId,
+        quizId: { in: quizIds },
+        completedAt: {
+          gte: thirtyDaysAgo,
+        },
+      },
+      select: {
+        quizId: true,
+        completedAt: true,
+      },
+      orderBy: {
+        completedAt: "desc",
+      },
+    }),
     // Get user ranks for these quizzes
     prisma.quizLeaderboard.findMany({
       where: {
@@ -420,8 +384,51 @@ export async function getDailyRecurringQuizzes(
     }),
   ]);
 
+  // Calculate streaks in-memory (grouped by quizId)
+  const attemptsByQuiz = new Map<string, Date[]>();
+  for (const attempt of allStreakAttempts) {
+    if (!attempt.completedAt) continue;
+    const dates = attemptsByQuiz.get(attempt.quizId) || [];
+    dates.push(attempt.completedAt);
+    attemptsByQuiz.set(attempt.quizId, dates);
+  }
+
+  const todayTime = today.getTime();
+  const yesterdayTime = todayTime - 86400000; // 24 hours in ms
+  const streakMap = new Map<string, number>();
+
+  // Calculate streak for each quiz
+  for (const quizId of quizIds) {
+    const attempts = attemptsByQuiz.get(quizId) || [];
+    
+    // Convert to unique dates (same day = one entry)
+    const attemptDates = attempts
+      .map((date) => {
+        const d = new Date(date);
+        d.setHours(0, 0, 0, 0);
+        return d.getTime();
+      });
+    const uniqueDates = [...new Set(attemptDates)].sort((a, b) => b - a);
+
+    // Calculate consecutive days streak
+    let streak = 0;
+    for (let i = 0; i < uniqueDates.length; i++) {
+      const expectedDate = todayTime - i * 86400000;
+      
+      // Allow for today or yesterday as starting point
+      if (i === 0 && (uniqueDates[i] === todayTime || uniqueDates[i] === yesterdayTime)) {
+        streak++;
+      } else if (uniqueDates[i] === expectedDate) {
+        streak++;
+      } else {
+        break;
+      }
+    }
+
+    streakMap.set(quizId, streak);
+  }
+
   const completedQuizIds = new Set(todayAttempts.map((a) => a.quizId));
-  const streakMap = new Map(userStreaks.map((s) => [s.quizId, s.streak]));
   const rankMap = new Map(userRanks.map((r) => [r.quizId, r.rank]));
 
   return dailyQuizzes.map((quiz) => ({

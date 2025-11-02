@@ -1,198 +1,159 @@
-# API Quick Reference Card
+# API Quick Reference
 
-## 📋 All Endpoints at a Glance
-
----
-
-## Quizzes
-
-| Method | Endpoint | Auth | Purpose |
-|--------|----------|------|---------|
-| **POST** | `/api/admin/quizzes` | Admin | Create quiz |
-| **GET** | `/api/admin/quizzes` | Admin | List all quizzes |
-| **GET** | `/api/admin/quizzes/[id]` | Admin | Get single quiz |
-| **PUT** | `/api/admin/quizzes/[id]` | Admin | Update quiz |
-| **DELETE** | `/api/admin/quizzes/[id]` | Admin | Archive quiz |
-| **POST** | `/api/admin/quizzes/import` | Admin | Bulk import JSON |
-| **GET** | `/api/quizzes` | Public | List published |
-| **GET** | `/api/quizzes/[slug]` | Public | Get quiz details |
-
-**Key Filters**: `?sport=X&difficulty=Y&minDuration=Z&sortBy=popularity&featured=true`
+**Last Updated**: February 2025  
+Use this cheat sheet for common operations. See `docs/API_REFERENCE.md` for exhaustive detail.
 
 ---
 
-## Questions
+## 🎯 Quizzes & Discovery
 
-| Method | Endpoint | Auth | Purpose |
-|--------|----------|------|---------|
-| **POST** | `/api/admin/questions` | Admin | Create question |
-| **GET** | `/api/admin/questions` | Admin | List with filters |
-| **GET** | `/api/admin/questions/[id]` | Admin | Get single |
-| **PUT** | `/api/admin/questions/[id]` | Admin | Update question |
-| **DELETE** | `/api/admin/questions/[id]` | Admin | Delete question |
-
-**Key Filters**: `?topicId=X&difficulty=Y&search=Z`
-
----
-
-## Topics
-
-| Method | Endpoint | Auth | Purpose |
-|--------|----------|------|---------|
-| **POST** | `/api/admin/topics` | Admin | Create topic |
-| **GET** | `/api/topics` | Public | List all |
-| **GET** | `/api/admin/topics` | Admin | List with filters |
-| **GET** | `/api/admin/topics/[id]` | Admin | Get single |
-| **PATCH** | `/api/admin/topics/[id]` | Admin | Update topic |
-| **PUT** | `/api/admin/topics/[id]` | Admin | Update (alias) |
-| **DELETE** | `/api/admin/topics/[id]` | Admin | Delete topic |
-
-**Key Filters**: `?parentId=X&hierarchy=true&search=Y`
+| Action | HTTP |
+|--------|------|
+| List published quizzes | `GET /api/quizzes?search=f1&difficulty=HARD&sortBy=rating` |
+| Get quiz detail | `GET /api/quizzes/cricket-basics` |
+| Get quiz reviews | `GET /api/quizzes/cricket-basics/reviews?page=2&rating=5` |
+| Submit review | `POST /api/quizzes/cricket-basics/reviews` → `{ "rating": 5, "comment": "Loved it" }` |
+| Topic taxonomy | `GET /api/topics` |
+| Search suggestions | `GET /api/search/suggestions?q=champ` |
 
 ---
 
-## Quiz Attempts
+## 🕹️ Attempt Lifecycle (player session required)
 
-| Method | Endpoint | Auth | Purpose |
-|--------|----------|------|---------|
-| **POST** | `/api/attempts` | User | Start quiz |
-| **PUT** | `/api/attempts/[id]/answer` | User | Submit answer |
-| **POST** | `/api/attempts/[id]/complete` | User | Complete quiz |
-| **GET** | `/api/attempts/[id]` | User | Get results |
-
----
-
-## Authentication
-
-| Method | Endpoint | Auth | Purpose |
-|--------|----------|------|---------|
-| **GET** | `/api/auth/signin/google` | Public | Google OAuth |
-| **GET/POST** | `/api/auth/[...nextauth]` | Public | NextAuth routes |
-
----
-
-## Admin Panel URLs
-
-| Page | URL | Purpose |
-|------|-----|---------|
-| Dashboard | `/admin/dashboard` | Metrics overview |
-| Quiz List | `/admin/quizzes` | Browse quizzes |
-| Create Quiz | `/admin/quizzes/new` | New quiz form |
-| Edit Quiz | `/admin/quizzes/[id]/edit` | Edit form |
-| Question List | `/admin/questions` | Browse questions |
-| Create Question | `/admin/questions/new` | New question form |
-| Edit Question | `/admin/questions/[id]/edit` | Edit form |
-| Import | `/admin/import` | JSON bulk import |
-
----
-
-## Quick Examples
-
-### Create Quiz
 ```bash
-POST /api/admin/quizzes
-{
-  "title": "NBA Quiz",
-  "difficulty": "MEDIUM",
-  "passingScore": 70,
-  "randomizeQuestionOrder": true
-}
-```
-
-### Create Question
-```bash
-POST /api/admin/questions
-{
-  "topicId": "{id}",
-  "questionText": "Who won 2023 NBA Championship?",
-  "difficulty": "EASY",
-  "randomizeAnswerOrder": true,
-  "answers": [
-    {"answerText": "Denver Nuggets", "isCorrect": true},
-    {"answerText": "Miami Heat", "isCorrect": false}
-  ]
-}
-```
-
-### Create Topic
-```bash
-POST /api/admin/topics
-{
-  "name": "NFL",
-  "slug": "nfl",
-  "parentId": null
-}
-```
-
-### Start Quiz
-```bash
+# Start attempt
 POST /api/attempts
 {
-  "quizId": "{id}",
-  "isPracticeMode": false
+  "quizId": "clv9..."
 }
-```
 
-### Filter Quizzes
-```bash
-GET /api/quizzes?sport=Basketball&difficulty=MEDIUM&sortBy=popularity
-```
-
-### Search Questions
-```bash
-GET /api/admin/questions?search=championship&difficulty=HARD
-```
-
----
-
-## Status Codes
-
-- `200` - Success
-- `201` - Created
-- `400` - Bad Request / Validation Error
-- `401` - Unauthorized
-- `403` - Forbidden (not admin)
-- `404` - Not Found
-- `500` - Server Error
-
----
-
-## Response Format
-
-**Success:**
-```json
+# Submit answer
+PUT /api/attempts/attempt-id/answer
 {
-  "success": true,
-  "data": { ... }
+  "questionId": "clv9q...",
+  "answerId": "clv9a...",
+  "timeSpent": 18
 }
+
+# Complete attempt
+POST /api/attempts/attempt-id/complete
 ```
 
-**Error:**
-```json
+Retrieve attempt state: `GET /api/attempts/attempt-id`  
+Next question (progressive mode): `GET /api/attempts/attempt-id/next`
+
+---
+
+## 🤝 Friends & Challenges
+
+| Action | HTTP |
+|--------|------|
+| Dashboard snapshot | `GET /api/friends` |
+| Send friend request | `POST /api/friends` → `{ "friendEmail": "alex@example.com" }` |
+| Accept request | `PATCH /api/friends/friendship-id` → `{ "action": "accept" }` |
+| Remove friend | `DELETE /api/friends/friendship-id` |
+| List challenges | `GET /api/challenges` |
+| Create challenge | `POST /api/challenges` → `{ "friendId": "...", "quizId": "..." }` |
+| Accept/Decline | `POST /api/challenges/challenge-id/accept` / `.../decline` |
+
+---
+
+## 🔔 Notifications & Gamification
+
+| Action | HTTP |
+|--------|------|
+| Notification center | `GET /api/notifications?limit=50` |
+| Mark single read | `PATCH /api/notifications/notification-id` |
+| Mark all read | `PATCH /api/notifications/read-all` |
+| Delete notification | `DELETE /api/notifications/notification-id` |
+| Player stats | `GET /api/users/me/stats` |
+| Topic stats | `GET /api/users/me/topic-stats` |
+| Badge progress | `GET /api/users/me/badges` |
+| Gamification snapshot | `GET /api/users/me/gamification` |
+
+---
+
+## 👑 Admin Essentials
+
+### Quizzes
+```bash
+# List
+GET /api/admin/quizzes?status=PUBLISHED&sport=Cricket
+
+# Create
+POST /api/admin/quizzes
 {
-  "error": "Error message",
-  "code": "ERROR_CODE"
+  "title": "F1 Legends",
+  "slug": "f1-legends",
+  "sport": "Formula 1",
+  "difficulty": "HARD",
+  "status": "PUBLISHED",
+  "randomizeQuestionOrder": true,
+  "maxAttemptsPerUser": 3,
+  "attemptResetPeriod": "WEEKLY"
 }
+
+# Import
+POST /api/admin/quizzes/import  (multipart/form-data or JSON body)
 ```
 
+Manage pools:  
+- `GET /api/admin/quizzes/{id}/questions`  
+- `POST /api/admin/quizzes/{id}/questions` → `{ "questionId": "...", "displayOrder": 3 }`  
+- `PATCH /api/admin/quizzes/{id}/questions` → reorder/update points  
+- `DELETE /api/admin/quizzes/{id}/questions?questionId=...`
+
+### Questions & Topics
+
+| Action | HTTP |
+|--------|------|
+| Search questions | `GET /api/admin/questions?topicId=...&difficulty=EASY&search=finals` |
+| Create question | `POST /api/admin/questions` |
+| Update question | `PUT /api/admin/questions/question-id` |
+| Delete question | `DELETE /api/admin/questions/question-id` |
+| Manage topics | `GET/POST/PATCH/DELETE /api/admin/topics[...]` |
+| Import topics | `POST /api/admin/topics/import` |
+| AI topic questions | `POST /api/admin/topics/topic-id/ai/generate-questions` |
+
+### Users, Reports, Settings
+
+| Action | HTTP |
+|--------|------|
+| List users | `GET /api/admin/users?role=USER&search=alex` |
+| Update role | `PATCH /api/admin/users/user-id` → `{ "role": "ADMIN" }` |
+| Resolve report | `PATCH /api/admin/reports/report-id` → `{ "status": "RESOLVED" }` |
+| Update settings | `PUT /api/admin/settings` |
+| Preview gamification | `GET /api/admin/gamification/preview?userId=...` |
+| Recompute levels/tiers | `POST /api/admin/gamification/recompute` |
+
+### AI & Utilities
+- Generate quiz draft: `POST /api/admin/ai/generate-quiz`
+- Track AI jobs: `GET /api/admin/ai/tasks` / `GET /api/admin/ai/tasks/task-id`
+- Upload image: `POST /api/admin/upload/image` (form-data: `file`)
+- Delete image: `DELETE /api/admin/upload/image?path=...`
+- Build sitemap: `POST /api/admin/sitemap`
+
 ---
 
-## 🎯 Most Used Endpoints
+## 📈 Leaderboards & Daily Challenges
 
-**Admin:**
-1. `POST /api/admin/quizzes` - Create quiz
-2. `POST /api/admin/questions` - Create question
-3. `GET /api/admin/quizzes` - List quizzes
-4. `GET /api/admin/questions` - List questions
-5. `POST /api/admin/quizzes/import` - Bulk import
-
-**Public:**
-1. `GET /api/quizzes` - Browse quizzes
-2. `GET /api/quizzes/[slug]` - Quiz details
-3. `POST /api/attempts` - Start quiz
-4. `GET /api/topics` - List topics
+| Action | HTTP |
+|--------|------|
+| Global leaderboard | `GET /api/leaderboards/global?period=daily&limit=10` |
+| Quiz leaderboard | `GET /api/leaderboards/quiz/quiz-id` |
+| Topic leaderboard | `GET /api/leaderboards/topic/topic-id` |
+| Player daily ranks | `GET /api/daily-quizzes/user-ranks` |
 
 ---
 
-Print this for quick reference during development! 📌
+## 🧪 Handy Utilities
 
+| Purpose | HTTP |
+|---------|------|
+| Auth smoke-test | `GET /api/test-auth` (returns 401 when unauthenticated) |
+| Player quiz idea | `POST /api/ai/suggest-quiz` |
+| Report problematic question | `POST /api/questions/question-id/report` |
+
+---
+
+Always authenticate requests with the NextAuth session cookie (or set the `Authorization` header with `Bearer` for test helpers that proxy session tokens). Update this sheet when routes change to keep a consistent single source of truth.

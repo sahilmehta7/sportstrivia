@@ -14,7 +14,17 @@
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "prisma studio",
     "prisma:seed": "tsx prisma/seed.ts",
-    "scripts:backfill:emojis": "tsx scripts/backfillTopicEmojis.ts"
+    "scripts:backfill:emojis": "tsx scripts/backfillTopicEmojis.ts",
+    "notifications:vapid": "tsx scripts/generateVapidKeys.ts",
+    "notifications:digest:daily": "tsx scripts/sendNotificationDigests.ts daily",
+    "notifications:digest:weekly": "tsx scripts/sendNotificationDigests.ts weekly",
+    "db:health": "tsx scripts/monitor-db-health.ts",
+    "db:indexes": "tsx scripts/monitor-index-usage.ts",
+    "db:indexes:unused": "tsx scripts/monitor-index-usage.ts --unused-only",
+    "db:queries": "tsx scripts/monitor-query-performance.ts",
+    "db:queries:slow": "tsx scripts/monitor-query-performance.ts --slow-only",
+    "db:queries:frequent": "tsx scripts/monitor-query-performance.ts --frequent-only",
+    "db:test": "tsx scripts/test-optimizations.ts"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.7.4",
@@ -40,6 +50,8 @@
     "@radix-ui/react-toast": "^1.2.15",
     "@supabase/supabase-js": "^2.75.0",
     "@tailwindcss/line-clamp": "^0.4.4",
+    "@upstash/ratelimit": "^2.0.6",
+    "@upstash/redis": "^1.35.6",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lucide-react": "^0.545.0",
@@ -50,7 +62,9 @@
     "react-dom": "^19.0.0",
     "react-hook-form": "^7.65.0",
     "recharts": "^2.15.0",
+    "resend": "^6.4.0",
     "tailwind-merge": "^2.6.0",
+    "web-push": "^3.6.3",
     "zod": "^3.25.76"
   },
   "devDependencies": {

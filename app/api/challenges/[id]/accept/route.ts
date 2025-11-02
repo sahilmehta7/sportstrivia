@@ -52,11 +52,27 @@ export async function POST(
     });
 
     // Notify challenger
-    await createNotification(challenge.challengerId, "CHALLENGE_ACCEPTED", {
-      byUserId: user.id,
-      byUserName: user.name || user.email,
-      challengeId: challenge.id,
-    });
+    await createNotification(
+      challenge.challengerId,
+      "CHALLENGE_ACCEPTED",
+      {
+        byUserId: user.id,
+        byUserName: user.name || user.email,
+        challengeId: challenge.id,
+      },
+      {
+        push: {
+          title: `${user.name || user.email} accepted your challenge`,
+          body: `Jump back into ${updatedChallenge.quiz.title} to compete.`,
+          url: `/challenges/${challenge.id}`,
+          tag: `challenge:${challenge.id}`,
+          data: {
+            challengeId: challenge.id,
+            quizId: updatedChallenge.quiz.id,
+          },
+        },
+      }
+    );
 
     return successResponse({
       challenge: updatedChallenge,
@@ -66,4 +82,3 @@ export async function POST(
     return handleError(error);
   }
 }
-

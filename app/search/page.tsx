@@ -7,6 +7,7 @@ import { getPublicQuizList, type PublicQuizListItem } from "@/lib/services/publi
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { searchTopics } from "@/lib/services/topic.service";
 import { formatPlayerCount, formatQuizDuration, getSportGradient } from "@/lib/quiz-formatters";
+import { validateSearchQuery } from "@/lib/validations/search.schema";
 
 export const metadata: Metadata = {
   title: "Search results | Sports Trivia",
@@ -24,11 +25,15 @@ export default async function SearchPage({
     return Array.isArray(v) ? v[0] : v;
   };
 
-  const search = (getParam("search") || "").trim();
+  const rawSearch = getParam("search") || "";
+  // Validate and sanitize search query (same as API)
+  // If validation fails, fall back to trimmed raw search to avoid losing queries
+  const validatedSearch = rawSearch ? validateSearchQuery(rawSearch) : null;
+  const search = validatedSearch || (rawSearch ? rawSearch.trim() : "");
   const page = Math.max(1, parseInt(getParam("page") || "1", 10) || 1);
   const limit = Math.min(12, Math.max(1, parseInt(getParam("limit") || "12", 10) || 12));
 
-  if (!search) {
+  if (!search || search.length === 0) {
     // If no query, show a friendly nudge
     return (
       <main className="mx-auto w-full max-w-6xl px-4 pb-16 pt-10">
@@ -44,9 +49,16 @@ export default async function SearchPage({
     );
   }
 
+  // Fetch quizzes and topics in parallel
   const [listing, topicResults] = await Promise.all([
-    getPublicQuizList({ search, page, limit }),
-    searchTopics({ query: search, limit: 9 }),
+    getPublicQuizList({ search, page, limit }).catch((error) => {
+      console.error("[search-page] Error fetching quizzes:", error);
+      return { quizzes: [], pagination: { page: 1, limit: 12, total: 0, pages: 0 } };
+    }),
+    searchTopics({ query: search, limit: 9 }).catch((error) => {
+      console.error("[search-page] Error fetching topics:", error);
+      return { topics: [], pagination: { page: 1, limit: 9, total: 0, pages: 0 } };
+    }),
   ]);
 
   const toCardProps = (quiz: PublicQuizListItem) => {
@@ -70,15 +82,15 @@ export default async function SearchPage({
         title="Search results"
         subtitle={`for “${search}”`}
       >
-        {topicResults.topics.length > 0 && (
-          <div className="space-y-3">
-            <h2 className="text-lg font-semibold">Topics</h2>
+        {topicResults.topics && topicResults.topics.length > 0 && (
+          <div className="space-y-3 mb-8">
+            <h2 className="text-lg font-semibold">Matching Topics</h2>
             <div className="flex flex-wrap gap-2">
               {topicResults.topics.map((t) => (
                 <a
                   key={t.id}
                   href={`/topics/${t.slug}`}
-                  className="rounded-full border border-border bg-background px-4 py-2 text-xs font-semibold"
+                  className="rounded-full border border-border bg-background px-4 py-2 text-xs font-semibold hover:bg-accent transition-colors"
                 >
                   {t.name}
                 </a>

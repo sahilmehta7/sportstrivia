@@ -163,12 +163,28 @@ export async function POST(request: NextRequest) {
     });
 
     // Create notification for challenged user
-    await createNotification(challengedId, "CHALLENGE_RECEIVED", {
-      challengerId: user.id,
-      challengerName: user.name || user.email,
-      quizTitle: quiz.title,
-      challengeId: challenge.id,
-    });
+    await createNotification(
+      challengedId,
+      "CHALLENGE_RECEIVED",
+      {
+        challengerId: user.id,
+        challengerName: user.name || user.email,
+        quizTitle: quiz.title,
+        challengeId: challenge.id,
+      },
+      {
+        push: {
+          title: "New challenge incoming",
+          body: `${user.name || user.email} challenged you to ${quiz.title}`,
+          url: `/challenges/${challenge.id}`,
+          tag: `challenge:${challenge.id}`,
+          data: {
+            challengeId: challenge.id,
+            quizId: quiz.id,
+          },
+        },
+      }
+    );
 
     return successResponse(
       { challenge, message: "Challenge sent successfully" },

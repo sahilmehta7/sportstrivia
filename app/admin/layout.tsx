@@ -16,9 +16,16 @@ export default async function AdminLayout({
 
   const navigation = [
     { name: "Dashboard", href: "/admin/dashboard", icon: "LayoutDashboard" as const },
-    { name: "Quizzes", href: "/admin/quizzes", icon: "FileQuestion" as const },
-    { name: "Questions", href: "/admin/questions", icon: "HelpCircle" as const },
-    { name: "Topics", href: "/admin/topics", icon: "FolderTree" as const },
+    {
+      name: "Content",
+      href: "/admin/content",
+      icon: "FileText" as const,
+      children: [
+        { name: "Quizzes", href: "/admin/quizzes", icon: "FileQuestion" as const },
+        { name: "Questions", href: "/admin/questions", icon: "HelpCircle" as const },
+        { name: "Topics", href: "/admin/topics", icon: "FolderTree" as const },
+      ],
+    },
     { name: "Users", href: "/admin/users", icon: "Users" as const },
     {
       name: "Gamification",
@@ -29,10 +36,17 @@ export default async function AdminLayout({
         { name: "Tiers", href: "/admin/gamification/tiers", icon: "Medal" as const },
       ],
     },
-    { name: "AI Quiz Generator", href: "/admin/ai-quiz", icon: "Sparkles" as const },
-    { name: "AI Tasks", href: "/admin/ai-tasks", icon: "History" as const },
-    { name: "Import Quiz", href: "/admin/import", icon: "Upload" as const },
-    { name: "Import Topics", href: "/admin/topics/import", icon: "FolderInput" as const },
+    {
+      name: "Utilities",
+      href: "/admin/utilities",
+      icon: "Wrench" as const,
+      children: [
+        { name: "AI Tasks", href: "/admin/ai-tasks", icon: "History" as const },
+        { name: "AI Quiz Generator", href: "/admin/ai-quiz", icon: "Sparkles" as const },
+        { name: "Import Quiz", href: "/admin/import", icon: "Upload" as const },
+        { name: "Import Topics", href: "/admin/topics/import", icon: "FolderInput" as const },
+      ],
+    },
     { name: "Settings", href: "/admin/settings", icon: "Settings" as const },
   ];
 

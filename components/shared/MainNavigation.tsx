@@ -11,6 +11,13 @@ import { useTheme } from "next-themes";
 import { signOut, useSession } from "next-auth/react";
 import { cn } from "@/lib/utils";
 import { GlobalQuizSearch } from "@/components/shared/GlobalQuizSearch";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 
 export function MainNavigation() {
   const pathname = usePathname();
@@ -37,6 +44,17 @@ export function MainNavigation() {
       void fetchUnreadCount();
     }
   }, [fetchUnreadCount, session?.user]);
+
+  // ARIA live region for notification count updates
+  useEffect(() => {
+    // Announce unread count changes to screen readers
+    if (unreadCount > 0) {
+      const announcement = document.getElementById('notification-announcement');
+      if (announcement) {
+        announcement.textContent = `${unreadCount} unread notification${unreadCount === 1 ? '' : 's'}`;
+      }
+    }
+  }, [unreadCount]);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -86,8 +104,17 @@ export function MainNavigation() {
   }
 
   return (
-    <nav className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="mx-auto flex max-w-7xl items-center gap-4 px-4 py-3">
+    <>
+      {/* ARIA live region for notifications */}
+      <div
+        id="notification-announcement"
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+        className="sr-only"
+      />
+      <nav className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="mx-auto flex max-w-7xl items-center gap-4 px-4 py-3">
         {/* Header with rounded-full styling */}
         <header
           className={cn(
@@ -128,6 +155,7 @@ export function MainNavigation() {
                 size="icon"
                 className="h-9 w-9 rounded-full"
                 title="Random Quiz"
+                aria-label="Random Quiz"
               >
                 <Shuffle className="h-4 w-4" />
               </Button>
@@ -139,15 +167,126 @@ export function MainNavigation() {
               onUnreadCountChange={setUnreadCount}
             />
 
-            {/* Mobile Menu Button */}
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-9 w-9 rounded-full lg:hidden"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            >
-              {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-            </Button>
+            {/* Mobile Menu - Using Sheet for proper accessibility */}
+            <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+              <SheetTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-9 w-9 rounded-full lg:hidden"
+                  aria-label={mobileMenuOpen ? "Close mobile menu" : "Open mobile menu"}
+                  aria-expanded={mobileMenuOpen}
+                  aria-controls="mobile-menu"
+                >
+                  {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="right" id="mobile-menu" className="w-full sm:max-w-md">
+                <SheetHeader>
+                  <SheetTitle>Menu</SheetTitle>
+                </SheetHeader>
+                <div className="mt-6 flex flex-col gap-3">
+                  <div className="pb-2">
+                    <GlobalQuizSearch showOnMobile className="w-full" />
+                  </div>
+
+                  {/* Navigation Links */}
+                  {navLinks.map((link) => (
+                    <Link
+                      key={link.href}
+                      href={link.href}
+                      className={cn(
+                        "rounded-2xl px-4 py-3 text-sm font-semibold uppercase tracking-[0.25em] transition",
+                        "hover:bg-accent",
+                        isActive(link.href) && "bg-accent"
+                      )}
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      {link.label}
+                    </Link>
+                  ))}
+
+                  {/* Random Quiz Link */}
+                  <Link
+                    href="/random-quiz"
+                    className="flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold uppercase tracking-[0.25em] transition hover:bg-accent"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    <Shuffle className="h-4 w-4" />
+                    <span>Random Quiz</span>
+                  </Link>
+
+                  {/* User Section */}
+                  <div className="border-t pt-3">
+                    <div className="px-3 py-2 mb-2">
+                      <p className="text-sm font-semibold">{session.user.name}</p>
+                      <p className="text-xs text-muted-foreground">{session.user.email}</p>
+                    </div>
+
+                    <Link
+                      href="/profile/me"
+                      className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm transition hover:bg-accent"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      <User className="h-4 w-4" />
+                      <span>My Profile</span>
+                    </Link>
+
+                    <Link
+                      href="/challenges"
+                      className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm transition hover:bg-accent"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      <Trophy className="h-4 w-4" />
+                      <span>Challenges</span>
+                    </Link>
+
+                    {session.user.role === "ADMIN" && (
+                      <Link
+                        href="/admin"
+                        className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm transition hover:bg-accent"
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        <Settings className="h-4 w-4" />
+                        <span>Admin Panel</span>
+                      </Link>
+                    )}
+
+                    <button
+                      onClick={() => {
+                        setTheme(theme === "dark" ? "light" : "dark");
+                        setMobileMenuOpen(false);
+                      }}
+                      className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm transition hover:bg-accent w-full"
+                      aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
+                    >
+                      {theme === "dark" ? (
+                        <>
+                          <Sun className="h-4 w-4" />
+                          <span>Switch to Light</span>
+                        </>
+                      ) : (
+                        <>
+                          <Moon className="h-4 w-4" />
+                          <span>Switch to Dark</span>
+                        </>
+                      )}
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        setMobileMenuOpen(false);
+                        signOut({ callbackUrl: "/" });
+                      }}
+                      className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm transition hover:bg-accent text-destructive w-full"
+                    >
+                      <LogOut className="h-4 w-4" />
+                      <span>Sign Out</span>
+                    </button>
+                  </div>
+                </div>
+              </SheetContent>
+            </Sheet>
 
             {/* Avatar Dropdown */}
             <div className="relative hidden lg:block">
@@ -157,6 +296,9 @@ export function MainNavigation() {
                 className="h-9 w-9 rounded-full"
                 onClick={() => setAvatarOpen(!avatarOpen)}
                 data-avatar-button
+                aria-label="Open user menu"
+                aria-expanded={avatarOpen}
+                aria-controls="avatar-menu"
               >
                 <UserAvatar
                   src={session.user.image}
@@ -171,6 +313,7 @@ export function MainNavigation() {
                     "absolute right-0 top-full mt-2 w-56 rounded-2xl border bg-card p-2 shadow-xl z-50"
                   )}
                   data-avatar-menu
+                  id="avatar-menu"
                 >
                   <div className="flex flex-col gap-1">
                     {/* User Info */}
@@ -227,6 +370,7 @@ export function MainNavigation() {
                         "flex items-center gap-3 rounded-xl px-3 py-2 text-sm transition",
                         "hover:bg-accent"
                       )}
+                      aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
                     >
                       {theme === "dark" ? (
                         <>
@@ -262,111 +406,8 @@ export function MainNavigation() {
             </div>
           </div>
         </header>
-
-        {/* Mobile Menu */}
-        {mobileMenuOpen && (
-          <div className="absolute left-0 top-full mt-3 w-full rounded-3xl border bg-card p-4 shadow-xl lg:hidden">
-            <div className="flex flex-col gap-3">
-              <div className="pb-2">
-                <GlobalQuizSearch showOnMobile className="w-full" />
-              </div>
-
-              {/* Navigation Links */}
-              {navLinks.map((link) => (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className={cn(
-                    "rounded-2xl px-4 py-3 text-sm font-semibold uppercase tracking-[0.25em] transition",
-                    "hover:bg-accent",
-                    isActive(link.href) && "bg-accent"
-                  )}
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  {link.label}
-                </Link>
-              ))}
-
-              {/* Random Quiz Link */}
-              <Link
-                href="/random-quiz"
-                className="flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold uppercase tracking-[0.25em] transition hover:bg-accent"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                <Shuffle className="h-4 w-4" />
-                <span>Random Quiz</span>
-              </Link>
-
-              {/* User Section */}
-              <div className="border-t pt-3">
-                <div className="px-3 py-2 mb-2">
-                  <p className="text-sm font-semibold">{session.user.name}</p>
-                  <p className="text-xs text-muted-foreground">{session.user.email}</p>
-                </div>
-
-                <Link
-                  href="/profile/me"
-                  className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm transition hover:bg-accent"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  <User className="h-4 w-4" />
-                  <span>My Profile</span>
-                </Link>
-
-                <Link
-                  href="/challenges"
-                  className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm transition hover:bg-accent"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  <Trophy className="h-4 w-4" />
-                  <span>Challenges</span>
-                </Link>
-
-                {session.user.role === "ADMIN" && (
-                  <Link
-                    href="/admin"
-                    className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm transition hover:bg-accent"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    <Settings className="h-4 w-4" />
-                    <span>Admin Panel</span>
-                  </Link>
-                )}
-
-                <button
-                  onClick={() => {
-                    setTheme(theme === "dark" ? "light" : "dark");
-                  }}
-                  className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm transition hover:bg-accent w-full"
-                >
-                  {theme === "dark" ? (
-                    <>
-                      <Sun className="h-4 w-4" />
-                      <span>Switch to Light</span>
-                    </>
-                  ) : (
-                    <>
-                      <Moon className="h-4 w-4" />
-                      <span>Switch to Dark</span>
-                    </>
-                  )}
-                </button>
-
-                <button
-                  onClick={() => {
-                    setMobileMenuOpen(false);
-                    signOut({ callbackUrl: "/" });
-                  }}
-                  className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm transition hover:bg-accent text-destructive w-full"
-                >
-                  <LogOut className="h-4 w-4" />
-                  <span>Sign Out</span>
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
     </nav>
+    </>
   );
 }

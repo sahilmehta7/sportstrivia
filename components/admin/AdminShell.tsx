@@ -22,6 +22,8 @@ import {
   ListOrdered,
   Medal,
   ChevronDown,
+  FileText,
+  Wrench,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -41,6 +43,8 @@ const iconComponents = {
   Trophy,
   ListOrdered,
   Medal,
+  FileText,
+  Wrench,
 };
 
 interface NavigationItem {

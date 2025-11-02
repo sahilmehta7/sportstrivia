@@ -184,12 +184,19 @@ export function NotificationsDropdown({
   return (
     <DropdownMenu open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="sm" className="relative">
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          className="relative"
+          aria-label={`Notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ""}`}
+          aria-expanded={open}
+        >
           <Bell className="h-5 w-5" />
           {unreadCount > 0 && (
             <Badge
               variant="destructive"
               className="absolute -right-1 -top-1 h-5 w-5 rounded-full p-0 text-xs"
+              aria-hidden="true"
             >
               {unreadCount > 9 ? "9+" : unreadCount}
             </Badge>

@@ -6,6 +6,8 @@ import {
   getRecentSearchQueriesForUser,
   getTrendingSearchQueries,
 } from "@/lib/services/search-query.service";
+import { validateSearchQuery } from "@/lib/validations/search.schema";
+import { searchSuggestionsRateLimiter, checkRateLimit } from "@/lib/rate-limit";
 
 function parseContext(value: string | null): SearchContext {
   if (!value) return SearchContext.QUIZ;
@@ -22,6 +24,30 @@ function parseContext(value: string | null): SearchContext {
 
 export async function GET(request: NextRequest) {
   try {
+    // Apply rate limiting
+    const identifier = request.ip || request.headers.get("x-forwarded-for") || "anonymous";
+    const rateLimitResult = await checkRateLimit(identifier, searchSuggestionsRateLimiter);
+    
+    if (!rateLimitResult.success) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: "Too many requests. Please try again later.",
+          code: "RATE_LIMIT_EXCEEDED",
+        }),
+        {
+          status: 429,
+          headers: {
+            "Content-Type": "application/json",
+            "X-RateLimit-Limit": rateLimitResult.limit.toString(),
+            "X-RateLimit-Remaining": rateLimitResult.remaining.toString(),
+            "X-RateLimit-Reset": new Date(rateLimitResult.reset).toISOString(),
+            "Retry-After": Math.ceil((rateLimitResult.reset - Date.now()) / 1000).toString(),
+          },
+        }
+      );
+    }
+    
     const { searchParams } = new URL(request.url);
     const context = parseContext(searchParams.get("context"));
     const session = await auth();

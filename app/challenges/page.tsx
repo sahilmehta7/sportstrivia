@@ -39,11 +39,8 @@ function serializeChallenge(challenge: DashboardChallenge) {
 export default async function ChallengesPage() {
   const session = await auth();
 
-  if (!session?.user?.id) {
-    redirect("/auth/signin");
-  }
-
-  const userId = session.user.id;
+  // Middleware ensures session exists, so we can safely use it
+  const userId = session!.user!.id;
 
   const { activeChallenges, receivedChallenges, sentChallenges } =
     await getChallengesForUserDashboard(userId);

@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db";
+import { queuePushNotification, type PushMessagePayload } from "@/lib/services/push-delivery.service";
 
 /**
  * Notification types
@@ -13,7 +14,57 @@ export type NotificationType =
   | "QUIZ_REMINDER"
   | "LEADERBOARD_POSITION"
   | "LEVEL_UP"
-  | "TIER_UPGRADED";
+  | "TIER_UPGRADED"
+  | "STREAK_UPDATED";
+
+const notificationMessages: Record<NotificationType, string> = {
+  FRIEND_REQUEST: "You have a new friend request",
+  FRIEND_ACCEPTED: "Your friend request was accepted",
+  CHALLENGE_RECEIVED: "You've been challenged to a quiz",
+  CHALLENGE_ACCEPTED: "Your challenge was accepted",
+  CHALLENGE_COMPLETED: "A challenge has been completed",
+  BADGE_EARNED: "You earned a new badge",
+  QUIZ_REMINDER: "A new quiz is available",
+  LEADERBOARD_POSITION: "You've moved up on the leaderboard",
+  LEVEL_UP: "You've leveled up!",
+  TIER_UPGRADED: "You've reached a new tier!",
+  STREAK_UPDATED: "Your streak is alive!",
+};
+
+type NotificationDeliveryOptions = {
+  push?:
+    | false
+    | (Partial<PushMessagePayload> & {
+        url?: string;
+        tag?: string;
+      });
+};
+
+async function isPushOptIn(userId: string): Promise<boolean> {
+  const preference = await prisma.userNotificationPreference.findUnique({
+    where: { userId },
+    select: { pushOptIn: true },
+  });
+  return preference?.pushOptIn !== false;
+}
+
+async function sendPushIfEligible(
+  userId: string,
+  payload: PushMessagePayload & { url?: string; tag?: string }
+): Promise<void> {
+  const shouldSend = await isPushOptIn(userId);
+  if (!shouldSend) return;
+
+  await queuePushNotification(userId, {
+    title: payload.title,
+    body: payload.body,
+    icon: payload.icon,
+    badge: payload.badge,
+    tag: payload.tag,
+    url: payload.url,
+    data: payload.data,
+  });
+}
 
 /**
  * Create a notification for a user
@@ -21,30 +72,40 @@ export type NotificationType =
 export async function createNotification(
   userId: string,
   type: NotificationType,
-  data: Record<string, any>
+  data: Record<string, any>,
+  options?: NotificationDeliveryOptions
 ): Promise<void> {
-  const messages = {
-    FRIEND_REQUEST: "You have a new friend request",
-    FRIEND_ACCEPTED: "Your friend request was accepted",
-    CHALLENGE_RECEIVED: "You've been challenged to a quiz",
-    CHALLENGE_ACCEPTED: "Your challenge was accepted",
-    CHALLENGE_COMPLETED: "A challenge has been completed",
-    BADGE_EARNED: "You earned a new badge",
-    QUIZ_REMINDER: "A new quiz is available",
-    LEADERBOARD_POSITION: "You've moved up on the leaderboard",
-    LEVEL_UP: "You've leveled up!",
-    TIER_UPGRADED: "You've reached a new tier!",
-  };
+  const defaultTitle = notificationMessages[type] ?? "Sports Trivia";
 
-  await prisma.notification.create({
+  const notification = await prisma.notification.create({
     data: {
       userId,
       type,
       content: JSON.stringify({
-        title: messages[type],
+        title: defaultTitle,
         ...data,
       }),
       read: false,
+    },
+  });
+
+  if (options?.push === false) {
+    return;
+  }
+
+  const pushOverrides = typeof options?.push === "object" ? options.push : undefined;
+
+  await sendPushIfEligible(userId, {
+    title: pushOverrides?.title ?? defaultTitle,
+    body: pushOverrides?.body ?? data.body ?? data.message,
+    icon: pushOverrides?.icon,
+    badge: pushOverrides?.badge,
+    tag: pushOverrides?.tag ?? `${type}:${notification.id}`,
+    url: pushOverrides?.url ?? data.url,
+    data: {
+      notificationId: notification.id,
+      type,
+      ...(pushOverrides?.data ?? {}),
     },
   });
 }
@@ -55,32 +116,48 @@ export async function createNotification(
 export async function createBatchNotifications(
   userIds: string[],
   type: NotificationType,
-  data: Record<string, any>
+  data: Record<string, any>,
+  options?: NotificationDeliveryOptions
 ): Promise<void> {
-  const messages = {
-    FRIEND_REQUEST: "You have a new friend request",
-    FRIEND_ACCEPTED: "Your friend request was accepted",
-    CHALLENGE_RECEIVED: "You've been challenged to a quiz",
-    CHALLENGE_ACCEPTED: "Your challenge was accepted",
-    CHALLENGE_COMPLETED: "A challenge has been completed",
-    BADGE_EARNED: "You earned a new badge",
-    QUIZ_REMINDER: "A new quiz is available",
-    LEADERBOARD_POSITION: "You've moved up on the leaderboard",
-    LEVEL_UP: "You've leveled up!",
-    TIER_UPGRADED: "You've reached a new tier!",
-  };
+  const defaultTitle = notificationMessages[type] ?? "Sports Trivia";
 
   await prisma.notification.createMany({
     data: userIds.map((userId) => ({
       userId,
       type,
       content: JSON.stringify({
-        title: messages[type],
+        title: defaultTitle,
         ...data,
       }),
       read: false,
     })),
   });
+
+  if (options?.push === false) {
+    return;
+  }
+
+  await Promise.all(
+    userIds.map((userId) =>
+      sendPushIfEligible(userId, {
+        title: typeof options?.push === "object" && options.push.title ? options.push.title : defaultTitle,
+        body:
+          (typeof options?.push === "object" && options.push.body) ??
+          data.body ??
+          data.message,
+        icon: typeof options?.push === "object" ? options.push.icon : undefined,
+        badge: typeof options?.push === "object" ? options.push.badge : undefined,
+        tag:
+          (typeof options?.push === "object" && options.push.tag) ??
+          `${type}:${Date.now()}`,
+        url: typeof options?.push === "object" ? options.push.url : data.url,
+        data: {
+          type,
+          ...(typeof options?.push === "object" ? options.push.data : {}),
+        },
+      })
+    )
+  );
 }
 
 /**
@@ -173,10 +250,23 @@ export async function notifyLevelUp(
     }
   }
 
-  await createNotification(userId, "LEVEL_UP", {
-    level,
-    message: `Congratulations! You've reached level ${level}`,
-  });
+  await createNotification(
+    userId,
+    "LEVEL_UP",
+    {
+      level,
+      message: `Congratulations! You've reached level ${level}`,
+    },
+    {
+      push: {
+        title: "Level up!",
+        body: `You reached level ${level}. Keep the momentum going.`,
+        url: "/profile/me",
+        tag: `level:${level}`,
+        data: { level },
+      },
+    }
+  );
   return true;
 }
 
@@ -217,11 +307,23 @@ export async function notifyTierUpgrade(
     }
   }
 
-  await createNotification(userId, "TIER_UPGRADED", {
-    tierId,
-    tierName,
-    message: `Amazing! You've reached the ${tierName} tier!`,
-  });
+  await createNotification(
+    userId,
+    "TIER_UPGRADED",
+    {
+      tierId,
+      tierName,
+      message: `Amazing! You've reached the ${tierName} tier!`,
+    },
+    {
+      push: {
+        title: "Tier unlocked",
+        body: `Welcome to the ${tierName} tier. Explore your new rewards.`,
+        url: "/profile/me",
+        tag: `tier:${tierId}`,
+        data: { tierId, tierName },
+      },
+    }
+  );
   return true;
 }
-

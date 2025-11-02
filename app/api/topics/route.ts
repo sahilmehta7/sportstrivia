@@ -31,17 +31,43 @@ export async function GET(request: NextRequest) {
     const includeHierarchy = searchParams.get("hierarchy") === "true";
 
     if (includeHierarchy) {
-      // Get full hierarchy tree
+      // Get full hierarchy tree (optimized with select and limits)
       const topics = await prisma.topic.findMany({
         where: { parentId: null },
         orderBy: { name: "asc" },
-        include: {
+        select: {
+          id: true,
+          name: true,
+          slug: true,
+          description: true,
+          level: true,
+          displayEmoji: true,
+          displayImageUrl: true,
+          parentId: true,
           children: {
             orderBy: { name: "asc" },
-            include: {
+            take: 50, // Limit children to prevent over-fetching
+            select: {
+              id: true,
+              name: true,
+              slug: true,
+              description: true,
+              level: true,
+              displayEmoji: true,
+              displayImageUrl: true,
+              parentId: true,
               children: {
                 orderBy: { name: "asc" },
-                include: {
+                take: 50, // Limit grandchildren
+                select: {
+                  id: true,
+                  name: true,
+                  slug: true,
+                  description: true,
+                  level: true,
+                  displayEmoji: true,
+                  displayImageUrl: true,
+                  parentId: true,
                   _count: {
                     select: { questions: true },
                   },

@@ -1,8 +1,8 @@
 import NextAuth from "next-auth";
-import GoogleProvider from "next-auth/providers/google";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { prisma } from "./db";
 import { UserRole } from "@prisma/client";
+import authConfig from "../auth.config";
 
 // Use NEXTAUTH_URL if set, otherwise construct from VERCEL_URL
 function getAuthUrl() {
@@ -16,30 +16,31 @@ function getAuthUrl() {
 }
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
+  ...authConfig,
   adapter: PrismaAdapter(prisma),
-  providers: [
-    GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID!,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-      authorization: {
-        params: {
-          prompt: "consent",
-          access_type: "offline",
-          response_type: "code",
-        },
-      },
-    }),
-  ],
+  secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET,
   callbacks: {
-    async session({ session, user }) {
-      if (session.user) {
-        session.user.id = user.id;
+    async jwt({ token, user, trigger, session: updateData }) {
+      // Initial sign in
+      if (user) {
+        token.id = user.id;
         // Fetch user role from database
         const dbUser = await prisma.user.findUnique({
           where: { id: user.id },
           select: { role: true },
         });
-        session.user.role = dbUser?.role || UserRole.USER;
+        token.role = dbUser?.role || UserRole.USER;
+      }
+      // Handle session update
+      if (trigger === "update" && updateData?.role) {
+        token.role = updateData.role;
+      }
+      return token;
+    },
+    async session({ session, token }) {
+      if (session.user) {
+        session.user.id = token.id as string;
+        session.user.role = token.role as UserRole || UserRole.USER;
       }
       return session;
     },
@@ -61,12 +62,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       return base;
     },
   },
-  pages: {
-    signIn: "/auth/signin",
-    error: "/auth/error",
-  },
   session: {
-    strategy: "database",
+    strategy: "jwt",
+    maxAge: 30 * 24 * 60 * 60, // 30 days
+    updateAge: 24 * 60 * 60,   // Update session every 24 hours
   },
   debug: process.env.NODE_ENV !== "production",
   trustHost: true,
