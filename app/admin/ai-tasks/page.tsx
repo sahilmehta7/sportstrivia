@@ -63,7 +63,9 @@ function formatRelative(date: Date | null): string {
 
 export default async function AiTasksPage() {
   const admin = await requireAdmin();
-  const tasks = await listBackgroundTasksForUser(admin.id, { take: 100 });
+  // Limit to 50 tasks per page to avoid connection pool issues with large JSON fields
+  // The result field is excluded by default in listBackgroundTasksForUser
+  const tasks = await listBackgroundTasksForUser(admin.id, { take: 50 });
 
   return (
     <div className="space-y-6">
@@ -116,9 +118,9 @@ export default async function AiTasksPage() {
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex flex-col">
-                        <span>{formatDate(task.completedAt ?? task.lastUpdatedAt ?? task.startedAt ?? task.createdAt)}</span>
+                        <span>{formatDate(task.completedAt ?? task.updatedAt ?? task.startedAt ?? task.createdAt)}</span>
                         <span className="text-xs text-muted-foreground">
-                          {formatRelative(task.completedAt ?? task.lastUpdatedAt ?? task.startedAt ?? task.createdAt)}
+                          {formatRelative(task.completedAt ?? task.updatedAt ?? task.startedAt ?? task.createdAt)}
                         </span>
                       </div>
                     </td>

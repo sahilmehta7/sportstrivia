@@ -215,6 +215,11 @@ function mapQuestionsToPreview(
 function normalizeQuizForImport(rawQuiz: any): NormalizedQuiz | null {
   if (!rawQuiz) return null;
 
+  // Check if questions array exists - this prevents "Cannot read properties of undefined" errors
+  if (!rawQuiz.questions || !Array.isArray(rawQuiz.questions)) {
+    return null;
+  }
+
   const titleCandidate =
     typeof rawQuiz.title === "string" && rawQuiz.title.trim()
       ? rawQuiz.title.trim()
@@ -392,12 +397,30 @@ export function TaskDetailClient({ task }: { task: SerializedBackgroundTask }) {
   const [importedQuizId, setImportedQuizId] = useState<string | null>(null);
   const [importSummary, setImportSummary] = useState<string | null>(null);
   const [questionsImported, setQuestionsImported] = useState(false);
+  const [retryingParsing, setRetryingParsing] = useState(false);
 
   const isCompleted = task.status === "COMPLETED";
+  const isFailed = task.status === "FAILED";
+  const canRetryParsing = isFailed && task.result?.canRetryParsing && task.result?.rawResponse;
 
   const quizPreview = useMemo(() => {
     if (task.type !== "AI_QUIZ_GENERATION") return null;
-    return task.result?.quiz ?? null;
+    // The quiz is stored in result.quiz for completed tasks
+    // Handle both direct quiz object and nested structure
+    const result = task.result;
+    if (!result) return null;
+    
+    // Check if quiz exists directly
+    if (result.quiz) {
+      return result.quiz;
+    }
+    
+    // If result itself is the quiz object (fallback for edge cases)
+    if (result.title || result.questions) {
+      return result;
+    }
+    
+    return null;
   }, [task]);
 
   const questionPreview = useMemo(() => {
@@ -434,6 +457,11 @@ export function TaskDetailClient({ task }: { task: SerializedBackgroundTask }) {
       const payload = normalizedQuiz ?? normalizeQuizForImport(quizPreview);
       if (!payload) {
         throw new Error("Quiz output could not be normalized into an importable format.");
+      }
+
+      // Defensive check: ensure questions array exists and is not empty
+      if (!payload.questions || !Array.isArray(payload.questions) || payload.questions.length === 0) {
+        throw new Error("Quiz has no questions to import. Please check the generated quiz data.");
       }
 
       const payloadForImport: Record<string, any> = {
@@ -536,6 +564,36 @@ export function TaskDetailClient({ task }: { task: SerializedBackgroundTask }) {
       });
     } finally {
       setImportingQuiz(false);
+    }
+  }
+
+  async function handleRetryParsing() {
+    setRetryingParsing(true);
+    try {
+      const response = await fetch(`/api/admin/ai-tasks/${task.id}/retry-parsing`, {
+        method: "POST",
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to retry parsing");
+      }
+
+      toast({
+        title: "Parsing retry successful",
+        description: "The JSON was successfully parsed. The task has been updated.",
+      });
+
+      // Reload the page to show the updated task status
+      window.location.reload();
+    } catch (error: any) {
+      toast({
+        title: "Retry failed",
+        description: error.message || "Unable to retry parsing",
+        variant: "destructive",
+      });
+    } finally {
+      setRetryingParsing(false);
     }
   }
 
@@ -658,8 +716,53 @@ export function TaskDetailClient({ task }: { task: SerializedBackgroundTask }) {
           </div>
           <div className="space-y-2 text-sm">
             {task.errorMessage && (
-              <div className="text-destructive">
+              <div className="text-destructive mb-4">
                 <span className="font-medium">Error:</span> {task.errorMessage}
+                {task.result?.parseError && (
+                  <div className="mt-2 text-sm opacity-90">
+                    Parse Error: {task.result.parseError.message || "Unknown parsing error"}
+                  </div>
+                )}
+              </div>
+            )}
+            {canRetryParsing && (
+              <div className="mb-4 rounded-md border border-destructive/50 bg-destructive/10 p-4">
+                <div className="mb-3">
+                  <h4 className="font-medium text-destructive mb-1">Parsing Failed</h4>
+                  <p className="text-sm text-muted-foreground">
+                    The OpenAI API response was stored successfully, but JSON parsing failed. 
+                    You can retry parsing without making a new API call.
+                  </p>
+                  {task.result?.parseError?.cleanedContent && (
+                    <details className="mt-2">
+                      <summary className="cursor-pointer text-xs text-muted-foreground hover:text-foreground">
+                        View cleaned content preview
+                      </summary>
+                      <pre className="mt-2 max-h-40 overflow-auto rounded bg-muted p-2 text-xs">
+                        {task.result.parseError.cleanedContent.substring(0, 500)}
+                        {task.result.parseError.cleanedContent.length > 500 && "..."}
+                      </pre>
+                    </details>
+                  )}
+                </div>
+                <Button
+                  onClick={handleRetryParsing}
+                  disabled={retryingParsing}
+                  variant="outline"
+                  size="sm"
+                >
+                  {retryingParsing ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Retrying...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="mr-2 h-4 w-4" />
+                      Retry Parsing
+                    </>
+                  )}
+                </Button>
               </div>
             )}
             {importSummary && (
@@ -724,11 +827,21 @@ export function TaskDetailClient({ task }: { task: SerializedBackgroundTask }) {
                     <SummaryItem label="Duration" value={`${normalizedQuiz.duration} sec`} />
                   )}
                 </div>
-                <QuestionPreviewList questions={normalizedQuizQuestions} />
+                {normalizedQuizQuestions.length > 0 ? (
+                  <QuestionPreviewList questions={normalizedQuizQuestions} />
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    No questions found in the generated quiz. Review the raw JSON output below.
+                  </p>
+                )}
               </>
-            ) : (
+            ) : quizPreview ? (
               <p className="text-sm text-muted-foreground">
                 The AI response did not contain structured quiz data. Review the raw JSON output below.
+              </p>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                No quiz data available. This task may still be processing or encountered an error.
               </p>
             )}
             <Separator />

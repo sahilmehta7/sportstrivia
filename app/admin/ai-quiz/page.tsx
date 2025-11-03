@@ -137,14 +137,30 @@ export default function AIQuizGeneratorPage() {
       }
 
       setOpenAIConfigured(true);
-      setGeneratedQuiz(result.data.quiz);
-      setGeneratedJSON(JSON.stringify(result.data.quiz, null, 2));
-      setMetadata(result.data.metadata);
-      setLastTaskId(result.data.taskId ?? null);
+
+      const quiz = result.data?.quiz ?? null;
+      const quizMetadata = result.data?.metadata ?? null;
+      const taskId = result.data?.taskId ?? null;
+      const statusMessage = result.data?.message ?? null;
+      const status = result.data?.status ?? null;
+
+      setGeneratedQuiz(quiz);
+      setGeneratedJSON(quiz ? JSON.stringify(quiz, null, 2) : "");
+      setMetadata(quizMetadata);
+      setLastTaskId(taskId);
+
+      const questionCount = quiz?.questions?.length ?? 0;
+      const toastDescription =
+        quiz
+          ? `Generated ${questionCount} ${questionCount === 1 ? "question" : "questions"} using AI. Saved to Background Tasks.`
+          : statusMessage ||
+            (status === "processing"
+              ? "AI generation is running in the background. Track progress from AI Background Tasks."
+              : "Quiz generation queued. Check AI Background Tasks for updates.");
 
       toast({
-        title: "Quiz generated!",
-        description: `Generated ${result.data.quiz.questions?.length || 0} questions using AI. Saved to Background Tasks.`,
+        title: quiz ? "Quiz generated!" : "Generation queued",
+        description: toastDescription,
       });
     } catch (error: any) {
       toast({

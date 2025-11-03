@@ -9,8 +9,15 @@ import {
   markBackgroundTaskCompleted,
   markBackgroundTaskFailed,
   markBackgroundTaskInProgress,
+  updateBackgroundTask,
 } from "@/lib/services/background-task.service";
 import { BackgroundTaskType } from "@prisma/client";
+import {
+  callOpenAIWithRetry,
+  extractContentFromCompletion,
+  extractUsageStats,
+} from "@/lib/services/ai-openai-client.service";
+import { extractJSON } from "@/lib/services/ai-quiz-processor.service";
 
 // Use Node.js runtime for long-running AI operations
 export const runtime = 'nodejs';
@@ -84,75 +91,58 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       { easyCount, mediumCount, hardCount }
     );
 
-    const usesNewParams = aiModel.startsWith("gpt-5") || aiModel.startsWith("o1");
-
-    // System message matches handling in AI quiz generator, emphasizing JSON-only when needed
+    // Build system message based on model type
+    const isO1 = aiModel.startsWith("o1");
     let systemMessage = "You are an expert sports quiz creator. You create engaging, accurate questions in strict JSON format.";
-    if (aiModel.startsWith("o1")) {
+    if (isO1) {
       systemMessage = "You are an expert sports quiz creator. CRITICAL: Output ONLY valid JSON. No markdown or extra text.";
     }
 
-    const requestBody: any = {
-      model: aiModel,
-      messages: [
-        { role: "system", content: systemMessage },
-        { role: "user", content: prompt },
-      ],
+    // Call OpenAI API with hybrid support (Responses API for GPT-5, Chat Completions for others)
+    const completion = await callOpenAIWithRetry(
+      aiModel,
+      prompt,
+      systemMessage,
+      {
+        temperature: 0.8,
+        maxTokens: isO1 ? 16000 : 4000,
+        responseFormat: isO1 ? null : { type: "json_object" },
+      }
+    );
+
+    // Extract content from response (handles both API formats)
+    const generatedContent = extractContentFromCompletion(completion, aiModel);
+
+    // Store raw OpenAI response permanently (expensive API call - don't lose it!)
+    // This allows us to retry parsing without another API call
+    const rawResponseData = {
+      rawCompletion: completion,
+      rawGeneratedContent: generatedContent,
+      prompt: prompt.substring(0, 5000), // Store prompt preview (truncated if very long)
     };
-
-    if (!aiModel.startsWith("o1") && !aiModel.startsWith("gpt-5")) {
-      requestBody.temperature = 0.8;
-    }
-    if (usesNewParams) {
-      requestBody.max_completion_tokens = 16000;  // Higher limit for GPT-5 reasoning models
-    } else {
-      requestBody.max_tokens = 4000;  // Increased from 3000 for larger question sets
-    }
-    if (!aiModel.startsWith("o1")) {
-      requestBody.response_format = { type: "json_object" };
-    }
-
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
-      },
-      body: JSON.stringify(requestBody),
-    });
-
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({}));
-      throw new BadRequestError(`OpenAI API error: ${error.error?.message || "Unknown error"}`);
-    }
-
-    const completion = await response.json();
-
-    let generatedContent: string | null = null;
-    if (completion.choices?.[0]?.message?.content) {
-      generatedContent = completion.choices[0].message.content;
-    } else if (completion.choices?.[0]?.text) {
-      generatedContent = completion.choices[0].text;
-    } else if (completion.content) {
-      generatedContent = completion.content;
-    } else if (completion.message?.content) {
-      generatedContent = completion.message.content;
-    } else if (completion.output) {
-      generatedContent = completion.output;
-    } else if (completion.data) {
-      generatedContent = completion.data;
-    }
-
-    if (!generatedContent) {
-      throw new BadRequestError(`No content generated from OpenAI. Model: ${aiModel}.`);
-    }
 
     const cleanedContent = extractJSON(generatedContent);
     let parsed: any;
+    let parseError: string | null = null;
     try {
       parsed = JSON.parse(cleanedContent);
     } catch (error: any) {
-      throw new BadRequestError(`Failed to parse generated JSON. ${error.message}`);
+      parseError = error.message;
+      
+      // Store raw response even on parse failure so we can retry parsing later
+      await updateBackgroundTask(taskId, {
+        result: {
+          rawResponse: rawResponseData,
+          parseError: {
+            message: parseError,
+            cleanedContent: cleanedContent.substring(0, 2000), // Store first 2000 chars for debugging
+            fullCleanedContent: cleanedContent, // Store full content for retry
+          },
+          canRetryParsing: true,
+        },
+      });
+      
+      throw new BadRequestError(`Failed to parse generated JSON. ${error.message}. You can retry parsing from the admin portal.`);
     }
 
     // Accept either { questions: [...] } or a raw array [...] for flexibility
@@ -177,14 +167,20 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       })),
     }));
 
+    // Extract usage stats - different APIs have different structures
+    const usageStats = extractUsageStats(completion);
+
     const resultPayload = {
       topicId: id,
       topicName: topic.name,
       model: aiModel,
+      api: usageStats.api,
       requested: { easyCount, mediumCount, hardCount, total },
       questions: normalized,
-      tokensUsed: completion.usage?.total_tokens || 0,
+      tokensUsed: usageStats.tokensUsed,
       promptPreview: `${prompt.substring(0, 200)}...`,
+      rawResponse: rawResponseData, // Store permanently for retry capability
+      canRetryParsing: true, // Flag indicating this task can have parsing retried
     };
 
     if (taskId) {
@@ -258,12 +254,4 @@ ${mixNote}
 All questions must be unique, unambiguous, and about the topic. Ensure factual accuracy. Keep hints short and helpful. Explanations should be 1–2 concise sentences. Only one answer can be correct. Output JSON only.
 
 Context (for your reference):\n\n"""\n${scaffold.substring(0, 1200)}\n"""`;
-}
-
-function extractJSON(content: string): string {
-  content = String(content || "").trim();
-  const markdownMatch = content.match(/```(?:json)?\s*(\{[\s\S]*?\})\s*```/);
-  if (markdownMatch) return markdownMatch[1].trim();
-  const jsonMatch = content.match(/(\{[\s\S]*\})/);
-  return jsonMatch ? jsonMatch[1].trim() : content;
 }
