@@ -84,7 +84,7 @@ export function QuizPlayClient({ quizId, quizTitle, quizSlug, initialAttemptLimi
   const [results, setResults] = useState<any>(null);
   const [timeLeft, setTimeLeft] = useState<number>(0);
   const [currentTimeLimit, setCurrentTimeLimit] = useState<number>(60);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [pendingQuestionId, setPendingQuestionId] = useState<string | null>(null);
   const [isCompleting, startCompletion] = useTransition();
   const [isSharing, setIsSharing] = useState(false);
   const [shareStatus, setShareStatus] = useState<"idle" | "success" | "error">("idle");
@@ -150,7 +150,53 @@ export function QuizPlayClient({ quizId, quizTitle, quizSlug, initialAttemptLimi
         const result = await response.json();
 
         if (!response.ok) {
-          throw new Error(result.error || "Failed to complete quiz");
+          const message = result.error || "Failed to complete quiz";
+
+          const shouldAttemptFallback = () => {
+            if (response.status === 401 || response.status === 403) {
+              return false;
+            }
+
+            if (
+              response.status === 400 &&
+              typeof result.error === "string" &&
+              result.error.toLowerCase().includes("already completed")
+            ) {
+              return true;
+            }
+
+            return response.status >= 500 || response.status === 409;
+          };
+
+          const tryLoadExistingAttempt = async () => {
+            try {
+              const fallback = await fetch(`/api/attempts/${activeAttemptId}`);
+              const fallbackJson = await fallback.json();
+
+              if (fallback.ok && fallbackJson?.data) {
+                setResults({
+                  ...fallbackJson.data,
+                  awardedBadges: [],
+                  progression: null,
+                  completionBonusAwarded: 0,
+                });
+                setStatus("results");
+                setFeedback(null);
+                setCurrentQuestion(null);
+                return true;
+              }
+            } catch (fallbackError) {
+              console.error("Failed to load fallback attempt results", fallbackError);
+            }
+
+            return false;
+          };
+
+          if (shouldAttemptFallback() && (await tryLoadExistingAttempt())) {
+            return;
+          }
+
+          throw new Error(message);
         }
 
         setResults(result.data);
@@ -306,6 +352,7 @@ export function QuizPlayClient({ quizId, quizTitle, quizSlug, initialAttemptLimi
     setCurrentTimeLimit(60);
     setTimeLeft(0);
     setLimitLockInfo(null);
+    setPendingQuestionId(null);
     startAttempt();
   }, [startAttempt]);
 
@@ -363,12 +410,12 @@ export function QuizPlayClient({ quizId, quizTitle, quizSlug, initialAttemptLimi
         !attemptIdRef.current ||
         !currentQuestion ||
         feedback ||
-        isSubmitting
+        pendingQuestionId === currentQuestion.id
       ) {
         return;
       }
 
-      setIsSubmitting(true);
+      setPendingQuestionId(currentQuestion.id);
       clearTimer();
 
       const timeLimit = computeTimeLimit(currentQuestion);
@@ -460,7 +507,7 @@ export function QuizPlayClient({ quizId, quizTitle, quizSlug, initialAttemptLimi
         setFeedback(null);
         resetTimerForQuestion(previousQuestion);
       } finally {
-        setIsSubmitting(false);
+        setPendingQuestionId(null);
       }
     },
     [
@@ -471,7 +518,7 @@ export function QuizPlayClient({ quizId, quizTitle, quizSlug, initialAttemptLimi
       currentIndex,
       currentQuestion,
       feedback,
-      isSubmitting,
+      pendingQuestionId,
       questions,
       resetTimerForQuestion,
       startCompletion,
@@ -915,7 +962,7 @@ export function QuizPlayClient({ quizId, quizTitle, quizSlug, initialAttemptLimi
                       "border-emerald-500/80 bg-emerald-500/10 text-foreground shadow-[0_0_0_1px_rgba(16,185,129,0.2)]",
                     isIncorrectSelection && "border-destructive/70 bg-destructive/10 text-foreground"
                   )}
-                  disabled={Boolean(feedback) || isSubmitting}
+                  disabled={Boolean(feedback) || pendingQuestionId === currentQuestion.id}
                   onClick={() => handleAnswer(answer.id)}
                 >
                   <div className="flex w-full flex-col gap-1">

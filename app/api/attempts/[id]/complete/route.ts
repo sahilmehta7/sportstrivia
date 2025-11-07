@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireAuth } from "@/lib/auth-helpers";
-import { handleError, successResponse, NotFoundError, ForbiddenError, BadRequestError } from "@/lib/errors";
+import { handleError, successResponse, NotFoundError, ForbiddenError } from "@/lib/errors";
 import { applyProgression, type TierProgress } from "@/lib/services/progression.service";
 import { computeQuizScale } from "@/lib/scoring/computeQuizScale";
 import { computeQuestionScore } from "@/lib/scoring/computeQuestionScore";
@@ -10,6 +10,41 @@ import type { Prisma } from "@prisma/client";
 import { checkAndAwardBadges } from "@/lib/services/badge.service";
 import { recomputeUserProgress } from "@/lib/services/gamification.service";
 import { createNotification } from "@/lib/services/notification.service";
+
+const quizSelection = {
+  id: true,
+  title: true,
+  slug: true,
+  passingScore: true,
+  completionBonus: true,
+  timePerQuestion: true,
+} as const;
+
+const userAnswerSelection = {
+  include: {
+    question: {
+      select: {
+        id: true,
+        questionText: true,
+        explanation: true,
+        explanationImageUrl: true,
+        explanationVideoUrl: true,
+        timeLimit: true,
+        difficulty: true,
+      },
+    },
+    answer: true,
+  },
+} as const;
+
+type AttemptWithDetails = Prisma.QuizAttemptGetPayload<{
+  include: {
+    quiz: {
+      select: typeof quizSelection;
+    };
+    userAnswers: typeof userAnswerSelection;
+  };
+}>;
 
 // POST /api/attempts/[id]/complete - Complete quiz attempt and calculate score
 export async function POST(
@@ -24,12 +59,8 @@ export async function POST(
     const attempt = await prisma.quizAttempt.findUnique({
       where: { id },
       include: {
-        quiz: true,
-        userAnswers: {
-          include: {
-            question: true,
-          },
-        },
+        quiz: { select: quizSelection },
+        userAnswers: userAnswerSelection,
       },
     });
 
@@ -44,7 +75,13 @@ export async function POST(
 
     // Check if already completed
     if (attempt.completedAt) {
-      throw new BadRequestError("Quiz attempt already completed");
+      const response = await buildAttemptResults(attempt);
+      return successResponse({
+        ...response,
+        awardedBadges: [],
+        progression: null,
+        completionBonusAwarded: 0,
+      });
     }
 
     const orderedAnswers = [...attempt.userAnswers].sort(
@@ -169,31 +206,8 @@ export async function POST(
           totalTimeSpent,
         },
         include: {
-          quiz: {
-            select: {
-              id: true,
-              title: true,
-              slug: true,
-              passingScore: true,
-              completionBonus: true,
-            },
-          },
-          userAnswers: {
-            include: {
-              question: {
-                select: {
-                  id: true,
-                  questionText: true,
-                  explanation: true,
-                  explanationImageUrl: true,
-                  explanationVideoUrl: true,
-                  timeLimit: true,
-                  difficulty: true,
-                },
-              },
-              answer: true,
-            },
-          },
+          quiz: { select: quizSelection },
+          userAnswers: userAnswerSelection,
         },
       });
     });
@@ -241,56 +255,7 @@ export async function POST(
     }
 
     // Get correct answers for review in batch
-    const questionIds = completedAttempt.userAnswers.map((ua) => ua.questionId);
-    const questions = await prisma.question.findMany({
-      where: { id: { in: questionIds } },
-      include: {
-        answers: {
-          where: { isCorrect: true },
-        },
-      },
-    });
-
-    const correctAnswersMap = new Map(
-      questions.map((q) => [q.id, q.answers[0]])
-    );
-
-    // Prepare results
-    const results = {
-      attempt: {
-        id: completedAttempt.id,
-        quizId: completedAttempt.quizId,
-        score: completedAttempt.score,
-        totalQuestions: completedAttempt.totalQuestions,
-        correctAnswers: completedAttempt.correctAnswers,
-        passed: completedAttempt.passed,
-        totalPoints: completedAttempt.totalPoints,
-        longestStreak: completedAttempt.longestStreak,
-        averageResponseTime: completedAttempt.averageResponseTime,
-        totalTimeSpent: completedAttempt.totalTimeSpent,
-        startedAt: completedAttempt.startedAt,
-        completedAt: completedAttempt.completedAt,
-        isPracticeMode: completedAttempt.isPracticeMode,
-      },
-      quiz: completedAttempt.quiz,
-      answers: completedAttempt.userAnswers.map((ua) => ({
-        questionId: ua.questionId,
-        questionText: ua.question.questionText,
-        userAnswerId: ua.answerId,
-        correctAnswerId: correctAnswersMap.get(ua.questionId)?.id,
-        isCorrect: ua.isCorrect,
-        wasSkipped: ua.wasSkipped,
-        timeSpent: ua.timeSpent,
-        basePoints: ua.basePoints,
-        timeBonus: ua.timeBonus,
-        streakBonus: ua.streakBonus,
-        totalPoints: ua.totalPoints,
-        timeLimit: ua.question.timeLimit ?? attempt.quiz.timePerQuestion ?? 60,
-        explanation: ua.question.explanation,
-        explanationImageUrl: ua.question.explanationImageUrl,
-        explanationVideoUrl: ua.question.explanationVideoUrl,
-      })),
-    };
+    const results = await buildAttemptResults(completedAttempt);
 
     // Check and award badges
     const awardedBadges = await checkAndAwardBadges(user.id);
@@ -308,6 +273,58 @@ export async function POST(
   } catch (error) {
     return handleError(error);
   }
+}
+
+async function buildAttemptResults(attempt: AttemptWithDetails) {
+  const questionIds = attempt.userAnswers.map((ua) => ua.questionId);
+  const questions = questionIds.length
+    ? await prisma.question.findMany({
+        where: { id: { in: questionIds } },
+        include: {
+          answers: {
+            where: { isCorrect: true },
+          },
+        },
+      })
+    : [];
+
+  const correctAnswersMap = new Map(questions.map((q) => [q.id, q.answers[0]]));
+
+  return {
+    attempt: {
+      id: attempt.id,
+      quizId: attempt.quizId,
+      score: attempt.score,
+      totalQuestions: attempt.totalQuestions,
+      correctAnswers: attempt.correctAnswers,
+      passed: attempt.passed,
+      totalPoints: attempt.totalPoints,
+      longestStreak: attempt.longestStreak,
+      averageResponseTime: attempt.averageResponseTime,
+      totalTimeSpent: attempt.totalTimeSpent,
+      startedAt: attempt.startedAt,
+      completedAt: attempt.completedAt,
+      isPracticeMode: attempt.isPracticeMode,
+    },
+    quiz: attempt.quiz,
+    answers: attempt.userAnswers.map((ua) => ({
+      questionId: ua.questionId,
+      questionText: ua.question.questionText,
+      userAnswerId: ua.answerId,
+      correctAnswerId: correctAnswersMap.get(ua.questionId)?.id,
+      isCorrect: ua.isCorrect,
+      wasSkipped: ua.wasSkipped,
+      timeSpent: ua.timeSpent,
+      basePoints: ua.basePoints,
+      timeBonus: ua.timeBonus,
+      streakBonus: ua.streakBonus,
+      totalPoints: ua.totalPoints,
+      timeLimit: ua.question.timeLimit ?? attempt.quiz.timePerQuestion ?? 60,
+      explanation: ua.question.explanation,
+      explanationImageUrl: ua.question.explanationImageUrl,
+      explanationVideoUrl: ua.question.explanationVideoUrl,
+    })),
+  };
 }
 
 // Helper function to update user statistics
