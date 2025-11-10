@@ -3,22 +3,13 @@ import { prisma } from "@/lib/db";
 import { Prisma } from "@prisma/client";
 import { auth } from "@/lib/auth";
 import Link from "next/link";
-import { Suspense } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
   CheckCircle2,
   XCircle,
-  Clock,
-  Target,
-  Award,
-  Zap,
   Trophy,
   ArrowLeft,
-  Calendar,
-  Coins,
 } from "lucide-react";
 import Image from "next/image";
 import { ShowcaseThemeProvider } from "@/components/showcase/ShowcaseThemeProvider";
@@ -26,18 +17,20 @@ import { ResultsShareButton } from "@/components/quiz/ResultsShareButton";
 import { ShowcaseButton } from "@/components/showcase/ui/buttons/Button";
 import { PointsReward } from "@/components/shared/PointsReward";
 import type { PointsBreakdown } from "@/components/shared/PointsReward.types";
+import { cn } from "@/lib/utils";
+import {
+  QuizResultsLayout,
+  QuizResultsCard,
+  QuizResultsHeader,
+  QuizResultsSummary,
+  QuizResultsStatsGrid,
+  QuizResultsSection,
+  QuizResultsLeaderboard,
+  QuizResultsActions,
+} from "@/components/quiz/results";
 
 interface QuizResultsPageProps {
   params: Promise<{ slug: string; attemptId: string }>;
-}
-
-function formatTime(seconds: number | null) {
-  if (!seconds) return "0 sec";
-  const minutes = Math.floor(seconds / 60);
-  const remainingSeconds = seconds % 60;
-  if (minutes === 0) return `${remainingSeconds} sec`;
-  if (remainingSeconds === 0) return `${minutes} min`;
-  return `${minutes} min ${remainingSeconds} sec`;
 }
 
 function formatDateTime(date: Date) {
@@ -275,128 +268,113 @@ export default async function QuizResultsPage({
     ...(completionPart > 0 ? [{ label: "Completion Bonus", points: completionPart, icon: "🏆" }] : []),
   ];
 
+  const summaryData = {
+    quizTitle: attempt.quiz.title,
+    userName: attempt.user?.name || "Anonymous",
+    userImage: attempt.user?.image,
+    correctAnswers: attempt.correctAnswers || 0,
+    totalQuestions: attempt.totalQuestions,
+    totalPoints: attempt.totalPoints || 0,
+    timeSpentSeconds: attempt.totalTimeSpent || 0,
+    passed: attempt.passed ?? false,
+    longestStreak: attempt.longestStreak || 0,
+    averageResponseTimeSeconds: attempt.averageResponseTime || 0,
+  };
+
+  const leaderboardEntries = quizLeaderboard.map((entry, index) => {
+    const user = (entry as any).user ?? null;
+    const totalPoints =
+      Number((entry as any).bestPoints ?? entry.bestPoints ?? entry.totalPoints ?? entry.bestScore ?? 0) || 0;
+
+    return {
+      userId: (entry as any).userId ?? user?.id ?? `anonymous-${index}`,
+      userName: user?.name ?? null,
+      userImage: user?.image ?? null,
+      score: totalPoints,
+      totalPoints,
+      rank: index + 1,
+    };
+  });
+
+  const userLeaderboardIndex = leaderboardEntries.findIndex((entry) => entry.userId === attempt.userId);
+  const displayLeaderboard =
+    userLeaderboardIndex >= 0 && userLeaderboardIndex < 3
+      ? leaderboardEntries.slice(0, 3)
+      : [
+          ...leaderboardEntries.slice(0, 3),
+          ...(userLeaderboardIndex >= 3 ? [leaderboardEntries[userLeaderboardIndex]] : []),
+        ];
+
   return (
     <ShowcaseThemeProvider>
-      <div className="relative flex min-h-screen flex-col items-center justify-start overflow-hidden bg-gradient-to-br from-white via-slate-50 to-blue-50 px-4 py-12 dark:from-slate-900 dark:via-purple-900 dark:to-amber-500 sm:px-6 lg:py-16">
-        <div className="absolute inset-0 -z-10 opacity-70">
-          <div className="absolute -left-20 top-24 h-72 w-72 rounded-full bg-emerald-400/20 blur-[120px] dark:bg-emerald-400/40" />
-          <div className="absolute right-12 top-12 h-64 w-64 rounded-full bg-pink-500/20 blur-[100px] dark:bg-pink-500/40" />
-          <div className="absolute bottom-8 left-1/2 h-56 w-56 -translate-x-1/2 rounded-full bg-blue-500/15 blur-[90px] dark:bg-blue-500/30" />
-        </div>
-
-        <div className="relative w-full max-w-5xl rounded-[1.75rem] border border-slate-200/60 bg-gradient-to-br from-white/90 via-slate-50/80 to-blue-50/80 p-6 shadow-[0_40px_120px_-40px_rgba(59,130,246,0.15)] backdrop-blur-xl dark:border-white/10 dark:from-black/70 dark:via-slate-900/60 dark:to-indigo-900/80 dark:shadow-[0_40px_120px_-40px_rgba(0,0,0,0.8)] sm:p-8 lg:p-10">
-          {/* Header */}
-          <div className="mb-8">
-            <Link href={`/quizzes/${slug}`}>
-              <ShowcaseButton
-                variant="ghost"
-                size="sm"
-                icon={<ArrowLeft className="h-4 w-4" />}
-                ariaLabel="Back to quiz"
-              >
-                Back to quiz
-              </ShowcaseButton>
-            </Link>
-            <h1 className="mt-4 text-3xl font-black tracking-tight text-slate-900 dark:text-white sm:text-4xl">
-              Quiz Results
-            </h1>
-            <p className="mt-2 text-sm text-slate-700 dark:text-white/70">{attempt.quiz.title}</p>
-          </div>
-
-          <div className="space-y-8">
-          {/* Points Reward Display */}
-            <PointsRewardServer points={attempt.totalPoints || 0} breakdown={breakdown} />
-
-          {/* Score Summary Card */}
-            <Card className="overflow-hidden rounded-2xl border border-slate-200/60 bg-white/70 backdrop-blur-xl dark:border-white/10 dark:bg-white/5">
-              <div className="bg-gradient-to-br from-blue-500/10 via-emerald-400/10 to-transparent p-8 dark:from-emerald-400/10 dark:via-amber-400/10">
-                <div className="flex flex-col items-center text-center">
-                {/* Score Circle */}
-                <div
-                    className={`mb-4 flex h-32 w-32 items-center justify-center rounded-full border-4 ${attempt.passed ? "border-emerald-400/30" : "border-rose-400/30"} ${scoreBgColor}`}
-                >
-                  <div className="text-center">
-                      <div className={`text-4xl font-bold ${scoreColor}`}>
-                        {attempt.correctAnswers}/{attempt.totalQuestions}
-                      </div>
-                      <div className="mt-1 text-xs text-slate-600 dark:text-white/70">Correct</div>
-                  </div>
-                </div>
-
-                {/* Pass/Fail Badge */}
-                  <Badge
-                    variant={attempt.passed ? "default" : "destructive"}
-                    className={`mb-4 ${attempt.passed ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300" : "bg-rose-500/15 text-rose-700 dark:text-rose-400"}`}
+      <QuizResultsLayout>
+        <div className="space-y-10">
+          <QuizResultsCard>
+            <QuizResultsHeader
+              title="Quiz Results"
+              subtitle={attempt.quiz.title}
+              leading={
+                <Link href={`/quizzes/${slug}`}>
+                  <ShowcaseButton
+                    variant="ghost"
+                    size="sm"
+                    icon={<ArrowLeft className="h-4 w-4" />}
+                    ariaLabel="Back to quiz"
                   >
-                    {attempt.passed ? (
-                      <>
-                        <Trophy className="mr-1 h-4 w-4" />
-                        Passed
-                      </>
-                    ) : (
-                      <>
-                        <XCircle className="mr-1 h-4 w-4" />
-                        Failed
-                      </>
-                    )}
-                  </Badge>
+                    Back to quiz
+                  </ShowcaseButton>
+                </Link>
+              }
+            />
 
-                {/* Points Earned */}
-                  <div className="mt-2 inline-flex items-center gap-2 rounded-lg border border-slate-200/60 bg-white/60 px-3 py-2 text-slate-900 backdrop-blur-sm dark:border-white/10 dark:bg-white/10 dark:text-white">
-                    <Coins className="h-4 w-4 text-amber-600 dark:text-amber-400" />
-                    <span className="text-sm font-semibold">{attempt.totalPoints} Points</span>
+            <div className="space-y-8 p-6">
+              <PointsRewardServer points={attempt.totalPoints || 0} breakdown={breakdown} />
+
+              <QuizResultsSummary
+                data={summaryData}
+                confetti
+                footer={
+                  <div className="flex flex-col items-center gap-3">
+                    <Badge
+                      variant={attempt.passed ? "default" : "destructive"}
+                      className={cn(
+                        "px-4 py-1.5 text-sm",
+                        attempt.passed
+                          ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300"
+                          : "bg-rose-500/15 text-rose-700 dark:text-rose-400",
+                      )}
+                    >
+                      {attempt.passed ? (
+                        <>
+                          <Trophy className="mr-1.5 h-4 w-4" />
+                          Passed
+                        </>
+                      ) : (
+                        <>
+                          <XCircle className="mr-1.5 h-4 w-4" />
+                          Failed
+                        </>
+                      )}
+                    </Badge>
+                    <p className="text-xs text-slate-600 dark:text-white/60">
+                      Completed {formatDateTime(attempt.completedAt!)}
+                    </p>
                   </div>
-                </div>
-              </div>
+                }
+              />
 
-              <CardContent className="p-6">
-                {/* Stats Grid */}
-                <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-                  <div className="text-center">
-                    <div className="flex items-center justify-center gap-1 text-slate-600 dark:text-white/70">
-                      <Target className="h-4 w-4" />
-                    </div>
-                    <div className="mt-2 text-2xl font-bold text-slate-900 dark:text-white">
-                      {attempt.correctAnswers}/{attempt.totalQuestions}
-                    </div>
-                    <div className="text-xs text-slate-600 dark:text-white/70">Correct</div>
-                  </div>
+              <QuizResultsStatsGrid data={summaryData} />
 
-                  <div className="text-center">
-                    <div className="flex items-center justify-center gap-1 text-slate-600 dark:text-white/70">
-                      <Award className="h-4 w-4" />
-                    </div>
-                    <div className="mt-2 text-2xl font-bold text-slate-900 dark:text-white">
-                      {attempt.totalPoints}
-                    </div>
-                    <div className="text-xs text-slate-600 dark:text-white/70">Points</div>
-                  </div>
+              <QuizResultsSection
+                title="See where you stand"
+                className="rounded-[1.5rem] bg-gradient-to-br from-slate-50/70 to-blue-50/60 p-6 dark:from-white/5 dark:to-white/5"
+              >
+                <QuizResultsLeaderboard entries={displayLeaderboard} />
+              </QuizResultsSection>
 
-                  <div className="text-center">
-                    <div className="flex items-center justify-center gap-1 text-slate-600 dark:text-white/70">
-                      <Zap className="h-4 w-4" />
-                    </div>
-                    <div className="mt-2 text-2xl font-bold text-slate-900 dark:text-white">
-                      {attempt.longestStreak}
-                    </div>
-                    <div className="text-xs text-slate-600 dark:text-white/70">
-                      Longest Streak
-                    </div>
-                  </div>
-
-                  <div className="text-center">
-                    <div className="flex items-center justify-center gap-1 text-slate-600 dark:text-white/70">
-                      <Clock className="h-4 w-4" />
-                    </div>
-                    <div className="mt-2 text-2xl font-bold text-slate-900 dark:text-white">
-                      {formatTime(attempt.totalTimeSpent)}
-                    </div>
-                    <div className="text-xs text-slate-600 dark:text-white/70">Time</div>
-                  </div>
-                </div>
-
-                {/* Share */}
-                <div className="mt-6 flex flex-wrap gap-3 justify-center">
+              <QuizResultsActions
+                className="justify-center"
+                primaryAction={
                   <ResultsShareButton
                     quizTitle={attempt.quiz.title}
                     userName={attempt.user?.name || "Anonymous"}
@@ -406,209 +384,147 @@ export default async function QuizResultsPage({
                     totalPoints={attempt.totalPoints || 0}
                     timeSpent={attempt.totalTimeSpent || 0}
                   />
-                </div>
-              </CardContent>
-            </Card>
+                }
+                secondaryAction={
+                  <Link href="/quizzes">
+                    <ShowcaseButton variant="secondary" size="md">
+                      Browse More Quizzes
+                    </ShowcaseButton>
+                  </Link>
+                }
+                extraActions={
+                  <Link href={`/quizzes/${slug}`}>
+                    <ShowcaseButton variant="ghost" size="md" icon={<ArrowLeft className="h-4 w-4" />}>
+                      Back To Quiz
+                    </ShowcaseButton>
+                  </Link>
+                }
+              />
+            </div>
+          </QuizResultsCard>
 
-          {/* Tabs: Leaderboard and Answers */}
-            <Tabs defaultValue="leaderboard">
-              <TabsList className="mb-4">
-                <TabsTrigger value="leaderboard">Leaderboard</TabsTrigger>
-                <TabsTrigger value="answers">Answers</TabsTrigger>
-              </TabsList>
+          <Tabs defaultValue="leaderboard" className="space-y-4">
+            <TabsList className="mx-auto flex w-full max-w-xs justify-center gap-2 rounded-full border border-slate-200/60 bg-white/70 p-1 backdrop-blur-sm dark:border-white/20 dark:bg-white/10">
+              <TabsTrigger value="leaderboard">Leaderboard</TabsTrigger>
+              <TabsTrigger value="answers">Answers</TabsTrigger>
+            </TabsList>
 
-              <TabsContent value="leaderboard">
-                <Card className="rounded-2xl border border-slate-200/60 bg-white/70 backdrop-blur-xl dark:border-white/10 dark:bg-white/5">
-                  <CardHeader>
-                    <CardTitle className="text-slate-900 dark:text-white">Top Players</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-3">
-                      {quizLeaderboard.map((entry, index) => (
-                        <div key={entry.user?.id || (entry as any).id || entry.userId} className="flex items-center gap-3 rounded-2xl border border-slate-200/60 bg-white/60 p-3 backdrop-blur-sm dark:border-white/10 dark:bg-white/5">
-                          <div className="relative">
-                            <div className="h-10 w-10 rounded-full bg-slate-200 dark:bg-white/10 overflow-hidden flex items-center justify-center">
-                              {entry.user?.image ? (
-                                // eslint-disable-next-line @next/next/no-img-element
-                                <img src={entry.user.image} alt={entry.user.name || "User"} className="h-full w-full object-cover" />
-                              ) : (
-                                <span className="text-sm font-medium text-slate-600 dark:text-white/70">{(entry.user?.name || "U").charAt(0)}</span>
-                              )}
-                            </div>
-                            <div className="absolute -bottom-1 -left-1 flex h-6 w-6 items-center justify-center rounded-full bg-gradient-to-r from-blue-500 to-purple-600 text-xs font-bold text-white">
-                              {(index + 1).toString().padStart(2, '0')}
-                            </div>
+            <TabsContent value="leaderboard">
+              <QuizResultsCard className="mt-4">
+                <QuizResultsSection title="Top Players" className="p-6">
+                  <QuizResultsLeaderboard entries={leaderboardEntries} />
+                </QuizResultsSection>
+              </QuizResultsCard>
+            </TabsContent>
+
+            <TabsContent value="answers">
+              <QuizResultsCard className="mt-4">
+                <QuizResultsSection
+                  title="Answer Review"
+                  className="space-y-4 p-6"
+                >
+                  {attempt.userAnswers.map((userAnswer, index) => {
+                    const isCorrect = userAnswer.isCorrect && !userAnswer.wasSkipped;
+                    const wasSkipped = userAnswer.wasSkipped;
+                    const correctAnswer = correctAnswersMap.get(userAnswer.questionId);
+
+                    return (
+                      <div
+                        key={userAnswer.id}
+                        className="space-y-2 rounded-2xl border border-white/40 bg-white/60 p-4 backdrop-blur-sm dark:border-white/10 dark:bg-white/5"
+                      >
+                        <div className="flex items-start gap-3">
+                          <div
+                            className={cn(
+                              "flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white",
+                              isCorrect ? "bg-emerald-500" : wasSkipped ? "bg-amber-500" : "bg-rose-500",
+                            )}
+                          >
+                            {index + 1}
                           </div>
                           <div className="flex-1">
-                            <p className="font-semibold text-slate-900 dark:text-white">{entry.user?.name || "Anonymous"}</p>
-                            <p className="text-sm text-slate-600 dark:text-white/70">{entry.bestPoints || Math.round(entry.bestScore || 0) || 0} points</p>
-                          </div>
-                          <div className="inline-flex items-center gap-1 rounded-lg border border-slate-200/60 bg-white/60 px-2 py-1 backdrop-blur-sm dark:border-white/10 dark:bg-white/10">
-                            <Coins className="h-3 w-3 text-amber-600 dark:text-amber-400" />
-                            <span className="text-sm font-semibold text-slate-900 dark:text-white">{entry.bestPoints || Math.round(entry.bestScore || 0) || 0}</span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              <TabsContent value="answers">
-                <Card className="rounded-2xl border border-slate-200/60 bg-white/70 backdrop-blur-xl dark:border-white/10 dark:bg-white/5">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-slate-900 dark:text-white">
-                      <CheckCircle2 className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
-                      Answer Review
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                  {attempt.userAnswers.map((userAnswer, index) => {
-                const isCorrect = userAnswer.isCorrect && !userAnswer.wasSkipped;
-                const wasSkipped = userAnswer.wasSkipped;
-                const correctAnswer = correctAnswersMap.get(
-                  userAnswer.questionId
-                );
-
-                return (
-                  <div
-                    key={userAnswer.id}
-                      className="space-y-2 rounded-2xl border border-slate-200/60 bg-white/60 p-4 backdrop-blur-sm dark:border-white/10 dark:bg-white/5"
-                  >
-                    {/* Question Header */}
-                    <div className="flex items-start gap-3">
-                      <div
-                        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-bold ${
-                          isCorrect
-                            ? "bg-emerald-500 text-white"
-                            : wasSkipped
-                              ? "bg-amber-500 text-white"
-                              : "bg-rose-500 text-white"
-                        }`}
-                      >
-                        {index + 1}
-                      </div>
-                      <div className="flex-1">
-                        <p className="font-medium">{userAnswer.question.questionText}</p>
-                        
-                        {userAnswer.question.questionImageUrl && (
-                          <div className="relative mt-2 h-48 w-full max-w-md overflow-hidden rounded-lg">
-                            <Image
-                              src={userAnswer.question.questionImageUrl}
-                              alt="Question"
-                              fill
-                              className="object-contain"
-                            />
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Your Answer */}
-                    <div className="ml-11 space-y-1">
-                      <div className="flex items-center gap-2 text-sm">
-                        <span className="font-medium text-muted-foreground">
-                          Your answer:
-                        </span>
-                        {wasSkipped ? (
-                          <Badge variant="outline" className="text-amber-600">
-                            Skipped
-                          </Badge>
-                        ) : userAnswer.answer ? (
-                          <span>{userAnswer.answer.answerText}</span>
-                        ) : (
-                          <span className="text-muted-foreground">
-                            No answer
-                          </span>
-                        )}
-                      </div>
-
-                      {/* Status Badge */}
-                      <div>
-                        {isCorrect ? (
-                          <Badge
-                            variant="outline"
-                            className="border-emerald-500 text-emerald-600"
-                          >
-                            <CheckCircle2 className="mr-1 h-3 w-3" />
-                            Correct
-                          </Badge>
-                        ) : wasSkipped ? (
-                          <Badge
-                            variant="outline"
-                            className="border-amber-500 text-amber-600"
-                          >
-                            Skipped
-                          </Badge>
-                        ) : (
-                          <Badge
-                            variant="outline"
-                            className="border-rose-500 text-rose-600"
-                          >
-                            <XCircle className="mr-1 h-3 w-3" />
-                            Incorrect
-                          </Badge>
-                        )}
-                      </div>
-
-                      {/* Correct Answer (if revealed and wrong) */}
-                      {revealAnswers &&
-                        correctAnswer &&
-                        !isCorrect &&
-                        !wasSkipped && (
-                          <div className="rounded-lg bg-emerald-500/10 p-3">
-                            <p className="mb-1 text-xs font-medium text-emerald-700 dark:text-emerald-400">
-                              Correct answer:
+                            <p className="font-medium text-slate-900 dark:text-white">
+                              {userAnswer.question.questionText}
                             </p>
-                            <p className="text-sm">{correctAnswer.answerText}</p>
+
+                            {userAnswer.question.questionImageUrl ? (
+                              <div className="relative mt-2 h-48 w-full max-w-md overflow-hidden rounded-lg">
+                                <Image
+                                  src={userAnswer.question.questionImageUrl}
+                                  alt="Question"
+                                  fill
+                                  className="object-contain"
+                                />
+                              </div>
+                            ) : null}
                           </div>
-                        )}
-
-                      {/* Explanation */}
-                      {userAnswer.question.explanation && (
-                        <div className="rounded-lg bg-muted p-3">
-                          <p className="mb-1 text-xs font-medium text-muted-foreground">
-                            Explanation:
-                          </p>
-                          <p className="text-sm">
-                            {userAnswer.question.explanation}
-                          </p>
                         </div>
-                      )}
 
-                      {/* Points Earned */}
-                      {userAnswer.totalPoints !== null && userAnswer.totalPoints > 0 && (
-                        <div className="text-xs text-muted-foreground">
-                          +{userAnswer.totalPoints} points
+                        <div className="ml-11 space-y-3">
+                          <div className="flex items-center gap-2 text-sm">
+                            <span className="font-medium text-slate-600 dark:text-white/70">Your answer:</span>
+                            {wasSkipped ? (
+                              <Badge variant="outline" className="border-amber-500 text-amber-600">
+                                Skipped
+                              </Badge>
+                            ) : userAnswer.answer ? (
+                              <span>{userAnswer.answer.answerText}</span>
+                            ) : (
+                              <span className="text-slate-500 dark:text-white/50">No answer</span>
+                            )}
+                          </div>
+
+                          <div>
+                            {isCorrect ? (
+                              <Badge variant="outline" className="border-emerald-500 text-emerald-600">
+                                <CheckCircle2 className="mr-1 h-3 w-3" />
+                                Correct
+                              </Badge>
+                            ) : wasSkipped ? (
+                              <Badge variant="outline" className="border-amber-500 text-amber-600">
+                                Skipped
+                              </Badge>
+                            ) : (
+                              <Badge variant="outline" className="border-rose-500 text-rose-600">
+                                <XCircle className="mr-1 h-3 w-3" />
+                                Incorrect
+                              </Badge>
+                            )}
+                          </div>
+
+                          {revealAnswers && correctAnswer && !isCorrect && !wasSkipped ? (
+                            <div className="rounded-lg bg-emerald-500/10 p-3">
+                              <p className="mb-1 text-xs font-medium text-emerald-700 dark:text-emerald-400">
+                                Correct answer:
+                              </p>
+                              <p className="text-sm text-slate-900 dark:text-white">{correctAnswer.answerText}</p>
+                            </div>
+                          ) : null}
+
+                          {userAnswer.question.explanation ? (
+                            <div className="rounded-lg bg-slate-100/70 p-3 text-sm text-slate-700 dark:bg-white/10 dark:text-white/80">
+                              <p className="mb-1 text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-white/60">
+                                Explanation
+                              </p>
+                              <p>{userAnswer.question.explanation}</p>
+                            </div>
+                          ) : null}
+
+                          {userAnswer.totalPoints ? (
+                            <div className="text-xs text-slate-500 dark:text-white/60">
+                              +{userAnswer.totalPoints} points
+                            </div>
+                          ) : null}
                         </div>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-                  </CardContent>
-                </Card>
-              </TabsContent>
-            </Tabs>
-
-          {/* Attempt Details removed per request */}
-
-          {/* Actions */}
-            <div className="flex flex-wrap gap-3">
-              <Link href={`/quizzes/${slug}`}>
-                <ShowcaseButton variant="secondary" size="md" icon={<ArrowLeft className="h-4 w-4" />}>
-                  Back To Quiz
-                </ShowcaseButton>
-              </Link>
-              <Link href="/quizzes">
-                <ShowcaseButton variant="primary" size="md">
-                  Browse More Quizzes
-                </ShowcaseButton>
-              </Link>
-            </div>
-          </div>
+                      </div>
+                    );
+                  })}
+                </QuizResultsSection>
+              </QuizResultsCard>
+            </TabsContent>
+          </Tabs>
         </div>
-      </div>
+      </QuizResultsLayout>
     </ShowcaseThemeProvider>
   );
 }
