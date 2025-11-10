@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -11,19 +11,10 @@ import { cn } from "@/lib/utils";
 import { Users, BookOpen, TrendingUp, Loader2 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-
-interface TopTopic {
-  id: string;
-  name: string;
-  slug: string;
-  description?: string | null;
-  imageUrl?: string | null;
-  userCount: number;
-  quizCount: number;
-}
+import type { TopicSummary } from "@/types/home";
 
 interface TopTopicsResponse {
-  topics: TopTopic[];
+  topics: TopicSummary[];
   sortBy: string;
   limit: number;
   total: number;
@@ -36,6 +27,7 @@ interface ShowcaseTopTopicsProps {
   defaultSortBy?: "users" | "quizzes";
   limit?: number;
   className?: string;
+  initialTopics?: TopicSummary[];
 }
 
 // Topic icons mapping
@@ -77,37 +69,60 @@ export function ShowcaseTopTopics({
   defaultSortBy = "users",
   limit = 6,
   className,
+  initialTopics,
 }: ShowcaseTopTopicsProps) {
   const { theme } = useShowcaseTheme();
-  const [topics, setTopics] = useState<TopTopic[]>([]);
+  const initialTopicsProvided = Array.isArray(initialTopics) && initialTopics.length > 0;
+  const [topics, setTopics] = useState<TopicSummary[]>(initialTopics ?? []);
   const [sortBy, setSortBy] = useState<"users" | "quizzes">(defaultSortBy);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!initialTopicsProvided);
   const [error, setError] = useState<string | null>(null);
+  const hydratedInitialRef = useRef(false);
 
   useEffect(() => {
+    if (!hydratedInitialRef.current) {
+      hydratedInitialRef.current = true;
+      if (initialTopicsProvided && sortBy === defaultSortBy) {
+        setLoading(false);
+        setError(null);
+        return;
+      }
+    }
+
+    let ignore = false;
     const fetchTopTopics = async () => {
       try {
         setLoading(true);
         setError(null);
-        
+
         const response = await fetch(`/api/topics/top?sortBy=${sortBy}&limit=${limit}`);
-        
+
         if (!response.ok) {
           throw new Error(`Failed to fetch topics: ${response.statusText}`);
         }
-        
+
         const data: TopTopicsResponse = await response.json();
-        setTopics(data.topics);
+        if (!ignore) {
+          setTopics(data.topics ?? []);
+        }
       } catch (err) {
         console.error("Error fetching top topics:", err);
-        setError(err instanceof Error ? err.message : "Failed to fetch topics");
+        if (!ignore) {
+          setError(err instanceof Error ? err.message : "Failed to fetch topics");
+        }
       } finally {
-        setLoading(false);
+        if (!ignore) {
+          setLoading(false);
+        }
       }
     };
 
-    fetchTopTopics();
-  }, [sortBy, limit]);
+    void fetchTopTopics();
+
+    return () => {
+      ignore = true;
+    };
+  }, [sortBy, limit, defaultSortBy, initialTopicsProvided]);
 
   const getTopicIcon = (topicName: string) => {
     return topicIcons[topicName] || topicIcons.default;

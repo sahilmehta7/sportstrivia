@@ -180,37 +180,44 @@ export async function POST(
       totalQuestions > 0 ? (correctAnswers / totalQuestions) * 100 : 0;
     const passed = scorePercentage >= attempt.quiz.passingScore;
 
-    const completedAttempt = await prisma.$transaction(async (tx) => {
-      for (const answer of answerScoreData) {
-        await tx.userAnswer.update({
-          where: { id: answer.id },
+    const completedAttempt = await prisma.$transaction(
+      async (tx) => {
+        await Promise.all(
+          answerScoreData.map((answer) =>
+            tx.userAnswer.update({
+              where: { id: answer.id },
+              data: {
+                basePoints: answer.basePoints,
+                timeBonus: answer.timeBonus,
+                streakBonus: answer.streakBonus,
+                totalPoints: answer.totalPoints,
+              },
+            })
+          )
+        );
+
+        return tx.quizAttempt.update({
+          where: { id },
           data: {
-            basePoints: answer.basePoints,
-            timeBonus: answer.timeBonus,
-            streakBonus: answer.streakBonus,
-            totalPoints: answer.totalPoints,
+            score: scorePercentage,
+            correctAnswers,
+            passed,
+            completedAt: new Date(),
+            totalPoints,
+            longestStreak,
+            averageResponseTime,
+            totalTimeSpent,
+          },
+          include: {
+            quiz: { select: quizSelection },
+            userAnswers: userAnswerSelection,
           },
         });
+      },
+      {
+        timeout: 20000,
       }
-
-      return tx.quizAttempt.update({
-        where: { id },
-        data: {
-          score: scorePercentage,
-          correctAnswers,
-          passed,
-          completedAt: new Date(),
-          totalPoints,
-          longestStreak,
-          averageResponseTime,
-          totalTimeSpent,
-        },
-        include: {
-          quiz: { select: quizSelection },
-          userAnswers: userAnswerSelection,
-        },
-      });
-    });
+    );
 
     // Award one-time completion bonus if passed BEFORE stats/leaderboard
     let completionBonusAwarded = 0;

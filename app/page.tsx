@@ -21,72 +21,24 @@ export const metadata: Metadata = {
   },
 };
 
-async function fetchFeaturedQuizzes() {
-  try {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/quizzes?featured=true&limit=6`, {
-      next: { revalidate: 300 } // Revalidate every 5 minutes
-    });
-    if (!response.ok) return [];
-    const data = await response.json();
-    return data.success ? data.data.quizzes : [];
-  } catch (error) {
-    console.error('Error fetching featured quizzes:', error);
-    return [];
-  }
-}
-
-async function fetchTopTopics() {
-  try {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/topics/top?sortBy=users&limit=6`, {
-      next: { revalidate: 300 } // Revalidate every 5 minutes
-    });
-    if (!response.ok) return [];
-    const data = await response.json();
-    return data.topics || [];
-  } catch (error) {
-    console.error('Error fetching top topics:', error);
-    return [];
-  }
-}
-
-// Server Component wrapper for data fetching
-async function HomePageData() {
-  const [featuredQuizzes, topTopics] = await Promise.all([
-    fetchFeaturedQuizzes(),
-    fetchTopTopics(),
-  ]);
-
-  // Mock stats for now - these could be fetched from database in the future
-  const stats = {
-    totalQuizzes: 150,
-    activeUsers: 2500,
-    questionsAnswered: 50000,
-    averageRating: 4.7,
-  };
-
-  return (
-    <LandingPage 
-      featuredQuizzes={featuredQuizzes}
-      topTopics={topTopics}
-      stats={stats}
-    />
-  );
-}
-
-// Loading fallback
-function HomePageFallback() {
-  return (
-    <div className="flex min-h-screen items-center justify-center">
-      <LoadingSpinner size="lg" />
-    </div>
-  );
-}
+const stats = {
+  totalQuizzes: 150,
+  activeUsers: 2500,
+  questionsAnswered: 50000,
+  averageRating: 4.7,
+};
 
 export default function Home() {
   return (
     <ShowcaseThemeProvider>
-      <Suspense fallback={<HomePageFallback />}>
-        <HomePageData />
+      <Suspense
+        fallback={(
+          <div className="flex min-h-screen items-center justify-center">
+            <LoadingSpinner size="lg" />
+          </div>
+        )}
+      >
+        <LandingPage stats={stats} />
       </Suspense>
     </ShowcaseThemeProvider>
   );

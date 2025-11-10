@@ -272,6 +272,7 @@ export default async function QuizDetailPage({ params }: QuizDetailPageProps) {
         isPracticeMode: false,
       },
       orderBy: [
+        { totalPoints: "desc" },
         { score: "desc" },
         { completedAt: "desc" },
       ],
@@ -492,10 +493,14 @@ export default async function QuizDetailPage({ params }: QuizDetailPageProps) {
                     View Results
                   </ShowcaseButton>
                 </Link>
+              ) : isLimitReached ? (
+                <ShowcaseButton className="px-6 py-3 text-sm" disabled>
+                  Attempt Limit Reached
+                </ShowcaseButton>
               ) : (
                 <Link href={`/quizzes/${quiz.slug}/play`}>
-                  <ShowcaseButton className="px-6 py-3 text-sm" disabled={isLimitReached}>
-                    {isLimitReached ? "Attempt Limit Reached" : "Start Quiz"}
+                  <ShowcaseButton className="px-6 py-3 text-sm">
+                    Start Quiz
                   </ShowcaseButton>
                 </Link>
               )}

@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, type ReactNode, useContext, useEffect, useState } from "react";
+import { createContext, type ReactNode, useContext, useEffect, useMemo, useState } from "react";
 import { useTheme as useNextTheme } from "next-themes";
 
 export type ShowcaseTheme = "light" | "dark";
@@ -14,24 +14,25 @@ const ShowcaseThemeContext = createContext<ShowcaseThemeContextType | undefined>
 
 export function ShowcaseThemeProvider({ children }: { children: ReactNode }) {
   const [mounted, setMounted] = useState(false);
-  const [theme, setTheme] = useState<ShowcaseTheme>("dark");
-  const { theme: nextTheme, setTheme: setNextTheme } = useNextTheme();
+  const { resolvedTheme, theme: userTheme, setTheme: setNextTheme } = useNextTheme();
 
-  // Mirror next-themes into showcase theme to keep the whole home page in sync
   useEffect(() => {
     setMounted(true);
-    const mapped = nextTheme === "light" ? "light" : "dark";
-    setTheme(mapped);
-  }, [nextTheme]);
+  }, []);
+
+  const effectiveTheme: ShowcaseTheme = useMemo(() => {
+    if (!mounted) {
+      return "dark";
+    }
+
+    const current = (resolvedTheme ?? userTheme) === "light" ? "light" : "dark";
+    return current;
+  }, [mounted, resolvedTheme, userTheme]);
 
   const toggleTheme = () => {
-    const next = theme === "light" ? "dark" : "light";
-    setTheme(next);
+    const next = effectiveTheme === "light" ? "dark" : "light";
     setNextTheme(next);
   };
-
-  // During SSR, always use "dark" to prevent hydration mismatch
-  const effectiveTheme = mounted ? theme : "dark";
 
   return (
     <ShowcaseThemeContext.Provider value={{ theme: effectiveTheme, toggleTheme }}>

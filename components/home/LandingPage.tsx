@@ -1,20 +1,17 @@
-"use client";
-
-import { useShowcaseTheme } from "@/components/showcase/ShowcaseThemeProvider";
-import { getBackgroundVariant, getBlurCircles } from "@/lib/showcase-theme";
-import { cn } from "@/lib/utils";
+import { Suspense } from "react";
 import { ShowcaseHeroSpotlight } from "@/components/showcase/ui/HeroVariants";
-import { FeaturedQuizzes } from "./FeaturedQuizzes";
-import { PopularTopics } from "./PopularTopics";
 import { SocialProof } from "./SocialProof";
 import { HowItWorks } from "./HowItWorks";
 import { Features } from "./Features";
 import { Testimonials } from "./Testimonials";
 import { FinalCTA } from "./FinalCTA";
+import { ThemedSection } from "./ThemedSection";
+import { FeaturedQuizzes } from "./FeaturedQuizzes";
+import { PopularTopics } from "./PopularTopics";
+import { FeaturedQuizzesSkeleton } from "./FeaturedQuizzesSkeleton";
+import { PopularTopicsSkeleton } from "./PopularTopicsSkeleton";
 
 interface LandingPageProps {
-  featuredQuizzes: any[];
-  topTopics: any[];
   stats: {
     totalQuizzes: number;
     activeUsers: number;
@@ -23,23 +20,10 @@ interface LandingPageProps {
   };
 }
 
-export function LandingPage({ featuredQuizzes, topTopics: _topTopics, stats }: LandingPageProps) {
-  const { theme } = useShowcaseTheme();
-  const blurCircles = getBlurCircles(theme);
-
+export function LandingPage({ stats }: LandingPageProps) {
   return (
     <div className="relative flex min-h-screen flex-col overflow-hidden">
-      {/* Hero Section with default background */}
-      <div className={cn(
-        "relative",
-        getBackgroundVariant("default", theme)
-      )}>
-        {/* Animated blur circles */}
-        <div className="absolute inset-0 -z-10 opacity-70">
-          <div className={cn(`absolute -left-20 top-24 h-72 w-72 rounded-full blur-[120px]`, blurCircles.circle1)} />
-          <div className={cn(`absolute right-12 top-12 h-64 w-64 rounded-full blur-[100px]`, blurCircles.circle2)} />
-          <div className={cn(`absolute bottom-8 left-1/2 h-56 w-56 -translate-x-1/2 rounded-full blur-[90px]`, blurCircles.circle3)} />
-        </div>
+      <ThemedSection variant="default">
         <div className="px-4 py-12 sm:px-6 sm:py-16 lg:py-24">
           <div className="mx-auto max-w-6xl">
             <ShowcaseHeroSpotlight
@@ -65,84 +49,39 @@ export function LandingPage({ featuredQuizzes, topTopics: _topTopics, stats }: L
             />
           </div>
         </div>
-      </div>
+      </ThemedSection>
 
-      {/* Featured Quizzes with vibrant background */}
-      <div className={cn("relative", getBackgroundVariant("vibrant", theme))}>
-        {/* Animated blur circles */}
-        <div className="absolute inset-0 -z-10 opacity-70">
-          <div className={cn(`absolute -left-20 top-24 h-72 w-72 rounded-full blur-[120px]`, blurCircles.circle1)} />
-          <div className={cn(`absolute right-12 top-12 h-64 w-64 rounded-full blur-[100px]`, blurCircles.circle2)} />
-          <div className={cn(`absolute bottom-8 left-1/2 h-56 w-56 -translate-x-1/2 rounded-full blur-[90px]`, blurCircles.circle3)} />
-        </div>
-        <FeaturedQuizzes quizzes={featuredQuizzes} />
-      </div>
+      <ThemedSection variant="vibrant">
+        <Suspense fallback={<FeaturedQuizzesSkeleton />}>
+          <FeaturedQuizzes />
+        </Suspense>
+      </ThemedSection>
 
-      {/* Popular Topics with cool background */}
-      <div className={cn("relative", getBackgroundVariant("cool", theme))}>
-        {/* Animated blur circles */}
-        <div className="absolute inset-0 -z-10 opacity-70">
-          <div className={cn(`absolute -left-20 top-24 h-72 w-72 rounded-full blur-[120px]`, blurCircles.circle1)} />
-          <div className={cn(`absolute right-12 top-12 h-64 w-64 rounded-full blur-[100px]`, blurCircles.circle2)} />
-          <div className={cn(`absolute bottom-8 left-1/2 h-56 w-56 -translate-x-1/2 rounded-full blur-[90px]`, blurCircles.circle3)} />
-        </div>
-        <PopularTopics />
-      </div>
+      <ThemedSection variant="cool">
+        <Suspense fallback={<PopularTopicsSkeleton />}>
+          <PopularTopics />
+        </Suspense>
+      </ThemedSection>
 
-      {/* Social Proof with default background */}
-      <div className={cn("relative", getBackgroundVariant("default", theme))}>
-        {/* Animated blur circles */}
-        <div className="absolute inset-0 -z-10 opacity-70">
-          <div className={cn(`absolute -left-20 top-24 h-72 w-72 rounded-full blur-[120px]`, blurCircles.circle1)} />
-          <div className={cn(`absolute right-12 top-12 h-64 w-64 rounded-full blur-[100px]`, blurCircles.circle2)} />
-          <div className={cn(`absolute bottom-8 left-1/2 h-56 w-56 -translate-x-1/2 rounded-full blur-[90px]`, blurCircles.circle3)} />
-        </div>
+      <ThemedSection variant="default">
         <SocialProof stats={stats} />
-      </div>
+      </ThemedSection>
 
-      {/* How It Works with dark background */}
-      <div className={cn("relative", getBackgroundVariant("dark", theme))}>
-        {/* Animated blur circles */}
-        <div className="absolute inset-0 -z-10 opacity-70">
-          <div className={cn(`absolute -left-20 top-24 h-72 w-72 rounded-full blur-[120px]`, blurCircles.circle1)} />
-          <div className={cn(`absolute right-12 top-12 h-64 w-64 rounded-full blur-[100px]`, blurCircles.circle2)} />
-          <div className={cn(`absolute bottom-8 left-1/2 h-56 w-56 -translate-x-1/2 rounded-full blur-[90px]`, blurCircles.circle3)} />
-        </div>
+      <ThemedSection variant="dark">
         <HowItWorks />
-      </div>
+      </ThemedSection>
 
-      {/* Features with vibrant background */}
-      <div className={cn("relative", getBackgroundVariant("vibrant", theme))}>
-        {/* Animated blur circles */}
-        <div className="absolute inset-0 -z-10 opacity-70">
-          <div className={cn(`absolute -left-20 top-24 h-72 w-72 rounded-full blur-[120px]`, blurCircles.circle1)} />
-          <div className={cn(`absolute right-12 top-12 h-64 w-64 rounded-full blur-[100px]`, blurCircles.circle2)} />
-          <div className={cn(`absolute bottom-8 left-1/2 h-56 w-56 -translate-x-1/2 rounded-full blur-[90px]`, blurCircles.circle3)} />
-        </div>
+      <ThemedSection variant="vibrant">
         <Features />
-      </div>
+      </ThemedSection>
 
-      {/* Testimonials with cool background */}
-      <div className={cn("relative", getBackgroundVariant("cool", theme))}>
-        {/* Animated blur circles */}
-        <div className="absolute inset-0 -z-10 opacity-70">
-          <div className={cn(`absolute -left-20 top-24 h-72 w-72 rounded-full blur-[120px]`, blurCircles.circle1)} />
-          <div className={cn(`absolute right-12 top-12 h-64 w-64 rounded-full blur-[100px]`, blurCircles.circle2)} />
-          <div className={cn(`absolute bottom-8 left-1/2 h-56 w-56 -translate-x-1/2 rounded-full blur-[90px]`, blurCircles.circle3)} />
-        </div>
+      <ThemedSection variant="cool">
         <Testimonials />
-      </div>
+      </ThemedSection>
 
-      {/* Final CTA with default background */}
-      <div className={cn("relative", getBackgroundVariant("default", theme))}>
-        {/* Animated blur circles */}
-        <div className="absolute inset-0 -z-10 opacity-70">
-          <div className={cn(`absolute -left-20 top-24 h-72 w-72 rounded-full blur-[120px]`, blurCircles.circle1)} />
-          <div className={cn(`absolute right-12 top-12 h-64 w-64 rounded-full blur-[100px]`, blurCircles.circle2)} />
-          <div className={cn(`absolute bottom-8 left-1/2 h-56 w-56 -translate-x-1/2 rounded-full blur-[90px]`, blurCircles.circle3)} />
-        </div>
+      <ThemedSection variant="default">
         <FinalCTA />
-      </div>
+      </ThemedSection>
     </div>
   );
 }

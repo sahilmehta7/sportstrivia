@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo, useRef, useState } from "react";
 import { ShowcaseQuizCard } from "./ShowcaseQuizCard";
 import { cn } from "@/lib/utils";
@@ -12,6 +13,7 @@ interface CarouselItem {
   playersLabel: string;
   accent: string;
   coverImageUrl?: string | null;
+  href?: string;
 }
 
 interface ShowcaseQuizCarouselProps {
@@ -98,8 +100,8 @@ export function ShowcaseQuizCarousel({ items, className }: ShowcaseQuizCarouselP
           )}
           style={{ transform: `translateX(${offset}px)` }}
         >
-          {items.map((item) => (
-            <div key={item.id} className="mr-8 last:mr-0" style={{ width: CARD_WIDTH }}>
+          {items.map((item) => {
+            const card = (
               <ShowcaseQuizCard
                 title={item.title}
                 badgeLabel={item.badgeLabel}
@@ -108,8 +110,24 @@ export function ShowcaseQuizCarousel({ items, className }: ShowcaseQuizCarouselP
                 accent={item.accent}
                 coverImageUrl={item.coverImageUrl}
               />
-            </div>
-          ))}
+            );
+
+            return (
+              <div key={item.id} className="mr-8 last:mr-0" style={{ width: CARD_WIDTH }}>
+                {item.href ? (
+                  <Link
+                    href={item.href}
+                    className="block h-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-2 focus-visible:ring-offset-background transition-transform hover:-translate-y-1"
+                    aria-label={`View quiz ${item.title}`}
+                  >
+                    {card}
+                  </Link>
+                ) : (
+                  card
+                )}
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>
