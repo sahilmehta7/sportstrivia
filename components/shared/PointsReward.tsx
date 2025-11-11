@@ -314,27 +314,27 @@ export function PointsReward({
             <span className={cn(config.points, pointsGradient)}>
               +<AnimatedNumber value={points} />
             </span>
-            <span className="text-sm text-foreground/60">total points</span>
+            <span className="text-sm text-foreground/60">XP</span>
           </div>
-          <p className={cn(config.text, "text-foreground/80 mb-4")}>
-            {reason}
-          </p>
+          {reason ? (
+            <p className={cn(config.text, "text-foreground/80 mb-4")}>
+              {reason}
+            </p>
+          ) : null}
 
           {/* Breakdown */}
           {breakdown && breakdown.length > 0 && (
-            <div className="space-y-2">
+            <div className="divide-y divide-border/40 border-t border-border/40">
               {breakdown.map((item, index) => (
                 <div
                   key={index}
-                  className="flex items-center justify-between py-2 border-b border-border/50 last:border-0"
+                  className="flex items-center justify-between gap-6 py-3 text-sm text-foreground/80"
                 >
-                  <div className="flex items-center gap-2 text-foreground/70">
-                    {item.icon && <span className="text-sm">{item.icon}</span>}
-                    <span className="text-sm">{item.label}</span>
+                  <div className="flex items-center gap-2">
+                    {item.icon && <span className="text-base leading-none">{item.icon}</span>}
+                    <span className="font-medium text-foreground">{item.label}</span>
                   </div>
-                  <span className="text-sm font-semibold text-foreground">
-                    +{item.points}
-                  </span>
+                  <span className="font-semibold text-foreground">+{item.points} XP</span>
                 </div>
               ))}
             </div>

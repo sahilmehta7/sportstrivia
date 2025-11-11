@@ -24,12 +24,9 @@ export function QuizResultsLayout({ theme, className, children }: QuizResultsLay
         className,
       )}
     >
-      <div className="absolute inset-0 -z-10 opacity-70">
-        <div className={cn("absolute -left-20 top-24 h-72 w-72 rounded-full blur-[120px]", blur.circle1)} />
-        <div className={cn("absolute right-12 top-12 h-64 w-64 rounded-full blur-[100px]", blur.circle2)} />
-        <div className={cn("absolute left-1/2 bottom-8 h-56 w-56 -translate-x-1/2 rounded-full blur-[90px]", blur.circle3)} />
-      </div>
-
+      <div className={cn("pointer-events-none", "absolute -left-20 top-24 h-72 w-72 rounded-full blur-[120px]", blur.circle1)} />
+      <div className={cn("pointer-events-none", "absolute right-12 top-12 h-64 w-64 rounded-full blur-[100px]", blur.circle2)} />
+      <div className={cn("pointer-events-none", "absolute left-1/2 bottom-8 h-56 w-56 -translate-x-1/2 rounded-full blur-[90px]", blur.circle3)} />
       <div
         className={cn(
           "relative w-full max-w-5xl rounded-[1.75rem] border p-6 sm:p-8 lg:p-10",

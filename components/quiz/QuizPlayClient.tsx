@@ -11,7 +11,6 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Progress } from "@/components/ui/progress";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { useToast } from "@/hooks/use-toast";
-import { ReviewModal } from "./ReviewModal";
 import { AttemptLimitBanner } from "@/components/quiz/AttemptLimitBanner";
 
 interface AttemptLimitClientInfo {
@@ -68,11 +67,8 @@ interface QuestionFeedback {
 export function QuizPlayClient({ quizId, quizTitle, quizSlug, initialAttemptLimit }: QuizPlayClientProps) {
   const router = useRouter();
   const { toast } = useToast();
-  const [showReviewModal, setShowReviewModal] = useState(false);
-  const [hasReviewed, setHasReviewed] = useState(false);
-
   const [status, setStatus] = useState<
-    "loading" | "in-progress" | "results" | "error" | "limit-reached"
+    "loading" | "in-progress" | "error" | "limit-reached" | "redirecting"
   >("loading");
   const attemptIdRef = useRef<string | null>(null);
   const [quizConfig, setQuizConfig] = useState<QuizConfig>({});
@@ -81,13 +77,10 @@ export function QuizPlayClient({ quizId, quizTitle, quizSlug, initialAttemptLimi
   const [currentIndex, setCurrentIndex] = useState<number>(0);
   const [currentQuestion, setCurrentQuestion] = useState<AttemptQuestion | null>(null);
   const [feedback, setFeedback] = useState<QuestionFeedback | null>(null);
-  const [results, setResults] = useState<any>(null);
   const [timeLeft, setTimeLeft] = useState<number>(0);
   const [currentTimeLimit, setCurrentTimeLimit] = useState<number>(60);
   const [pendingQuestionId, setPendingQuestionId] = useState<string | null>(null);
   const [isCompleting, startCompletion] = useTransition();
-  const [isSharing, setIsSharing] = useState(false);
-  const [shareStatus, setShareStatus] = useState<"idle" | "success" | "error">("idle");
   const [attemptLimit, setAttemptLimit] = useState<AttemptLimitClientInfo | null>(
     initialAttemptLimit ?? null
   );
@@ -173,16 +166,12 @@ export function QuizPlayClient({ quizId, quizTitle, quizSlug, initialAttemptLimi
               const fallback = await fetch(`/api/attempts/${activeAttemptId}`);
               const fallbackJson = await fallback.json();
 
-              if (fallback.ok && fallbackJson?.data) {
-                setResults({
-                  ...fallbackJson.data,
-                  awardedBadges: [],
-                  progression: null,
-                  completionBonusAwarded: 0,
-                });
-                setStatus("results");
+              if (fallback.ok && fallbackJson?.data?.attempt?.id) {
+                const attemptedSlug = fallbackJson.data?.quiz?.slug ?? quizSlug;
                 setFeedback(null);
                 setCurrentQuestion(null);
+                setStatus("redirecting");
+                router.push(`/quizzes/${attemptedSlug}/results/${fallbackJson.data.attempt.id}?fresh=1`);
                 return true;
               }
             } catch (fallbackError) {
@@ -199,10 +188,19 @@ export function QuizPlayClient({ quizId, quizTitle, quizSlug, initialAttemptLimi
           throw new Error(message);
         }
 
-        setResults(result.data);
-        setStatus("results");
+        const attemptData = result.data?.attempt;
+        const attemptQuiz = result.data?.quiz;
+
+        if (attemptData?.id) {
+          const destinationSlug = attemptQuiz?.slug ?? quizSlug;
         setFeedback(null);
         setCurrentQuestion(null);
+          setStatus("redirecting");
+          router.push(`/quizzes/${destinationSlug}/results/${attemptData.id}?fresh=1`);
+          return;
+        }
+
+        throw new Error("Missing attempt details after completion");
       } catch (error: any) {
         toast({
           title: "Unable to complete quiz",
@@ -212,7 +210,7 @@ export function QuizPlayClient({ quizId, quizTitle, quizSlug, initialAttemptLimi
         setStatus("error");
       }
     },
-    [toast]
+    [quizSlug, router, toast]
   );
 
   const startAttempt = useCallback(async () => {
@@ -339,69 +337,6 @@ export function QuizPlayClient({ quizId, quizTitle, quizSlug, initialAttemptLimi
       clearAdvanceTimeout();
     };
   }, [clearAdvanceTimeout, clearTimer, initialAttemptLimit, startAttempt]);
-
-  const handleRematch = useCallback(() => {
-    setStatus("loading");
-    setResults(null);
-    setFeedback(null);
-    attemptIdRef.current = null;
-    setTotalQuestions(0);
-    setQuestions([]);
-    setCurrentIndex(0);
-    setCurrentQuestion(null);
-    setCurrentTimeLimit(60);
-    setTimeLeft(0);
-    setLimitLockInfo(null);
-    setPendingQuestionId(null);
-    startAttempt();
-  }, [startAttempt]);
-
-  const handleShare = useCallback(async () => {
-    if (!results?.attempt) return;
-    const shareText = `I just scored ${results.attempt.totalPoints} pts in ${quizTitle}! Can you beat me?`;
-    const quizUrl = typeof window !== "undefined" ? `${window.location.origin}/quizzes/${quizSlug}` : "";
-
-    try {
-      setIsSharing(true);
-      setShareStatus("idle");
-
-      if (typeof navigator !== "undefined" && navigator.share) {
-        await navigator.share({
-          title: quizTitle,
-          text: shareText,
-          url: quizUrl,
-        });
-        setShareStatus("success");
-      } else if (typeof navigator !== "undefined" && navigator.clipboard) {
-        await navigator.clipboard.writeText(`${shareText} ${quizUrl}`.trim());
-        setShareStatus("success");
-        toast({
-          title: "Score copied!",
-          description: "Share it with friends and challenge their best time.",
-        });
-      } else {
-        throw new Error("Sharing is not supported on this device");
-      }
-    } catch (error) {
-      setShareStatus("error");
-      const message = error instanceof Error ? error.message : "Unable to share your score";
-      toast({
-        title: "Share failed",
-        description: message,
-        variant: "destructive",
-      });
-    } finally {
-      setIsSharing(false);
-    }
-  }, [quizSlug, quizTitle, results, toast]);
-
-  const handleBrowseQuizzes = useCallback(() => {
-    router.push("/quizzes");
-  }, [router]);
-
-  const handleViewQuiz = useCallback(() => {
-    router.push(`/quizzes/${quizSlug}`);
-  }, [router, quizSlug]);
 
   const handleAnswer = useCallback(
     async (answerId: string | null, fromTimer = false) => {
@@ -654,217 +589,13 @@ export function QuizPlayClient({ quizId, quizTitle, quizSlug, initialAttemptLimi
     );
   }
 
-  if (status === "results" && results) {
-    const awardedBadges: string[] = results.awardedBadges ?? [];
-    const progression = results.progression as
-      | {
-          tier: string;
-          tierLabel: string;
-          totalPoints: number;
-          leveledUp: boolean;
-          nextTier: string | null;
-          nextTierLabel: string | null;
-          pointsToNext: number | null;
-          progressPercent: number;
-        }
-      | undefined;
-
+  if (status === "redirecting") {
     return (
-      <div className="mx-auto grid max-w-4xl gap-6 py-8">
-        {attemptLimit && (
-          <AttemptLimitBanner
-            maxAttempts={attemptLimit.max}
-            period={attemptLimit.period}
-            attemptsRemaining={attemptLimit.remaining}
-            attemptsUsed={
-              attemptLimit.remaining !== null
-                ? Math.max(attemptLimit.max - attemptLimit.remaining, 0)
-                : null
-            }
-            resetAt={attemptLimit.resetAt}
-            className="shadow-sm"
-          />
-        )}
-        <Card>
-          <CardHeader>
-            <CardTitle>Quiz Completed</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <p className="text-2xl font-semibold">
-                Score: {results.attempt.score.toFixed(1)}%
-              </p>
-              <p className="text-muted-foreground">
-                {results.attempt.correctAnswers} / {results.attempt.totalQuestions} correct
-              </p>
-            </div>
-            <Badge variant={results.attempt.passed ? "default" : "destructive"}>
-              {results.attempt.passed ? "Passed" : "Did not pass"}
-            </Badge>
-            <div className="grid gap-2 text-sm text-muted-foreground sm:grid-cols-2">
-              <div className="rounded-md border border-muted-foreground/20 bg-muted/40 px-3 py-2">
-                <p className="font-semibold text-foreground">Total Points</p>
-                <p>{results.attempt.totalPoints}</p>
-              </div>
-              <div className="rounded-md border border-muted-foreground/20 bg-muted/40 px-3 py-2">
-                <p className="font-semibold text-foreground">Longest Streak</p>
-                <p>{results.attempt.longestStreak} correct</p>
-              </div>
-              <div className="rounded-md border border-muted-foreground/20 bg-muted/40 px-3 py-2">
-                <p className="font-semibold text-foreground">Avg. Response Time</p>
-                <p>{results.attempt.averageResponseTime.toFixed(1)} sec</p>
-              </div>
-              <div className="rounded-md border border-muted-foreground/20 bg-muted/40 px-3 py-2">
-                <p className="font-semibold text-foreground">Total Time Spent</p>
-                <p>{results.attempt.totalTimeSpent} sec</p>
-              </div>
-            </div>
-            {progression && (
-              <div className="space-y-3 rounded-md border border-primary/30 bg-primary/5 px-4 py-3">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <div>
-                    <p className="text-sm font-semibold text-foreground">Current Tier</p>
-                    <p className="text-lg font-bold">{progression.tierLabel}</p>
-                  </div>
-                  <Badge>{progression.tierLabel}</Badge>
-                </div>
-                <div className="text-sm text-muted-foreground">
-                  Career points:{" "}
-                  <span className="font-semibold text-foreground">{progression.totalPoints}</span>
-                </div>
-                <div className="space-y-1">
-                  <div className="flex items-center justify-between text-xs text-muted-foreground">
-                    <span>
-                      Progress to {progression.nextTierLabel ?? progression.tierLabel}
-                    </span>
-                    <span>{progression.progressPercent}%</span>
-                  </div>
-                  <div className="h-2 w-full rounded-full bg-muted">
-                    <div
-                      className="h-2 rounded-full bg-primary transition-all"
-                      style={{ width: `${progression.progressPercent}%` }}
-                    />
-                  </div>
-                  {progression.pointsToNext !== null && (
-                    <p className="text-xs text-muted-foreground">
-                      {progression.pointsToNext} points until {progression.nextTierLabel}
-                    </p>
-                  )}
-                  {progression.leveledUp && (
-                    <p className="text-xs font-semibold text-primary">
-                      Level up! You&apos;ve reached the {progression.tierLabel} tier.
-                    </p>
-                  )}
-                </div>
-              </div>
-            )}
-            {awardedBadges.length > 0 && (
-              <div className="space-y-2 rounded-md border border-emerald-400/40 bg-emerald-400/10 px-4 py-3">
-                <p className="text-sm font-semibold text-foreground">New badges unlocked</p>
-                <div className="flex flex-wrap gap-2">
-                  {awardedBadges.map((badge) => (
-                    <Badge key={badge} variant="secondary">
-                      {badge}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-            )}
-            <div className="flex flex-wrap gap-2">
-              <Button onClick={handleViewQuiz}>Back to quiz</Button>
-              <Button variant="outline" onClick={handleBrowseQuizzes}>
-                Browse more quizzes
-              </Button>
-              <Button variant="secondary" onClick={handleRematch}>
-                Rematch
-              </Button>
-              {!hasReviewed && (
-                <Button variant="default" onClick={() => setShowReviewModal(true)}>
-                  Rate this quiz
-                </Button>
-              )}
-              <Button variant="outline" onClick={handleShare} disabled={isSharing}>
-                {isSharing ? "Sharing..." : "Share score"}
-              </Button>
-            </div>
-            {shareStatus === "success" && (
-              <p className="text-xs text-emerald-500">
-                Shared! Challenge your friends to climb the leaderboard.
-              </p>
-            )}
-            {shareStatus === "error" && (
-              <p className="text-xs text-destructive">
-                We couldn&apos;t share automatically—try copying the link manually.
-              </p>
-            )}
-          </CardContent>
-        </Card>
-
-        <ReviewModal
-          quizSlug={quizSlug}
-          quizTitle={quizTitle}
-          isOpen={showReviewModal}
-          onClose={() => setShowReviewModal(false)}
-          onSuccess={() => {
-            setHasReviewed(true);
-            setShowReviewModal(false);
-          }}
-        />
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Question Review</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {results.answers.map((answer: any, index: number) => (
-              <div
-                key={answer.questionId}
-                className={cn(
-                  "rounded-lg border p-4 transition-colors",
-                  answer.isCorrect
-                    ? "border-green-500/40 bg-green-500/5"
-                    : "border-red-500/40 bg-red-500/5"
-                )}
-              >
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">
-                      Question {index + 1}
-                    </p>
-                    <p className="text-base font-semibold">{answer.questionText}</p>
-                  </div>
-                  <Badge variant={answer.isCorrect ? "default" : "destructive"}>
-                    {answer.isCorrect ? "Correct" : answer.wasSkipped ? "Skipped" : "Incorrect"}
-                  </Badge>
-                </div>
-                {answer.explanation && (
-                  <p className="mt-2 text-sm text-muted-foreground">
-                    {answer.explanation}
-                  </p>
-                )}
-                <div className="mt-3 grid gap-2 text-xs text-muted-foreground sm:grid-cols-2">
-                  <div>
-                    <span className="font-medium text-foreground">Points:</span> {answer.totalPoints}
-                    {answer.totalPoints > 0 && (
-                      <span>
-                        {" "}
-                        (base {answer.basePoints}
-                        {answer.timeBonus ? ", time " + answer.timeBonus : ""}
-                        {answer.streakBonus ? ", streak " + answer.streakBonus : ""})
-                      </span>
-                    )}
-                  </div>
-                  <div>
-                    <span className="font-medium text-foreground">Time:</span> {answer.timeSpent}s
-                    {typeof answer.timeLimit === "number" && (
-                      <span> / {answer.timeLimit}s</span>
-                    )}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
+      <div className="flex min-h-[50vh] flex-col items-center justify-center gap-4">
+        <LoadingSpinner size="lg" />
+        <p className="text-sm text-muted-foreground">
+          Wrapping up your results… taking you to the summary.
+        </p>
       </div>
     );
   }

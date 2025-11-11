@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { Coins, Clock, Zap } from "lucide-react";
+import { Clock, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   getAccentColor,
@@ -81,23 +81,6 @@ export function QuizResultsSummary({ data, theme, confetti = false, footer }: Qu
           >
             <div className="text-2xl font-bold">{data.correctAnswers}</div>
             <div className="text-xs">Out of {data.totalQuestions}</div>
-          </div>
-        </div>
-
-        <div className="mb-4">
-          <p className={cn("mb-2 text-sm", getTextColor(theme, "secondary"))}>You have earned</p>
-          <div
-            className={cn(
-              "inline-flex items-center gap-2 rounded-lg px-3 py-2 backdrop-blur-sm",
-              theme === "light"
-                ? "border border-blue-200/50 bg-gradient-to-r from-blue-100/80 to-purple-100/80"
-                : "border border-amber-400/30 bg-gradient-to-r from-amber-400/20 to-pink-500/20",
-            )}
-          >
-            <Coins className={cn("h-4 w-4", getAccentColor(theme, "primary"))} />
-            <span className={cn("font-semibold", getTextColor(theme, "primary"))}>
-              {data.totalPoints} Points
-            </span>
           </div>
         </div>
 
