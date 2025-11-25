@@ -4,7 +4,8 @@ import { Toaster } from "@/components/ui/toaster";
 import { LayoutWrapper } from "@/components/LayoutWrapper";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { AppSessionProvider } from "@/components/providers/AppSessionProvider";
-import { getOrganizationSchema, getWebSiteSchema } from "@/lib/schema-utils";
+import { OrganizationJsonLd, JsonLdScript } from "next-seo";
+import { defaultSeoConfig } from "@/lib/next-seo-config";
 import React from "react";
 
 export const metadata: Metadata = {
@@ -69,9 +70,6 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const organizationSchema = getOrganizationSchema();
-  const websiteSchema = getWebSiteSchema();
-
   return (
     <html lang="en" suppressHydrationWarning>
       <body className="font-sans">
@@ -83,13 +81,27 @@ export default function RootLayout({
         </ThemeProvider>
 
         {/* Global Structured Data */}
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
+        <OrganizationJsonLd
+          organizationName={defaultSeoConfig.organization.name}
+          url={defaultSeoConfig.organization.url}
+          logo={defaultSeoConfig.organization.logo}
+          description={defaultSeoConfig.organization.description}
         />
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }}
+        <JsonLdScript
+          scriptKey="website-jsonld"
+          data={{
+            "@context": "https://schema.org",
+            "@type": "WebSite",
+            url: defaultSeoConfig.siteUrl,
+            potentialAction: {
+              "@type": "SearchAction",
+              target: {
+                "@type": "EntryPoint",
+                urlTemplate: `${defaultSeoConfig.siteUrl}/quizzes?search={search_term_string}`,
+              },
+              "query-input": "required name=search_term_string",
+            },
+          }}
         />
       </body>
     </html>

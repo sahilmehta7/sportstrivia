@@ -12,6 +12,8 @@ import { Star } from "lucide-react";
 import { ShowcaseThemeProvider } from "@/components/showcase/ShowcaseThemeProvider";
 import { getCurrentUser } from "@/lib/auth-helpers";
 import { getAttemptLimitStatus } from "@/lib/services/attempt-limit.service";
+import { ArticleJsonLd, AggregateRatingJsonLd, BreadcrumbJsonLd } from "next-seo";
+import { getCanonicalUrl } from "@/lib/next-seo-config";
 
 interface QuizDetailPageProps {
   params: Promise<{ slug: string }>;
@@ -122,7 +124,23 @@ export default async function QuizDetailPage({ params }: QuizDetailPageProps) {
   try {
     quiz = await prisma.quiz.findUnique({
       where: { slug },
-      include: {
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        slug: true,
+        sport: true,
+        difficulty: true,
+        duration: true,
+        timePerQuestion: true,
+        descriptionImageUrl: true,
+        createdAt: true,
+        updatedAt: true,
+        averageRating: true,
+        totalReviews: true,
+        maxAttemptsPerUser: true,
+        attemptResetPeriod: true,
+        recurringType: true,
         _count: {
           select: {
             attempts: true,
@@ -199,6 +217,7 @@ export default async function QuizDetailPage({ params }: QuizDetailPageProps) {
     }));
   } catch (error) {
     console.warn(`[quizzes/${slug}] Using fallback data`, error);
+    const now = new Date();
     quiz = {
       id: "demo-quiz",
       title: "Ultimate Cricket Venue Challenge",
@@ -217,6 +236,8 @@ export default async function QuizDetailPage({ params }: QuizDetailPageProps) {
       status: "PUBLISHED",
       averageRating: 4.3,
       totalReviews: 128,
+      createdAt: now,
+      updatedAt: now,
       _count: { attempts: 12345, reviews: 128 },
       topicConfigs: [{ topic: { name: "Cricket" } }],
       leaderboard: [
@@ -384,8 +405,37 @@ export default async function QuizDetailPage({ params }: QuizDetailPageProps) {
       ? quiz.totalReviews
       : quiz._count?.reviews ?? 0;
 
+  const quizUrl = getCanonicalUrl(`/quizzes/${quiz.slug}`);
+  const topicName = quiz.topicConfigs?.[0]?.topic?.name || quiz.sport || "Sports";
+  const breadcrumbItems = [
+    { position: 1, name: "Home", item: getCanonicalUrl("/") },
+    { position: 2, name: "Quizzes", item: getCanonicalUrl("/quizzes") },
+    { position: 3, name: quiz.title, item: quizUrl },
+  ];
+
   return (
     <ShowcaseThemeProvider>
+      {/* Structured Data */}
+      <ArticleJsonLd
+        url={quizUrl}
+        title={quiz.title}
+        description={quiz.description || `Test your knowledge about ${topicName} with this ${quiz.difficulty.toLowerCase()} difficulty quiz`}
+        images={quiz.descriptionImageUrl ? [quiz.descriptionImageUrl] : []}
+        datePublished={quiz.createdAt?.toISOString() || new Date().toISOString()}
+        dateModified={quiz.updatedAt?.toISOString() || new Date().toISOString()}
+        authorName="Sports Trivia Team"
+        publisherName="Sports Trivia"
+        publisherLogo={getCanonicalUrl("/logo.png")}
+      />
+      {totalReviews > 0 && averageRating > 0 && (
+        <AggregateRatingJsonLd
+          ratingValue={averageRating}
+          reviewCount={totalReviews}
+          bestRating={5}
+          worstRating={1}
+        />
+      )}
+      <BreadcrumbJsonLd itemListElements={breadcrumbItems} />
     <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-gradient-to-br from-white via-slate-50 to-blue-50 px-4 py-12 dark:from-slate-900 dark:via-purple-900 dark:to-amber-500 sm:px-6 lg:py-16">
       <div className="absolute inset-0 -z-10 opacity-70">
         <div className="absolute -left-20 top-24 h-72 w-72 rounded-full bg-emerald-400/20 blur-[120px] dark:bg-emerald-400/40" />

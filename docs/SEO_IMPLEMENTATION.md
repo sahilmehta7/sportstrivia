@@ -69,30 +69,29 @@ Each page includes:
 
 ### 4. Structured Data (JSON-LD)
 
-Implemented using Schema.org markup:
+Implemented using `next-seo` library with Schema.org markup:
 
-- **Organization Schema** - Company/platform information
-- **WebSite Schema** - Site-wide info with search functionality
-- **Quiz Schema** - Educational content markup for quizzes
-- **HowTo Schema** - Instructions for completing quizzes
-- **Breadcrumb Schema** - Navigation structure
-- **CollectionPage Schema** - For topics and categories
-- **Person Schema** - User profiles
-- **Review Schema** - Quiz reviews and ratings
-- **ItemList Schema** - List of quizzes/topics
-- **FAQPage Schema** - Common questions
+- **OrganizationJsonLd** - Company/platform information (root layout)
+- **WebSiteJsonLd** - Site-wide info with search functionality (root layout)
+- **ArticleJsonLd** - Educational content markup for quizzes (quiz detail pages)
+- **AggregateRatingJsonLd** - Quiz ratings and reviews (quiz detail pages)
+- **BreadcrumbJsonLd** - Navigation structure (breadcrumbs component, topic pages)
+- **ItemListJsonLd** - List of quizzes/topics (quiz listing pages, topic pages)
+- **PersonJsonLd** - User profiles (profile pages)
 
-**Utilities:** Located in `lib/schema-utils.ts`
+**Library:** `next-seo` - Pre-built React components for structured data
+**Configuration:** `lib/next-seo-config.ts` - Centralized SEO defaults
+**Utilities:** `lib/schema-utils.ts` - Helper functions (legacy, being phased out)
 
 ### 5. Canonical URLs
 
-**Helper Function:** `getCanonicalUrl()` in `lib/seo-utils.ts`
+**Helper Function:** `getCanonicalUrl()` in `lib/next-seo-config.ts`
 
 Ensures each page has a single canonical URL to prevent duplicate content issues.
 
 **Usage:**
 ```typescript
-import { getCanonicalUrl } from "@/lib/seo-utils";
+import { getCanonicalUrl } from "@/lib/next-seo-config";
 
 const canonicalUrl = getCanonicalUrl("/quizzes/my-quiz");
 ```
@@ -249,6 +248,65 @@ export async function generateMetadata({
   };
 }
 ```
+
+### Using next-seo Components
+
+The project uses `next-seo` for structured data (JSON-LD). Components can be used in both Server and Client Components.
+
+**Example: Adding Article Schema to a Quiz Page**
+
+```typescript
+import { ArticleJsonLd, AggregateRatingJsonLd, BreadcrumbJsonLd } from "next-seo";
+import { getCanonicalUrl } from "@/lib/next-seo-config";
+
+export default async function QuizPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  const quiz = await fetchQuiz(slug);
+  const quizUrl = getCanonicalUrl(`/quizzes/${slug}`);
+  
+  return (
+    <>
+      {/* Page content */}
+      <ArticleJsonLd
+        url={quizUrl}
+        title={quiz.title}
+        description={quiz.description}
+        images={quiz.image ? [quiz.image] : []}
+        datePublished={quiz.createdAt.toISOString()}
+        dateModified={quiz.updatedAt.toISOString()}
+        authorName="Sports Trivia Team"
+        publisherName="Sports Trivia"
+      />
+      {quiz.rating > 0 && (
+        <AggregateRatingJsonLd
+          ratingValue={quiz.rating}
+          reviewCount={quiz.reviewCount}
+          bestRating={5}
+          worstRating={1}
+        />
+      )}
+      <BreadcrumbJsonLd
+        itemListElements={[
+          { position: 1, name: "Home", item: getCanonicalUrl("/") },
+          { position: 2, name: "Quizzes", item: getCanonicalUrl("/quizzes") },
+          { position: 3, name: quiz.title, item: quizUrl },
+        ]}
+      />
+    </>
+  );
+}
+```
+
+**Available next-seo Components:**
+
+- `OrganizationJsonLd` - Organization information
+- `WebSiteJsonLd` - Website with search action
+- `ArticleJsonLd` - Article/blog post content
+- `BreadcrumbJsonLd` - Navigation breadcrumbs
+- `ItemListJsonLd` - Lists of items
+- `PersonJsonLd` - Person/user profiles
+- `AggregateRatingJsonLd` - Ratings and reviews
+- `FAQJsonLd` - FAQ pages
 
 ## Best Practices
 

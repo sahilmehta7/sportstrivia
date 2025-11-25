@@ -13,7 +13,8 @@ import {
   type PublicQuizListItem,
 } from "@/lib/services/public-quiz.service";
 import { buildTopicLeaderboard, type LeaderboardPeriod } from "@/lib/services/leaderboard.service";
-import { getTopicSchema, getBreadcrumbSchema, getItemListSchema } from "@/lib/schema-utils";
+import { BreadcrumbJsonLd, ItemListJsonLd } from "next-seo";
+import { getCanonicalUrl } from "@/lib/next-seo-config";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { TopicHero } from "@/components/topics/topic-hero";
 import { FeaturedRow } from "@/components/quizzes/featured-row";
@@ -305,29 +306,32 @@ export default async function TopicDetailPage({
     listing.quizzes[0] ??
     null;
 
-  // Generate structured data
-  const topicSchema = getTopicSchema(topic, listing.pagination.total);
+  // Generate structured data for next-seo components
   const breadcrumbItems = [
-    { name: "Home", url: "/" },
+    { position: 1, name: "Home", item: getCanonicalUrl("/") },
   ];
   if (topic.parent) {
-    breadcrumbItems.push({ name: topic.parent.name, url: `/topics/${topic.parent.slug}` });
+    breadcrumbItems.push({ 
+      position: breadcrumbItems.length + 1, 
+      name: topic.parent.name, 
+      item: getCanonicalUrl(`/topics/${topic.parent.slug}`) 
+    });
   }
-  breadcrumbItems.push({ name: topic.name });
-  const breadcrumbSchema = getBreadcrumbSchema(breadcrumbItems);
+  breadcrumbItems.push({ 
+    position: breadcrumbItems.length + 1, 
+    name: topic.name, 
+    item: getCanonicalUrl(`/topics/${topic.slug}`) 
+  });
   
-  const itemListSchema = listing.quizzes.length > 0
-    ? getItemListSchema(
-        listing.quizzes.map(q => ({
-          id: q.id,
-          title: q.title,
-          slug: q.slug,
-          description: q.description,
-          descriptionImageUrl: q.descriptionImageUrl,
-        })),
-        `${topic.name} Quizzes`
-      )
-    : null;
+  const itemListElements = listing.quizzes.length > 0
+    ? listing.quizzes.map((q, index) => ({
+        position: index + 1,
+        name: q.title,
+        item: getCanonicalUrl(`/quizzes/${q.slug}`),
+        ...(q.descriptionImageUrl ? { image: q.descriptionImageUrl } : {}),
+        ...(q.description ? { description: q.description } : {}),
+      }))
+    : [];
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-background via-background to-muted">
@@ -516,18 +520,11 @@ export default async function TopicDetailPage({
       </div>
 
       {/* Structured Data */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(topicSchema) }}
-      />
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
-      />
-      {itemListSchema && (
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListSchema) }}
+      <BreadcrumbJsonLd itemListElements={breadcrumbItems} />
+      {itemListElements.length > 0 && (
+        <ItemListJsonLd
+          itemListElements={itemListElements}
+          name={`${topic.name} Quizzes`}
         />
       )}
     </main>

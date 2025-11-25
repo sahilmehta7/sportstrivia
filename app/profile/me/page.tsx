@@ -1,6 +1,5 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
-import { getPersonSchema } from "@/lib/schema-utils";
 import {
   getUserProfileInfo,
   getUserProfileStats,
@@ -64,19 +63,11 @@ export default async function MyProfilePage() {
     earnedAt: progress.earnedAt ? progress.earnedAt.toISOString() : null,
   }));
 
-  const personSchema = getPersonSchema({
-    id: profile.id,
-    name: profile.name,
-    image: profile.image,
-    bio: profile.bio,
-  });
-
   return (
     <ProfileMeClient
       profile={profile}
       stats={stats}
       badges={badges}
-      personSchema={personSchema}
     />
   );
 }

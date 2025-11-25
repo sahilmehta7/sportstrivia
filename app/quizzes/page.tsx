@@ -13,6 +13,7 @@ import type { PublicQuizFilters } from "@/lib/dto/quiz-filters.dto";
 import type { ShowcaseFilterGroup } from "@/components/showcase/ui/FilterBar";
 import { Difficulty } from "@prisma/client";
 import { auth } from "@/lib/auth";
+import { ItemListJsonLd } from "next-seo";
 
 const HERO_SECTION_LIMIT = 5;
 const DEFAULT_PAGE_SIZE = 12;
@@ -271,20 +272,12 @@ async function QuizzesData({
     (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : undefined);
 
   const itemList = listing.quizzes.map((quiz, index) => ({
-    "@type": "ListItem",
     position: (listing.pagination.page - 1) * listing.pagination.limit + index + 1,
     url: baseUrl ? `${baseUrl}/quizzes/${quiz.slug}` : `/quizzes/${quiz.slug}`,
     name: quiz.title,
-    image: quiz.descriptionImageUrl ?? undefined,
-    description: quiz.description ?? undefined,
+    ...(quiz.descriptionImageUrl ? { image: quiz.descriptionImageUrl } : {}),
+    ...(quiz.description ? { description: quiz.description } : {}),
   }));
-
-  const jsonLd = {
-    "@context": "https://schema.org",
-    "@type": "ItemList",
-    name: "Sports Trivia Quizzes",
-    itemListElement: itemList,
-  };
 
   return (
     <>
@@ -298,9 +291,9 @@ async function QuizzesData({
       />
 
       {itemList.length > 0 && (
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        <ItemListJsonLd
+          itemListElements={itemList}
+          name="Sports Trivia Quizzes"
         />
       )}
     </>

@@ -2,7 +2,8 @@ import React from "react";
 import Link from "next/link";
 import { ChevronRight, Home } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { getBreadcrumbSchema } from "@/lib/schema-utils";
+import { BreadcrumbJsonLd } from "next-seo";
+import { getCanonicalUrl } from "@/lib/next-seo-config";
 
 export interface BreadcrumbItem {
   name: string;
@@ -21,7 +22,11 @@ export function Breadcrumbs({ items, className, showHome = true }: BreadcrumbsPr
     ? [{ name: "Home", url: "/", icon: <Home className="h-3.5 w-3.5" /> }, ...items]
     : items;
 
-  const breadcrumbSchema = getBreadcrumbSchema(allItems.map(item => ({ name: item.name, url: item.url })));
+  const breadcrumbJsonLdItems = allItems.map((item, index) => ({
+    position: index + 1,
+    name: item.name,
+    ...(item.url && index !== allItems.length - 1 ? { item: getCanonicalUrl(item.url) } : {}),
+  }));
 
   return (
     <>
@@ -62,10 +67,7 @@ export function Breadcrumbs({ items, className, showHome = true }: BreadcrumbsPr
       </nav>
 
       {/* Structured Data */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
-      />
+      <BreadcrumbJsonLd itemListElements={breadcrumbJsonLdItems} />
     </>
   );
 }

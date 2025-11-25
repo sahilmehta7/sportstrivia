@@ -42,6 +42,7 @@ import Link from "next/link";
 import { formatPlayerCount } from "@/lib/quiz-formatters";
 import { PushSubscriptionCard } from "@/components/notifications/PushSubscriptionCard";
 import { DigestPreferencesCard } from "@/components/notifications/DigestPreferencesCard";
+import { JsonLdScript } from "next-seo";
 
 interface ProfileData {
   id: string;
@@ -125,14 +126,12 @@ interface ProfileMeClientProps {
   profile: ProfileData;
   stats: ProfileStats | null;
   badges: BadgeProgress[];
-  personSchema: Record<string, unknown>;
 }
 
 export function ProfileMeClient({
   profile: initialProfile,
   stats,
   badges,
-  personSchema,
 }: ProfileMeClientProps) {
   const router = useRouter();
   const { toast } = useToast();
@@ -668,9 +667,16 @@ export function ProfileMeClient({
         </Tabs>
       </div>
 
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(personSchema) }}
+      {/* Structured Data */}
+      <JsonLdScript
+        scriptKey="person-jsonld"
+        data={{
+          "@context": "https://schema.org",
+          "@type": "Person",
+          name: profile.name || "Anonymous User",
+          ...(profile.image ? { image: profile.image } : {}),
+          ...(profile.bio ? { description: profile.bio } : {}),
+        }}
       />
     </main>
   );
