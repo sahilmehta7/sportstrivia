@@ -69,7 +69,7 @@ export function ShowcaseFeaturedQuizCard({
       {/* Image Section - Now on top for mobile */}
       <div
         className={cn(
-          "relative flex min-h-[240px] flex-1 items-center justify-center overflow-hidden rounded-t-[2.75rem] md:order-2 md:rounded-l-[2.75rem] md:rounded-tr-none",
+          "relative flex aspect-[16/9] min-h-[240px] flex-1 items-center justify-center overflow-hidden rounded-t-[2.75rem] md:order-2 md:rounded-l-[2.75rem] md:rounded-tr-none",
           isLight ? "bg-slate-100/60" : "bg-white/5"
         )}
       >

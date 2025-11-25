@@ -76,6 +76,7 @@ const nextConfig: NextConfig = {
     serverActions: {
       bodySizeLimit: "10mb",
     },
+    optimizeCss: true,
   },
   env: {
     NEXT_PUBLIC_GAMIFICATION_ENABLED:

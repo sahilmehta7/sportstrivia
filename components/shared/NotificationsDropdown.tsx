@@ -215,7 +215,12 @@ export function NotificationsDropdown({
             </p>
           </div>
           {unreadCount > 0 && (
-            <Button variant="ghost" size="sm" onClick={markAllAsRead}>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={markAllAsRead}
+              aria-label="Mark all notifications as read"
+            >
               <Check className="h-4 w-4" />
             </Button>
           )}
@@ -282,6 +287,7 @@ export function NotificationsDropdown({
                           size="sm"
                           className="h-7 w-7 p-0"
                           onClick={(e) => markAsRead(notification.id, e)}
+                          aria-label={`Mark notification as read: ${content.title || "notification"}`}
                         >
                           <Check className="h-3.5 w-3.5" />
                         </Button>
@@ -291,6 +297,7 @@ export function NotificationsDropdown({
                         size="sm"
                         className="h-7 w-7 p-0"
                         onClick={(e) => deleteNotification(notification.id, e)}
+                        aria-label={`Delete notification: ${content.title || "notification"}`}
                       >
                         <Trash2 className="h-3.5 w-3.5 text-destructive" />
                       </Button>

@@ -149,7 +149,7 @@ export function MainNavigation() {
           {/* Right Section */}
           <div className="flex flex-shrink-0 items-center gap-2">
             {/* Random Quiz Button */}
-            <Link href="/random-quiz">
+            <Link href="/random-quiz" aria-label="Go to random quiz">
               <Button
                 variant="ghost"
                 size="icon"

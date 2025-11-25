@@ -37,6 +37,7 @@ const sportEmojiMap: Record<string, string> = {
 
 // Route segment config
 export const dynamic = 'auto';
+export const revalidate = 3600; // Revalidate every hour
 
 export const metadata: Metadata = {
   title: "Browse Sports Trivia Quizzes | Sports Trivia Platform",

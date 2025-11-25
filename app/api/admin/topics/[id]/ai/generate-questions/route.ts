@@ -186,8 +186,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     if (taskId) {
       try {
         await markBackgroundTaskCompleted(taskId, resultPayload);
-      } catch (taskError) {
-        console.error("[AI Question Generator] Failed to mark background task completed:", taskError);
+      } catch {
+        // Silently handle task completion errors
       }
     }
 
@@ -200,8 +200,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       const message = error instanceof Error ? error.message : "Unknown error";
       try {
         await markBackgroundTaskFailed(taskId, message);
-      } catch (taskError) {
-        console.error("[AI Question Generator] Failed to update background task status:", taskError);
+      } catch {
+        // Silently handle task status update errors
       }
     }
     return handleError(error);

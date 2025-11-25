@@ -33,6 +33,7 @@ export const metadata: Metadata = {
 
 // Route segment config
 export const dynamic = 'auto';
+export const revalidate = 3600; // Revalidate every hour
 
 // Color pairs matching the showcase design
 const colorPairs = [
@@ -46,38 +47,16 @@ const colorPairs = [
   { dark: "#92400e", light: "#fed7aa" },
 ];
 
-// Server Component for topics data
-async function TopicsData() {
-  const session = await auth();
-  const userId = session?.user?.id;
+// Server Component for critical topics data (featured topics)
+async function FeaturedTopicsData() {
   let featuredTopics: any[] = [];
-  let allTopics: any[] = [];
-  let l2Topics: any[] = [];
-  let trendingTopicQueries: any[] = [];
-  let recentTopicQueries: { query: string }[] = [];
 
   try {
-    [featuredTopics, allTopics, l2Topics] = await Promise.all([
-      getFeaturedTopics(6),
-      getRootTopics(),
-      getL2TopicsForPopularSports(),
-    ]);
-  } catch (error) {
-    console.warn("[topics] Falling back to empty data due to fetch error", error);
+    featuredTopics = await getFeaturedTopics(6);
+  } catch {
+    // Fallback to empty data on error
   }
 
-  try {
-    trendingTopicQueries = await getTrendingSearchQueries(SearchContext.TOPIC, { limit: 8 });
-    if (userId) {
-      recentTopicQueries = await getRecentSearchQueriesForUser(userId, SearchContext.TOPIC, {
-        limit: 4,
-      });
-    }
-  } catch (error) {
-    console.warn("[topics] Unable to load search telemetry", error);
-  }
-  
-  // Map root topics to format with color pairs
   const featuredItems = featuredTopics.map((topic, index) => ({
     id: topic.id,
     title: topic.name,
@@ -86,6 +65,23 @@ async function TopicsData() {
     accentDark: colorPairs[index % colorPairs.length].dark,
     accentLight: colorPairs[index % colorPairs.length].light,
   }));
+
+  return featuredItems;
+}
+
+// Server Component for all topics data
+async function AllTopicsData() {
+  let allTopics: any[] = [];
+  let l2Topics: any[] = [];
+
+  try {
+    [allTopics, l2Topics] = await Promise.all([
+      getRootTopics(),
+      getL2TopicsForPopularSports(),
+    ]);
+  } catch {
+    // Fallback to empty data on error
+  }
 
   const allItems = allTopics.map((topic, index) => ({
     id: topic.id,
@@ -117,6 +113,31 @@ async function TopicsData() {
     return acc;
   }, {} as Record<string, any[]>);
 
+  return { allItems, l2ItemsByParent };
+}
+
+// Server Component for search suggestions
+async function SearchSuggestionsData() {
+  const session = await auth();
+  const userId = session?.user?.id;
+  let trendingTopicQueries: any[] = [];
+  let recentTopicQueries: { query: string }[] = [];
+  let allTopics: any[] = [];
+
+  try {
+    [trendingTopicQueries, allTopics] = await Promise.all([
+      getTrendingSearchQueries(SearchContext.TOPIC, { limit: 8 }),
+      getRootTopics(),
+    ]);
+    if (userId) {
+      recentTopicQueries = await getRecentSearchQueriesForUser(userId, SearchContext.TOPIC, {
+        limit: 4,
+      });
+    }
+  } catch {
+    // Unable to load search telemetry, continue without it
+  }
+
   const formatChipLabel = (value: string) =>
     value
       .split(" ")
@@ -144,14 +165,23 @@ async function TopicsData() {
     });
   }
 
-  const searchChips = Array.from(chipMap.values()).slice(0, 8);
+  return Array.from(chipMap.values()).slice(0, 8);
+}
+
+// Main Server Component for topics data
+async function TopicsData() {
+  const [featuredItems, { allItems, l2ItemsByParent }, suggestedChips] = await Promise.all([
+    FeaturedTopicsData(),
+    AllTopicsData(),
+    SearchSuggestionsData(),
+  ]);
   
   return (
     <TopicsContent 
       featured={featuredItems} 
       topics={allItems}
       l2TopicsByParent={l2ItemsByParent}
-      suggestedChips={searchChips}
+      suggestedChips={suggestedChips}
     />
   );
 }

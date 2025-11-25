@@ -72,7 +72,7 @@ export function HeroSection({ stats }: HeroSectionProps) {
                 "w-full sm:min-w-[200px] gap-2 text-base sm:text-lg font-semibold transition-all duration-200 hover:scale-105",
                 theme === "light"
                   ? "bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-500/25"
-                  : "bg-emerald-500 hover:bg-emerald-600 text-white shadow-lg shadow-emerald-500/25"
+                  : "bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-600/25"
               )}
             >
               Get Started

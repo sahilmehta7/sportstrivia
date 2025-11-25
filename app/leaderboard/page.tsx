@@ -3,6 +3,9 @@ import { headers } from "next/headers";
 import { ShowcaseLeaderboard, type LeaderboardEntry, type LeaderboardRangeKey } from "@/components/quiz/ShowcaseLeaderboard";
 import { notFound } from "next/navigation";
 
+// Route segment config
+export const revalidate = 300; // Revalidate every 5 minutes for leaderboard
+
 export const metadata: Metadata = {
   title: "Global Leaderboard - Top Performers",
   description: "View the top performers in sports trivia. Check daily and all-time leaderboards to see who's dominating the competition.",

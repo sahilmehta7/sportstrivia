@@ -154,19 +154,7 @@ export async function POST(
         streakBonus,
         totalPoints: totalForQuestion,
       });
-      // Lightweight analytics logging (server-side)
-      try {
-        // eslint-disable-next-line no-console
-        console.info('[scoring]', {
-          attemptId: attempt.id,
-          quizId: attempt.quizId,
-          questionId: userAnswer.questionId,
-          difficulty: userAnswer.question.difficulty,
-          timeSpent: userAnswer.timeSpent,
-          timeLimit: questionTimeLimit,
-          awarded: totalForQuestion,
-        });
-      } catch {}
+      // Analytics logging removed for production
     }
 
     totalPoints = Math.round(totalPoints);

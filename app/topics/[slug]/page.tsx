@@ -258,8 +258,7 @@ export default async function TopicDetailPage({
     }
 
     quizSearchSuggestions = Array.from(suggestionMap.values()).slice(0, 6);
-  } catch (error) {
-    console.warn("[topics] Unable to prepare quiz search suggestions", error);
+  } catch {
     quizSearchSuggestions = [{ value: topic.name, label: topic.name }];
   }
 

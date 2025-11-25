@@ -11,7 +11,17 @@ import { validateSearchQuery } from "@/lib/validations/search.schema";
 
 export const metadata: Metadata = {
   title: "Search results | Sports Trivia",
-  description: "Find quizzes by name, sport, topic, tags and more.",
+  description: "Search and discover sports trivia quizzes by name, sport, topic, tags, and more. Find your perfect quiz challenge from thousands of questions across football, cricket, basketball, tennis, and other sports.",
+  keywords: ["search quizzes", "sports trivia search", "find quizzes", "quiz search", "sports trivia"],
+  openGraph: {
+    title: "Search Sports Trivia Quizzes",
+    description: "Search and discover sports trivia quizzes by name, sport, topic, tags, and more. Find your perfect quiz challenge from thousands of questions.",
+    type: "website",
+    url: "/search",
+  },
+  alternates: {
+    canonical: "/search",
+  },
 };
 
 export default async function SearchPage({
@@ -51,12 +61,10 @@ export default async function SearchPage({
 
   // Fetch quizzes and topics in parallel
   const [listing, topicResults] = await Promise.all([
-    getPublicQuizList({ search, page, limit }).catch((error) => {
-      console.error("[search-page] Error fetching quizzes:", error);
+    getPublicQuizList({ search, page, limit }).catch(() => {
       return { quizzes: [], pagination: { page: 1, limit: 12, total: 0, pages: 0 } };
     }),
-    searchTopics({ query: search, limit: 9 }).catch((error) => {
-      console.error("[search-page] Error fetching topics:", error);
+    searchTopics({ query: search, limit: 9 }).catch(() => {
       return { topics: [], pagination: { page: 1, limit: 9, total: 0, pages: 0 } };
     }),
   ]);
@@ -91,6 +99,7 @@ export default async function SearchPage({
                   key={t.id}
                   href={`/topics/${t.slug}`}
                   className="rounded-full border border-border bg-background px-4 py-2 text-xs font-semibold hover:bg-accent transition-colors"
+                  aria-label={`Browse ${t.name} topic quizzes`}
                 >
                   {t.name}
                 </a>

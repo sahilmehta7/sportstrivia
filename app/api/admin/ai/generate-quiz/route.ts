@@ -103,9 +103,8 @@ export async function POST(request: NextRequest) {
       after(async () => {
         try {
           await processAIQuizTask(finalTaskId);
-        } catch (error) {
-          console.error(`[AI Generator] Background processing failed for task ${finalTaskId}:`, error);
-          // Error handling is done inside processAIQuizTask, but log here for visibility
+        } catch {
+          // Error handling is done inside processAIQuizTask
         }
       });
     }
@@ -121,8 +120,8 @@ export async function POST(request: NextRequest) {
       const message = error instanceof Error ? error.message : "Unknown error";
       try {
         await markBackgroundTaskFailed(taskId, message);
-      } catch (taskError) {
-        console.error("[AI Generator] Failed to update background task status:", taskError);
+      } catch {
+        // Silently handle task status update errors
       }
     }
     return handleError(error);

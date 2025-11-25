@@ -51,8 +51,7 @@ export async function generateStaticParams() {
     return topQuizzes.map((quiz) => ({
       slug: quiz.slug,
     }));
-  } catch (error) {
-    console.error('Error generating static params for quizzes:', error);
+  } catch {
     return [];
   }
 }
@@ -215,8 +214,7 @@ export default async function QuizDetailPage({ params }: QuizDetailPageProps) {
       quote: r.comment ?? "",
       dateLabel: r.createdAt.toLocaleDateString(),
     }));
-  } catch (error) {
-    console.warn(`[quizzes/${slug}] Using fallback data`, error);
+  } catch {
     const now = new Date();
     quiz = {
       id: "demo-quiz",
