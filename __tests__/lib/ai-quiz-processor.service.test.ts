@@ -146,6 +146,24 @@ describe("ai-quiz-processor.service", () => {
       expect(markBackgroundTaskFailed).not.toHaveBeenCalled();
     });
 
+    it("should derive sport context when input sport is missing", async () => {
+      getBackgroundTaskById.mockResolvedValue({
+        ...mockTask,
+        input: {
+          ...mockTask.input,
+          topic: "Super Bowl champions",
+          effectiveTopic: "Super Bowl champions",
+          quizSport: undefined,
+          sport: "",
+        },
+      });
+
+      await processAIQuizTask(mockTaskId);
+
+      const completedCall = markBackgroundTaskCompleted.mock.calls[0];
+      expect(completedCall[1].metadata.sport).toBe("Football");
+    });
+
     it("should throw error if task not found", async () => {
       getBackgroundTaskById.mockResolvedValue(null);
 
