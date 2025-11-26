@@ -167,7 +167,7 @@ The transaction will still fail if:
 
 ```bash
 # Import a test quiz with 100 questions
-curl -X POST http://localhost:3000/api/admin/quizzes/import \
+curl -X POST http://localhost:3200/api/admin/quizzes/import \
   -H "Content-Type: application/json" \
   -d @large-quiz-100q.json
 ```

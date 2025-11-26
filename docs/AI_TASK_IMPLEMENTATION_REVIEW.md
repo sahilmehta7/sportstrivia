@@ -78,7 +78,7 @@ export async function POST(request: NextRequest) {
 ```typescript
 const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || process.env.VERCEL_URL 
   ? `https://${process.env.VERCEL_URL}` 
-  : 'http://localhost:3000';
+  : 'http://localhost:3200';
 ```
 
 If `VERCEL_URL` is set but `NEXT_PUBLIC_BASE_URL` is not, it will use `VERCEL_URL` even if `NEXT_PUBLIC_BASE_URL` should take precedence.
@@ -86,7 +86,7 @@ If `VERCEL_URL` is set but `NEXT_PUBLIC_BASE_URL` is not, it will use `VERCEL_UR
 **Fix**:
 ```typescript
 const baseUrl = process.env.NEXT_PUBLIC_BASE_URL 
-  || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');
+  || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3200');
 ```
 
 #### 4. **Missing Request Context in Background Function (HIGH PRIORITY)**

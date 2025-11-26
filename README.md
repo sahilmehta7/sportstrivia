@@ -65,7 +65,7 @@ Modern multi-player sports trivia experience built with Next.js 15, Prisma, and 
    ```bash
    npm run dev
    ```
-   Visit `http://localhost:3000`.
+   Visit `http://localhost:3200`.
 
 ## Database Schema
 

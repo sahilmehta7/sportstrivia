@@ -188,7 +188,7 @@ psql $DATABASE_URL -c "SELECT count(*) FROM pg_stat_activity WHERE state = 'acti
 
 # Monitor during load test
 while true; do
-  curl -s http://localhost:3000/quizzes/[slug] > /dev/null
+  curl -s http://localhost:3200/quizzes/[slug] > /dev/null
   sleep 0.5
 done
 ```
@@ -200,7 +200,7 @@ done
 npm install -g artillery
 
 # Load test quiz pages
-artillery quick --count 50 --num 10 http://localhost:3000/quizzes
+artillery quick --count 50 --num 10 http://localhost:3200/quizzes
 ```
 
 ## When to Increase Pool Size

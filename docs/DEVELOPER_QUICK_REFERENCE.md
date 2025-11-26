@@ -17,10 +17,10 @@ npm run dev
 ```
 
 Access points:
-- Landing page: `http://localhost:3000/`
-- Admin dashboard: `http://localhost:3000/admin`
-- Sign-in: `http://localhost:3000/auth/signin`
-- Player profile: `http://localhost:3000/profile/me`
+- Landing page: `http://localhost:3200/`
+- Admin dashboard: `http://localhost:3200/admin`
+- Sign-in: `http://localhost:3200/auth/signin`
+- Player profile: `http://localhost:3200/profile/me`
 - API reference: `docs/API_REFERENCE.md`
 
 ---

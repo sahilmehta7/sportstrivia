@@ -79,25 +79,25 @@ Based on your requirements, here's what's implemented and how to use it:
 **All EASY Cricket questions:**
 ```bash
 # First, get Cricket topic ID
-curl 'http://localhost:3000/api/topics' | jq '.data.topics[] | select(.slug == "cricket") | .id'
+curl 'http://localhost:3200/api/topics' | jq '.data.topics[] | select(.slug == "cricket") | .id'
 
 # Then filter questions
-curl 'http://localhost:3000/api/admin/questions?topicId={cricket-id}&difficulty=EASY'
+curl 'http://localhost:3200/api/admin/questions?topicId={cricket-id}&difficulty=EASY'
 ```
 
 **All HARD questions (any topic):**
 ```bash
-curl 'http://localhost:3000/api/admin/questions?difficulty=HARD'
+curl 'http://localhost:3200/api/admin/questions?difficulty=HARD'
 ```
 
 **MEDIUM Basketball questions:**
 ```bash
-curl 'http://localhost:3000/api/admin/questions?topicId={basketball-id}&difficulty=MEDIUM'
+curl 'http://localhost:3200/api/admin/questions?topicId={basketball-id}&difficulty=MEDIUM'
 ```
 
 **Multiple filters combined:**
 ```bash
-curl 'http://localhost:3000/api/admin/questions?topicId={id}&difficulty=EASY&type=MULTIPLE_CHOICE&limit=10'
+curl 'http://localhost:3200/api/admin/questions?topicId={id}&difficulty=EASY&type=MULTIPLE_CHOICE&limit=10'
 ```
 
 ---
@@ -298,29 +298,29 @@ Used for:
 
 ```bash
 # Step 1: Get all topics
-curl 'http://localhost:3000/api/topics' | jq '.data.topics'
+curl 'http://localhost:3200/api/topics' | jq '.data.topics'
 
 # Step 2: Pick a topic ID (e.g., Cricket)
 CRICKET_ID="cm..."
 
 # Step 3: Get all Cricket questions
-curl "http://localhost:3000/api/admin/questions?topicId=${CRICKET_ID}"
+curl "http://localhost:3200/api/admin/questions?topicId=${CRICKET_ID}"
 
 # Step 4: Get only EASY Cricket questions
-curl "http://localhost:3000/api/admin/questions?topicId=${CRICKET_ID}&difficulty=EASY"
+curl "http://localhost:3200/api/admin/questions?topicId=${CRICKET_ID}&difficulty=EASY"
 ```
 
 ### Test 2: Difficulty Filtering
 
 ```bash
 # Get all EASY questions
-curl 'http://localhost:3000/api/admin/questions?difficulty=EASY'
+curl 'http://localhost:3200/api/admin/questions?difficulty=EASY'
 
 # Get all HARD questions  
-curl 'http://localhost:3000/api/admin/questions?difficulty=HARD'
+curl 'http://localhost:3200/api/admin/questions?difficulty=HARD'
 
 # Get MEDIUM questions, page 1
-curl 'http://localhost:3000/api/admin/questions?difficulty=MEDIUM&page=1&limit=10'
+curl 'http://localhost:3200/api/admin/questions?difficulty=MEDIUM&page=1&limit=10'
 ```
 
 ### Test 3: Randomization Testing
@@ -411,13 +411,13 @@ Based on the seed script, you have:
 **Test with Real IDs:**
 ```bash
 # Get Cricket topic ID
-CRICKET_ID=$(curl -s 'http://localhost:3000/api/topics' | jq -r '.data.topics[] | select(.slug == "cricket") | .id')
+CRICKET_ID=$(curl -s 'http://localhost:3200/api/topics' | jq -r '.data.topics[] | select(.slug == "cricket") | .id')
 
 # Get all Cricket questions (should include Batting + Bowling)
-curl "http://localhost:3000/api/admin/questions?topicId=${CRICKET_ID}"
+curl "http://localhost:3200/api/admin/questions?topicId=${CRICKET_ID}"
 
 # Get only EASY Cricket questions
-curl "http://localhost:3000/api/admin/questions?topicId=${CRICKET_ID}&difficulty=EASY"
+curl "http://localhost:3200/api/admin/questions?topicId=${CRICKET_ID}&difficulty=EASY"
 ```
 
 ---

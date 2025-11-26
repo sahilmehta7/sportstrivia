@@ -10,7 +10,7 @@
 **POST** `/api/admin/quizzes`
 
 ```bash
-curl -X POST 'http://localhost:3000/api/admin/quizzes' \
+curl -X POST 'http://localhost:3200/api/admin/quizzes' \
   -H 'Content-Type: application/json' \
   -d '{
     "title": "NBA Champions Quiz",
@@ -31,7 +31,7 @@ curl -X POST 'http://localhost:3000/api/admin/quizzes' \
 **PUT** `/api/admin/quizzes/[id]`
 
 ```bash
-curl -X PUT 'http://localhost:3000/api/admin/quizzes/{id}' \
+curl -X PUT 'http://localhost:3200/api/admin/quizzes/{id}' \
   -H 'Content-Type: application/json' \
   -d '{
     "title": "Updated Title",
@@ -44,7 +44,7 @@ curl -X PUT 'http://localhost:3000/api/admin/quizzes/{id}' \
 **DELETE** `/api/admin/quizzes/[id]`
 
 ```bash
-curl -X DELETE 'http://localhost:3000/api/admin/quizzes/{id}'
+curl -X DELETE 'http://localhost:3200/api/admin/quizzes/{id}'
 ```
 
 **Note**: Soft delete - archives the quiz
@@ -53,7 +53,7 @@ curl -X DELETE 'http://localhost:3000/api/admin/quizzes/{id}'
 **POST** `/api/admin/quizzes/import`
 
 ```bash
-curl -X POST 'http://localhost:3000/api/admin/quizzes/import' \
+curl -X POST 'http://localhost:3200/api/admin/quizzes/import' \
   -H 'Content-Type: application/json' \
   -d '{
     "title": "Imported Quiz",
@@ -69,7 +69,7 @@ curl -X POST 'http://localhost:3000/api/admin/quizzes/import' \
 **POST** `/api/admin/questions`
 
 ```bash
-curl -X POST 'http://localhost:3000/api/admin/questions' \
+curl -X POST 'http://localhost:3200/api/admin/questions' \
   -H 'Content-Type: application/json' \
   -d '{
     "topicId": "{topic-id}",
@@ -91,20 +91,20 @@ curl -X POST 'http://localhost:3000/api/admin/questions' \
 
 ```bash
 # List all
-curl 'http://localhost:3000/api/admin/questions'
+curl 'http://localhost:3200/api/admin/questions'
 
 # Filter by topic and difficulty
-curl 'http://localhost:3000/api/admin/questions?topicId={id}&difficulty=EASY'
+curl 'http://localhost:3200/api/admin/questions?topicId={id}&difficulty=EASY'
 
 # Get single
-curl 'http://localhost:3000/api/admin/questions/{id}'
+curl 'http://localhost:3200/api/admin/questions/{id}'
 ```
 
 ### Update Question
 **PUT** `/api/admin/questions/[id]`
 
 ```bash
-curl -X PUT 'http://localhost:3000/api/admin/questions/{id}' \
+curl -X PUT 'http://localhost:3200/api/admin/questions/{id}' \
   -H 'Content-Type: application/json' \
   -d '{
     "questionText": "Updated question text",
@@ -117,7 +117,7 @@ curl -X PUT 'http://localhost:3000/api/admin/questions/{id}' \
 **DELETE** `/api/admin/questions/[id]`
 
 ```bash
-curl -X DELETE 'http://localhost:3000/api/admin/questions/{id}'
+curl -X DELETE 'http://localhost:3200/api/admin/questions/{id}'
 ```
 
 **Protection**: Cannot delete if question is used in any quiz
@@ -130,7 +130,7 @@ curl -X DELETE 'http://localhost:3000/api/admin/questions/{id}'
 **POST** `/api/admin/topics`
 
 ```bash
-curl -X POST 'http://localhost:3000/api/admin/topics' \
+curl -X POST 'http://localhost:3200/api/admin/topics' \
   -H 'Content-Type: application/json' \
   -d '{
     "name": "NFL",
@@ -147,13 +147,13 @@ curl -X POST 'http://localhost:3000/api/admin/topics' \
 
 ```bash
 # Public list
-curl 'http://localhost:3000/api/topics'
+curl 'http://localhost:3200/api/topics'
 
 # Admin list
-curl 'http://localhost:3000/api/admin/topics'
+curl 'http://localhost:3200/api/admin/topics'
 
 # Get single
-curl 'http://localhost:3000/api/admin/topics/{id}'
+curl 'http://localhost:3200/api/admin/topics/{id}'
 ```
 
 ### Update Topic
@@ -161,7 +161,7 @@ curl 'http://localhost:3000/api/admin/topics/{id}'
 **PUT** `/api/admin/topics/[id]` (alias)
 
 ```bash
-curl -X PATCH 'http://localhost:3000/api/admin/topics/{id}' \
+curl -X PATCH 'http://localhost:3200/api/admin/topics/{id}' \
   -H 'Content-Type: application/json' \
   -d '{
     "name": "Updated Name",
@@ -173,7 +173,7 @@ curl -X PATCH 'http://localhost:3000/api/admin/topics/{id}' \
 **DELETE** `/api/admin/topics/[id]`
 
 ```bash
-curl -X DELETE 'http://localhost:3000/api/admin/topics/{id}'
+curl -X DELETE 'http://localhost:3200/api/admin/topics/{id}'
 ```
 
 **Protection**: Cannot delete if has questions, children, or is used in quizzes
@@ -278,7 +278,7 @@ All CRUD operations are integrated into the admin panel:
 ```bash
 #!/bin/bash
 
-BASE_URL="http://localhost:3000"
+BASE_URL="http://localhost:3200"
 
 echo "Testing CRUD Operations"
 echo "======================="

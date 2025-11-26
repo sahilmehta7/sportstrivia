@@ -43,7 +43,7 @@ Before you begin, ensure you have:
    - Click "Create Credentials" > "OAuth client ID"
    - Application type: "Web application"
    - Authorized redirect URIs: 
-     - `http://localhost:3000/api/auth/callback/google` (development)
+     - `http://localhost:3200/api/auth/callback/google` (development)
      - Add production URL when deploying
 
 5. Note down:
@@ -59,7 +59,7 @@ Before you begin, ensure you have:
 DATABASE_URL="postgresql://postgres:[YOUR-PASSWORD]@db.[YOUR-PROJECT].supabase.co:5432/postgres"
 
 # NextAuth
-NEXTAUTH_URL="http://localhost:3000"
+NEXTAUTH_URL="http://localhost:3200"
 NEXTAUTH_SECRET="run: openssl rand -base64 32"
 
 # Google OAuth
@@ -118,7 +118,7 @@ This creates:
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000)
+Open [http://localhost:3200](http://localhost:3200)
 
 ## Step 7: Access Admin Panel
 
@@ -134,7 +134,7 @@ Or using SQL:
 UPDATE "User" SET role = 'ADMIN' WHERE email = 'your-email@gmail.com';
 ```
 
-3. Access admin panel at [http://localhost:3000/admin](http://localhost:3000/admin)
+3. Access admin panel at [http://localhost:3200/admin](http://localhost:3200/admin)
 
 ## Useful Commands
 

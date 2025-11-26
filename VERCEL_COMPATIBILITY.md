@@ -203,7 +203,7 @@ Set these in Vercel Dashboard:
 
 Update in Google Cloud Console:
 ```
-Development: http://localhost:3000/api/auth/callback/google
+Development: http://localhost:3200/api/auth/callback/google
 Production: https://your-domain.vercel.app/api/auth/callback/google
 ```
 
@@ -230,7 +230,7 @@ npm run build
 # Start production server
 npm run start
 
-# Test on http://localhost:3000
+# Test on http://localhost:3200
 ```
 
 ### Vercel Deploy

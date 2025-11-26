@@ -22,10 +22,10 @@ List all topics (public, no auth required).
 
 ```bash
 # Flat list of all topics
-curl 'http://localhost:3000/api/topics'
+curl 'http://localhost:3200/api/topics'
 
 # Hierarchical tree structure
-curl 'http://localhost:3000/api/topics?hierarchy=true'
+curl 'http://localhost:3200/api/topics?hierarchy=true'
 ```
 
 **Response (Flat):**
@@ -113,19 +113,19 @@ List topics with advanced filtering options (admin only).
 
 ```bash
 # Get all topics
-curl 'http://localhost:3000/api/admin/topics'
+curl 'http://localhost:3200/api/admin/topics'
 
 # Get root topics only
-curl 'http://localhost:3000/api/admin/topics?parentId=null'
+curl 'http://localhost:3200/api/admin/topics?parentId=null'
 
 # Get children of specific topic
-curl 'http://localhost:3000/api/admin/topics?parentId={topic-id}&includeChildren=true'
+curl 'http://localhost:3200/api/admin/topics?parentId={topic-id}&includeChildren=true'
 
 # Search topics
-curl 'http://localhost:3000/api/admin/topics?search=cricket'
+curl 'http://localhost:3200/api/admin/topics?search=cricket'
 
 # Flat list sorted by hierarchy
-curl 'http://localhost:3000/api/admin/topics?flat=true'
+curl 'http://localhost:3200/api/admin/topics?flat=true'
 ```
 
 **Response:**
@@ -191,7 +191,7 @@ Create a new topic (admin only).
 
 ```bash
 # Create root topic
-curl -X POST 'http://localhost:3000/api/admin/topics' \
+curl -X POST 'http://localhost:3200/api/admin/topics' \
   -H 'Content-Type: application/json' \
   -d '{
     "name": "NFL",
@@ -201,7 +201,7 @@ curl -X POST 'http://localhost:3000/api/admin/topics' \
   }'
 
 # Create child topic
-curl -X POST 'http://localhost:3000/api/admin/topics' \
+curl -X POST 'http://localhost:3200/api/admin/topics' \
   -H 'Content-Type: application/json' \
   -d '{
     "name": "Quarterbacks",
@@ -249,7 +249,7 @@ Get a single topic with details (admin only).
 **Example:**
 
 ```bash
-curl 'http://localhost:3000/api/admin/topics/{topic-id}'
+curl 'http://localhost:3200/api/admin/topics/{topic-id}'
 ```
 
 **Response:**
@@ -319,17 +319,17 @@ Update an existing topic (admin only).
 
 ```bash
 # Update topic name
-curl -X PATCH 'http://localhost:3000/api/admin/topics/{id}' \
+curl -X PATCH 'http://localhost:3200/api/admin/topics/{id}' \
   -H 'Content-Type: application/json' \
   -d '{"name": "Cricket Updated"}'
 
 # Change parent (moves topic in hierarchy)
-curl -X PATCH 'http://localhost:3000/api/admin/topics/{id}' \
+curl -X PATCH 'http://localhost:3200/api/admin/topics/{id}' \
   -H 'Content-Type: application/json' \
   -d '{"parentId": "{new-parent-id}"}'
 
 # Make topic a root topic
-curl -X PATCH 'http://localhost:3000/api/admin/topics/{id}' \
+curl -X PATCH 'http://localhost:3200/api/admin/topics/{id}' \
   -H 'Content-Type: application/json' \
   -d '{"parentId": null}'
 ```
@@ -376,7 +376,7 @@ Delete a topic (admin only).
 **Example:**
 
 ```bash
-curl -X DELETE 'http://localhost:3000/api/admin/topics/{id}'
+curl -X DELETE 'http://localhost:3200/api/admin/topics/{id}'
 ```
 
 **Success Response:**
@@ -594,7 +594,7 @@ model Topic {
 
 ```bash
 # 1. CREATE - Create a new topic
-curl -X POST 'http://localhost:3000/api/admin/topics' \
+curl -X POST 'http://localhost:3200/api/admin/topics' \
   -H 'Content-Type: application/json' \
   -d '{
     "name": "Soccer",
@@ -604,15 +604,15 @@ curl -X POST 'http://localhost:3000/api/admin/topics' \
 # Note the returned ID
 
 # 2. READ - Get the topic
-curl 'http://localhost:3000/api/admin/topics/{topic-id}'
+curl 'http://localhost:3200/api/admin/topics/{topic-id}'
 
 # 3. UPDATE - Change the name
-curl -X PATCH 'http://localhost:3000/api/admin/topics/{topic-id}' \
+curl -X PATCH 'http://localhost:3200/api/admin/topics/{topic-id}' \
   -H 'Content-Type: application/json' \
   -d '{"name": "Football (Soccer)"}'
 
 # 4. DELETE - Remove the topic
-curl -X DELETE 'http://localhost:3000/api/admin/topics/{topic-id}'
+curl -X DELETE 'http://localhost:3200/api/admin/topics/{topic-id}'
 ```
 
 ### Test Hierarchy Operations
@@ -691,10 +691,10 @@ PATCH /api/admin/topics/{child-id}
 
 ```bash
 # Get topic ID
-TOPIC_ID=$(curl -s 'http://localhost:3000/api/topics' | jq -r '.data.topics[] | select(.slug == "cricket") | .id')
+TOPIC_ID=$(curl -s 'http://localhost:3200/api/topics' | jq -r '.data.topics[] | select(.slug == "cricket") | .id')
 
 # Get all questions in this topic (includes child topics!)
-curl "http://localhost:3000/api/admin/questions?topicId=${TOPIC_ID}"
+curl "http://localhost:3200/api/admin/questions?topicId=${TOPIC_ID}"
 ```
 
 ### Topic Hierarchy in Question Selection

@@ -3,7 +3,7 @@
 # Practical API Testing - Uses actual seeded data
 # Run this after: npm run dev (in another terminal)
 
-BASE_URL="http://localhost:3000"
+BASE_URL="http://localhost:3200"
 
 echo "🧪 Sports Trivia API - Practical Tests"
 echo "======================================"

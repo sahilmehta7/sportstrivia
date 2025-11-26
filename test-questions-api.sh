@@ -3,7 +3,7 @@
 # Question API Testing Script
 # This script tests all question-related API features
 
-BASE_URL="http://localhost:3000"
+BASE_URL="http://localhost:3200"
 echo "🧪 Testing Question APIs"
 echo "========================"
 echo ""

@@ -327,34 +327,34 @@ fetch('/api/quizzes?difficulty=HARD&minDuration=20&sortBy=popularity')
 
 ```bash
 # Default listing
-curl 'http://localhost:3000/api/quizzes'
+curl 'http://localhost:3200/api/quizzes'
 
 # Featured quizzes
-curl 'http://localhost:3000/api/quizzes?featured=true'
+curl 'http://localhost:3200/api/quizzes?featured=true'
 
 # Coming soon
-curl 'http://localhost:3000/api/quizzes?comingSoon=true'
+curl 'http://localhost:3200/api/quizzes?comingSoon=true'
 
 # Sort by popularity
-curl 'http://localhost:3000/api/quizzes?sortBy=popularity'
+curl 'http://localhost:3200/api/quizzes?sortBy=popularity'
 
 # Sort by rating
-curl 'http://localhost:3000/api/quizzes?sortBy=rating'
+curl 'http://localhost:3200/api/quizzes?sortBy=rating'
 
 # Filter by difficulty
-curl 'http://localhost:3000/api/quizzes?difficulty=EASY'
+curl 'http://localhost:3200/api/quizzes?difficulty=EASY'
 
 # Duration range (5-15 mins)
-curl 'http://localhost:3000/api/quizzes?minDuration=5&maxDuration=15'
+curl 'http://localhost:3200/api/quizzes?minDuration=5&maxDuration=15'
 
 # By topic
-curl 'http://localhost:3000/api/quizzes?topic=cricket'
+curl 'http://localhost:3200/api/quizzes?topic=cricket'
 
 # By tag
-curl 'http://localhost:3000/api/quizzes?tag=trivia'
+curl 'http://localhost:3200/api/quizzes?tag=trivia'
 
 # Combined filters
-curl 'http://localhost:3000/api/quizzes?sport=Basketball&difficulty=MEDIUM&sortBy=popularity&page=1&limit=20'
+curl 'http://localhost:3200/api/quizzes?sport=Basketball&difficulty=MEDIUM&sortBy=popularity&page=1&limit=20'
 ```
 
 ---

@@ -13,12 +13,12 @@ The app now uses JWT sessions instead of database sessions. Existing browser ses
 2. Or manually sign out if you're currently logged in
 
 ### Step 2: Sign In Again
-1. Go to `http://localhost:3000/auth/signin`
+1. Go to `http://localhost:3200/auth/signin`
 2. Sign in with your admin Google account
 3. The JWT token will now contain your admin role
 
 ### Step 3: Access Admin Panel
-1. Navigate to `http://localhost:3000/admin`
+1. Navigate to `http://localhost:3200/admin`
 2. You should now have access
 
 ## Verification

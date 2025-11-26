@@ -13,7 +13,7 @@ All the features you requested are already implemented! Here's how they work:
 ### Example
 ```bash
 # Replace {question-id} with actual question ID
-curl http://localhost:3000/api/admin/questions/{question-id}
+curl http://localhost:3200/api/admin/questions/{question-id}
 ```
 
 ### Response
@@ -83,22 +83,22 @@ curl http://localhost:3000/api/admin/questions/{question-id}
 
 #### Get all EASY Cricket questions
 ```bash
-curl 'http://localhost:3000/api/admin/questions?topicId={cricket-topic-id}&difficulty=EASY'
+curl 'http://localhost:3200/api/admin/questions?topicId={cricket-topic-id}&difficulty=EASY'
 ```
 
 #### Get HARD questions from any topic
 ```bash
-curl 'http://localhost:3000/api/admin/questions?difficulty=HARD&limit=10'
+curl 'http://localhost:3200/api/admin/questions?difficulty=HARD&limit=10'
 ```
 
 #### Search for specific questions
 ```bash
-curl 'http://localhost:3000/api/admin/questions?search=championship&difficulty=MEDIUM'
+curl 'http://localhost:3200/api/admin/questions?search=championship&difficulty=MEDIUM'
 ```
 
 #### Combined filters
 ```bash
-curl 'http://localhost:3000/api/admin/questions?topicId={id}&difficulty=MEDIUM&type=MULTIPLE_CHOICE&page=1&limit=20'
+curl 'http://localhost:3200/api/admin/questions?topicId={id}&difficulty=MEDIUM&type=MULTIPLE_CHOICE&page=1&limit=20'
 ```
 
 ### Response
@@ -166,7 +166,7 @@ if (quiz.randomizeQuestionOrder) {
 
 ```bash
 # 1. Create a quiz with randomizeQuestionOrder: true
-curl -X POST http://localhost:3000/api/admin/quizzes \
+curl -X POST http://localhost:3200/api/admin/quizzes \
   -H "Content-Type: application/json" \
   -d '{
     "title": "Randomized Quiz",
@@ -175,7 +175,7 @@ curl -X POST http://localhost:3000/api/admin/quizzes \
   }'
 
 # 2. Start quiz attempt multiple times
-curl -X POST http://localhost:3000/api/attempts \
+curl -X POST http://localhost:3200/api/attempts \
   -H "Content-Type: application/json" \
   -d '{"quizId": "..."}'
 
@@ -231,7 +231,7 @@ answers: q.answers
 
 ```bash
 # 1. Create question with randomized answers
-curl -X POST http://localhost:3000/api/admin/questions \
+curl -X POST http://localhost:3200/api/admin/questions \
   -H "Content-Type: application/json" \
   -d '{
     "questionText": "Which team won the 2023 NBA Championship?",
@@ -257,12 +257,12 @@ curl -X POST http://localhost:3000/api/admin/questions \
 
 ```bash
 # 1. Create a topic
-curl -X POST http://localhost:3000/api/admin/topics \
+curl -X POST http://localhost:3200/api/admin/topics \
   -d '{"name": "NBA", "slug": "nba"}'
 # Note the returned topic ID
 
 # 2. Create questions with different settings
-curl -X POST http://localhost:3000/api/admin/questions \
+curl -X POST http://localhost:3200/api/admin/questions \
   -d '{
     "topicId": "{topic-id}",
     "difficulty": "EASY",
@@ -276,7 +276,7 @@ curl -X POST http://localhost:3000/api/admin/questions \
   }'
 
 # 3. Create more questions with different difficulties
-curl -X POST http://localhost:3000/api/admin/questions \
+curl -X POST http://localhost:3200/api/admin/questions \
   -d '{
     "topicId": "{topic-id}",
     "difficulty": "HARD",
@@ -290,16 +290,16 @@ curl -X POST http://localhost:3000/api/admin/questions \
 
 ```bash
 # Get all EASY NBA questions
-curl 'http://localhost:3000/api/admin/questions?topicId={topic-id}&difficulty=EASY'
+curl 'http://localhost:3200/api/admin/questions?topicId={topic-id}&difficulty=EASY'
 
 # Get all HARD questions
-curl 'http://localhost:3000/api/admin/questions?difficulty=HARD'
+curl 'http://localhost:3200/api/admin/questions?difficulty=HARD'
 ```
 
 ### Test 2: Create Quiz with Randomization
 
 ```bash
-curl -X POST http://localhost:3000/api/admin/quizzes \
+curl -X POST http://localhost:3200/api/admin/quizzes \
   -d '{
     "title": "NBA Quiz with Randomization",
     "slug": "nba-random",
@@ -322,12 +322,12 @@ curl -X POST http://localhost:3000/api/admin/quizzes \
 
 ```bash
 # First attempt
-curl -X POST http://localhost:3000/api/attempts \
+curl -X POST http://localhost:3200/api/attempts \
   -d '{"quizId": "{quiz-id}"}'
 # Note question order and answer order
 
 # Second attempt  
-curl -X POST http://localhost:3000/api/attempts \
+curl -X POST http://localhost:3200/api/attempts \
   -d '{"quizId": "{quiz-id}"}'
 # Compare - should be different if randomization is on
 ```

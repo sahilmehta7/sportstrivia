@@ -116,7 +116,7 @@ Generates consistent OG and Twitter Card tags across the platform.
 **Environment Variable:** `NEXT_PUBLIC_APP_URL`
 
 Can be configured via environment variables for different environments:
-- Development: `http://localhost:3000`
+- Development: `http://localhost:3200`
 - Production: `https://sportstrivia.in`
 
 ## Testing & Verification

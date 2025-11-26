@@ -416,7 +416,7 @@ Edit Quiz → [Manage Questions] → Question Pool Manager
    ```
 
 2. **Sign in as admin**:
-   - Go to http://localhost:3000/admin
+   - Go to http://localhost:3200/admin
    
 3. **Edit the sample quiz**:
    - Go to Quizzes → Click "Questions (3)" on "Cricket Basics Quiz"

@@ -11,7 +11,7 @@ DATABASE_URL="postgresql://user:password@localhost:5432/sportstrivia"
 
 ### NextAuth
 ```bash
-NEXTAUTH_URL="http://localhost:3000"
+NEXTAUTH_URL="http://localhost:3200"
 NEXTAUTH_SECRET="your-secret-key-here"
 ```
 Generate secret: `openssl rand -base64 32`

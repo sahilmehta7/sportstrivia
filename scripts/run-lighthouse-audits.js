@@ -30,7 +30,7 @@ const PAGES_TO_AUDIT = [
 ];
 
 const ENVIRONMENTS = {
-  localhost: 'http://localhost:3000',
+  localhost: 'http://localhost:3200',
   production: 'https://www.sportstrivia.in',
 };
 

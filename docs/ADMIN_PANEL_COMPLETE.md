@@ -369,7 +369,7 @@ Admin Panel
 
 ### Test Workflow
 
-1. **Access Admin**: http://localhost:3000/admin
+1. **Access Admin**: http://localhost:3200/admin
 2. **Create Quiz**: 
    - Go to Quizzes → Create Quiz
    - Fill in all details
