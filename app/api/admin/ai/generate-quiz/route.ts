@@ -52,6 +52,7 @@ export async function POST(request: NextRequest) {
     const { topic, customTitle, sport, difficulty, numQuestions, sourceUrl } =
       generateQuizSchema.parse(body);
 
+    const normalizedSport = sport?.trim() || undefined;
     let effectiveTopic = (customTitle || topic || "").trim();
 
     let sourceMaterial: SourceMaterial | null = null;
@@ -70,7 +71,7 @@ export async function POST(request: NextRequest) {
 
     // Determine sport from topic or use provided
     const derivedSportContext = `${effectiveTopic} ${sourceMaterial?.contentSnippet ?? ""}`;
-    const quizSport = sport || determineSportFromTopic(derivedSportContext);
+    const quizSport = normalizedSport || determineSportFromTopic(derivedSportContext);
 
     const backgroundTask = await createBackgroundTask({
       userId: admin.id,
@@ -79,7 +80,7 @@ export async function POST(request: NextRequest) {
       input: {
         topic,
         customTitle,
-        sport,
+        sport: normalizedSport,
         difficulty,
         numQuestions,
         sourceUrl,

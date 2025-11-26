@@ -67,8 +67,11 @@ export async function processAIQuizTask(taskId: string): Promise<void> {
       sourceMaterial = await fetchSourceMaterial(sourceUrl);
     }
 
+    // Normalize topic to avoid undefined/empty strings from legacy tasks
+    const resolvedTopic = (effectiveTopic || topic || customTitle || "Sports Quiz").trim();
+
     // Create slugified version of topic
-    const slugifiedTopic = effectiveTopic
+    const slugifiedTopic = resolvedTopic
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/^-|-$/g, "");
@@ -84,10 +87,12 @@ export async function processAIQuizTask(taskId: string): Promise<void> {
     console.log("[AI Generator] Prompt source:", promptTemplate.substring(0, 100) + "...");
     
     // Build the prompt with placeholders replaced
+    const resolvedSport = (quizSport || sport || determineSportFromTopic(resolvedTopic)).trim() || "General";
+
     const prompt = buildPrompt(
       promptTemplate,
-      effectiveTopic,
-      quizSport,
+      resolvedTopic,
+      resolvedSport,
       difficulty,
       numQuestions,
       slugifiedTopic,
@@ -218,8 +223,8 @@ export async function processAIQuizTask(taskId: string): Promise<void> {
     const usageStats = extractUsageStats(completion);
 
     const metadata = {
-      topic: effectiveTopic,
-      sport: quizSport,
+      topic: resolvedTopic,
+      sport: resolvedSport,
       difficulty,
       numQuestions,
       model: aiModel,

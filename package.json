@@ -67,6 +67,7 @@
     "react-hook-form": "^7.65.0",
     "recharts": "^2.15.0",
     "resend": "^6.4.0",
+    "critters": "file:vendor/critters",
     "tailwind-merge": "^2.6.0",
     "web-push": "^3.6.3",
     "zod": "^3.25.76"
