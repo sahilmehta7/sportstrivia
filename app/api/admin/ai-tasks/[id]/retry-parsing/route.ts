@@ -7,6 +7,7 @@ import { extractJSON } from "@/lib/services/ai-quiz-processor.service";
 
 export const runtime = 'nodejs';
 export const maxDuration = 30;
+export const dynamic = "force-dynamic";
 
 /**
  * POST /api/admin/ai-tasks/[id]/retry-parsing
