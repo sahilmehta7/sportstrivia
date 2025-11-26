@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "../db";
 import {
   LEVELS_MAX,
   TIERS_MAX,
@@ -7,8 +7,6 @@ import {
   slugifyTierName,
 } from "../config/gamification";
 import { notifyLevelUp, notifyTierUpgrade } from "./notification.service";
-
-const prisma = new PrismaClient();
 
 export type ComputedLevel = {
   level: number;
