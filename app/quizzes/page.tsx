@@ -13,7 +13,8 @@ import type { PublicQuizFilters } from "@/lib/dto/quiz-filters.dto";
 import type { ShowcaseFilterGroup } from "@/components/showcase/ui/FilterBar";
 import { Difficulty } from "@prisma/client";
 import { auth } from "@/lib/auth";
-import { ItemListJsonLd } from "next-seo";
+import { ItemListStructuredData } from "@/components/seo/ItemListStructuredData";
+import { PageContainer } from "@/components/shared/PageContainer";
 
 const HERO_SECTION_LIMIT = 5;
 const DEFAULT_PAGE_SIZE = 12;
@@ -291,12 +292,7 @@ async function QuizzesData({
         pagination={listing.pagination}
       />
 
-      {itemList.length > 0 && (
-        <ItemListJsonLd
-          itemListElements={itemList}
-          name="Sports Trivia Quizzes"
-        />
-      )}
+      <ItemListStructuredData itemListElements={itemList} name="Sports Trivia Quizzes" />
     </>
   );
 }
@@ -304,13 +300,13 @@ async function QuizzesData({
 // Fallback for quizzes loading
 function QuizzesFallback() {
   return (
-    <div className="container mx-auto px-4 pt-12">
+    <PageContainer className="pt-12">
       <div className="mb-8">
         <div className="h-10 w-64 rounded bg-muted animate-pulse mb-4" />
         <div className="h-4 w-96 rounded bg-muted animate-pulse" />
       </div>
       <QuizListSkeleton count={12} />
-    </div>
+    </PageContainer>
   );
 }
 
@@ -321,9 +317,9 @@ export default async function QuizzesPage({
 }) {
   return (
     <>
-      <div className="container mx-auto px-4 pt-12">
+      <PageContainer className="pt-12">
         <QuizzesPageHeader />
-      </div>
+      </PageContainer>
       <Suspense fallback={<QuizzesFallback />}>
         <QuizzesData searchParams={searchParams} />
       </Suspense>

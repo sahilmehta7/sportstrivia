@@ -20,6 +20,7 @@ import {
   Trash2,
 } from "lucide-react";
 import Link from "next/link";
+import { PageContainer } from "@/components/shared/PageContainer";
 
 interface Notification {
   id: string;
@@ -183,7 +184,7 @@ export default function NotificationsPage() {
 
   return (
     <main className="min-h-screen bg-background py-8">
-      <div className="mx-auto max-w-4xl space-y-6 px-4">
+      <PageContainer variant="narrow" className="space-y-6">
         <div className="flex flex-col gap-4">
           <div className="flex items-center justify-between gap-2">
             <PageHeader
@@ -294,7 +295,7 @@ export default function NotificationsPage() {
             })}
           </div>
         )}
-      </div>
+      </PageContainer>
     </main>
   );
 }

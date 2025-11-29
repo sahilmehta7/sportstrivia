@@ -1,10 +1,11 @@
 import { LeaderboardSkeleton } from "@/components/shared/skeletons";
+import { PageContainer } from "@/components/shared/PageContainer";
 
 export default function Loading() {
   return (
-    <div className="container mx-auto px-4 py-8 max-w-4xl">
+    <PageContainer variant="narrow" className="py-8">
       <LeaderboardSkeleton rows={10} />
-    </div>
+    </PageContainer>
   );
 }
 

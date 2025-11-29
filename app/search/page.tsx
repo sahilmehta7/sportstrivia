@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { searchTopics } from "@/lib/services/topic.service";
 import { formatPlayerCount, formatQuizDuration, getSportGradient } from "@/lib/quiz-formatters";
 import { validateSearchQuery } from "@/lib/validations/search.schema";
+import { PageContainer } from "@/components/shared/PageContainer";
 
 export const metadata: Metadata = {
   title: "Search results | Sports Trivia",
@@ -46,15 +47,17 @@ export default async function SearchPage({
   if (!search || search.length === 0) {
     // If no query, show a friendly nudge
     return (
-      <main className="mx-auto w-full max-w-6xl px-4 pb-16 pt-10">
-        <div className="space-y-6">
-          <h1 className="text-2xl font-semibold">Search</h1>
-          <Card>
-            <CardContent className="py-10 text-center text-muted-foreground">
-              Start typing in the search bar above to find quizzes.
-            </CardContent>
-          </Card>
-        </div>
+      <main className="pb-16 pt-10">
+        <PageContainer>
+          <div className="space-y-6">
+            <h1 className="text-2xl font-semibold">Search</h1>
+            <Card>
+              <CardContent className="py-10 text-center text-muted-foreground">
+                Start typing in the search bar above to find quizzes.
+              </CardContent>
+            </Card>
+          </div>
+        </PageContainer>
       </main>
     );
   }

@@ -6,6 +6,7 @@ import { ShowcaseDailyCarousel } from "@/components/showcase/ShowcaseDailyCarous
 import { QuizzesContent } from "./QuizzesContent";
 import type { ShowcaseFilterGroup } from "@/components/showcase/ui/FilterBar";
 import type { PublicQuizListItem, DailyQuizItem, ComingSoonQuiz } from "@/lib/services/public-quiz.service";
+import { PageContainer } from "@/components/shared/PageContainer";
 
 interface QuizzesPageContentProps {
   quizzes: PublicQuizListItem[];
@@ -31,7 +32,7 @@ export function QuizzesPageContent({
 }: QuizzesPageContentProps) {
   return (
     <main className="min-h-screen bg-gradient-to-b from-background via-background to-muted/40 py-12">
-      <div className="container mx-auto px-4">
+      <PageContainer>
         {/* Featured Quizzes Hero Section */}
         {featuredQuizzes.length > 0 && (
           <FeaturedQuizzesHero featuredQuizzes={featuredQuizzes} />
@@ -49,7 +50,7 @@ export function QuizzesPageContent({
           filterGroups={filterGroups}
           pagination={pagination}
         />
-      </div>
+      </PageContainer>
     </main>
   );
 }

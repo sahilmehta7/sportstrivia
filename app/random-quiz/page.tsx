@@ -14,6 +14,7 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import type { Metadata } from "next";
 import type { Prisma } from "@prisma/client";
+import { PageContainer } from "@/components/shared/PageContainer";
 
 export const metadata: Metadata = {
   title: "Random Quiz Challenge | Sports Trivia",
@@ -28,7 +29,7 @@ export const metadata: Metadata = {
 function renderNoRandomQuiz() {
   return (
     <main className="min-h-screen bg-gradient-to-b from-background via-background to-muted/40 py-12">
-      <div className="container mx-auto px-4">
+      <PageContainer>
         <Link href="/quizzes">
           <Button variant="ghost" className="mb-6">
             <ArrowLeft className="mr-2 h-4 w-4" />
@@ -49,7 +50,7 @@ function renderNoRandomQuiz() {
             </div>
           </CardContent>
         </Card>
-      </div>
+      </PageContainer>
     </main>
   );
 }
@@ -139,7 +140,7 @@ export default async function RandomQuizPage() {
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-background via-background to-muted/40 py-12">
-      <div className="container mx-auto px-4">
+      <PageContainer>
         <Link href="/quizzes">
           <Button variant="ghost" className="mb-6">
             <ArrowLeft className="mr-2 h-4 w-4" />
@@ -173,7 +174,7 @@ export default async function RandomQuizPage() {
             ctaHref={`/quizzes/${quiz.slug}`}
           />
         </div>
-      </div>
+      </PageContainer>
     </main>
   );
 }

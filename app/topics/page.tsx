@@ -10,6 +10,7 @@ import {
 import { TopicsContent } from "@/components/topics/TopicsContent";
 import { ShowcaseThemeProvider } from "@/components/showcase/ShowcaseThemeProvider";
 import { TopicCardSkeleton } from "@/components/shared/skeletons";
+import { PageContainer } from "@/components/shared/PageContainer";
 
 export const metadata: Metadata = {
   title: "Sports Topics - Explore by Category",
@@ -189,7 +190,7 @@ async function TopicsData() {
 // Fallback for topics loading
 function TopicsFallback() {
   return (
-    <div className="container mx-auto px-4 py-8">
+    <PageContainer className="py-8">
       <div className="mb-8">
         <div className="h-10 w-64 rounded bg-muted animate-pulse mb-4" />
         <div className="h-4 w-96 rounded bg-muted animate-pulse" />
@@ -199,7 +200,7 @@ function TopicsFallback() {
           <TopicCardSkeleton key={index} />
         ))}
       </div>
-    </div>
+    </PageContainer>
   );
 }
 

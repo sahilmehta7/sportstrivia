@@ -43,6 +43,7 @@ import { formatPlayerCount } from "@/lib/quiz-formatters";
 import { PushSubscriptionCard } from "@/components/notifications/PushSubscriptionCard";
 import { DigestPreferencesCard } from "@/components/notifications/DigestPreferencesCard";
 import { JsonLdScript } from "next-seo";
+import { PageContainer } from "@/components/shared/PageContainer";
 
 interface ProfileData {
   id: string;
@@ -309,7 +310,7 @@ export function ProfileMeClient({
         <div className="absolute bottom-8 left-1/2 h-56 w-56 -translate-x-1/2 rounded-full bg-purple-500/20 blur-[90px]" />
       </div>
       
-      <div className="relative mx-auto max-w-6xl space-y-8 px-4">
+      <PageContainer className="relative space-y-8">
         <ProfileHeader user={profile} isOwnProfile showEditButton={false} />
 
         <Tabs defaultValue="overview" className="space-y-8">
@@ -665,7 +666,7 @@ export function ProfileMeClient({
             </Card>
           </TabsContent>
         </Tabs>
-      </div>
+      </PageContainer>
 
       {/* Structured Data */}
       <JsonLdScript

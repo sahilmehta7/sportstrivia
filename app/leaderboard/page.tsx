@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { ShowcaseLeaderboard, type LeaderboardEntry, type LeaderboardRangeKey } from "@/components/quiz/ShowcaseLeaderboard";
 import { notFound } from "next/navigation";
+import { PageContainer } from "@/components/shared/PageContainer";
 
 // Route segment config
 export const revalidate = 300; // Revalidate every 5 minutes for leaderboard
@@ -74,7 +75,7 @@ export default async function LeaderboardPage() {
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-background via-background to-muted/50 py-16">
-      <div className="mx-auto flex w-full max-w-4xl flex-col gap-8 px-4 sm:px-6 lg:px-8">
+      <PageContainer variant="narrow" className="flex flex-col gap-8">
         <header className="flex flex-col items-center gap-2">
           <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
             Global Leaderboard
@@ -87,7 +88,7 @@ export default async function LeaderboardPage() {
         <div className="flex justify-center">
           <ShowcaseLeaderboard title="Leaderboard" datasets={datasets} initialRange={daily.length > 0 ? "daily" : "all-time"} />
         </div>
-      </div>
+      </PageContainer>
     </main>
   );
 }

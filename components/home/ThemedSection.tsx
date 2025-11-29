@@ -1,7 +1,10 @@
+"use client";
+
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { getBackgroundVariant, getBlurCircles } from "@/lib/showcase-theme";
 import type { BackgroundVariant } from "@/lib/showcase-theme";
+import { useShowcaseTheme } from "@/components/showcase/ShowcaseThemeProvider";
 
 interface ThemedSectionProps {
   variant: BackgroundVariant;
@@ -11,10 +14,11 @@ interface ThemedSectionProps {
 }
 
 export function ThemedSection({ variant, children, showBlur = true, className }: ThemedSectionProps) {
-  const blurCircles = getBlurCircles();
+  const { theme } = useShowcaseTheme();
+  const blurCircles = getBlurCircles(theme);
 
   return (
-    <section className={cn("relative", getBackgroundVariant(variant), className)}>
+    <section className={cn("relative", getBackgroundVariant(variant, theme), className)}>
       {showBlur && (
         <div className="absolute inset-0 -z-10 opacity-70">
           <div className={cn("absolute -left-20 top-24 h-72 w-72 rounded-full blur-[120px]", blurCircles.circle1)} />

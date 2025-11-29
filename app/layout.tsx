@@ -3,6 +3,7 @@ import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 import { LayoutWrapper } from "@/components/LayoutWrapper";
 import { ThemeProvider } from "@/components/ThemeProvider";
+import { ThemeColorInit } from "@/components/ThemeColorInit";
 import { AppSessionProvider } from "@/components/providers/AppSessionProvider";
 import { OrganizationJsonLd, JsonLdScript } from "next-seo";
 import { defaultSeoConfig } from "@/lib/next-seo-config";
@@ -73,6 +74,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className="font-sans">
+        <ThemeColorInit />
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
           <AppSessionProvider>
             <LayoutWrapper>{children}</LayoutWrapper>

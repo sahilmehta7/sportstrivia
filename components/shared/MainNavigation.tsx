@@ -89,7 +89,7 @@ export function MainNavigation() {
   if (!session?.user) {
     return (
       <nav className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4">
+        <div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
           <Link href="/" className="text-xl font-bold">
             Sports Trivia
           </Link>
@@ -114,7 +114,7 @@ export function MainNavigation() {
         className="sr-only"
       />
       <nav className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="mx-auto flex max-w-7xl items-center gap-4 px-4 py-3">
+        <div className="mx-auto flex w-full max-w-7xl items-center gap-4 px-4 py-3 sm:px-6 lg:px-8">
         {/* Header with rounded-full styling */}
         <header
           className={cn(
@@ -181,108 +181,115 @@ export function MainNavigation() {
                   {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
                 </Button>
               </SheetTrigger>
-              <SheetContent side="right" id="mobile-menu" className="w-full sm:max-w-md">
-                <SheetHeader>
+              <SheetContent
+                side="right"
+                id="mobile-menu"
+                className="flex h-full w-full flex-col p-0 sm:max-w-md"
+                onOpenAutoFocus={(event) => event.preventDefault()}
+              >
+                <SheetHeader className="border-b px-6 pb-4 pt-6">
                   <SheetTitle>Menu</SheetTitle>
                 </SheetHeader>
-                <div className="mt-6 flex flex-col gap-3">
-                  <div className="pb-2">
+                <div className="flex-1 overflow-y-auto px-6 pb-6">
+                  <div className="py-4">
                     <GlobalQuizSearch showOnMobile className="w-full" />
                   </div>
 
-                  {/* Navigation Links */}
-                  {navLinks.map((link) => (
-                    <Link
-                      key={link.href}
-                      href={link.href}
-                      className={cn(
-                        "rounded-2xl px-4 py-3 text-sm font-semibold uppercase tracking-[0.25em] transition",
-                        "hover:bg-accent",
-                        isActive(link.href) && "bg-accent"
-                      )}
-                      onClick={() => setMobileMenuOpen(false)}
-                    >
-                      {link.label}
-                    </Link>
-                  ))}
-
-                  {/* Random Quiz Link */}
-                  <Link
-                    href="/random-quiz"
-                    className="flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold uppercase tracking-[0.25em] transition hover:bg-accent"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    <Shuffle className="h-4 w-4" />
-                    <span>Random Quiz</span>
-                  </Link>
-
-                  {/* User Section */}
-                  <div className="border-t pt-3">
-                    <div className="px-3 py-2 mb-2">
-                      <p className="text-sm font-semibold">{session.user.name}</p>
-                      <p className="text-xs text-muted-foreground">{session.user.email}</p>
-                    </div>
-
-                    <Link
-                      href="/profile/me"
-                      className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm transition hover:bg-accent"
-                      onClick={() => setMobileMenuOpen(false)}
-                    >
-                      <User className="h-4 w-4" />
-                      <span>My Profile</span>
-                    </Link>
-
-                    <Link
-                      href="/challenges"
-                      className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm transition hover:bg-accent"
-                      onClick={() => setMobileMenuOpen(false)}
-                    >
-                      <Trophy className="h-4 w-4" />
-                      <span>Challenges</span>
-                    </Link>
-
-                    {session.user.role === "ADMIN" && (
+                  <div className="flex flex-col gap-3">
+                    {/* Navigation Links */}
+                    {navLinks.map((link) => (
                       <Link
-                        href="/admin"
+                        key={link.href}
+                        href={link.href}
+                        className={cn(
+                          "rounded-2xl px-4 py-3 text-sm font-semibold uppercase tracking-[0.25em] transition",
+                          "hover:bg-accent",
+                          isActive(link.href) && "bg-accent"
+                        )}
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        {link.label}
+                      </Link>
+                    ))}
+
+                    {/* Random Quiz Link */}
+                    <Link
+                      href="/random-quiz"
+                      className="flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold uppercase tracking-[0.25em] transition hover:bg-accent"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      <Shuffle className="h-4 w-4" />
+                      <span>Random Quiz</span>
+                    </Link>
+
+                    {/* User Section */}
+                    <div className="border-t pt-3">
+                      <div className="mb-2 px-3 py-2">
+                        <p className="text-sm font-semibold">{session.user.name}</p>
+                        <p className="text-xs text-muted-foreground">{session.user.email}</p>
+                      </div>
+
+                      <Link
+                        href="/profile/me"
                         className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm transition hover:bg-accent"
                         onClick={() => setMobileMenuOpen(false)}
                       >
-                        <Settings className="h-4 w-4" />
-                        <span>Admin Panel</span>
+                        <User className="h-4 w-4" />
+                        <span>My Profile</span>
                       </Link>
-                    )}
 
-                    <button
-                      onClick={() => {
-                        setTheme(theme === "dark" ? "light" : "dark");
-                        setMobileMenuOpen(false);
-                      }}
-                      className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm transition hover:bg-accent w-full"
-                      aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
-                    >
-                      {theme === "dark" ? (
-                        <>
-                          <Sun className="h-4 w-4" />
-                          <span>Switch to Light</span>
-                        </>
-                      ) : (
-                        <>
-                          <Moon className="h-4 w-4" />
-                          <span>Switch to Dark</span>
-                        </>
+                      <Link
+                        href="/challenges"
+                        className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm transition hover:bg-accent"
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        <Trophy className="h-4 w-4" />
+                        <span>Challenges</span>
+                      </Link>
+
+                      {session.user.role === "ADMIN" && (
+                        <Link
+                          href="/admin"
+                          className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm transition hover:bg-accent"
+                          onClick={() => setMobileMenuOpen(false)}
+                        >
+                          <Settings className="h-4 w-4" />
+                          <span>Admin Panel</span>
+                        </Link>
                       )}
-                    </button>
 
-                    <button
-                      onClick={() => {
-                        setMobileMenuOpen(false);
-                        signOut({ callbackUrl: "/" });
-                      }}
-                      className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm transition hover:bg-accent text-destructive w-full"
-                    >
-                      <LogOut className="h-4 w-4" />
-                      <span>Sign Out</span>
-                    </button>
+                      <button
+                        onClick={() => {
+                          setTheme(theme === "dark" ? "light" : "dark");
+                          setMobileMenuOpen(false);
+                        }}
+                        className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm transition hover:bg-accent"
+                        aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
+                      >
+                        {theme === "dark" ? (
+                          <>
+                            <Sun className="h-4 w-4" />
+                            <span>Switch to Light</span>
+                          </>
+                        ) : (
+                          <>
+                            <Moon className="h-4 w-4" />
+                            <span>Switch to Dark</span>
+                          </>
+                        )}
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          setMobileMenuOpen(false);
+                          signOut({ callbackUrl: "/" });
+                        }}
+                        className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm transition hover:bg-accent text-destructive"
+                      >
+                        <LogOut className="h-4 w-4" />
+                        <span>Sign Out</span>
+                      </button>
+                    </div>
                   </div>
                 </div>
               </SheetContent>

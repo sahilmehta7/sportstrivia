@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { Trophy, Target, TrendingUp, BarChart3, UserPlus, Swords, UserMinus } from "lucide-react";
+import { PageContainer } from "@/components/shared/PageContainer";
 
 interface PublicProfilePageProps {
   params: Promise<{ id: string }>;
@@ -172,7 +173,7 @@ export default function PublicProfilePage({ params }: PublicProfilePageProps) {
 
   return (
     <main className="min-h-screen bg-background py-8">
-      <div className="mx-auto max-w-6xl space-y-6 px-4">
+      <PageContainer className="space-y-6">
         {/* Profile Header */}
         <ProfileHeader
           user={profile.user}
@@ -242,7 +243,7 @@ export default function PublicProfilePage({ params }: PublicProfilePageProps) {
 
         {/* Recent Activity */}
         <ActivityFeed attempts={stats.recentAttempts || []} />
-      </div>
+      </PageContainer>
 
       <CreateChallengeModal
         isOpen={showChallengeModal}

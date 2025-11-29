@@ -7,11 +7,12 @@ export function Footer() {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="px-4 pb-10 pt-6">
+    <footer className="pb-10 pt-6">
       <div
         className={cn(
-          "relative mx-auto max-w-7xl overflow-hidden rounded-[2.5rem] border p-8 md:p-12",
-          "bg-card/80 backdrop-blur-lg border-border shadow-lg"
+          "relative mx-auto w-full max-w-7xl overflow-hidden rounded-[2.5rem] border py-8 md:py-12",
+          "bg-card/80 backdrop-blur-lg border-border shadow-lg",
+          "px-4 sm:px-6 lg:px-8"
         )}
       >
         {/* soft glow accents */}

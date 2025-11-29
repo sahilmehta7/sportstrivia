@@ -13,7 +13,8 @@ import {
   type PublicQuizListItem,
 } from "@/lib/services/public-quiz.service";
 import { buildTopicLeaderboard, type LeaderboardPeriod } from "@/lib/services/leaderboard.service";
-import { BreadcrumbJsonLd, ItemListJsonLd } from "next-seo";
+import { BreadcrumbJsonLd } from "next-seo";
+import { ItemListStructuredData } from "@/components/seo/ItemListStructuredData";
 import { getCanonicalUrl } from "@/lib/next-seo-config";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { TopicHero } from "@/components/topics/topic-hero";
@@ -31,6 +32,7 @@ import {
 } from "@/lib/services/search-query.service";
 import { ShowcaseThemeProvider } from "@/components/showcase/ShowcaseThemeProvider";
 import { ChevronRight } from "lucide-react";
+import { PageContainer } from "@/components/shared/PageContainer";
 
 const topicWithRelations = {
   include: {
@@ -334,7 +336,7 @@ export default async function TopicDetailPage({
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-background via-background to-muted">
-      <div className="mx-auto w-full max-w-6xl space-y-8 px-4 pb-16 pt-10 sm:px-6 lg:px-8">
+      <PageContainer className="space-y-8 pb-16 pt-10">
         <nav className="flex items-center gap-2 text-sm text-muted-foreground">
           <Link href="/" className="transition-colors hover:text-foreground">
             Home
@@ -516,16 +518,11 @@ export default async function TopicDetailPage({
               </aside>
             </div>
         </section>
-      </div>
+      </PageContainer>
 
       {/* Structured Data */}
       <BreadcrumbJsonLd itemListElements={breadcrumbItems} />
-      {itemListElements.length > 0 && (
-        <ItemListJsonLd
-          itemListElements={itemListElements}
-          name={`${topic.name} Quizzes`}
-        />
-      )}
+      <ItemListStructuredData itemListElements={itemListElements} name={`${topic.name} Quizzes`} />
     </main>
   );
 }

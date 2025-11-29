@@ -7,6 +7,7 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { glassText } from "@/components/showcase/ui/typography";
 import { PointsPaginationClient } from "@/components/profile/PointsPaginationClient";
+import { PageContainer } from "@/components/shared/PageContainer";
 
 const PAGE_SIZE = 20;
 
@@ -49,7 +50,7 @@ export default async function PointsHistoryPage({ searchParams }: { searchParams
         <div className="absolute bottom-8 left-1/2 h-56 w-56 -translate-x-1/2 rounded-full bg-purple-500/20 blur-[90px]" />
       </div>
 
-      <div className="relative mx-auto max-w-5xl px-4">
+      <PageContainer className="relative">
         <PageHeader title="Points History" description="Your recent points transactions" />
 
         <Card className="relative mt-6 overflow-hidden rounded-[2rem] border shadow-xl bg-card/80 backdrop-blur-lg border-border/60">
@@ -118,7 +119,7 @@ export default async function PointsHistoryPage({ searchParams }: { searchParams
             )}
           </CardContent>
         </Card>
-      </div>
+      </PageContainer>
     </main>
   );
 }

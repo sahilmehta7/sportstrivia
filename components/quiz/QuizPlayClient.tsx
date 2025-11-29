@@ -12,6 +12,8 @@ import { Progress } from "@/components/ui/progress";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { useToast } from "@/hooks/use-toast";
 import { AttemptLimitBanner } from "@/components/quiz/AttemptLimitBanner";
+import { ENABLE_NEW_QUIZ_UI } from "@/lib/config/quiz-ui";
+import { QuizPlayUI } from "@/components/quiz/QuizPlayUI";
 
 interface AttemptLimitClientInfo {
   max: number;
@@ -81,6 +83,9 @@ export function QuizPlayClient({ quizId, quizTitle, quizSlug, initialAttemptLimi
   const [currentTimeLimit, setCurrentTimeLimit] = useState<number>(60);
   const [pendingQuestionId, setPendingQuestionId] = useState<string | null>(null);
   const [isCompleting, startCompletion] = useTransition();
+  const [selectedAnswerId, setSelectedAnswerId] = useState<string | null>(null);
+  const [isReviewing, setIsReviewing] = useState(false);
+  const reviewTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [attemptLimit, setAttemptLimit] = useState<AttemptLimitClientInfo | null>(
     initialAttemptLimit ?? null
   );
@@ -386,7 +391,8 @@ export function QuizPlayClient({ quizId, quizTitle, quizSlug, initialAttemptLimi
 
       clearAdvanceTimeout();
 
-      if (!isLastQuestion && nextQuestion) {
+      // Only auto-advance with old timeout if NOT using new UI
+      if (!isLastQuestion && nextQuestion && !ENABLE_NEW_QUIZ_UI) {
         advanceTimeoutRef.current = setTimeout(() => {
           setCurrentIndex(nextIndex);
           setCurrentQuestion(nextQuestion);
@@ -424,9 +430,17 @@ export function QuizPlayClient({ quizId, quizTitle, quizSlug, initialAttemptLimi
         );
 
         if (isLastQuestion) {
-          startCompletion(async () => {
-            await completeAttempt();
-          });
+          // For new UI, complete immediately after feedback
+          if (ENABLE_NEW_QUIZ_UI) {
+            setIsReviewing(false);
+            startCompletion(async () => {
+              await completeAttempt();
+            });
+          } else {
+            startCompletion(async () => {
+              await completeAttempt();
+            });
+          }
         }
       } catch (error: any) {
         clearAdvanceTimeout();
@@ -492,8 +506,82 @@ export function QuizPlayClient({ quizId, quizTitle, quizSlug, initialAttemptLimi
   useEffect(() => {
     return () => {
       clearAdvanceTimeout();
+      if (reviewTimeoutRef.current) {
+        clearTimeout(reviewTimeoutRef.current);
+        reviewTimeoutRef.current = null;
+      }
     };
   }, [clearAdvanceTimeout]);
+
+  // Reset selected answer when question changes
+  useEffect(() => {
+    setSelectedAnswerId(null);
+    setIsReviewing(false);
+    if (reviewTimeoutRef.current) {
+      clearTimeout(reviewTimeoutRef.current);
+      reviewTimeoutRef.current = null;
+    }
+  }, [currentQuestion?.id]);
+
+  // Handle answer selection for new UI
+  const handleAnswerSelect = useCallback((answerId: string) => {
+    if (status !== "in-progress" || !currentQuestion || feedback || selectedAnswerId) {
+      return;
+    }
+    setSelectedAnswerId(answerId);
+  }, [status, currentQuestion, feedback, selectedAnswerId]);
+
+  // Handle next button for new UI (with review flow)
+  const handleNext = useCallback(async () => {
+    if (!selectedAnswerId || !currentQuestion || isReviewing || isAdvancing || feedback) {
+      return;
+    }
+
+    // Start review phase
+    setIsReviewing(true);
+    clearTimer();
+
+    try {
+      // Submit answer (this will set feedback)
+      await handleAnswer(selectedAnswerId, false);
+
+      // After answer is submitted and feedback is set, start review timeout
+      const isLastQuestion = currentIndex >= totalQuestions - 1;
+      if (!isLastQuestion) {
+        reviewTimeoutRef.current = setTimeout(() => {
+          const nextIndex = currentIndex + 1;
+          const nextQuestion = questions[nextIndex];
+          if (nextQuestion) {
+            setCurrentIndex(nextIndex);
+            setCurrentQuestion(nextQuestion);
+            setFeedback(null);
+            setSelectedAnswerId(null);
+            setIsReviewing(false);
+            resetTimerForQuestion(nextQuestion);
+          }
+        }, 900);
+      }
+    } catch (error) {
+      // handleAnswer will handle error display, just reset review state
+      setIsReviewing(false);
+      if (reviewTimeoutRef.current) {
+        clearTimeout(reviewTimeoutRef.current);
+        reviewTimeoutRef.current = null;
+      }
+    }
+  }, [
+    selectedAnswerId,
+    currentQuestion,
+    isReviewing,
+    isAdvancing,
+    feedback,
+    handleAnswer,
+    currentIndex,
+    totalQuestions,
+    questions,
+    resetTimerForQuestion,
+    clearTimer,
+  ]);
 
   useEffect(() => {
     if (typeof performance !== "undefined" && status === "in-progress" && currentQuestion) {
@@ -609,6 +697,35 @@ export function QuizPlayClient({ quizId, quizTitle, quizSlug, initialAttemptLimi
     );
   }
 
+  // Render new UI if feature flag is enabled
+  if (ENABLE_NEW_QUIZ_UI) {
+    return (
+      <div className="mx-auto w-full max-w-4xl px-4 py-8">
+        <QuizPlayUI
+          question={currentQuestion}
+          currentIndex={currentIndex}
+          totalQuestions={totalQuestions}
+          timeLeft={timeLeft}
+          timeLimit={currentTimeLimit}
+          selectedAnswerId={selectedAnswerId}
+          feedback={feedback}
+          isReviewing={isReviewing}
+          isAdvancing={isAdvancing || isCompleting}
+          onAnswerSelect={handleAnswerSelect}
+          onNext={handleNext}
+          reviewTimeout={900}
+          helperText="Tap an answer to lock it in"
+        />
+        <div className="mt-6 flex justify-center">
+          <Button variant="outline" onClick={() => router.push(`/quizzes/${quizSlug}`)}>
+            Quit quiz
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // Fallback to old UI
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-6 py-8">
       <div className="space-y-3">

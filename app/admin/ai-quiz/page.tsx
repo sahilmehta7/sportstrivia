@@ -149,10 +149,10 @@ export default function AIQuizGeneratorPage() {
       setMetadata(quizMetadata);
       setLastTaskId(taskId);
 
-      const questionCount = quiz?.questions?.length ?? 0;
+      const generatedQuestionCount = quiz?.questions?.length ?? 0;
       const toastDescription =
         quiz
-          ? `Generated ${questionCount} ${questionCount === 1 ? "question" : "questions"} using AI. Saved to Background Tasks.`
+          ? `Generated ${generatedQuestionCount} ${generatedQuestionCount === 1 ? "question" : "questions"} using AI. Saved to Background Tasks.`
           : statusMessage ||
             (status === "processing"
               ? "AI generation is running in the background. Track progress from AI Background Tasks."
