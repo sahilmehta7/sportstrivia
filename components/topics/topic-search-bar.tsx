@@ -57,7 +57,7 @@ export function TopicQuizSearchBar({
     if (urlQuery !== query) {
       setQuery(urlQuery);
     }
-  }, [initialQuery, searchParams]);
+  }, [initialQuery, searchParams, query]);
 
   // Sync with URL params changes (external navigation)
   useEffect(() => {
@@ -69,7 +69,7 @@ export function TopicQuizSearchBar({
     if (!urlQuery) {
       setActiveChip(null);
     }
-  }, [searchParams]);
+  }, [searchParams, query, debouncedQuery]);
 
   // Execute search when debounced query changes
   useEffect(() => {

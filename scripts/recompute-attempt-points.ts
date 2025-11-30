@@ -69,16 +69,13 @@ async function main() {
 
     await prisma.$transaction(updates);
     updatedAttempts += 1;
-    // eslint-disable-next-line no-console
     console.log(`Updated attempt ${attempt.id}: perQuestion=${perQuestionTotal}, completion=${completionPart}, total=${newTotalPoints}`);
   }
 
-  // eslint-disable-next-line no-console
   console.log(`Recomputed points for ${updatedAttempts} attempts.`);
 }
 
 main().catch((e) => {
-  // eslint-disable-next-line no-console
   console.error(e);
   process.exit(1);
 }).finally(async () => {

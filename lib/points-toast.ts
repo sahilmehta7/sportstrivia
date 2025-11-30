@@ -20,7 +20,7 @@ interface ShowPointsRewardOptions {
 export function showPointsReward({
   points,
   reason,
-  category,
+  category: _category,
   breakdown,
   duration = 4000,
 }: ShowPointsRewardOptions) {

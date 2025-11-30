@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTheme } from "next-themes";
 import { cn } from "@/lib/utils";
 
@@ -168,7 +168,7 @@ export function QuizPlayUI({
   isAdvancing,
   onAnswerSelect,
   onNext,
-  reviewTimeout = 900,
+  reviewTimeout: _reviewTimeout = 900,
   helperText = "Tap an answer to lock it in",
   className,
 }: QuizPlayUIProps) {
@@ -251,7 +251,6 @@ export function QuizPlayUI({
 
   const handleAnswerClick = (answerId: string) => {
     if (isAdvancing || isReviewing || feedback) return;
-    if (selectedAnswerId) return; // One-way selection - cannot change once selected
     onAnswerSelect(answerId);
   };
 

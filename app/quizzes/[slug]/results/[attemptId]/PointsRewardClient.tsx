@@ -13,8 +13,8 @@ interface PointsRewardClientProps {
 
 export function PointsRewardClient({
   totalPoints,
-  userId,
-  attemptId,
+  userId: _userId,
+  attemptId: _attemptId,
   searchParams,
 }: PointsRewardClientProps) {
   const [breakdown, setBreakdown] = useState<PointsBreakdown[]>([]);

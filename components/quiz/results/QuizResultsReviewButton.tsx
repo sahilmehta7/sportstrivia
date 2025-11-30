@@ -20,8 +20,7 @@ export function QuizResultsReviewButton({
   existingReview,
 }: QuizResultsReviewButtonProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [hasSubmittedReview, setHasSubmittedReview] = useState(Boolean(existingReview));
-  const [reviewDraft, setReviewDraft] = useState(existingReview ?? null);
+  const [reviewDraft] = useState(existingReview ?? null);
 
   return (
     <>
@@ -41,7 +40,7 @@ export function QuizResultsReviewButton({
           isOpen={isOpen}
           onClose={() => setIsOpen(false)}
           onSuccess={() => {
-            setHasSubmittedReview(true);
+            setIsOpen(false);
           }}
           existingReview={reviewDraft ?? undefined}
         />

@@ -18,7 +18,9 @@ export async function GET() {
         const currentLevel = await prisma.level.findUnique({ where: { level: computed.level } });
         currentRequired = currentLevel?.pointsRequired ?? 0;
       }
-    } catch {}
+    } catch {
+      // Silently fail - level model may not be available in all environments
+    }
     const nextRequired = computed.nextLevelPoints ?? null;
     const span = nextRequired ? Math.max(nextRequired - currentRequired, 1) : 1;
     const progress = nextRequired ? Math.min(Math.max(totalPoints - currentRequired, 0), span) : span;

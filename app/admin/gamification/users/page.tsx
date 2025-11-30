@@ -1,29 +1,5 @@
 import { prisma } from "@/lib/db";
 import { computeLevelFromPoints, getTierForLevel } from "@/lib/services/gamification.service";
-import { PageHeader } from "@/components/shared/PageHeader";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Search, Trophy, TrendingUp } from "lucide-react";
-import Link from "next/link";
-import Image from "next/image";
-import { User as UserIcon } from "lucide-react";
-import { ShowcasePagination } from "@/components/showcase/ui/Pagination";
 import { AdminUsersProgressClient } from "./AdminUsersProgressClient";
 
 interface SearchParams {

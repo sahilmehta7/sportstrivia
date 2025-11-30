@@ -45,7 +45,6 @@ import type { OnboardingStep } from "@/components/showcase/ui/OnboardingTooltipS
 import Link from "next/link";
 import { GlassButton } from "@/components/showcase/ui/GlassButton";
 import React from "react";
-import { pointsForLevel, DEFAULT_TIER_NAMES, LEVELS_MAX, TIERS_MAX } from "@/lib/config/gamification";
 
 function SkeletonWidget() {
   return (
@@ -221,7 +220,6 @@ export function ShowcaseUiPlaygroundContent({ filterGroups }: ShowcaseUiPlaygrou
         if (!res.ok) return;
         const json = await res.json();
         const data = json?.data ?? json;
-        const totalPoints: number = data?.totalPoints ?? 0;
         const progress: number = data?.progress ?? 0;
         const span: number = data?.span ?? 100;
         const tierName: string = data?.tierName ?? "Rookie";

@@ -3,11 +3,10 @@
 import { useEffect } from "react";
 import {
   Toast,
-  ToastDescription,
   ToastClose,
 } from "@/components/ui/toast";
 import { PointsReward } from "./PointsReward";
-import type { PointsCategory, PointsRewardProps } from "./PointsReward.types";
+import type { PointsRewardProps } from "./PointsReward.types";
 
 interface PointsRewardToastProps extends Partial<PointsRewardProps> {
   open: boolean;

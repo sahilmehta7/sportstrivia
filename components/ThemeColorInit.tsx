@@ -27,7 +27,9 @@ const themeInitScript = `(function () {
 })();`;
 
 export function ThemeColorInit() {
+  // Using beforeInteractive to prevent FOUC (Flash of Unstyled Content) in App Router
   return (
+    // eslint-disable-next-line @next/next/no-before-interactive-script-outside-document
     <Script id="theme-color-init" strategy="beforeInteractive">
       {themeInitScript}
     </Script>

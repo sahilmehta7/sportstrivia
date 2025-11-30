@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Bell, Menu, X, User, Moon, Sun } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { ShowcaseIconButton } from "@/components/showcase/ui/buttons/IconButton";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useShowcaseTheme } from "@/components/showcase/ShowcaseThemeProvider";
 import { getSurfaceStyles, getTextColor } from "@/lib/showcase-theme";

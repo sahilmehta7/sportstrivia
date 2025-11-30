@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/auth-helpers";
-import { handleError, successResponse, BadRequestError } from "@/lib/errors";
+import { handleError, successResponse } from "@/lib/errors";
 import { computeLevelFromPoints, getTierForLevel } from "@/lib/services/gamification.service";
 
 // POST /api/admin/gamification/recompute { dryRun?: boolean, limit?: number }

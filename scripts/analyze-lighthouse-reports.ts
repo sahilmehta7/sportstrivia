@@ -239,7 +239,7 @@ async function findLatestReports(): Promise<Array<{ environment: string; timesta
           reportsDir: path.join(envDir, timestamps[0]),
         });
       }
-    } catch (error) {
+    } catch {
       // Environment directory doesn't exist yet
       console.warn(`No reports found for ${env}`);
     }

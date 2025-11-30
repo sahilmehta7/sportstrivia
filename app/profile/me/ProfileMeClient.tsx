@@ -22,7 +22,6 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import {
   Trophy,
-  Target,
   TrendingUp,
   BarChart3,
   Save,
@@ -39,7 +38,6 @@ import { ShowcaseProgressTrackerRibbon } from "@/components/showcase/ui/Progress
 import { pointsForLevel } from "@/lib/config/gamification";
 import { ShowcaseThemeProvider } from "@/components/showcase/ShowcaseThemeProvider";
 import Link from "next/link";
-import { formatPlayerCount } from "@/lib/quiz-formatters";
 import { PushSubscriptionCard } from "@/components/notifications/PushSubscriptionCard";
 import { DigestPreferencesCard } from "@/components/notifications/DigestPreferencesCard";
 import { JsonLdScript } from "next-seo";
@@ -429,7 +427,7 @@ export function ProfileMeClient({
                       <ShowcaseThemeProvider>
                         <ShowcaseContinuePlayingQueue
                           embedded
-                          items={continueItems.map(({ slug, ...rest }) => rest as any)}
+                          items={continueItems.map(({ slug: _slug, ...rest }) => rest as any)}
                           onResume={(item: any) => router.push(`/quizzes/${continueItems.find((i:any)=>i.id===item.id)?.slug}`)}
                         />
                       </ShowcaseThemeProvider>

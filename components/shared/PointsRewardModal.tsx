@@ -7,7 +7,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { PointsReward } from "./PointsReward";
-import type { PointsCategory, PointsRewardProps, PointsBreakdown } from "./PointsReward.types";
+import type { PointsRewardProps } from "./PointsReward.types";
 
 interface PointsRewardModalProps extends Partial<PointsRewardProps> {
   open: boolean;

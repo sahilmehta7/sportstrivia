@@ -38,7 +38,7 @@ async function main() {
   }
 
   let created = 0;
-  for (const [key, list] of groups.entries()) {
+  for (const list of groups.values()) {
     const first = list[0]; // earliest passed attempt
     const existing = await prisma.quizCompletionBonusAward.findUnique({
       where: { quizId_userId: { quizId: first.quizId, userId: first.userId } },
@@ -61,17 +61,14 @@ async function main() {
       prisma.quizAttempt.update({ where: { id: first.id }, data: { totalPoints: (first.totalPoints || 0) + effectiveBonus } }),
     ]);
     created += 1;
-    // eslint-disable-next-line no-console
     console.log(`Awarded ${effectiveBonus} to user ${first.userId} for quiz ${first.quizId} at attempt ${first.id}`);
   }
 
-  // eslint-disable-next-line no-console
   console.log(`Created ${created} completion bonus awards.`);
 }
 
 main()
   .catch((e) => {
-    // eslint-disable-next-line no-console
     console.error(e);
     process.exit(1);
   })

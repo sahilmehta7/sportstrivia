@@ -1,4 +1,3 @@
-import type { ShowcaseTheme } from "@/components/showcase/ShowcaseThemeProvider";
 import type { QuizResultsSectionProps } from "./types";
 import { cn } from "@/lib/utils";
 import { getTextColor } from "@/lib/showcase-theme";

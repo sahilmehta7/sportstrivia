@@ -6,7 +6,6 @@ import {
   getRecentSearchQueriesForUser,
   getTrendingSearchQueries,
 } from "@/lib/services/search-query.service";
-import { validateSearchQuery } from "@/lib/validations/search.schema";
 import { searchSuggestionsRateLimiter, checkRateLimit } from "@/lib/rate-limit";
 
 function parseContext(value: string | null): SearchContext {

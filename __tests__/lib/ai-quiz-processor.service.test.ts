@@ -22,7 +22,7 @@ const {
   markBackgroundTaskCompleted,
   markBackgroundTaskFailed,
   updateTaskProgress,
-  updateBackgroundTask,
+  updateBackgroundTask: _updateBackgroundTask,
 } = require("@/lib/services/background-task.service");
 
 const { getAIQuizPrompt, getAIModel } = require("@/lib/services/settings.service");

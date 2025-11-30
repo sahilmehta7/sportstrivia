@@ -524,16 +524,19 @@ export function QuizPlayClient({ quizId, quizTitle, quizSlug, initialAttemptLimi
   }, [currentQuestion?.id]);
 
   // Handle answer selection for new UI
-  const handleAnswerSelect = useCallback((answerId: string) => {
-    if (status !== "in-progress" || !currentQuestion || feedback || selectedAnswerId) {
-      return;
-    }
-    setSelectedAnswerId(answerId);
-  }, [status, currentQuestion, feedback, selectedAnswerId]);
+  const handleAnswerSelect = useCallback(
+    (answerId: string) => {
+      if (status !== "in-progress" || !currentQuestion || feedback || isReviewing) {
+        return;
+      }
+      setSelectedAnswerId(answerId);
+    },
+    [status, currentQuestion, feedback, isReviewing]
+  );
 
   // Handle next button for new UI (with review flow)
   const handleNext = useCallback(async () => {
-    if (!selectedAnswerId || !currentQuestion || isReviewing || isAdvancing || feedback) {
+    if (!selectedAnswerId || !currentQuestion || isReviewing || feedback) {
       return;
     }
 
@@ -561,7 +564,7 @@ export function QuizPlayClient({ quizId, quizTitle, quizSlug, initialAttemptLimi
           }
         }, 900);
       }
-    } catch (error) {
+    } catch {
       // handleAnswer will handle error display, just reset review state
       setIsReviewing(false);
       if (reviewTimeoutRef.current) {
@@ -573,7 +576,6 @@ export function QuizPlayClient({ quizId, quizTitle, quizSlug, initialAttemptLimi
     selectedAnswerId,
     currentQuestion,
     isReviewing,
-    isAdvancing,
     feedback,
     handleAnswer,
     currentIndex,
@@ -710,7 +712,7 @@ export function QuizPlayClient({ quizId, quizTitle, quizSlug, initialAttemptLimi
           selectedAnswerId={selectedAnswerId}
           feedback={feedback}
           isReviewing={isReviewing}
-          isAdvancing={isAdvancing || isCompleting}
+          isAdvancing={isCompleting}
           onAnswerSelect={handleAnswerSelect}
           onNext={handleNext}
           reviewTimeout={900}

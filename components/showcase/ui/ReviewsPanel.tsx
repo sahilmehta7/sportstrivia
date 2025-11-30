@@ -33,7 +33,10 @@ export function ShowcaseReviewsPanel({ reviews, onAddReview, className }: Showca
     onAddReview?.();
   };
 
-  if (reviews.length === 0) {
+  // Ensure reviews is always an array
+  const safeReviews = Array.isArray(reviews) ? reviews : [];
+
+  if (safeReviews.length === 0) {
     return (
       <ShowcaseEmptyState
         icon="💬"
@@ -48,7 +51,7 @@ export function ShowcaseReviewsPanel({ reviews, onAddReview, className }: Showca
   return (
     <div className={cn("rounded-[1.5rem] p-4 sm:p-6", getSurfaceStyles(theme, "base"), className)}>
       <div className="mb-3 sm:mb-4 flex items-center justify-between gap-2">
-        <h4 className={cn("text-sm sm:text-base font-semibold", getTextColor(theme, "primary"))}>Reviews ({reviews.length})</h4>
+        <h4 className={cn("text-sm sm:text-base font-semibold", getTextColor(theme, "primary"))}>Reviews ({safeReviews.length})</h4>
         {canAddReview && (
           <Button size="sm" className="rounded-full" onClick={handleAdd}>
             Add review
@@ -56,7 +59,7 @@ export function ShowcaseReviewsPanel({ reviews, onAddReview, className }: Showca
         )}
       </div>
       <div className="space-y-4">
-        {reviews.map((r) => (
+        {safeReviews.map((r) => (
           <ShowcaseReviewCard
             key={r.id}
             reviewer={r.reviewer}

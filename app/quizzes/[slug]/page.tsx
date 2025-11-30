@@ -12,11 +12,16 @@ import { Star } from "lucide-react";
 import { ShowcaseThemeProvider } from "@/components/showcase/ShowcaseThemeProvider";
 import { getCurrentUser } from "@/lib/auth-helpers";
 import { getAttemptLimitStatus } from "@/lib/services/attempt-limit.service";
-import { ArticleJsonLd, AggregateRatingJsonLd, BreadcrumbJsonLd } from "next-seo";
+import { ArticleJsonLd, AggregateRatingJsonLd } from "next-seo";
 import { getCanonicalUrl } from "@/lib/next-seo-config";
 
 interface QuizDetailPageProps {
   params: Promise<{ slug: string }>;
+}
+
+// Normalize nullable relation arrays so downstream mapping logic is safe.
+function ensureArray<T>(value: T[] | null | undefined): T[] {
+  return Array.isArray(value) ? value : [];
 }
 
 // Route segment config - enable ISR for popular quizzes
@@ -140,6 +145,8 @@ export default async function QuizDetailPage({ params }: QuizDetailPageProps) {
         maxAttemptsPerUser: true,
         attemptResetPeriod: true,
         recurringType: true,
+        isPublished: true,
+        status: true,
         _count: {
           select: {
             attempts: true,
@@ -185,6 +192,7 @@ export default async function QuizDetailPage({ params }: QuizDetailPageProps) {
     if (!quiz || !quiz.isPublished || quiz.status !== "PUBLISHED") {
       notFound();
     }
+    
     // Unique players count (distinct users who have played this quiz)
     // Count with distinct is not supported on count(); use findMany with distinct and take the length
     const distinctUsers = await prisma.quizAttempt.findMany({
@@ -192,7 +200,7 @@ export default async function QuizDetailPage({ params }: QuizDetailPageProps) {
       distinct: ["userId"],
       select: { userId: true },
     });
-    uniqueUsersCount = distinctUsers.length;
+    uniqueUsersCount = Array.isArray(distinctUsers) ? distinctUsers.length : 0;
     // Fetch latest reviews for this quiz for the showcase panel
     const rawReviews = await prisma.quizReview.findMany({
       where: { quizId: quiz.id },
@@ -207,14 +215,15 @@ export default async function QuizDetailPage({ params }: QuizDetailPageProps) {
       orderBy: { createdAt: "desc" },
       take: 10,
     });
-    showcaseReviews = rawReviews.map((r) => ({
+    showcaseReviews = (Array.isArray(rawReviews) ? rawReviews : []).map((r) => ({
       id: r.id,
       reviewer: { name: r.user?.name || "Anonymous", avatarUrl: r.user?.image },
       rating: r.rating,
       quote: r.comment ?? "",
       dateLabel: r.createdAt.toLocaleDateString(),
     }));
-  } catch {
+  } catch (error) {
+    console.error("Error fetching quiz:", error);
     const now = new Date();
     quiz = {
       id: "demo-quiz",
@@ -246,10 +255,29 @@ export default async function QuizDetailPage({ params }: QuizDetailPageProps) {
     };
   }
 
+  // Ensure quiz is defined and has required properties
+  if (!quiz) {
+    notFound();
+  }
+
+  // Ensure all required properties exist with defaults
+  quiz.isPublished = quiz.isPublished ?? false;
+  quiz.status = quiz.status ?? "DRAFT";
+  quiz.title = quiz.title ?? "Untitled Quiz";
+  quiz.slug = quiz.slug ?? slug;
+  quiz.description = quiz.description ?? null;
+  quiz.sport = quiz.sport ?? null;
+  quiz.difficulty = quiz.difficulty ?? "MEDIUM";
+  quiz.createdAt = quiz.createdAt ?? new Date();
+  quiz.updatedAt = quiz.updatedAt ?? new Date();
+  quiz.descriptionImageUrl = quiz.descriptionImageUrl ?? null;
+
+  const topicConfigs = ensureArray(quiz.topicConfigs);
+  const leaderboardRecords = ensureArray(quiz.leaderboard);
   const durationLabel = formatQuizDuration(quiz.duration ?? quiz.timePerQuestion);
   const playersLabel = formatPlayerCount(uniqueUsersCount);
   const badgeLabel =
-    quiz.topicConfigs?.[0]?.topic?.name ?? quiz.sport ?? quiz.difficulty ?? "Featured";
+    topicConfigs[0]?.topic?.name ?? quiz.sport ?? quiz.difficulty ?? "Featured";
 
   // Calculate user's actual attempt limit status
   const now = new Date();
@@ -371,13 +399,14 @@ export default async function QuizDetailPage({ params }: QuizDetailPageProps) {
           `
     );
 
-    sidebarLeaderboard = rows.map((r, index) => ({
+    const recurringRows = ensureArray(rows);
+    sidebarLeaderboard = recurringRows.map((r, index) => ({
       name: r.name || r.email?.split("@")[0] || `Player ${index + 1}`,
       score: r.bestPoints || 0,
       rank: index + 1,
     }));
   } else {
-    sidebarLeaderboard = (quiz.leaderboard ?? []).map((entry: any, index: number) => ({
+    sidebarLeaderboard = leaderboardRecords.map((entry: any, index: number) => ({
       name:
         entry.user?.name ||
         entry.user?.email?.split("@")[0] ||
@@ -403,37 +432,42 @@ export default async function QuizDetailPage({ params }: QuizDetailPageProps) {
       ? quiz.totalReviews
       : quiz._count?.reviews ?? 0;
 
-  const quizUrl = getCanonicalUrl(`/quizzes/${quiz.slug}`);
-  const topicName = quiz.topicConfigs?.[0]?.topic?.name || quiz.sport || "Sports";
-  const breadcrumbItems = [
-    { position: 1, name: "Home", item: getCanonicalUrl("/") },
-    { position: 2, name: "Quizzes", item: getCanonicalUrl("/quizzes") },
-    { position: 3, name: quiz.title, item: quizUrl },
-  ];
+  const quizUrl = getCanonicalUrl(`/quizzes/${quiz.slug}`) || `/quizzes/${quiz.slug}`;
+  const topicName = (topicConfigs[0]?.topic?.name || quiz.sport || "Sports") as string;
+  const difficulty = (quiz.difficulty || "MEDIUM") as string;
+
+  // Ensure images is always a valid array of strings
+  const articleImages = Array.isArray(quiz.descriptionImageUrl) 
+    ? quiz.descriptionImageUrl.filter((img): img is string => typeof img === "string")
+    : (typeof quiz.descriptionImageUrl === "string" && quiz.descriptionImageUrl ? [quiz.descriptionImageUrl] : []);
 
   return (
     <ShowcaseThemeProvider>
       {/* Structured Data */}
       <ArticleJsonLd
-        url={quizUrl}
-        title={quiz.title}
-        description={quiz.description || `Test your knowledge about ${topicName} with this ${quiz.difficulty.toLowerCase()} difficulty quiz`}
-        images={quiz.descriptionImageUrl ? [quiz.descriptionImageUrl] : []}
+        url={quizUrl || ""}
+        title={quiz.title || "Quiz"}
+        description={quiz.description || `Test your knowledge about ${topicName} with this ${difficulty.toLowerCase()} difficulty quiz`}
+        images={articleImages}
         datePublished={quiz.createdAt?.toISOString() || new Date().toISOString()}
         dateModified={quiz.updatedAt?.toISOString() || new Date().toISOString()}
         authorName="Sports Trivia Team"
         publisherName="Sports Trivia"
-        publisherLogo={getCanonicalUrl("/logo.png")}
+        publisherLogo={getCanonicalUrl("/logo.png") || ""}
       />
-      {totalReviews > 0 && averageRating > 0 && (
+      {typeof totalReviews === "number" && totalReviews > 0 && typeof averageRating === "number" && averageRating > 0 && (
         <AggregateRatingJsonLd
+          itemReviewed={{
+            "@type": "Article",
+            name: quiz.title || "Quiz",
+            url: quizUrl || "",
+          }}
           ratingValue={averageRating}
           reviewCount={totalReviews}
           bestRating={5}
           worstRating={1}
         />
       )}
-      <BreadcrumbJsonLd itemListElements={breadcrumbItems} />
     <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-gradient-to-br from-white via-slate-50 to-blue-50 px-4 py-12 dark:from-slate-900 dark:via-purple-900 dark:to-amber-500 sm:px-6 lg:py-16">
       <div className="absolute inset-0 -z-10 opacity-70">
         <div className="absolute -left-20 top-24 h-72 w-72 rounded-full bg-emerald-400/20 blur-[120px] dark:bg-emerald-400/40" />
@@ -504,7 +538,7 @@ export default async function QuizDetailPage({ params }: QuizDetailPageProps) {
 
             <div className="mt-10 flex flex-wrap items-center justify-center gap-3 sm:gap-4 lg:justify-start">
               <div className="flex -space-x-2 sm:-space-x-3">
-                {[getSportGradient(quiz.sport, 0), getSportGradient(quiz.sport, 1), getSportGradient(quiz.sport, 2)].map((gradient, index) => (
+                {[getSportGradient(quiz.sport ?? "Sports", 0), getSportGradient(quiz.sport ?? "Sports", 1), getSportGradient(quiz.sport ?? "Sports", 2)].filter(Boolean).map((gradient, index) => (
                   <div
                     key={`${gradient}-${index}`}
                     className={`relative h-8 w-8 rounded-full border-2 border-slate-300/60 bg-gradient-to-br dark:border-white/30 sm:h-9 sm:w-9 lg:h-10 lg:w-10 ${gradient}`}
@@ -623,7 +657,7 @@ export default async function QuizDetailPage({ params }: QuizDetailPageProps) {
             </div>
 
               <div className="space-y-4 text-sm">
-              {(sidebarLeaderboard.length ? sidebarLeaderboard : [
+              {(Array.isArray(sidebarLeaderboard) && sidebarLeaderboard.length ? sidebarLeaderboard : [
                 { name: "Be the first", score: 0, rank: "" },
               ]).map((player: any, index: number) => (
                 <div
@@ -698,7 +732,7 @@ export default async function QuizDetailPage({ params }: QuizDetailPageProps) {
         </div>
       </div>
       <div className="mx-auto mt-6 w-full max-w-5xl rounded-[1.75rem] bg-gradient-to-br from-white/90 via-slate-50/80 to-blue-50/80 p-4 text-slate-900 shadow-[0_40px_120px_-40px_rgba(59,130,246,0.15)] backdrop-blur-xl dark:from-black/70 dark:via-slate-900/60 dark:to-indigo-900/80 dark:text-white sm:p-5 lg:p-6">
-        <ShowcaseReviewsPanel reviews={showcaseReviews} className="bg-transparent border-0 p-0" />
+        <ShowcaseReviewsPanel reviews={Array.isArray(showcaseReviews) ? showcaseReviews : []} className="bg-transparent border-0 p-0" />
       </div>
     </div>
     </ShowcaseThemeProvider>

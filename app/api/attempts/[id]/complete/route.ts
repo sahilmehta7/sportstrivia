@@ -257,7 +257,9 @@ export async function POST(
     // Recompute level/tier after points and stats updates
     try {
       await recomputeUserProgress(user.id);
-    } catch {}
+    } catch {
+      // Silently fail - recomputation is not critical for quiz completion
+    }
 
     return successResponse({
       ...results,

@@ -1,6 +1,6 @@
 "use client";
 
-import { Component, type ReactNode } from "react";
+import React, { Component, type ReactNode, type ErrorInfo } from "react";
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
 
 interface SearchErrorBoundaryProps {
@@ -36,7 +36,7 @@ export class SearchErrorBoundary extends Component<
     };
   }
 
-  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     // Log error for debugging
     console.error("Search error:", error, errorInfo);
   }

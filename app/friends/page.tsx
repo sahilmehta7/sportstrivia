@@ -1,4 +1,3 @@
-import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { getFriendDashboardData } from "@/lib/services/friend.service";
 import { FriendsClient } from "./FriendsClient";

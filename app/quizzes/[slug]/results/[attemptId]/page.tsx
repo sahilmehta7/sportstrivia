@@ -5,7 +5,7 @@ import { auth } from "@/lib/auth";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { CheckCircle2, XCircle, Trophy, ArrowLeft } from "lucide-react";
+import { CheckCircle2, XCircle, Trophy } from "lucide-react";
 import Image from "next/image";
 import { ShowcaseThemeProvider } from "@/components/showcase/ShowcaseThemeProvider";
 import { ResultsShareButton } from "@/components/quiz/ResultsShareButton";
@@ -154,12 +154,6 @@ export default async function QuizResultsPage({
     }
   }
 
-  const scoreColor = attempt.passed
-    ? "text-emerald-600 dark:text-emerald-400"
-    : "text-rose-600 dark:text-rose-400";
-  const scoreBgColor = attempt.passed
-    ? "bg-emerald-500/10"
-    : "bg-rose-500/10";
 
   // Build quiz-specific leaderboard (top 10) with recurring aggregation support
   let quizLeaderboard:

@@ -90,7 +90,6 @@ export default function NewQuizPage() {
       penaltyPercentage: 25,
       timeBonusEnabled: false,
       bonusPointsPerSecond: 0,
-      completionBonus: 0,
       // Optional fields
       descriptionImageUrl: "",
       startTime: "",

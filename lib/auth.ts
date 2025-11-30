@@ -15,8 +15,21 @@ function getAuthUrl() {
   return "http://localhost:3200";
 }
 
+// Normalize providers to avoid NextAuth internals calling .map on undefined.
+const providers = Array.isArray(authConfig.providers)
+  ? authConfig.providers
+  : authConfig.providers
+    ? [authConfig.providers]
+    : [];
+
+if (providers.length === 0) {
+  // Surface a clear log so it is obvious why auth would fail at runtime.
+  console.warn("[auth] No providers configured. Check auth.config.ts or environment vars.");
+}
+
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
+  providers,
   adapter: PrismaAdapter(prisma),
   secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET,
   callbacks: {

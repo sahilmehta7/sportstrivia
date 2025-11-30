@@ -29,7 +29,7 @@ jest.mock("@/lib/services/ai-quiz-processor.service", () => ({
 }));
 
 const { requireAdmin } = require("@/lib/auth-helpers");
-const { createBackgroundTask, markBackgroundTaskFailed } = require("@/lib/services/background-task.service");
+const { createBackgroundTask, markBackgroundTaskFailed: _markBackgroundTaskFailed } = require("@/lib/services/background-task.service");
 const { processAIQuizTask, determineSportFromTopic, fetchSourceMaterial } = require("@/lib/services/ai-quiz-processor.service");
 const { after } = require("next/server");
 

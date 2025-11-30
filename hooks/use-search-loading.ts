@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { usePathname, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 
 interface UseSearchLoadingOptions {
   debounceMs?: number;
@@ -23,7 +23,6 @@ export function useSearchLoading(
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
   const [pendingQuery, setPendingQuery] = useState<string | null>(null);
-  const pathname = usePathname();
   const searchParams = useSearchParams();
 
   // Track when a query change is initiated

@@ -125,7 +125,9 @@ export async function computeLevelFromPoints(totalPoints: number): Promise<Compu
     if ((prisma as any)?.level?.findMany) {
       levels = await prisma.level.findMany({ orderBy: { level: "asc" } });
     }
-  } catch {}
+  } catch {
+    // Silently fail - level model may not be available, will use fallback curve
+  }
 
   if (!levels || levels.length === 0) {
     // Fallback to on-the-fly curve if DB empty

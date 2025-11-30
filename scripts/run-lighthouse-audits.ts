@@ -13,11 +13,10 @@
 
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import { fileURLToPath } from 'url';
 
 // Dynamic imports to avoid ESM issues
-const lighthouse = require('lighthouse');
-const chromeLauncher = require('chrome-launcher');
+const lighthouseLib = require('lighthouse') as any;
+const chromeLauncher = require('chrome-launcher') as any;
 
 const PAGES_TO_AUDIT = [
   { path: '/', name: 'home' },
@@ -51,7 +50,7 @@ interface AuditResult {
 async function ensureDirectoryExists(dirPath: string): Promise<void> {
   try {
     await fs.mkdir(dirPath, { recursive: true });
-  } catch (error) {
+  } catch {
     // Directory might already exist, ignore
   }
 }
@@ -60,12 +59,12 @@ async function runLighthouseAudit(
   url: string,
   pageName: string,
   outputDir: string,
-  chrome: chromeLauncher.LaunchedChrome
+  chrome: any
 ): Promise<AuditResult> {
   console.log(`\n🔍 Auditing ${pageName} (${url})...`);
 
   try {
-    const options: lighthouse.Options = {
+    const options: any = {
       logLevel: 'info',
       output: ['html', 'json'],
       onlyCategories: ['performance', 'accessibility', 'best-practices', 'seo'],
@@ -73,7 +72,7 @@ async function runLighthouseAudit(
       disableStorageReset: false,
     };
 
-    const config: lighthouse.Config = {
+    const config: any = {
       extends: 'lighthouse:default',
       settings: {
         throttling: {
@@ -90,7 +89,7 @@ async function runLighthouseAudit(
       },
     };
 
-    const runnerResult = await lighthouse(url, options, config);
+    const runnerResult = await lighthouseLib(url, options, config);
 
     if (!runnerResult) {
       throw new Error('Lighthouse returned no results');

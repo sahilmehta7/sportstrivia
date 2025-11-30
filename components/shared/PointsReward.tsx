@@ -17,7 +17,6 @@ import type {
   PointsRewardProps,
   PointsCategory,
   PointsSize,
-  PointsBreakdown,
 } from "./PointsReward.types";
 
 // Icon mapping

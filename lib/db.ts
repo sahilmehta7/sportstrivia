@@ -19,7 +19,7 @@ const createPrismaFallback = () => {
   };
 
   return new Proxy({}, {
-    get(_target, modelKey) {
+    get(_target, _modelKey) {
       return new Proxy({}, modelHandler);
     },
   }) as unknown as PrismaClient;

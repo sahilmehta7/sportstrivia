@@ -1,4 +1,4 @@
-import { Prisma, SearchContext } from "@prisma/client";
+import { SearchContext } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { recordSearchQuery } from "@/lib/services/search-query.service";
 

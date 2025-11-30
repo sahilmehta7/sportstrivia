@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import { requireAdmin } from "@/lib/auth-helpers";
 import { handleError, successResponse, BadRequestError, NotFoundError } from "@/lib/errors";
 import { getBackgroundTaskById, updateBackgroundTask, markBackgroundTaskCompleted } from "@/lib/services/background-task.service";
-import { BackgroundTaskType, BackgroundTaskStatus } from "@prisma/client";
+import { BackgroundTaskType } from "@prisma/client";
 import { extractJSON } from "@/lib/services/ai-quiz-processor.service";
 
 export const runtime = 'nodejs';

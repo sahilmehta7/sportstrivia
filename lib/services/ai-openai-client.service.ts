@@ -339,7 +339,7 @@ export function extractContentFromCompletion(completion: any, aiModel: string): 
   let generatedContent: string | null = null;
   
   // Check if this is a Responses API response
-  const isResponsesAPI = completion.object === "response" || completion.object === "response_completion" || completion.hasOwnProperty("output_text");
+  const isResponsesAPI = completion.object === "response" || completion.object === "response_completion" || Object.prototype.hasOwnProperty.call(completion, "output_text");
   
   if (isResponsesAPI) {
     // Responses API formats
@@ -391,7 +391,7 @@ export function extractContentFromCompletion(completion: any, aiModel: string): 
  */
 export function extractUsageStats(completion: any): { tokensUsed: number; api: string } {
   let tokensUsed = 0;
-  const isResponsesAPI = completion.object === "response" || completion.object === "response_completion" || completion.hasOwnProperty("output_text");
+  const isResponsesAPI = completion.object === "response" || completion.object === "response_completion" || Object.prototype.hasOwnProperty.call(completion, "output_text");
   
   if (completion.usage?.total_tokens) {
     // Chat Completions API format

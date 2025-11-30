@@ -47,7 +47,7 @@ export function validateSearchQuery(query: string | null | undefined): string | 
     const result = searchQuerySchema.parse(query);
     // Return null if result is empty after trimming
     return result.length > 0 ? result : null;
-  } catch (error) {
+  } catch {
     // If validation fails but query is reasonable, just normalize it manually
     // This is more permissive and prevents valid queries from being rejected
     const normalized = trimmed.replace(/\s+/g, " ").trim();
