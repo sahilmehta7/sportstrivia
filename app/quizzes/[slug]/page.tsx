@@ -19,6 +19,32 @@ interface QuizDetailPageProps {
   params: Promise<{ slug: string }>;
 }
 
+const allowedImageHosts = [
+  "images.unsplash.com",
+  "lh3.googleusercontent.com",
+  "api.dicebear.com",
+];
+
+function getValidImageUrl(url?: string | null): string | null {
+  if (!url) return null;
+
+  try {
+    const parsed = new URL(url);
+
+    if (parsed.protocol !== "https:") {
+      return null;
+    }
+
+    if (parsed.hostname.endsWith(".supabase.co")) {
+      return url;
+    }
+
+    return allowedImageHosts.includes(parsed.hostname) ? url : null;
+  } catch {
+    return null;
+  }
+}
+
 // Normalize nullable relation arrays so downstream mapping logic is safe.
 function ensureArray<T>(value: T[] | null | undefined): T[] {
   return Array.isArray(value) ? value : [];
@@ -87,6 +113,7 @@ export async function generateMetadata({ params }: QuizDetailPageProps): Promise
     };
   }
 
+  const heroImageUrl = getValidImageUrl(quiz.descriptionImageUrl);
   const meta = generateQuizMetaTags(quiz);
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "");
   const canonicalUrl = baseUrl ? `${baseUrl}/quizzes/${quiz.slug}` : undefined;
@@ -100,13 +127,13 @@ export async function generateMetadata({ params }: QuizDetailPageProps): Promise
       description: meta.ogDescription,
       type: "article",
       ...(canonicalUrl ? { url: canonicalUrl } : {}),
-      ...(quiz.descriptionImageUrl ? { images: [{ url: quiz.descriptionImageUrl }] } : {}),
+      ...(heroImageUrl ? { images: [{ url: heroImageUrl }] } : {}),
     },
     twitter: {
-      card: quiz.descriptionImageUrl ? "summary_large_image" : "summary",
+      card: heroImageUrl ? "summary_large_image" : "summary",
       title: meta.ogTitle,
       description: meta.ogDescription,
-      ...(quiz.descriptionImageUrl ? { images: [quiz.descriptionImageUrl] } : {}),
+      ...(heroImageUrl ? { images: [heroImageUrl] } : {}),
     },
     ...(canonicalUrl
       ? {
@@ -272,6 +299,7 @@ export default async function QuizDetailPage({ params }: QuizDetailPageProps) {
   quiz.updatedAt = quiz.updatedAt ?? new Date();
   quiz.descriptionImageUrl = quiz.descriptionImageUrl ?? null;
 
+  const heroImageUrl = getValidImageUrl(quiz.descriptionImageUrl);
   const topicConfigs = ensureArray(quiz.topicConfigs);
   const leaderboardRecords = ensureArray(quiz.leaderboard);
   const durationLabel = formatQuizDuration(quiz.duration ?? quiz.timePerQuestion);
@@ -437,9 +465,7 @@ export default async function QuizDetailPage({ params }: QuizDetailPageProps) {
   const difficulty = (quiz.difficulty || "MEDIUM") as string;
 
   // Ensure images is always a valid array of strings
-  const articleImages = Array.isArray(quiz.descriptionImageUrl) 
-    ? quiz.descriptionImageUrl.filter((img): img is string => typeof img === "string")
-    : (typeof quiz.descriptionImageUrl === "string" && quiz.descriptionImageUrl ? [quiz.descriptionImageUrl] : []);
+  const articleImages = heroImageUrl ? [heroImageUrl] : [];
 
   return (
     <ShowcaseThemeProvider>
@@ -478,10 +504,10 @@ export default async function QuizDetailPage({ params }: QuizDetailPageProps) {
       <div className="relative w-full max-w-5xl rounded-[1.75rem] border border-slate-200/60 bg-gradient-to-br from-white/90 via-slate-50/80 to-blue-50/80 p-6 shadow-[0_40px_120px_-40px_rgba(59,130,246,0.15)] backdrop-blur-xl dark:border-white/10 dark:from-black/70 dark:via-slate-900/60 dark:to-indigo-900/80 dark:shadow-[0_40px_120px_-40px_rgba(0,0,0,0.8)] sm:p-8 lg:p-10">
         <div className="flex flex-col gap-10 lg:flex-row lg:items-stretch">
           <div className="flex-1 text-center lg:text-left">
-            {quiz.descriptionImageUrl && (
+            {heroImageUrl && (
               <div className="relative mb-4 w-full overflow-hidden rounded-2xl lg:hidden h-48">
                 <Image
-                  src={quiz.descriptionImageUrl}
+                  src={heroImageUrl}
                   alt={quiz.title}
                   fill
                   sizes="(max-width: 1024px) 100vw, 50vw"
@@ -638,10 +664,10 @@ export default async function QuizDetailPage({ params }: QuizDetailPageProps) {
           </div>
 
           <div className="relative flex w-full max-w-md flex-col items-stretch gap-6 rounded-[1.75rem] border border-slate-200/60 bg-white/80 p-6 text-slate-900 shadow-[0_40px_80px_-40px_rgba(59,130,246,0.15)] backdrop-blur-3xl dark:border-white/10 dark:bg-white/5 dark:text-white dark:shadow-[0_40px_80px_-40px_rgba(15,15,35,0.7)] sm:p-8 lg:max-w-sm">
-            {quiz.descriptionImageUrl && (
+            {heroImageUrl && (
               <div className="relative hidden w-full overflow-hidden rounded-2xl lg:block h-48">
-                <Image 
-                  src={quiz.descriptionImageUrl} 
+                <Image
+                  src={heroImageUrl}
                   alt={quiz.title}
                   fill
                   sizes="(max-width: 1200px) 100vw, 600px"
