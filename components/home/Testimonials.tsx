@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 import { Star } from "lucide-react";
 
 export function Testimonials() {
-  const { theme } = useShowcaseTheme();
+  // Theme styling via CSS
 
   const testimonials = [
     {
@@ -34,18 +34,18 @@ export function Testimonials() {
       <div className="mx-auto max-w-6xl">
         <div className={cn(
           "relative w-full max-w-5xl mx-auto rounded-[1.75rem] border p-6 sm:p-8 backdrop-blur-xl mb-8",
-          getGlassCard(theme)
+          getGlassCard()
         )}>
           <div className="text-center">
             <h2 className={cn(
               "text-2xl sm:text-3xl font-bold mb-4",
-              getTextColor(theme, "primary")
+              getTextColor("primary")
             )}>
               What Our Players Say
             </h2>
             <p className={cn(
               "text-base sm:text-lg",
-              getTextColor(theme, "secondary")
+              getTextColor("secondary")
             )}>
               Join thousands of satisfied sports fans
             </p>
@@ -58,7 +58,7 @@ export function Testimonials() {
               key={index}
               className={cn(
                 "rounded-xl sm:rounded-2xl p-6 sm:p-8 backdrop-blur-sm transition-all duration-200 hover:scale-105",
-                getGlassCard(theme)
+                getGlassCard()
               )}
             >
               {/* Stars */}
@@ -68,7 +68,8 @@ export function Testimonials() {
                     key={i}
                     className={cn(
                       "h-4 w-4 sm:h-5 sm:w-5",
-                      theme === "light" ? "text-yellow-500" : "text-yellow-400"
+                      "text-yellow-500",
+                      "dark:text-yellow-400"
                     )}
                     fill="currentColor"
                   />
@@ -79,7 +80,7 @@ export function Testimonials() {
               <blockquote
                 className={cn(
                   "text-center mb-4 sm:mb-6 italic text-sm sm:text-base",
-                  getTextColor(theme, "secondary")
+                  getTextColor("secondary")
                 )}
               >
                 &ldquo;{testimonial.quote}&rdquo;
@@ -89,13 +90,13 @@ export function Testimonials() {
               <div className="text-center">
                 <div className={cn(
                   "font-bold text-sm sm:text-base",
-                  getTextColor(theme, "primary")
+                  getTextColor("primary")
                 )}>
                   {testimonial.name}
                 </div>
                 <div className={cn(
                   "text-xs sm:text-sm",
-                  getTextColor(theme, "muted")
+                  getTextColor("muted")
                 )}>
                   {testimonial.title}
                 </div>

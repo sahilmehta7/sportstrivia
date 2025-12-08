@@ -5,7 +5,6 @@ import { Search, SlidersHorizontal, Sparkles } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { useShowcaseTheme } from "@/components/showcase/ShowcaseThemeProvider";
 import { getInputStyles, getChipStyles, getSurfaceStyles } from "@/lib/showcase-theme";
 import { useSearchKeyboard } from "@/hooks/use-search-keyboard";
 
@@ -47,7 +46,6 @@ export function ShowcaseSearchBar({
   onClear,
   searchDescription = "Search quizzes by title, description, sport, or topic",
 }: ShowcaseSearchBarProps) {
-  const { theme } = useShowcaseTheme();
   const [internalValue, setInternalValue] = useState("");
   const [announcement, setAnnouncement] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
@@ -55,7 +53,7 @@ export function ShowcaseSearchBar({
 
   const currentValue = value ?? internalValue;
 
-  const inputClasses = useMemo(() => getInputStyles(theme), [theme]);
+  const inputClasses = useMemo(() => getInputStyles(), []);
 
   // Handle keyboard shortcuts (/ and Ctrl/Cmd + K)
   useSearchKeyboard(inputRef, {
@@ -105,7 +103,7 @@ export function ShowcaseSearchBar({
     <div
       className={cn(
         "w-full space-y-4 rounded-[2rem] border px-6 py-5 shadow-[0_24px_60px_-38px_rgba(15,23,42,0.45)]",
-        getSurfaceStyles(theme, "raised"),
+        getSurfaceStyles("raised"),
         className
       )}
     >
@@ -144,7 +142,7 @@ export function ShowcaseSearchBar({
             className={cn(
               "h-12 rounded-full pl-9 pr-12 text-sm shadow-none",
               inputClasses,
-              theme === "dark" ? "bg-white/8" : "bg-white"
+              "dark:bg-white/5 bg-white" // Fallback specific overriding if needed, or rely on inputClasses
             )}
           />
           <Button
@@ -194,7 +192,7 @@ export function ShowcaseSearchBar({
                 aria-label={`${active ? "Remove" : "Apply"} search filter: ${chip.label}`}
                 className={cn(
                   "inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] transition",
-                  active ? getChipStyles(theme, "solid") : getChipStyles(theme, "outline")
+                  active ? getChipStyles("solid") : getChipStyles("outline")
                 )}
               >
                 {chip.emoji && <span aria-hidden="true">{chip.emoji}</span>}

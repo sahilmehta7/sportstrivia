@@ -19,7 +19,7 @@ export async function PopularTopics() {
             <h2
               className={cn(
                 "mb-4 text-2xl font-bold sm:text-3xl",
-                getTextColor(undefined, "primary")
+                getTextColor("primary")
               )}
             >
               Popular Topics
@@ -27,7 +27,7 @@ export async function PopularTopics() {
             <p
               className={cn(
                 "text-base sm:text-lg",
-                getTextColor(undefined, "secondary")
+                getTextColor("secondary")
               )}
             >
               Explore the most popular sports categories

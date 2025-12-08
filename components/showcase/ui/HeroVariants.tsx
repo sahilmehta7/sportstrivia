@@ -4,7 +4,6 @@ import Link from "next/link";
 import { type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { useShowcaseTheme } from "@/components/showcase/ShowcaseThemeProvider";
 import {
   getGlassBackground,
   getGlassCard,
@@ -88,13 +87,13 @@ export function ShowcaseHeroSpotlight({
   stats,
   className,
 }: ShowcaseHeroSpotlightProps) {
-  const { theme } = useShowcaseTheme();
+  // Theme styling via CSS
 
   return (
     <section
       className={cn(
         "relative overflow-hidden rounded-[2rem] border px-8 py-12 shadow-xl sm:px-10 lg:px-16 lg:py-16",
-        getSurfaceStyles(theme, "raised"),
+        getSurfaceStyles("raised"),
         className
       )}
     >
@@ -117,9 +116,8 @@ export function ShowcaseHeroSpotlight({
             <span
               className={cn(
                 "inline-flex items-center justify-center rounded-full px-4 py-1 text-xs font-semibold uppercase tracking-[0.35em]",
-                theme === "light"
-                  ? "bg-white/80 text-slate-600"
-                  : "bg-white/15 text-white/70"
+                "bg-white/80 text-slate-600",
+                "dark:bg-white/15 dark:text-white/70"
               )}
             >
               {eyebrow}
@@ -128,7 +126,7 @@ export function ShowcaseHeroSpotlight({
           <h1
             className={cn(
               "mx-auto max-w-4xl text-4xl font-black tracking-tight sm:text-5xl lg:text-6xl",
-              getTextColor(theme)
+              getTextColor("primary")
             )}
           >
             {title}{" "}
@@ -136,9 +134,8 @@ export function ShowcaseHeroSpotlight({
               <span
                 className={cn(
                   "bg-gradient-to-r bg-clip-text text-transparent",
-                  theme === "light"
-                    ? "from-blue-600 via-indigo-500 to-purple-600"
-                    : "from-emerald-300 via-sky-300 to-blue-300"
+                  "from-blue-600 via-indigo-500 to-purple-600",
+                  "dark:from-emerald-300 dark:via-sky-300 dark:to-blue-300"
                 )}
               >
                 {highlightedText}
@@ -149,7 +146,7 @@ export function ShowcaseHeroSpotlight({
             <p
               className={cn(
                 "mx-auto max-w-3xl text-base sm:text-lg",
-                getTextColor(theme, "secondary")
+                getTextColor("secondary")
               )}
             >
               {subtitle}
@@ -169,13 +166,13 @@ export function ShowcaseHeroSpotlight({
                 key={stat.label}
                 className={cn(
                   "rounded-2xl px-6 py-5 text-center",
-                  getGlassCard(theme)
+                  getGlassCard()
                 )}
               >
-                <dt className={cn("text-xs font-semibold uppercase tracking-[0.35em]", getTextColor(theme, "muted"))}>
+                <dt className={cn("text-xs font-semibold uppercase tracking-[0.35em]", getTextColor("muted"))}>
                   {stat.label}
                 </dt>
-                <dd className={cn("mt-2 text-2xl font-bold", getTextColor(theme))}>
+                <dd className={cn("mt-2 text-2xl font-bold", getTextColor("primary"))}>
                   {typeof stat.value === "number"
                     ? stat.value.toLocaleString()
                     : stat.value}
@@ -210,13 +207,13 @@ export function ShowcaseHeroSplit({
   secondaryAction,
   className,
 }: ShowcaseHeroSplitProps) {
-  const { theme } = useShowcaseTheme();
+  // Theme styling via CSS
 
   return (
     <section
       className={cn(
         "rounded-[1.75rem] border p-6 sm:p-8 lg:p-12",
-        getSurfaceStyles(theme, "base"),
+        getSurfaceStyles("base"),
         className
       )}
     >
@@ -226,18 +223,17 @@ export function ShowcaseHeroSplit({
             <span
               className={cn(
                 "inline-flex rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.3em]",
-                theme === "light"
-                  ? "bg-blue-100 text-blue-600"
-                  : "bg-white/10 text-white/70"
+                "bg-blue-100 text-blue-600",
+                "dark:bg-white/10 dark:text-white/70"
               )}
             >
               {eyebrow}
             </span>
           )}
           <div className="space-y-3">
-            <h2 className={cn("text-3xl font-bold sm:text-4xl", getTextColor(theme))}>{title}</h2>
+            <h2 className={cn("text-3xl font-bold sm:text-4xl", getTextColor("primary"))}>{title}</h2>
             {subtitle && (
-              <p className={cn("text-base sm:text-lg", getTextColor(theme, "secondary"))}>
+              <p className={cn("text-base sm:text-lg", getTextColor("secondary"))}>
                 {subtitle}
               </p>
             )}
@@ -250,27 +246,26 @@ export function ShowcaseHeroSplit({
                   key={item.title}
                   className={cn(
                     "flex items-start gap-3 rounded-2xl p-4",
-                    getGlassCard(theme)
+                    getGlassCard()
                   )}
                 >
                   {item.icon && (
                     <div
                       className={cn(
                         "flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl",
-                        theme === "light"
-                          ? "bg-blue-100 text-blue-600"
-                          : "bg-white/10 text-white"
+                        "bg-blue-100 text-blue-600",
+                        "dark:bg-white/10 dark:text-white"
                       )}
                     >
                       {item.icon}
                     </div>
                   )}
                   <div>
-                    <h3 className={cn("text-base font-semibold", getTextColor(theme))}>
+                    <h3 className={cn("text-base font-semibold", getTextColor("primary"))}>
                       {item.title}
                     </h3>
                     {item.description && (
-                      <p className={cn("text-sm", getTextColor(theme, "secondary"))}>
+                      <p className={cn("text-sm", getTextColor("secondary"))}>
                         {item.description}
                       </p>
                     )}
@@ -290,7 +285,7 @@ export function ShowcaseHeroSplit({
           <div
             className={cn(
               "relative overflow-hidden rounded-[1.5rem] border p-1",
-              getGlassCard(theme)
+              getGlassCard()
             )}
           >
             <div className="rounded-[1.25rem] bg-gradient-to-br from-white/20 via-white/5 to-transparent p-6">
@@ -320,7 +315,7 @@ export function ShowcaseHeroBanner({
   align = "center",
   className,
 }: ShowcaseHeroBannerProps) {
-  const { theme } = useShowcaseTheme();
+  // Theme styling via CSS
 
   const alignment = align === "center" ? "text-center" : "text-left";
   const actionJustify = align === "center" ? "justify-center" : "justify-start";
@@ -329,7 +324,7 @@ export function ShowcaseHeroBanner({
     <section
       className={cn(
         "overflow-hidden rounded-3xl border p-6 sm:p-8",
-        getGlassBackground(theme),
+        getGlassBackground(),
         className
       )}
     >
@@ -339,18 +334,17 @@ export function ShowcaseHeroBanner({
             <div
               className={cn(
                 "flex h-12 w-12 items-center justify-center rounded-2xl",
-                theme === "light"
-                  ? "bg-white/70 text-blue-600"
-                  : "bg-black/30 text-white"
+                "bg-white/70 text-blue-600",
+                "dark:bg-black/30 dark:text-white"
               )}
             >
               {icon}
             </div>
           )}
-          <div className={cn("flex-1", align === "center" ? "sm:text-center" : "sm:text-left")}> 
-            <h2 className={cn("text-2xl font-semibold sm:text-3xl", getTextColor(theme))}>{title}</h2>
+          <div className={cn("flex-1", align === "center" ? "sm:text-center" : "sm:text-left")}>
+            <h2 className={cn("text-2xl font-semibold sm:text-3xl", getTextColor("primary"))}>{title}</h2>
             {subtitle && (
-              <p className={cn("mt-2 text-base", getTextColor(theme, "secondary"))}>{subtitle}</p>
+              <p className={cn("mt-2 text-base", getTextColor("secondary"))}>{subtitle}</p>
             )}
           </div>
         </div>
@@ -390,14 +384,14 @@ export function ShowcaseHeroDeck({
   primaryAction,
   className,
 }: ShowcaseHeroDeckProps) {
-  const { theme } = useShowcaseTheme();
+  // Theme styling via CSS
 
   return (
     <section className={cn("space-y-8", className)}>
       <div className="text-center">
-        <h2 className={cn("text-3xl font-bold sm:text-4xl", getTextColor(theme))}>{title}</h2>
+        <h2 className={cn("text-3xl font-bold sm:text-4xl", getTextColor("primary"))}>{title}</h2>
         {subtitle && (
-          <p className={cn("mt-2 text-base sm:text-lg", getTextColor(theme, "secondary"))}>{subtitle}</p>
+          <p className={cn("mt-2 text-base sm:text-lg", getTextColor("secondary"))}>{subtitle}</p>
         )}
       </div>
 
@@ -407,32 +401,32 @@ export function ShowcaseHeroDeck({
             <div
               className={cn(
                 "flex h-full flex-col gap-4 rounded-2xl border p-6",
-                getGlassCard(theme)
+                getGlassCard()
               )}
             >
               {card.icon && (
                 <div
                   className={cn(
                     "flex h-12 w-12 items-center justify-center rounded-xl text-lg",
-                    theme === "light"
-                      ? "bg-blue-100 text-blue-600"
-                      : "bg-white/10 text-white"
+                    "bg-blue-100 text-blue-600",
+                    "dark:bg-white/10 dark:text-white"
                   )}
                 >
                   {card.icon}
                 </div>
               )}
               <div className="space-y-2">
-                <h3 className={cn("text-lg font-semibold", getTextColor(theme))}>{card.title}</h3>
+                <h3 className={cn("text-lg font-semibold", getTextColor("primary"))}>{card.title}</h3>
                 {card.description && (
-                  <p className={cn("text-sm", getTextColor(theme, "secondary"))}>{card.description}</p>
+                  <p className={cn("text-sm", getTextColor("secondary"))}>{card.description}</p>
                 )}
               </div>
               {card.stat && (
                 <div
                   className={cn(
                     "mt-auto text-sm font-semibold uppercase tracking-[0.2em]",
-                    theme === "light" ? "text-blue-600" : "text-blue-300"
+                    "text-blue-600",
+                    "dark:text-blue-300"
                   )}
                 >
                   {card.stat}

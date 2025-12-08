@@ -23,29 +23,19 @@ export function ShowcaseTopicInsightWidget({
   breakdown = [],
   className,
 }: TopicInsightWidgetProps) {
-  const { theme: nextTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
+  /* Removed unused theme logic */
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  // Use dark theme as default during SSR to prevent hydration mismatch
-  const theme: ShowcaseTheme = mounted 
-    ? (nextTheme === "light" ? "light" : "dark")
-    : "dark";
-  
-  const textPrimary = getTextColor(theme, "primary");
-  const textSecondary = getTextColor(theme, "secondary");
+  const textPrimary = getTextColor("primary");
+  const textSecondary = getTextColor("secondary");
 
   return (
-    <div className={cn("rounded-[2rem] p-5", getSurfaceStyles(theme, "raised"), className)}>
+    <div className={cn("rounded-[2rem] p-5", getSurfaceStyles("raised"), className)}>
       <div className="mb-4 flex items-center justify-between">
         <div>
           <h3 className={cn("text-lg font-bold", textPrimary)}>{title}</h3>
           <p className={cn("text-xs uppercase tracking-[0.3em]", textSecondary)}>Topic Insights</p>
         </div>
-        <span className={cn("rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.3em]", getChipStyles(theme, "outline"))}>
+        <span className={cn("rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.3em]", getChipStyles("outline"))}>
           {totalQuizzes} quizzes
         </span>
       </div>

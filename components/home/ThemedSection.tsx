@@ -14,11 +14,11 @@ interface ThemedSectionProps {
 }
 
 export function ThemedSection({ variant, children, showBlur = true, className }: ThemedSectionProps) {
-  const { theme } = useShowcaseTheme();
-  const blurCircles = getBlurCircles(theme);
+  // Theme logic is now handled via CSS classes
+  const blurCircles = getBlurCircles();
 
   return (
-    <section className={cn("relative", getBackgroundVariant(variant, theme), className)}>
+    <section className={cn("relative", getBackgroundVariant(variant), className)}>
       {showBlur && (
         <div className="absolute inset-0 -z-10 opacity-70">
           <div className={cn("absolute -left-20 top-24 h-72 w-72 rounded-full blur-[120px]", blurCircles.circle1)} />

@@ -2,8 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
-import { useTheme } from "next-themes";
-import type { ShowcaseTheme } from "@/components/showcase/ShowcaseThemeProvider";
 import { getChipStyles, getTextColor } from "@/lib/showcase-theme";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -27,17 +25,11 @@ export function ShowcasePagination({
   maxPageNumbers = 5,
   className,
 }: ShowcasePaginationProps) {
-  const { theme: nextTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
   }, []);
-
-  // Map next-themes to showcase theme, defaulting to dark for consistency
-  const theme: ShowcaseTheme = mounted 
-    ? (nextTheme === "light" ? "light" : "dark")
-    : "dark";
 
   // Calculate which page numbers to show
   const getPageNumbers = () => {
@@ -88,6 +80,10 @@ export function ShowcasePagination({
     }
   };
 
+  if (!mounted) {
+    return null;
+  }
+
   return (
     <div className={cn("flex items-center justify-center gap-2", className)}>
       {/* First page button */}
@@ -97,9 +93,10 @@ export function ShowcasePagination({
           size="icon"
           onClick={() => handlePageChange(1)}
           disabled={currentPage === 1}
+          aria-label="Go to first page"
           className={cn(
             "h-9 w-9 rounded-full transition",
-            getChipStyles(theme, "ghost"),
+            getChipStyles("ghost"),
             currentPage === 1 && "opacity-50"
           )}
         >
@@ -113,9 +110,10 @@ export function ShowcasePagination({
         size="icon"
         onClick={() => handlePageChange(currentPage - 1)}
         disabled={currentPage === 1}
+        aria-label="Go to previous page"
         className={cn(
           "h-9 w-9 rounded-full transition",
-          getChipStyles(theme, "ghost"),
+          getChipStyles("ghost"),
           currentPage === 1 && "opacity-50"
         )}
       >
@@ -132,7 +130,7 @@ export function ShowcasePagination({
                   key={`ellipsis-${index}`}
                   className={cn(
                     "flex h-9 w-9 items-center justify-center rounded-full text-xs font-semibold",
-                    getTextColor(theme, "muted")
+                    getTextColor("muted")
                   )}
                 >
                   ...
@@ -148,9 +146,11 @@ export function ShowcasePagination({
                 key={pageNum}
                 onClick={() => handlePageChange(pageNum)}
                 disabled={isActive}
+                aria-label={isActive ? `Current page, page ${pageNum}` : `Go to page ${pageNum}`}
+                aria-current={isActive ? "page" : undefined}
                 className={cn(
                   "h-9 w-9 rounded-full text-xs font-semibold transition",
-                  isActive ? getChipStyles(theme, "solid") : getChipStyles(theme, "ghost")
+                  isActive ? getChipStyles("solid") : getChipStyles("ghost")
                 )}
               >
                 {pageNum}
@@ -166,9 +166,10 @@ export function ShowcasePagination({
         size="icon"
         onClick={() => handlePageChange(currentPage + 1)}
         disabled={currentPage === totalPages}
+        aria-label="Go to next page"
         className={cn(
           "h-9 w-9 rounded-full transition",
-          getChipStyles(theme, "ghost"),
+          getChipStyles("ghost"),
           currentPage === totalPages && "opacity-50"
         )}
       >
@@ -182,9 +183,10 @@ export function ShowcasePagination({
           size="icon"
           onClick={() => handlePageChange(totalPages)}
           disabled={currentPage === totalPages}
+          aria-label="Go to last page"
           className={cn(
             "h-9 w-9 rounded-full transition",
-            getChipStyles(theme, "ghost"),
+            getChipStyles("ghost"),
             currentPage === totalPages && "opacity-50"
           )}
         >
@@ -194,4 +196,3 @@ export function ShowcasePagination({
     </div>
   );
 }
-

@@ -30,21 +30,17 @@ interface ShowcaseFilterBarProps {
 }
 
 export function ShowcaseFilterBar({ groups, className, condensed = false, onChange }: ShowcaseFilterBarProps) {
-  const { theme: themeMode } = useTheme();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  // Default to dark theme until mounted to prevent hydration mismatch
-  const theme = mounted && themeMode === "light" ? "light" : "dark";
-
   return (
     <div
       className={cn(
         "w-full rounded-[1.75rem] border px-5 py-4 md:px-7 md:py-5",
-        getSurfaceStyles(theme, "base"),
+        getSurfaceStyles("base"),
         className
       )}
     >
@@ -54,7 +50,7 @@ export function ShowcaseFilterBar({ groups, className, condensed = false, onChan
           if (type === "select") {
             return (
               <div key={group.id} className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-                <span className={cn("text-sm font-semibold uppercase tracking-[0.3em]", getTextColor(theme, "secondary"))}>
+                <span className={cn("text-sm font-semibold uppercase tracking-[0.3em]", getTextColor("secondary"))}>
                   {group.label}
                 </span>
                 <Select
@@ -89,7 +85,7 @@ export function ShowcaseFilterBar({ groups, className, condensed = false, onChan
 
           return (
             <div key={group.id} className="space-y-2">
-              <span className={cn("text-sm font-semibold uppercase tracking-[0.3em]", getTextColor(theme, "secondary"))}>
+              <span className={cn("text-sm font-semibold uppercase tracking-[0.3em]", getTextColor("secondary"))}>
                 {group.label}
               </span>
               <div className={cn(
@@ -105,7 +101,7 @@ export function ShowcaseFilterBar({ groups, className, condensed = false, onChan
                       onClick={() => onChange?.(group.id, option)}
                       className={cn(
                         "rounded-full px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.25em] whitespace-nowrap",
-                        active ? getChipStyles(theme, "solid") : getChipStyles(theme, "outline")
+                        active ? getChipStyles("solid") : getChipStyles("outline")
                       )}
                     >
                       {option.emoji && <span aria-hidden="true" className="mr-1">{option.emoji}</span>}

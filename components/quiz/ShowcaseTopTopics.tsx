@@ -71,7 +71,11 @@ export function ShowcaseTopTopics({
   className,
   initialTopics,
 }: ShowcaseTopTopicsProps) {
-  const { theme } = useShowcaseTheme();
+  const { theme } = useShowcaseTheme(); // Keeping strictly for inline-style fallback if needed, but preferable to remove if possible.
+  // Actually, let's keep `theme` mostly unused for classes, but we might validly use it for logical things if any exist. 
+  // Wait, I should try to remove it entirely to solve the mismatch. 
+  // If I need dynamic colors, I'll pass them via CSS vars.
+
   const initialTopicsProvided = Array.isArray(initialTopics) && initialTopics.length > 0;
   const [topics, setTopics] = useState<TopicSummary[]>(initialTopics ?? []);
   const [sortBy, setSortBy] = useState<"users" | "quizzes">(defaultSortBy);
@@ -137,7 +141,7 @@ export function ShowcaseTopTopics({
       <div className={cn("w-full max-w-6xl mx-auto", className)}>
         <div className="flex items-center justify-center py-12">
           <Loader2 className="h-8 w-8 animate-spin" />
-          <span className={cn("ml-2 text-sm", getTextColor(theme, "secondary"))}>
+          <span className={cn("ml-2 text-sm", getTextColor("secondary"))}>
             Loading top topics...
           </span>
         </div>
@@ -148,8 +152,8 @@ export function ShowcaseTopTopics({
   if (error) {
     return (
       <div className={cn("w-full max-w-6xl mx-auto", className)}>
-        <Card className={cn("p-6 text-center", getGlassCard(theme))}>
-          <p className={cn("text-sm", getTextColor(theme, "secondary"))}>
+        <Card className={cn("p-6 text-center", getGlassCard())}>
+          <p className={cn("text-sm", getTextColor("secondary"))}>
             Error: {error}
           </p>
         </Card>
@@ -162,14 +166,14 @@ export function ShowcaseTopTopics({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className={cn("text-2xl font-bold", getTextColor(theme, "primary"))}>
+          <h2 className={cn("text-2xl font-bold", getTextColor("primary"))}>
             {title}
           </h2>
-          <p className={cn("text-sm mt-1", getTextColor(theme, "secondary"))}>
+          <p className={cn("text-sm mt-1", getTextColor("secondary"))}>
             {getSortLabel(sortBy)} in the last 30 days
           </p>
         </div>
-        
+
         <div className="flex items-center gap-4">
           {/* Sort Selector */}
           <Select value={sortBy} onValueChange={(value: "users" | "quizzes") => setSortBy(value)}>
@@ -191,7 +195,7 @@ export function ShowcaseTopTopics({
               </SelectItem>
             </SelectContent>
           </Select>
-          
+
           {/* View All Button */}
           {showViewAll && (
             <Button asChild variant="outline" size="sm">
@@ -208,23 +212,35 @@ export function ShowcaseTopTopics({
         {topics.map((topic, index) => {
           const colorPair = colorPairs[index % colorPairs.length];
           const accentColor = theme === "light" ? colorPair.light : colorPair.dark;
-          
+
           return (
-            <Card key={topic.id} className={cn("group cursor-pointer transition-all duration-200 hover:scale-105 overflow-hidden", getGlassCard(theme))}>
+            <Card key={topic.id} className={cn("group cursor-pointer transition-all duration-200 hover:scale-105 overflow-hidden", getGlassCard())}>
               <Link href={`/topics/${topic.slug}`}>
                 <CardContent className="p-0">
                   {/* Background Section with Accent Color */}
-                  <div 
+                  <div
                     className="p-6 text-center space-y-4"
-                    style={{ backgroundColor: accentColor }}
+                    style={{
+                      // Use CSS variables to handle theming for arbitrary colors
+                      ['--topic-light' as string]: colorPair.light,
+                      ['--topic-dark' as string]: colorPair.dark,
+                      backgroundColor: 'var(--topic-bg)',
+                    }}
                   >
+                    <style jsx>{`
+                      div[style] {
+                        --topic-bg: var(--topic-light);
+                      }
+                      :global(.dark) div[style] {
+                        --topic-bg: var(--topic-dark);
+                      }
+                    `}</style>
                     {/* Topic Icon */}
                     <div className="flex justify-center">
                       <div className={cn(
                         "w-16 h-16 rounded-2xl flex items-center justify-center text-3xl transition-all duration-200 group-hover:scale-110 backdrop-blur-sm",
-                        theme === "light" 
-                          ? "bg-white/80 shadow-lg shadow-black/10" 
-                          : "bg-black/20 shadow-lg shadow-black/30"
+                        "bg-white/80 shadow-lg shadow-black/10",
+                        "dark:bg-black/20 dark:shadow-lg dark:shadow-black/30"
                       )}>
                         {topic.imageUrl ? (
                           <Image
@@ -244,18 +260,15 @@ export function ShowcaseTopTopics({
                     <div>
                       <h3 className={cn(
                         "font-semibold text-lg group-hover:underline",
-                        theme === "light" 
-                          ? "text-slate-900 drop-shadow-[0_2px_8px_rgba(0,0,0,0.1)]" 
-                          : "text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.3)]"
+                        "text-slate-900 drop-shadow-[0_2px_8px_rgba(0,0,0,0.1)]",
+                        "dark:text-white dark:drop-shadow-[0_2px_8px_rgba(0,0,0,0.3)]"
                       )}>
                         {topic.name}
                       </h3>
                       {topic.description && (
                         <p className={cn(
                           "text-xs mt-1 line-clamp-2",
-                          theme === "light" 
-                            ? "text-slate-700" 
-                            : "text-white/80"
+                          "text-slate-700 dark:text-white/80"
                         )}>
                           {topic.description}
                         </p>
@@ -266,9 +279,8 @@ export function ShowcaseTopTopics({
                     <div className="flex items-center justify-center gap-4 text-xs">
                       <div className={cn(
                         "flex items-center gap-1 px-2 py-1 rounded-full backdrop-blur-sm",
-                        theme === "light" 
-                          ? "bg-white/60 text-slate-700" 
-                          : "bg-black/30 text-white/80"
+                        "bg-white/60 text-slate-700",
+                        "dark:bg-black/30 dark:text-white/80"
                       )}>
                         <Users className="h-3 w-3" />
                         <span>
@@ -277,9 +289,8 @@ export function ShowcaseTopTopics({
                       </div>
                       <div className={cn(
                         "flex items-center gap-1 px-2 py-1 rounded-full backdrop-blur-sm",
-                        theme === "light" 
-                          ? "bg-white/60 text-slate-700" 
-                          : "bg-black/30 text-white/80"
+                        "bg-white/60 text-slate-700",
+                        "dark:bg-black/30 dark:text-white/80"
                       )}>
                         <BookOpen className="h-3 w-3" />
                         <span>
@@ -290,13 +301,12 @@ export function ShowcaseTopTopics({
 
                     {/* Trending Badge */}
                     {sortBy === "users" && topic.userCount > 0 && (
-                      <Badge 
-                        variant="secondary" 
+                      <Badge
+                        variant="secondary"
                         className={cn(
                           "text-xs backdrop-blur-sm",
-                          theme === "light" 
-                            ? "bg-emerald-100/80 text-emerald-700 border-emerald-200/50" 
-                            : "bg-emerald-900/50 text-emerald-300 border-emerald-700/50"
+                          "bg-emerald-100/80 text-emerald-700 border-emerald-200/50",
+                          "dark:bg-emerald-900/50 dark:text-emerald-300 dark:border-emerald-700/50"
                         )}
                       >
                         <TrendingUp className="h-3 w-3 mr-1" />
@@ -313,13 +323,13 @@ export function ShowcaseTopTopics({
 
       {/* Empty State */}
       {topics.length === 0 && (
-        <Card className={cn("p-12 text-center", getGlassCard(theme))}>
+        <Card className={cn("p-12 text-center", getGlassCard())}>
           <div className="space-y-4">
             <div className="text-4xl">📝</div>
-            <h3 className={cn("text-lg font-semibold", getTextColor(theme, "primary"))}>
+            <h3 className={cn("text-lg font-semibold", getTextColor("primary"))}>
               No topics found
             </h3>
-            <p className={cn("text-sm", getTextColor(theme, "secondary"))}>
+            <p className={cn("text-sm", getTextColor("secondary"))}>
               Try adjusting your sorting criteria or check back later.
             </p>
           </div>
