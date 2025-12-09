@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import type { NextAuthRequest } from "next-auth";
-import { auth } from "@/lib/auth";
+import { auth } from "@/lib/auth-edge";
 
 // Protected routes requiring authentication
 const protectedRoutes = ["/profile", "/challenges", "/friends", "/notifications"];
