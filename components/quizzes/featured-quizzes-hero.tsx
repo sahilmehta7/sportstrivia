@@ -1,4 +1,4 @@
-"use client";
+
 
 import { ShowcaseMasonryGrid } from "@/components/showcase/ui/MasonryGrid";
 import { glassText } from "@/components/showcase/ui/typography";
@@ -30,7 +30,7 @@ export function FeaturedQuizzesHero({ featuredQuizzes }: FeaturedQuizzesHeroProp
             title={quiz.title}
             subtitle={quiz.description || ""}
             category={quiz.sport || "Multi-sport"}
-            tags={quiz.topics?.map((t) => t.name) || []}
+            tags={quiz.tags?.map((t) => t.tag.name) || []}
             coverImageUrl={quiz.descriptionImageUrl || ""}
             href={`/quizzes/${quiz.slug}`}
             meta={{
