@@ -8,6 +8,7 @@ import { AppSessionProvider } from "@/components/providers/AppSessionProvider";
 import { OrganizationJsonLd, JsonLdScript } from "next-seo";
 import { defaultSeoConfig } from "@/lib/next-seo-config";
 import React from "react";
+import { GoogleAnalytics } from "@next/third-parties/google";
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "https://www.sportstrivia.in"),
@@ -105,6 +106,7 @@ export default function RootLayout({
             },
           }}
         />
+        <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_ID || "G-DKRBB31VSK"} />
       </body>
     </html>
   );
