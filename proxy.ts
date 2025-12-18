@@ -30,7 +30,7 @@ function getAllowedOrigins(request: NextRequest): Set<string> {
   return origins;
 }
 
-export default auth(async function middleware(req: NextAuthRequest) {
+export default auth(async function proxy(req: NextAuthRequest) {
   const { nextUrl } = req;
   const pathname = nextUrl.pathname;
 
