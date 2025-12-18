@@ -22,8 +22,8 @@ interface ShowcaseTrendingRailProps {
 
 export function ShowcaseTrendingRail({ items, className }: ShowcaseTrendingRailProps) {
   const { theme } = useShowcaseTheme();
-  const labelColor = getTextColor(theme, "secondary");
-  const titleColor = getTextColor(theme, "primary");
+  const labelColor = getTextColor("secondary");
+  const titleColor = getTextColor("primary");
 
   if (!items.length) return null;
 
@@ -36,7 +36,7 @@ export function ShowcaseTrendingRail({ items, className }: ShowcaseTrendingRailP
             href={`#quiz-${item.id}`}
             className={cn(
               "group relative flex h-40 w-64 flex-shrink-0 flex-col overflow-hidden rounded-[1.75rem] p-4 transition-transform duration-200 hover:-translate-y-1",
-              getSurfaceStyles(theme, "raised")
+              getSurfaceStyles("raised")
             )}
           >
             {item.coverImageUrl ? (
@@ -45,6 +45,7 @@ export function ShowcaseTrendingRail({ items, className }: ShowcaseTrendingRailP
                 alt={item.title}
                 fill
                 className="absolute inset-0 h-full w-full object-cover opacity-60"
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
               />
             ) : (
               <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/20 to-blue-500/20" />
@@ -54,7 +55,7 @@ export function ShowcaseTrendingRail({ items, className }: ShowcaseTrendingRailP
               <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.3em] text-white/60">
                 {item.live && <span className="inline-flex items-center gap-1 rounded-full bg-red-500/90 px-2 py-1 text-[10px] font-semibold uppercase">Live</span>}
                 {item.streakLabel && (
-                  <span className={cn("rounded-full px-2 py-1", getChipStyles(theme, "ghost"))}>{item.streakLabel}</span>
+                  <span className={cn("rounded-full px-2 py-1", getChipStyles("ghost"))}>{item.streakLabel}</span>
                 )}
               </div>
               <div className="space-y-1">
