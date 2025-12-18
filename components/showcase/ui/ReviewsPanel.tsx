@@ -6,6 +6,7 @@ import { useShowcaseTheme } from "@/components/showcase/ShowcaseThemeProvider";
 import { getSurfaceStyles, getTextColor } from "@/lib/showcase-theme";
 import { ShowcaseReviewCard } from "@/components/showcase/ui/ReviewCard";
 import { ShowcaseEmptyState } from "@/components/showcase/ui/EmptyState";
+import { trackEvent } from "@/lib/analytics";
 
 interface ReviewItem {
   id: string;
@@ -30,6 +31,7 @@ export function ShowcaseReviewsPanel({ reviews, onAddReview, className }: Showca
   const canAddReview = typeof onAddReview === "function";
 
   const handleAdd = () => {
+    trackEvent("review_submit", { action: "open_modal" });
     onAddReview?.();
   };
 

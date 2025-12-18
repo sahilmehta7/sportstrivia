@@ -14,6 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { AttemptLimitBanner } from "@/components/quiz/AttemptLimitBanner";
 import { ENABLE_NEW_QUIZ_UI } from "@/lib/config/quiz-ui";
 import { QuizPlayUI } from "@/components/quiz/QuizPlayUI";
+import { trackEvent } from "@/lib/analytics";
 
 interface AttemptLimitClientInfo {
   max: number;
@@ -145,6 +146,8 @@ export function QuizPlayClient({ quizId, quizTitle, quizSlug, initialAttemptLimi
           method: "POST",
         });
 
+        trackEvent("quiz_complete", { quizId, quizTitle, attemptId: activeAttemptId });
+
         const result = await response.json();
 
         if (!response.ok) {
@@ -198,8 +201,8 @@ export function QuizPlayClient({ quizId, quizTitle, quizSlug, initialAttemptLimi
 
         if (attemptData?.id) {
           const destinationSlug = attemptQuiz?.slug ?? quizSlug;
-        setFeedback(null);
-        setCurrentQuestion(null);
+          setFeedback(null);
+          setCurrentQuestion(null);
           setStatus("redirecting");
           router.push(`/quizzes/${destinationSlug}/results/${attemptData.id}?fresh=1`);
           return;
@@ -301,6 +304,8 @@ export function QuizPlayClient({ quizId, quizTitle, quizSlug, initialAttemptLimi
         throw new Error("Quiz has no questions available right now.");
       }
 
+      trackEvent("quiz_start", { quizId, quizTitle });
+
       setQuestions(readyQuestions);
       setTotalQuestions(readyQuestions.length || totalFromServer || 0);
       setCurrentIndex(0);
@@ -381,8 +386,8 @@ export function QuizPlayClient({ quizId, quizTitle, quizSlug, initialAttemptLimi
         message: wasSkipped
           ? "Question skipped"
           : optimisticIsCorrect
-          ? "Correct answer!"
-          : "Incorrect answer",
+            ? "Correct answer!"
+            : "Incorrect answer",
         selectedAnswerId: answerId,
         correctAnswerId,
         correctAnswerText,
@@ -421,11 +426,11 @@ export function QuizPlayClient({ quizId, quizTitle, quizSlug, initialAttemptLimi
         setFeedback((prev) =>
           prev
             ? {
-                ...prev,
-                isCorrect: result.data.isCorrect,
-                wasSkipped: result.data.wasSkipped,
-                message: result.data.message ?? prev.message,
-              }
+              ...prev,
+              isCorrect: result.data.isCorrect,
+              wasSkipped: result.data.wasSkipped,
+              message: result.data.message ?? prev.message,
+            }
             : prev
         );
 
@@ -809,7 +814,7 @@ export function QuizPlayClient({ quizId, quizTitle, quizSlug, initialAttemptLimi
                     !feedback && "hover:-translate-y-0.5 hover:border-primary hover:bg-primary/10",
                     feedback && "cursor-default",
                     isCorrectAnswer &&
-                      "border-emerald-500/80 bg-emerald-500/10 text-foreground shadow-[0_0_0_1px_rgba(16,185,129,0.2)]",
+                    "border-emerald-500/80 bg-emerald-500/10 text-foreground shadow-[0_0_0_1px_rgba(16,185,129,0.2)]",
                     isIncorrectSelection && "border-destructive/70 bg-destructive/10 text-foreground"
                   )}
                   disabled={Boolean(feedback) || pendingQuestionId === currentQuestion.id}
@@ -824,8 +829,8 @@ export function QuizPlayClient({ quizId, quizTitle, quizSlug, initialAttemptLimi
                           isCorrectAnswer
                             ? "text-emerald-600"
                             : isIncorrectSelection
-                            ? "text-destructive"
-                            : "text-muted-foreground"
+                              ? "text-destructive"
+                              : "text-muted-foreground"
                         )}
                       >
                         {statusHint}

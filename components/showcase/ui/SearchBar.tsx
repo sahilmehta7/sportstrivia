@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { getInputStyles, getChipStyles, getSurfaceStyles } from "@/lib/showcase-theme";
 import { useSearchKeyboard } from "@/hooks/use-search-keyboard";
+import { trackEvent } from "@/lib/analytics";
 
 export interface ShowcaseSearchChip {
   value: string;
@@ -86,6 +87,7 @@ export function ShowcaseSearchBar({
     event.preventDefault();
     const trimmed = currentValue.trim();
     if (trimmed) {
+      trackEvent("search", { search_term: trimmed });
       onSubmit?.(trimmed);
       setAnnouncement(`Searching for ${trimmed}`);
     }

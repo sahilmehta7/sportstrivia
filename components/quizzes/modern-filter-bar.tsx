@@ -11,15 +11,16 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { 
-  Filter, 
-  RefreshCw, 
-  ChevronDown, 
+import {
+  Filter,
+  RefreshCw,
+  ChevronDown,
   Star
 } from "lucide-react";
 import type { Difficulty } from "@prisma/client";
 import type { QuizFilterOptions } from "@/lib/services/public-quiz.service";
 import { cn } from "@/lib/utils";
+import { trackEvent } from "@/lib/analytics";
 
 const difficultyLabels: Record<Difficulty, string> = {
   EASY: "Easy",
@@ -61,6 +62,7 @@ export function ModernFilterBar({
   const [isExpanded, setIsExpanded] = useState(false);
 
   const updateQuery = (key: string, value?: string) => {
+    trackEvent("filter_change", { filter_type: key, value });
     const params = new URLSearchParams(searchParams.toString());
 
     if (!value) {
@@ -98,6 +100,7 @@ export function ModernFilterBar({
   };
 
   const handleRatingClick = (rating: number) => {
+    trackEvent("filter_change", { filter_type: "minRating", value: rating });
     if (filters.minRating === rating) {
       updateQuery("minRating", undefined);
     } else {

@@ -11,6 +11,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { trackEvent } from "@/lib/analytics";
 
 interface QuickPreviewModalProps {
   trigger: ReactNode;
@@ -47,7 +48,10 @@ export function ShowcaseQuickPreviewModal({ trigger, title, description, coverIm
           </div>
           {children}
           <div className="flex items-center justify-end gap-3">
-            <Button variant="ghost" className="rounded-full" onClick={() => onPlay?.()}>Bookmark</Button>
+            <Button variant="ghost" className="rounded-full" onClick={() => {
+              trackEvent("quiz_bookmark", { title });
+              onPlay?.();
+            }}>Bookmark</Button>
             <Button className="rounded-full" onClick={onPlay}>Play Now</Button>
           </div>
         </div>

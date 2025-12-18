@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useShowcaseTheme } from "@/components/showcase/ShowcaseThemeProvider";
 import { getSurfaceStyles, getTextColor } from "@/lib/showcase-theme";
+import { trackEvent } from "@/lib/analytics";
 
 interface ShowcaseShareStripProps {
   shareUrl?: string;
@@ -17,6 +18,7 @@ export function ShowcaseShareStrip({ shareUrl, message = "Challenge your friends
   const { theme } = useShowcaseTheme();
 
   const handleShare = (channel: string) => {
+    trackEvent("share", { method: channel, url: shareUrl });
     onShare?.(channel);
     if (channel === "copy" && shareUrl) {
       void navigator.clipboard?.writeText(shareUrl);

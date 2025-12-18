@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { toast } from "@/hooks/use-toast";
 import { Difficulty } from "@prisma/client";
+import { trackEvent } from "@/lib/analytics";
 
 interface AISuggestionModalProps {
   topicName: string;
@@ -23,6 +24,7 @@ export function AISuggestionModal({ topicName, trigger }: AISuggestionModalProps
   const onGenerate = async () => {
     try {
       setLoading(true);
+      trackEvent("ai_generation", { topic: topicName, difficulty, numQuestions });
       setResult(null);
       const res = await fetch("/api/ai/suggest-quiz", {
         method: "POST",

@@ -8,6 +8,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Bell, BellOff, Loader2, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { urlBase64ToUint8Array } from "@/lib/utils/push";
+import { trackEvent } from "@/lib/analytics";
 
 type PermissionState = "default" | "denied" | "granted" | "unsupported";
 
@@ -143,6 +144,7 @@ export function PushSubscriptionCard() {
       });
 
       setIsSubscribed(true);
+      trackEvent("push_subscription", { status: "subscribed", platform: detectDeviceType(navigator.userAgent) });
       toast({
         title: "Push enabled",
         description: "You'll now receive challenge and streak notifications.",
@@ -186,6 +188,7 @@ export function PushSubscriptionCard() {
       });
 
       setIsSubscribed(false);
+      trackEvent("push_subscription", { status: "unsubscribed" });
       toast({
         title: "Push disabled",
         description: "You won't receive push notifications until you re-enable them.",
