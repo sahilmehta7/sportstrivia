@@ -51,7 +51,7 @@ export async function GET(request: NextRequest) {
     const filters: PublicQuizFilters = {
       page: parseInt(searchParams.get("page") || "1"),
       limit: parseInt(searchParams.get("limit") || "12"),
-      search,
+      search: search ?? undefined,
       sport: searchParams.get("sport") ?? undefined,
       difficulty: (searchParams.get("difficulty") as Difficulty) || undefined,
       tag: searchParams.get("tag") || undefined,

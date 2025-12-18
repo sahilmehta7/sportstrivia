@@ -26,15 +26,15 @@ export function ShowcaseCreatorSpotlightCard({
   href,
 }: CreatorSpotlightCardProps) {
   const { theme } = useShowcaseTheme();
-  const textPrimary = getTextColor(theme, "primary");
-  const textSecondary = getTextColor(theme, "secondary");
+  const textPrimary = getTextColor("primary");
+  const textSecondary = getTextColor("secondary");
 
   const body = (
     <div
       className={cn(
         "relative overflow-hidden rounded-[2rem] px-6 py-8 text-white",
-        getSurfaceStyles(theme, "raised"),
-        getCardGlow(theme)
+        getSurfaceStyles("raised"),
+        getCardGlow()
       )}
       style={{ backgroundImage: `linear-gradient(135deg, var(--tw-gradient-stops))` }}
       data-theme={theme}
