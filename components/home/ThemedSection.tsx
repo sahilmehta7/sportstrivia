@@ -4,7 +4,6 @@ import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { getBackgroundVariant, getBlurCircles } from "@/lib/showcase-theme";
 import type { BackgroundVariant } from "@/lib/showcase-theme";
-import { useShowcaseTheme } from "@/components/showcase/ShowcaseThemeProvider";
 
 interface ThemedSectionProps {
   variant: BackgroundVariant;

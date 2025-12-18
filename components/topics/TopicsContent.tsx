@@ -164,10 +164,6 @@ export function TopicsContent({
     ? searchMeta?.total ?? (searchResults?.length ?? 0)
     : topics.length;
 
-  const filteredL2Topics = useMemo(() => {
-    if (hasActiveSearch) return {};
-    return l2TopicsByParent;
-  }, [hasActiveSearch, l2TopicsByParent]);
 
   // Special sections derived from popular topics for the Bento Grid
   // We'll prioritize Cricket and Football if they exist, or just take the first few

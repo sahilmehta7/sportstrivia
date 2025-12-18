@@ -1,19 +1,16 @@
 import type { ReactNode } from "react";
-import type { ShowcaseTheme } from "@/components/showcase/ShowcaseThemeProvider";
 import {
   getBlurCircles,
   getGlassBackground,
-  getShadowColor,
 } from "@/lib/showcase-theme";
 import { cn } from "@/lib/utils";
 
 interface QuizResultsLayoutProps {
-  theme?: ShowcaseTheme;
   className?: string;
   children: ReactNode;
 }
 
-export function QuizResultsLayout({ theme, className, children }: QuizResultsLayoutProps) {
+export function QuizResultsLayout({ className, children }: QuizResultsLayoutProps) {
   const blur = getBlurCircles();
 
   return (

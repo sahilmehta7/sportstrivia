@@ -388,7 +388,6 @@ export function QuizPlayClient({ quizId, quizTitle, quizSlug, initialAttemptLimi
         !!answerId && !!correctAnswerId && answerId === correctAnswerId && !wasSkipped;
 
       const previousIndex = currentIndex;
-      const previousQuestion = currentQuestion;
       const nextIndex = currentIndex + 1;
       const nextQuestion = questions[nextIndex];
       const isLastQuestion = previousIndex >= totalQuestions - 1;

@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { requireAdmin } from "@/lib/auth-helpers";
-import { handleError, successResponse, NotFoundError } from "@/lib/errors";
+import { handleError, successResponse } from "@/lib/errors";
 import { mergeTopics, getDescendantTopicIds } from "@/lib/services/topic.service";
 import { z } from "zod";
 

@@ -31,12 +31,6 @@ interface QuizResultsPageProps {
   searchParams?: Promise<Record<string, string | string[]>>;
 }
 
-function formatDateTime(date: Date) {
-  return new Intl.DateTimeFormat("en-US", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(date);
-}
 
 // Server-side reward renderer using the showcase PointsReward component
 function PointsRewardServer({ points, breakdown }: { points: number; breakdown: PointsBreakdown[] }) {

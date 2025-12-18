@@ -3,6 +3,8 @@ import { Suspense } from "react";
 import { ShowcaseThemeProvider } from "@/components/showcase/ShowcaseThemeProvider";
 import { LandingPage } from "@/components/home/LandingPage";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
+import { auth } from "@/lib/auth";
+import { redirect } from "next/navigation";
 
 export const metadata: Metadata = {
   title: "Home",
@@ -28,7 +30,13 @@ const stats = {
   averageRating: 4.7,
 };
 
-export default function Home() {
+export default async function Home() {
+  const session = await auth();
+
+  if (session?.user) {
+    redirect("/quizzes");
+  }
+
   return (
     <ShowcaseThemeProvider>
       <Suspense

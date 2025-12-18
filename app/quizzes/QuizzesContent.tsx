@@ -37,7 +37,7 @@ export function QuizzesContent({ quizzes, filterGroups, pagination }: QuizzesCon
 
   const handleFilterChange = (groupId: string, option: any) => {
     const params = new URLSearchParams(searchParams.toString());
-    
+
     if (groupId === "category") {
       if (option.value === "all") {
         params.delete("topic");
@@ -46,9 +46,9 @@ export function QuizzesContent({ quizzes, filterGroups, pagination }: QuizzesCon
         params.set("topic", option.value);
       }
     }
-    
+
     params.delete("page"); // Reset to page 1 when filters change
-    
+
     // Use startTransition for optimistic UI updates
     startTransition(() => {
       router.push(`/quizzes?${params.toString()}`);
@@ -58,7 +58,7 @@ export function QuizzesContent({ quizzes, filterGroups, pagination }: QuizzesCon
   const handlePageChange = (page: number) => {
     const params = new URLSearchParams(searchParams.toString());
     params.set("page", page.toString());
-    
+
     // Use startTransition for optimistic UI updates
     startTransition(() => {
       router.push(`/quizzes?${params.toString()}`);
@@ -68,7 +68,7 @@ export function QuizzesContent({ quizzes, filterGroups, pagination }: QuizzesCon
   return (
     <>
       {/* All Quizzes Section */}
-      <section className="mt-8">
+      <section className="mt-4 md:mt-8">
         <div className="mb-6">
           <h2 className={glassText.h2}>All Quizzes</h2>
           <p className={"mt-1 " + glassText.subtitle}>
@@ -78,15 +78,15 @@ export function QuizzesContent({ quizzes, filterGroups, pagination }: QuizzesCon
 
         {/* Filter Bar - Integrated styling */}
         <div className="mb-6">
-          <FilterBar 
-            groups={filterGroups} 
+          <FilterBar
+            groups={filterGroups}
             onChange={handleFilterChange}
             className="border-0 bg-transparent p-0"
           />
         </div>
 
         {quizzes.length > 0 ? (
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <div className="grid gap-6 sm:grid-cols-2">
             {quizzes.map((quiz) => {
               const gradient = getSportGradient(quiz.sport, hashString(`${quiz.title}`));
               const durationLabel = quiz.duration ? `${Math.round(quiz.duration / 60)} min` : "Flexible";

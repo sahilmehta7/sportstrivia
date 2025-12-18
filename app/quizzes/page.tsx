@@ -317,7 +317,7 @@ export default async function QuizzesPage({
 }) {
   return (
     <>
-      <PageContainer className="pt-12">
+      <PageContainer className="pt-6 md:pt-12">
         <QuizzesPageHeader />
       </PageContainer>
       <Suspense fallback={<QuizzesFallback />}>

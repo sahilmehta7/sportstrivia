@@ -1,6 +1,5 @@
 "use client";
 
-import { useShowcaseTheme } from "@/components/showcase/ShowcaseThemeProvider";
 import { getGlassCard, getTextColor, getAccentColor } from "@/lib/showcase-theme";
 import { cn } from "@/lib/utils";
 import { Search, Play, Trophy } from "lucide-react";

@@ -1,7 +1,6 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { useShowcaseTheme } from "@/components/showcase/ShowcaseThemeProvider";
 import { getSurfaceStyles, getTextColor } from "@/lib/showcase-theme";
 
 interface DidYouKnowPanelProps {

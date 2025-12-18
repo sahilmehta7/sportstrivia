@@ -2,7 +2,6 @@
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { useShowcaseTheme } from "@/components/showcase/ShowcaseThemeProvider";
 import { getSurfaceStyles, getTextColor } from "@/lib/showcase-theme";
 import { ShowcaseReviewCard } from "@/components/showcase/ui/ReviewCard";
 import { ShowcaseEmptyState } from "@/components/showcase/ui/EmptyState";
@@ -27,7 +26,6 @@ interface ShowcaseReviewsPanelProps {
 }
 
 export function ShowcaseReviewsPanel({ reviews, onAddReview, className }: ShowcaseReviewsPanelProps) {
-  const { theme } = useShowcaseTheme();
   const canAddReview = typeof onAddReview === "function";
 
   const handleAdd = () => {

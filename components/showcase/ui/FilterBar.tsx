@@ -1,10 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-import { useTheme } from "next-themes";
 import { getChipStyles, getSurfaceStyles, getTextColor } from "@/lib/showcase-theme";
 
 export interface ShowcaseFilterOption {
@@ -30,12 +28,6 @@ interface ShowcaseFilterBarProps {
 }
 
 export function ShowcaseFilterBar({ groups, className, condensed = false, onChange }: ShowcaseFilterBarProps) {
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
   return (
     <div
       className={cn(

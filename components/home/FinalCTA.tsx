@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { useShowcaseTheme } from "@/components/showcase/ShowcaseThemeProvider";
 import { getGlassCard, getTextColor } from "@/lib/showcase-theme";
 import { cn } from "@/lib/utils";
 import { ArrowRight, Play } from "lucide-react";

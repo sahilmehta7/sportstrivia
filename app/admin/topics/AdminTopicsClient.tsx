@@ -174,8 +174,6 @@ export function AdminTopicsClient({ topics }: AdminTopicsClientProps) {
 
   // Flattened topics for merge selection, excluding the source topic and its descendants
   const getMergeableTopics = (sourceTopicId: string) => {
-    const list: TopicNode[] = [];
-
     // Simple recursive function to find descendants
     const getDescendantIds = (topic: TopicNode): string[] => {
       const ids = [topic.id];
@@ -185,8 +183,6 @@ export function AdminTopicsClient({ topics }: AdminTopicsClientProps) {
       return ids;
     };
 
-    const sourceTopic = topics.find(t => t.id === sourceTopicId) ||
-      topics.flatMap(t => t.children || []).find(t => t.id === sourceTopicId); // This only goes 2 levels deep but topics tree is deep
 
     // Better to just filter from the full flattened list if we had one. 
     // For now, let's just do a basic filter on top-level topics for simplicity or assume user knows

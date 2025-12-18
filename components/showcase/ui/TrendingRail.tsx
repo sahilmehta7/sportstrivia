@@ -3,7 +3,6 @@
 import Image from "next/image";
 import { Play } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useShowcaseTheme } from "@/components/showcase/ShowcaseThemeProvider";
 import { getSurfaceStyles, getTextColor, getChipStyles } from "@/lib/showcase-theme";
 
 export interface TrendingRailItem {
@@ -21,7 +20,6 @@ interface ShowcaseTrendingRailProps {
 }
 
 export function ShowcaseTrendingRail({ items, className }: ShowcaseTrendingRailProps) {
-  const { theme } = useShowcaseTheme();
   const labelColor = getTextColor("secondary");
   const titleColor = getTextColor("primary");
 

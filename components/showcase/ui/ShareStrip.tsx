@@ -3,7 +3,6 @@
 import { Share2, Link as LinkIcon, Twitter, Facebook, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { useShowcaseTheme } from "@/components/showcase/ShowcaseThemeProvider";
 import { getSurfaceStyles, getTextColor } from "@/lib/showcase-theme";
 import { trackEvent } from "@/lib/analytics";
 
@@ -15,7 +14,6 @@ interface ShowcaseShareStripProps {
 }
 
 export function ShowcaseShareStrip({ shareUrl, message = "Challenge your friends", onShare, className }: ShowcaseShareStripProps) {
-  const { theme } = useShowcaseTheme();
 
   const handleShare = (channel: string) => {
     trackEvent("share", { method: channel, url: shareUrl });

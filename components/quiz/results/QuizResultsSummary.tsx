@@ -105,7 +105,7 @@ interface QuizResultsStatsGridProps {
   className?: string;
 }
 
-export function QuizResultsStatsGrid({ data, theme, className }: QuizResultsStatsGridProps) {
+export function QuizResultsStatsGrid({ data, className }: QuizResultsStatsGridProps) {
   const cards = [
     {
       label: "Longest Streak",

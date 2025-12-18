@@ -5,7 +5,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useShowcaseTheme } from "@/components/showcase/ShowcaseThemeProvider";
 import { getGlassCard, getTextColor } from "@/lib/showcase-theme";
 import { cn } from "@/lib/utils";
 import { Users, BookOpen, TrendingUp, Loader2 } from "lucide-react";
@@ -71,7 +70,6 @@ export function ShowcaseTopTopics({
   className,
   initialTopics,
 }: ShowcaseTopTopicsProps) {
-  const { theme } = useShowcaseTheme(); // Keeping strictly for inline-style fallback if needed, but preferable to remove if possible.
   // Actually, let's keep `theme` mostly unused for classes, but we might validly use it for logical things if any exist. 
   // Wait, I should try to remove it entirely to solve the mismatch. 
   // If I need dynamic colors, I'll pass them via CSS vars.
@@ -211,7 +209,6 @@ export function ShowcaseTopTopics({
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
         {topics.map((topic, index) => {
           const colorPair = colorPairs[index % colorPairs.length];
-          const accentColor = theme === "light" ? colorPair.light : colorPair.dark;
 
           return (
             <Card key={topic.id} className={cn("group cursor-pointer transition-all duration-200 hover:scale-105 overflow-hidden", getGlassCard())}>
