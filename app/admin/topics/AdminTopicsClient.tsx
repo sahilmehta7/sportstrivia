@@ -4,7 +4,7 @@ import { Fragment, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { Button } from "@/components/ui/button";
-import { Plus, Edit, Trash2, ChevronRight, ChevronDown, GitMerge } from "lucide-react";
+import { Plus, Edit, Trash2, ChevronRight, ChevronDown, GitMerge, Check, ChevronsUpDown } from "lucide-react";
 import Link from "next/link";
 import {
   Table,
@@ -25,12 +25,19 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
 
 interface TopicNode {
   id: string;
@@ -62,6 +69,7 @@ export function AdminTopicsClient({ topics }: AdminTopicsClientProps) {
   const [topicToMerge, setTopicToMerge] = useState<TopicNode | null>(null);
   const [destinationTopicId, setDestinationTopicId] = useState<string>("");
   const [merging, setMerging] = useState(false);
+  const [comboboxOpen, setComboboxOpen] = useState(false);
 
   const totalTopics = useMemo(() => topics.length, [topics]);
 
@@ -122,6 +130,7 @@ export function AdminTopicsClient({ topics }: AdminTopicsClientProps) {
   const openMergeDialog = (topic: TopicNode) => {
     setTopicToMerge(topic);
     setDestinationTopicId("");
+    setComboboxOpen(false);
     setMergeDialogOpen(true);
   };
 
@@ -384,18 +393,52 @@ export function AdminTopicsClient({ topics }: AdminTopicsClientProps) {
           <div className="py-4 space-y-4">
             <div className="space-y-2">
               <label className="text-sm font-medium">Destination Topic</label>
-              <Select value={destinationTopicId} onValueChange={setDestinationTopicId}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select destination topic" />
-                </SelectTrigger>
-                <SelectContent className="max-h-[300px]">
-                  {topicToMerge && getMergeableTopics(topicToMerge.id).map((t) => (
-                    <SelectItem key={t.id} value={t.id}>
-                      {t.name} {t.level > 0 ? `(Level ${t.level})` : "(Root)"}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Popover open={comboboxOpen} onOpenChange={setComboboxOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={comboboxOpen}
+                    className="w-full justify-between"
+                  >
+                    {destinationTopicId
+                      ? (() => {
+                        const selected = topicToMerge && getMergeableTopics(topicToMerge.id).find((t) => t.id === destinationTopicId);
+                        return selected ? `${selected.name} ${selected.level > 0 ? `(Level ${selected.level})` : "(Root)"}` : "Select destination topic...";
+                      })()
+                      : "Select destination topic..."}
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[400px] p-0">
+                  <Command>
+                    <CommandInput placeholder="Search topics..." />
+                    <CommandList>
+                      <CommandEmpty>No topic found.</CommandEmpty>
+                      <CommandGroup>
+                        {topicToMerge && getMergeableTopics(topicToMerge.id).map((t) => (
+                          <CommandItem
+                            key={t.id}
+                            value={t.name}
+                            onSelect={() => {
+                              setDestinationTopicId(t.id);
+                              setComboboxOpen(false);
+                            }}
+                          >
+                            <Check
+                              className={cn(
+                                "mr-2 h-4 w-4",
+                                destinationTopicId === t.id ? "opacity-100" : "opacity-0"
+                              )}
+                            />
+                            {t.name} {t.level > 0 ? `(Level ${t.level})` : "(Root)"}
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
             </div>
 
             {topicToMerge && (

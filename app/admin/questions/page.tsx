@@ -10,6 +10,7 @@ import { Difficulty, Prisma } from "@prisma/client";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { Plus } from "lucide-react";
 import Link from "next/link";
+import { TopicFilterCombobox } from "@/components/admin/TopicFilterCombobox";
 
 interface QuestionsPageProps {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
@@ -120,19 +121,13 @@ export default async function QuestionsPage({ searchParams }: QuestionsPageProps
           <label htmlFor="topicId" className="text-sm font-medium">
             Topic
           </label>
-          <select
-            id="topicId"
-            name="topicId"
+          <TopicFilterCombobox
+            topics={topics}
             defaultValue={topicFilter}
-            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 md:text-sm"
-          >
-            <option value="">All topics</option>
-            {topics.map((topic) => (
-              <option key={topic.id} value={topic.id}>
-                {`${"— ".repeat(topic.level ?? 0)}${topic.name}`}
-              </option>
-            ))}
-          </select>
+            name="topicId"
+            placeholder="Search topics..."
+            emptyLabel="All topics"
+          />
         </div>
 
         <div className="space-y-2">

@@ -7,13 +7,26 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Save, Trash2, Wand2, Loader2, Upload } from "lucide-react";
+import { ArrowLeft, Save, Trash2, Wand2, Loader2, Upload, Check, ChevronsUpDown } from "lucide-react";
 import Link from "next/link";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { Badge } from "@/components/ui/badge";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
 import {
   Dialog,
   DialogContent,
@@ -46,6 +59,7 @@ export default function EditTopicPage({ params }: EditTopicPageProps) {
   const [importing, setImporting] = useState(false);
   const [generatedQuestions, setGeneratedQuestions] = useState<any[] | null>(null);
   const [lastTaskId, setLastTaskId] = useState<string | null>(null);
+  const [parentComboboxOpen, setParentComboboxOpen] = useState(false);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -406,23 +420,64 @@ export default function EditTopicPage({ params }: EditTopicPageProps) {
 
             <div className="space-y-2">
               <Label htmlFor="parentId">Parent Topic</Label>
-              <Select
-                value={formData.parentId || "none"}
-                onValueChange={(val) => updateField("parentId", val === "none" ? "" : val)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="None (root topic)" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">None (root topic)</SelectItem>
-                  {topics.map((topic) => (
-                    <SelectItem key={topic.id} value={topic.id}>
-                      {"  ".repeat(topic.level)}
-                      {topic.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Popover open={parentComboboxOpen} onOpenChange={setParentComboboxOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={parentComboboxOpen}
+                    className="w-full justify-between"
+                  >
+                    {formData.parentId
+                      ? topics.find((t) => t.id === formData.parentId)?.name || "Select parent topic..."
+                      : "None (root topic)"}
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[400px] p-0">
+                  <Command>
+                    <CommandInput placeholder="Search topics..." />
+                    <CommandList>
+                      <CommandEmpty>No topic found.</CommandEmpty>
+                      <CommandGroup>
+                        <CommandItem
+                          value="none"
+                          onSelect={() => {
+                            updateField("parentId", "");
+                            setParentComboboxOpen(false);
+                          }}
+                        >
+                          <Check
+                            className={cn(
+                              "mr-2 h-4 w-4",
+                              !formData.parentId ? "opacity-100" : "opacity-0"
+                            )}
+                          />
+                          None (root topic)
+                        </CommandItem>
+                        {topics.map((topic) => (
+                          <CommandItem
+                            key={topic.id}
+                            value={topic.name}
+                            onSelect={() => {
+                              updateField("parentId", topic.id);
+                              setParentComboboxOpen(false);
+                            }}
+                          >
+                            <Check
+                              className={cn(
+                                "mr-2 h-4 w-4",
+                                formData.parentId === topic.id ? "opacity-100" : "opacity-0"
+                              )}
+                            />
+                            {"  ".repeat(topic.level)}{topic.name}
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
               <p className="text-xs text-muted-foreground">
                 Changing parent will update this topic&apos;s level and all descendants
               </p>

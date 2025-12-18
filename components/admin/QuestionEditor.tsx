@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -25,9 +25,10 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { X, Plus, CheckCircle } from "lucide-react";
+import { X, Plus, CheckCircle, Sparkles, Loader2 } from "lucide-react";
 import { questionSchema, answerSchema } from "@/lib/validations/question.schema";
 import { Difficulty, QuestionType } from "@prisma/client";
+import { useToast } from "@/hooks/use-toast";
 
 const questionFormSchema = questionSchema.extend({
   answers: z
@@ -56,6 +57,8 @@ export function QuestionEditor({
   onCancel,
   saving = false,
 }: QuestionEditorProps) {
+  const { toast } = useToast();
+  const [aiFixing, setAiFixing] = useState(false);
   const defaultAnswers =
     initialData?.answers?.map((answer: any, index: number) => ({
       id: answer.id,
@@ -165,15 +168,126 @@ export function QuestionEditor({
     }
   });
 
+  const handleAIFix = async () => {
+    const currentValues = form.getValues();
+
+    if (!currentValues.questionText.trim()) {
+      toast({
+        title: "Question text required",
+        description: "Please enter a question before using AI fix.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const validAnswers = currentValues.answers.filter(a => a.answerText?.trim());
+    if (validAnswers.length < 2) {
+      toast({
+        title: "More answers needed",
+        description: "Please add at least 2 answers before using AI fix.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setAiFixing(true);
+
+    try {
+      // Get topic name for context
+      const selectedTopic = topics.find(t => t.id === currentValues.topicId);
+
+      const response = await fetch("/api/admin/questions/ai/fix", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          questionText: currentValues.questionText,
+          answers: currentValues.answers.map(a => ({
+            answerText: a.answerText || "",
+            isCorrect: a.isCorrect,
+          })),
+          difficulty: currentValues.difficulty,
+          hint: currentValues.hint,
+          explanation: currentValues.explanation,
+          topicName: selectedTopic?.name,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || "Failed to get AI suggestions");
+      }
+
+      // Update form with AI-improved content
+      const improved = result.data;
+
+      form.setValue("questionText", improved.questionText, { shouldDirty: true });
+
+      if (improved.hint) {
+        form.setValue("hint", improved.hint, { shouldDirty: true });
+      }
+
+      if (improved.explanation) {
+        form.setValue("explanation", improved.explanation, { shouldDirty: true });
+      }
+
+      // Update answers - maintain existing IDs and URLs
+      if (Array.isArray(improved.answers)) {
+        const currentAnswers = form.getValues("answers");
+        improved.answers.forEach((improvedAnswer: any, index: number) => {
+          if (index < currentAnswers.length) {
+            form.setValue(`answers.${index}.answerText`, improvedAnswer.answerText, { shouldDirty: true });
+            form.setValue(`answers.${index}.isCorrect`, improvedAnswer.isCorrect, { shouldDirty: true });
+          }
+        });
+      }
+
+      toast({
+        title: "AI suggestions applied!",
+        description: "Review the improvements and save when ready.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "AI fix failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setAiFixing(false);
+    }
+  };
+
   const rootError = form.formState.errors.root?.message;
 
   return (
     <Form {...form}>
       <form onSubmit={submitQuestion} className="space-y-6">
         <Card>
-          <CardHeader>
-            <CardTitle>Question Details</CardTitle>
-            <CardDescription>Basic question information</CardDescription>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0">
+            <div>
+              <CardTitle>Question Details</CardTitle>
+              <CardDescription>Basic question information</CardDescription>
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={handleAIFix}
+              disabled={aiFixing}
+              className="gap-2"
+            >
+              {aiFixing ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Improving...
+                </>
+              ) : (
+                <>
+                  <Sparkles className="h-4 w-4" />
+                  AI Fix
+                </>
+              )}
+            </Button>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid gap-4 md:grid-cols-3">
