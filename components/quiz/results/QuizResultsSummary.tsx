@@ -21,6 +21,7 @@ interface QuizResultsSummaryProps {
   theme?: ShowcaseTheme;
   confetti?: boolean;
   footer?: ReactNode;
+  className?: string;
 }
 
 function formatTime(seconds: number) {
@@ -39,14 +40,12 @@ function formatTime(seconds: number) {
   return `${minutes} min ${remainingSeconds} sec`;
 }
 
-export function QuizResultsSummary({ data, theme, confetti = false, footer }: QuizResultsSummaryProps) {
+export function QuizResultsSummary({ data, theme, confetti = false, footer, className }: QuizResultsSummaryProps) {
   return (
     <div
       className={cn(
-        "relative rounded-[1.5rem] p-6",
-        theme === "light"
-          ? "bg-gradient-to-br from-blue-50/60 to-purple-50/60"
-          : "bg-white/5",
+        "relative py-6 text-center",
+        className
       )}
     >
       {confetti ? (
@@ -66,7 +65,7 @@ export function QuizResultsSummary({ data, theme, confetti = false, footer }: Qu
       ) : null}
 
       <div className="relative text-center">
-        <h2 className={cn("mb-4 text-xl font-bold", getTextColor(theme, "primary"))}>
+        <h2 className={cn("mb-4 text-xl font-bold", getTextColor("primary"))}>
           Congratulations! You have scored
         </h2>
 
@@ -87,7 +86,7 @@ export function QuizResultsSummary({ data, theme, confetti = false, footer }: Qu
         <div
           className={cn(
             "flex items-center justify-center gap-2 text-sm",
-            getAccentColor(theme, "success"),
+            getAccentColor("success"),
           )}
         >
           <Clock className="h-4 w-4" />
@@ -110,39 +109,36 @@ export function QuizResultsStatsGrid({ data, theme, className }: QuizResultsStat
   const cards = [
     {
       label: "Longest Streak",
-      icon: <Zap className={cn("h-4 w-4", getAccentColor(theme, "warning"))} />,
+      icon: <Zap className={cn("h-4 w-4", getAccentColor("warning"))} />,
       value: `${data.longestStreak} correct`,
     },
     {
       label: "Avg. Response Time",
-      icon: <Clock className={cn("h-4 w-4", getAccentColor(theme, "success"))} />,
+      icon: <Clock className={cn("h-4 w-4", getAccentColor("success"))} />,
       value: `${data.averageResponseTimeSeconds.toFixed(1)} sec`,
     },
     {
       label: "Total Time",
-      icon: <Clock className={cn("h-4 w-4", getAccentColor(theme, "primary"))} />,
+      icon: <Clock className={cn("h-4 w-4", getAccentColor("primary"))} />,
       value: formatTime(data.timeSpentSeconds),
     },
   ];
 
   return (
-    <div className={cn("grid gap-4 sm:grid-cols-2 lg:grid-cols-3", className)}>
-      {cards.map((card) => (
+    <div className={cn("grid grid-cols-1 gap-8 rounded-2xl bg-white/5 p-6 backdrop-blur-sm sm:grid-cols-3 sm:gap-12", className)}>
+      {cards.map((card, index) => (
         <div
           key={card.label}
           className={cn(
-            "rounded-2xl border p-4 backdrop-blur-sm",
-            getTextColor(theme, "primary"),
-            theme === "light"
-              ? "border-slate-200/50 bg-white/60 shadow-[inset_0_1px_0_rgba(0,0,0,0.05)]"
-              : "border-white/10 bg-white/5 shadow-[inset_0_1px_0_rgba(255,255,255,0.12)]",
+            "flex flex-col items-center justify-center text-center",
+            index !== cards.length - 1 && "relative after:absolute after:bottom-[-1.5rem] after:left-1/2 after:top-auto after:h-px after:w-full after:max-w-[12rem] after:-translate-x-1/2 after:bg-border after:content-[''] sm:after:bottom-auto sm:after:left-auto sm:after:right-[-1.5rem] sm:after:top-1/2 sm:after:h-8 sm:after:w-px sm:after:max-w-none sm:after:-translate-y-1/2 sm:after:translate-x-0 sm:after:right-[-3rem]"
           )}
         >
-          <div className="mb-2 flex items-center gap-2">
+          <div className="mb-3 flex items-center justify-center gap-2">
             {card.icon}
-            <p className={cn("text-sm font-semibold", getTextColor(theme, "primary"))}>{card.label}</p>
+            <p className={cn("text-xs font-semibold uppercase tracking-wider opacity-70", getTextColor("primary"))}>{card.label}</p>
           </div>
-          <p className={cn("text-2xl font-bold", getTextColor(theme, "primary"))}>{card.value}</p>
+          <p className={cn("text-2xl font-bold sm:text-3xl", getTextColor("primary"))}>{card.value}</p>
         </div>
       ))}
     </div>

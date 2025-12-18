@@ -12,21 +12,26 @@ interface ResultsShareButtonProps {
   totalQuestions: number;
   totalPoints: number;
   timeSpent: number; // seconds
+  className?: string; // Add className
+  children?: React.ReactNode; // Add children
 }
 
 export function ResultsShareButton(props: ResultsShareButtonProps) {
   const { shareResults, isGenerating } = useShareResults(props);
 
   return (
-    <ShowcaseButton
-      onClick={shareResults}
-      disabled={isGenerating}
-      variant="primary"
-      size="md"
-      icon={<Share2 className="h-4 w-4" />}
-    >
-      {isGenerating ? "Generating..." : "Share Results"}
-    </ShowcaseButton>
+    <div className={props.className}>
+      <ShowcaseButton
+        onClick={shareResults}
+        disabled={isGenerating}
+        variant="primary"
+        size="md"
+        icon={<Share2 className="h-4 w-4" />}
+        className="w-full"
+      >
+        {isGenerating ? "Generating..." : (props.children || "Share Results")}
+      </ShowcaseButton>
+    </div>
   );
 }
 
