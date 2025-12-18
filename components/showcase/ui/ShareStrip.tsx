@@ -33,10 +33,10 @@ export function ShowcaseShareStrip({ shareUrl, message = "Challenge your friends
   ];
 
   return (
-    <div className={cn("flex w-full flex-wrap items-center gap-3 rounded-[2rem] px-5 py-4", getSurfaceStyles(theme, "base"), className)}>
+    <div className={cn("flex w-full flex-wrap items-center gap-3 rounded-[2rem] px-5 py-4", getSurfaceStyles("base"), className)}>
       <div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.3em]">
         <Share2 className="h-4 w-4" />
-        <span className={getTextColor(theme, "secondary")}>{message}</span>
+        <span className={getTextColor("secondary")}>{message}</span>
       </div>
       <div className="ml-auto flex flex-wrap gap-2">
         {actions.map(({ id, icon: Icon, label }) => (

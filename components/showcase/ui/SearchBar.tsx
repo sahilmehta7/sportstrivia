@@ -57,7 +57,7 @@ export function ShowcaseSearchBar({
   const inputClasses = useMemo(() => getInputStyles(), []);
 
   // Handle keyboard shortcuts (/ and Ctrl/Cmd + K)
-  useSearchKeyboard(inputRef, {
+  useSearchKeyboard(inputRef as React.RefObject<HTMLInputElement>, {
     enabled: true,
     onFocus: () => {
       // Select all text when focused via shortcut for easy replacement

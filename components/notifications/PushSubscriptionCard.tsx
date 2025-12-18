@@ -121,7 +121,7 @@ export function PushSubscriptionCard() {
 
       const newSubscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(vapidPublicKey),
+        applicationServerKey: urlBase64ToUint8Array(vapidPublicKey) as any,
       });
 
       const body = newSubscription.toJSON();

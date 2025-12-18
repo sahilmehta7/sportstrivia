@@ -51,9 +51,9 @@ export function ShowcaseReviewsPanel({ reviews, onAddReview, className }: Showca
   }
 
   return (
-    <div className={cn("rounded-[1.5rem] p-4 sm:p-6", getSurfaceStyles(theme, "base"), className)}>
+    <div className={cn("rounded-[1.5rem] p-4 sm:p-6", getSurfaceStyles("base"), className)}>
       <div className="mb-3 sm:mb-4 flex items-center justify-between gap-2">
-        <h4 className={cn("text-sm sm:text-base font-semibold", getTextColor(theme, "primary"))}>Reviews ({safeReviews.length})</h4>
+        <h4 className={cn("text-sm sm:text-base font-semibold", getTextColor("primary"))}>Reviews ({safeReviews.length})</h4>
         {canAddReview && (
           <Button size="sm" className="rounded-full" onClick={handleAdd}>
             Add review

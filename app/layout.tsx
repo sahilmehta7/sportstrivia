@@ -85,10 +85,9 @@ export default function RootLayout({
 
         {/* Global Structured Data */}
         <OrganizationJsonLd
-          organizationName={defaultSeoConfig.organization.name}
+          name={defaultSeoConfig.organization.name}
           url={defaultSeoConfig.organization.url}
           logo={defaultSeoConfig.organization.logo}
-          description={defaultSeoConfig.organization.description}
         />
         <JsonLdScript
           scriptKey="website-jsonld"
