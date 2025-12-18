@@ -37,7 +37,7 @@ async function buildTopicCache(): Promise<TopicCache> {
 
   // Build adjacency list
   const children = new Map<string, string[]>();
-  
+
   for (const topic of allTopics) {
     if (topic.parentId) {
       const siblings = children.get(topic.parentId) || [];
@@ -100,7 +100,7 @@ export async function getDescendantTopicIdsForMultiple(
   }
 
   const result = new Map<string, string[]>();
-  
+
   for (const topicId of topicIds) {
     result.set(topicId, topicCache!.descendants.get(topicId) || []);
   }
@@ -114,13 +114,13 @@ export async function getDescendantTopicIdsForMultiple(
  */
 export async function getRootTopics() {
   return await prisma.topic.findMany({
-    where: { 
+    where: {
       parentId: null
     },
     orderBy: { name: "asc" },
     include: {
       _count: {
-        select: { 
+        select: {
           quizTopicConfigs: true,
           children: true
         }
@@ -135,9 +135,9 @@ export async function getRootTopics() {
  */
 export async function getFeaturedTopics(limit = 6) {
   const popularSports = ['Cricket', 'Football (Soccer)', 'Tennis', 'Basketball', 'Baseball', 'Golf', 'Rugby', 'American Football', 'Boxing', 'MMA'];
-  
+
   return await prisma.topic.findMany({
-    where: { 
+    where: {
       parentId: null,
       OR: [
         {
@@ -170,7 +170,7 @@ export async function getFeaturedTopics(limit = 6) {
     take: limit,
     include: {
       _count: {
-        select: { 
+        select: {
           quizTopicConfigs: true,
           children: true
         }
@@ -185,7 +185,7 @@ export async function getFeaturedTopics(limit = 6) {
  */
 export async function getL2TopicsForPopularSports() {
   const popularSports = ['Cricket', 'Football (Soccer)', 'Tennis', 'Basketball', 'Baseball', 'Golf', 'Rugby'];
-  
+
   return await prisma.topic.findMany({
     where: {
       parent: {
@@ -278,7 +278,7 @@ export async function getTopicTree(parentId: string | null = null): Promise<any[
   });
 
   const result = [];
-  
+
   for (const topic of topics) {
     const children = await getTopicTree(topic.id);
     result.push({
@@ -397,4 +397,156 @@ export async function searchTopics(
       pages: Math.ceil(total / take),
     },
   };
+}
+
+/**
+ * Merge one topic into another
+ * Transfers all questions, quiz configs, user stats, and children to the destination topic
+ */
+export async function mergeTopics(sourceId: string, destinationId: string) {
+  if (sourceId === destinationId) {
+    throw new Error("Cannot merge a topic into itself");
+  }
+
+  return await prisma.$transaction(async (tx) => {
+    // 1. Verify topics exist
+    const [source, destination] = await Promise.all([
+      tx.topic.findUnique({ where: { id: sourceId } }),
+      tx.topic.findUnique({ where: { id: destinationId } }),
+    ]);
+
+    if (!source) throw new Error("Source topic not found");
+    if (!destination) throw new Error("Destination topic not found");
+
+    // 2. Move Questions
+    await tx.question.updateMany({
+      where: { topicId: sourceId },
+      data: { topicId: destinationId },
+    });
+
+    // 3. Move QuizTopicConfigs (Handling unique constraints)
+    const sourceConfigs = await tx.quizTopicConfig.findMany({
+      where: { topicId: sourceId },
+    });
+
+    for (const config of sourceConfigs) {
+      const existingConfig = await tx.quizTopicConfig.findUnique({
+        where: {
+          quizId_topicId_difficulty: {
+            quizId: config.quizId,
+            topicId: destinationId,
+            difficulty: config.difficulty,
+          },
+        },
+      });
+
+      if (existingConfig) {
+        // Merge question counts
+        await tx.quizTopicConfig.update({
+          where: { id: existingConfig.id },
+          data: {
+            questionCount: existingConfig.questionCount + config.questionCount,
+          },
+        });
+        // Delete the old one
+        await tx.quizTopicConfig.delete({ where: { id: config.id } });
+      } else {
+        // Move it
+        await tx.quizTopicConfig.update({
+          where: { id: config.id },
+          data: { topicId: destinationId },
+        });
+      }
+    }
+
+    // 4. Move UserTopicStats (Handling unique constraints)
+    const sourceStats = await tx.userTopicStats.findMany({
+      where: { topicId: sourceId },
+    });
+
+    for (const stats of sourceStats) {
+      const existingStats = await tx.userTopicStats.findUnique({
+        where: {
+          userId_topicId: {
+            userId: stats.userId,
+            topicId: destinationId,
+          },
+        },
+      });
+
+      if (existingStats) {
+        // Merge stats
+        await tx.userTopicStats.update({
+          where: { id: existingStats.id },
+          data: {
+            questionsAnswered: existingStats.questionsAnswered + stats.questionsAnswered,
+            questionsCorrect: existingStats.questionsCorrect + stats.questionsCorrect,
+            // Simple average for averageTime might be inaccurate but acceptable for now
+            averageTime: (existingStats.averageTime + stats.averageTime) / 2,
+            currentStreak: Math.max(existingStats.currentStreak, stats.currentStreak),
+            lastAnsweredAt: stats.lastAnsweredAt && existingStats.lastAnsweredAt
+              ? (stats.lastAnsweredAt > existingStats.lastAnsweredAt ? stats.lastAnsweredAt : existingStats.lastAnsweredAt)
+              : (stats.lastAnsweredAt || existingStats.lastAnsweredAt),
+            // Recalculate success rate
+            successRate: (existingStats.questionsAnswered + stats.questionsAnswered) > 0
+              ? (existingStats.questionsCorrect + stats.questionsCorrect) / (existingStats.questionsAnswered + stats.questionsAnswered)
+              : 0
+          },
+        });
+        // Delete the old one
+        await tx.userTopicStats.delete({ where: { id: stats.id } });
+      } else {
+        // Move it
+        await tx.userTopicStats.update({
+          where: { id: stats.id },
+          data: { topicId: destinationId },
+        });
+      }
+    }
+
+    // 5. Move child topics and update levels
+    const sourceChildren = await tx.topic.findMany({
+      where: { parentId: sourceId },
+    });
+
+    for (const child of sourceChildren) {
+      await tx.topic.update({
+        where: { id: child.id },
+        data: {
+          parentId: destinationId,
+          level: destination.level + 1
+        },
+      });
+      // Recursively update levels for this child's descendants
+      await updateDescendantLevelsInTx(tx, child.id, destination.level + 1);
+    }
+
+    // 6. Delete source topic
+    await tx.topic.delete({
+      where: { id: sourceId },
+    });
+
+    // 7. Invalidate cache
+    invalidateTopicCache();
+
+    return { success: true };
+  });
+}
+
+/**
+ * Helper to update descendant levels within a transaction
+ */
+async function updateDescendantLevelsInTx(tx: any, parentId: string, parentLevel: number) {
+  const children = await tx.topic.findMany({
+    where: { parentId },
+  });
+
+  for (const child of children) {
+    const newLevel = parentLevel + 1;
+    await tx.topic.update({
+      where: { id: child.id },
+      data: { level: newLevel },
+    });
+    await updateDescendantLevelsInTx(tx, child.id, newLevel);
+  }
 }
