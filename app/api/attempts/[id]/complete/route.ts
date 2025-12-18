@@ -55,6 +55,13 @@ export async function POST(
     const user = await requireAuth();
     const { id } = await params;
 
+    const body = await request.json().catch(() => ({}));
+    const batchedAnswers = body.answers as Array<{
+      questionId: string;
+      answerId: string | null;
+      timeSpent: number;
+    }> | undefined;
+
     // Get attempt with answers
     const attempt = await prisma.quizAttempt.findUnique({
       where: { id },
@@ -84,17 +91,82 @@ export async function POST(
       });
     }
 
-    const orderedAnswers = [...attempt.userAnswers].sort(
+    // Process batched answers if provided
+    if (batchedAnswers && Array.isArray(batchedAnswers) && batchedAnswers.length > 0) {
+      const questionIds = batchedAnswers.map((a) => a.questionId);
+
+      // Verify all questions belong to this attempt
+      const validQuestions = attempt.selectedQuestionIds;
+      const invalidQuestions = questionIds.filter(id => !validQuestions.includes(id));
+
+      if (invalidQuestions.length > 0) {
+        // We'll just filter them out rather than failing strictly, to be robust
+        console.warn(`Attempt ${id} submitted answers for invalid questions: ${invalidQuestions.join(", ")}`);
+      }
+
+      // Fetch question details for correctness checking
+      const questions = await prisma.question.findMany({
+        where: { id: { in: questionIds } },
+        include: { answers: true },
+      });
+
+      const questionMap = new Map(questions.map(q => [q.id, q]));
+
+      // Create answers in transaction
+      const answersToCreate = batchedAnswers
+        .filter(a => validQuestions.includes(a.questionId))
+        .map(answer => {
+          const question = questionMap.get(answer.questionId);
+          if (!question) return null; // Should not happen given query above
+
+          const correctAnswer = question.answers.find(a => a.isCorrect);
+          const isCorrect = answer.answerId === correctAnswer?.id;
+          const wasSkipped = answer.answerId === null;
+
+          // Check if answer already exists (deduplication)
+          const existing = attempt.userAnswers.find(ua => ua.questionId === answer.questionId);
+          if (existing) return null;
+
+          return {
+            attemptId: id,
+            questionId: answer.questionId,
+            answerId: answer.answerId,
+            isCorrect,
+            wasSkipped,
+            timeSpent: answer.timeSpent,
+          };
+        })
+        .filter((data): data is NonNullable<typeof data> => data !== null);
+
+      if (answersToCreate.length > 0) {
+        await prisma.$transaction(
+          answersToCreate.map((data) => prisma.userAnswer.create({ data }))
+        );
+      }
+    }
+
+    // Refresh attempt data with newly inserted answers
+    const updatedAttempt = await prisma.quizAttempt.findUnique({
+      where: { id },
+      include: {
+        quiz: { select: quizSelection },
+        userAnswers: userAnswerSelection,
+      },
+    });
+
+    if (!updatedAttempt) throw new Error("Failed to reload attempt");
+
+    const orderedAnswers = [...updatedAttempt.userAnswers].sort(
       (a, b) => a.createdAt.getTime() - b.createdAt.getTime()
     );
 
     // Precompute quiz scale based on quiz completionBonus and selected questions' configuration
     const questionConfigs = orderedAnswers.map((ua) => ({
       difficulty: ua.question.difficulty,
-      timeLimitSeconds: ua.question.timeLimit ?? attempt.quiz.timePerQuestion ?? 60,
+      timeLimitSeconds: ua.question.timeLimit ?? updatedAttempt.quiz.timePerQuestion ?? 60,
     }));
     const quizScale = computeQuizScale({
-      completionBonus: attempt.quiz.completionBonus ?? 0,
+      completionBonus: updatedAttempt.quiz.completionBonus ?? 0,
       questions: questionConfigs,
     });
 
@@ -116,7 +188,7 @@ export async function POST(
     for (let index = 0; index < orderedAnswers.length; index += 1) {
       const userAnswer = orderedAnswers[index];
       const questionConfig = questionConfigs[index];
-      const questionTimeLimit = questionConfig.timeLimitSeconds ?? attempt.quiz.timePerQuestion ?? 60;
+      const questionTimeLimit = questionConfig.timeLimitSeconds ?? updatedAttempt.quiz.timePerQuestion ?? 60;
 
       totalTimeSpent += userAnswer.timeSpent;
 
@@ -163,10 +235,10 @@ export async function POST(
     const averageResponseTime =
       answeredCount > 0 ? totalTimeSpent / answeredCount : 0;
 
-    const totalQuestions = attempt.totalQuestions || answeredCount;
+    const totalQuestions = updatedAttempt.totalQuestions || answeredCount;
     const scorePercentage =
       totalQuestions > 0 ? (correctAnswers / totalQuestions) * 100 : 0;
-    const passed = scorePercentage >= attempt.quiz.passingScore;
+    const passed = scorePercentage >= updatedAttempt.quiz.passingScore;
 
     const completedAttempt = await prisma.$transaction(
       async (tx) => {
@@ -276,13 +348,13 @@ async function buildAttemptResults(attempt: AttemptWithDetails) {
   const questionIds = attempt.userAnswers.map((ua) => ua.questionId);
   const questions = questionIds.length
     ? await prisma.question.findMany({
-        where: { id: { in: questionIds } },
-        include: {
-          answers: {
-            where: { isCorrect: true },
-          },
+      where: { id: { in: questionIds } },
+      include: {
+        answers: {
+          where: { isCorrect: true },
         },
-      })
+      },
+    })
     : [];
 
   const correctAnswersMap = new Map(questions.map((q) => [q.id, q.answers[0]]));
@@ -388,14 +460,14 @@ async function updateUserStatistics(
   });
 
   const questionMap = new Map(questions.map((q) => [q.id, q.topicId]));
-  
+
   // Group answers by topic for batch processing
   const topicAnswerMap = new Map<string, { correct: number; total: number; totalTime: number }>();
-  
+
   for (const userAnswer of attempt.userAnswers) {
     const topicId = questionMap.get(userAnswer.questionId);
     if (!topicId) continue;
-    
+
     const stats = topicAnswerMap.get(topicId) || { correct: 0, total: 0, totalTime: 0 };
     stats.total++;
     if (userAnswer.isCorrect) stats.correct++;
@@ -420,7 +492,7 @@ async function updateUserStatistics(
 
   for (const [topicId, stats] of topicAnswerMap.entries()) {
     const existing = existingStatsMap.get(topicId);
-    
+
     if (existing) {
       const newQuestionsAnswered = existing.questionsAnswered + stats.total;
       const newQuestionsCorrect = existing.questionsCorrect + stats.correct;
@@ -466,8 +538,8 @@ async function updateUserStatistics(
       newLongestStreak > previousLongestStreak
         ? `New personal best! You're on a ${newStreak}-day streak.`
         : newStreak === 1
-            ? "Streak started! Come back tomorrow to keep it alive."
-            : `Your ${newStreak}-day streak is alive. Keep it going!`;
+          ? "Streak started! Come back tomorrow to keep it alive."
+          : `Your ${newStreak}-day streak is alive. Keep it going!`;
 
     await createNotification(
       userId,
@@ -497,9 +569,9 @@ async function updateUserStatistics(
     userUpdateOverrides,
     user
       ? {
-          totalPoints: user.totalPoints ?? 0,
-          experienceTier: user.experienceTier,
-        }
+        totalPoints: user.totalPoints ?? 0,
+        experienceTier: user.experienceTier,
+      }
       : undefined
   );
 

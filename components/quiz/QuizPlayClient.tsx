@@ -136,6 +136,12 @@ export function QuizPlayClient({ quizId, quizTitle, quizSlug, initialAttemptLimi
     [computeTimeLimit]
   );
 
+  const batchedAnswersRef = useRef<Array<{
+    questionId: string;
+    answerId: string | null;
+    timeSpent: number;
+  }>>([]);
+
   const completeAttempt = useCallback(
     async (attemptIdentifier?: string) => {
       const activeAttemptId = attemptIdentifier ?? attemptIdRef.current;
@@ -144,6 +150,10 @@ export function QuizPlayClient({ quizId, quizTitle, quizSlug, initialAttemptLimi
       try {
         const response = await fetch(`/api/attempts/${activeAttemptId}/complete`, {
           method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            answers: batchedAnswersRef.current,
+          }),
         });
 
         trackEvent("quiz_complete", { quizId, quizTitle, attemptId: activeAttemptId });
@@ -218,13 +228,16 @@ export function QuizPlayClient({ quizId, quizTitle, quizSlug, initialAttemptLimi
         setStatus("error");
       }
     },
-    [quizSlug, router, toast]
+    [quizId, quizTitle, quizSlug, router, toast]
   );
 
   const startAttempt = useCallback(async () => {
     setStatus("loading");
     clearTimer();
     clearAdvanceTimeout();
+    // Reset batched answers on new attempt
+    batchedAnswersRef.current = [];
+
     try {
       const response = await fetch("/api/attempts", {
         method: "POST",
@@ -330,7 +343,7 @@ export function QuizPlayClient({ quizId, quizTitle, quizSlug, initialAttemptLimi
       });
       setStatus("error");
     }
-  }, [clearAdvanceTimeout, clearTimer, initialAttemptLimit, quizId, quizSlug, router, toast]);
+  }, [clearAdvanceTimeout, clearTimer, initialAttemptLimit, quizId, quizSlug, quizTitle, router, toast]);
 
   useEffect(() => {
     if (initialAttemptLimit?.isLocked) {
@@ -380,6 +393,13 @@ export function QuizPlayClient({ quizId, quizTitle, quizSlug, initialAttemptLimi
       const nextQuestion = questions[nextIndex];
       const isLastQuestion = previousIndex >= totalQuestions - 1;
 
+      // Batch the answer locally
+      batchedAnswersRef.current.push({
+        questionId: currentQuestion.id,
+        answerId,
+        timeSpent,
+      });
+
       setFeedback({
         isCorrect: optimisticIsCorrect,
         wasSkipped,
@@ -403,64 +423,23 @@ export function QuizPlayClient({ quizId, quizTitle, quizSlug, initialAttemptLimi
           setCurrentQuestion(nextQuestion);
           setFeedback(null);
           resetTimerForQuestion(nextQuestion);
+          setPendingQuestionId(null);
         }, fromTimer ? 350 : 550);
-      }
-
-      try {
-        const response = await fetch(`/api/attempts/${attemptIdRef.current}/answer`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            questionId: currentQuestion.id,
-            answerId,
-            timeSpent,
-          }),
-        });
-
-        const result = await response.json();
-
-        if (!response.ok) {
-          throw new Error(result.error || "Unable to submit answer");
+      } else if (isLastQuestion) {
+        // Last question - submit everything
+        if (ENABLE_NEW_QUIZ_UI) {
+          setIsReviewing(false);
+          startCompletion(async () => {
+            await completeAttempt();
+          });
+        } else {
+          startCompletion(async () => {
+            await completeAttempt();
+          });
         }
-
-        setFeedback((prev) =>
-          prev
-            ? {
-              ...prev,
-              isCorrect: result.data.isCorrect,
-              wasSkipped: result.data.wasSkipped,
-              message: result.data.message ?? prev.message,
-            }
-            : prev
-        );
-
-        if (isLastQuestion) {
-          // For new UI, complete immediately after feedback
-          if (ENABLE_NEW_QUIZ_UI) {
-            setIsReviewing(false);
-            startCompletion(async () => {
-              await completeAttempt();
-            });
-          } else {
-            startCompletion(async () => {
-              await completeAttempt();
-            });
-          }
-        }
-      } catch (error: any) {
-        clearAdvanceTimeout();
-
-        toast({
-          title: "Submission failed",
-          description: error?.message || "We couldn't record your answer.",
-          variant: "destructive",
-        });
-
-        setCurrentIndex(previousIndex);
-        setCurrentQuestion(previousQuestion);
-        setFeedback(null);
-        resetTimerForQuestion(previousQuestion);
-      } finally {
+        setPendingQuestionId(null);
+      } else {
+        // Just clear pending state, UI handles the rest (Review Button or similar)
         setPendingQuestionId(null);
       }
     },
@@ -478,7 +457,6 @@ export function QuizPlayClient({ quizId, quizTitle, quizSlug, initialAttemptLimi
       startCompletion,
       status,
       timeLeft,
-      toast,
       totalQuestions,
     ]
   );
