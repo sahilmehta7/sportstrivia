@@ -26,7 +26,7 @@ async function fetchLeaderboard(baseUrl: string, period: string): Promise<Leader
 }
 
 export default async function ShowcaseLeaderboardPage() {
-  const headersList = headers();
+  const headersList = await headers();
   const host = headersList.get("x-forwarded-host") ?? headersList.get("host");
   const protocol = headersList.get("x-forwarded-proto") ?? "https";
 

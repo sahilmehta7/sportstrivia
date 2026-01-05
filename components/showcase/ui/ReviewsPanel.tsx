@@ -2,10 +2,10 @@
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { useShowcaseTheme } from "@/components/showcase/ShowcaseThemeProvider";
 import { getSurfaceStyles, getTextColor } from "@/lib/showcase-theme";
 import { ShowcaseReviewCard } from "@/components/showcase/ui/ReviewCard";
 import { ShowcaseEmptyState } from "@/components/showcase/ui/EmptyState";
+import { trackEvent } from "@/lib/analytics";
 
 interface ReviewItem {
   id: string;
@@ -26,10 +26,10 @@ interface ShowcaseReviewsPanelProps {
 }
 
 export function ShowcaseReviewsPanel({ reviews, onAddReview, className }: ShowcaseReviewsPanelProps) {
-  const { theme } = useShowcaseTheme();
   const canAddReview = typeof onAddReview === "function";
 
   const handleAdd = () => {
+    trackEvent("review_submit", { action: "open_modal" });
     onAddReview?.();
   };
 
@@ -49,9 +49,9 @@ export function ShowcaseReviewsPanel({ reviews, onAddReview, className }: Showca
   }
 
   return (
-    <div className={cn("rounded-[1.5rem] p-4 sm:p-6", getSurfaceStyles(theme, "base"), className)}>
+    <div className={cn("rounded-[1.5rem] p-4 sm:p-6", getSurfaceStyles("base"), className)}>
       <div className="mb-3 sm:mb-4 flex items-center justify-between gap-2">
-        <h4 className={cn("text-sm sm:text-base font-semibold", getTextColor(theme, "primary"))}>Reviews ({safeReviews.length})</h4>
+        <h4 className={cn("text-sm sm:text-base font-semibold", getTextColor("primary"))}>Reviews ({safeReviews.length})</h4>
         {canAddReview && (
           <Button size="sm" className="rounded-full" onClick={handleAdd}>
             Add review

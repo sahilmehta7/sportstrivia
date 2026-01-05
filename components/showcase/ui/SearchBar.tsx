@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { getInputStyles, getChipStyles, getSurfaceStyles } from "@/lib/showcase-theme";
 import { useSearchKeyboard } from "@/hooks/use-search-keyboard";
+import { trackEvent } from "@/lib/analytics";
 
 export interface ShowcaseSearchChip {
   value: string;
@@ -56,7 +57,7 @@ export function ShowcaseSearchBar({
   const inputClasses = useMemo(() => getInputStyles(), []);
 
   // Handle keyboard shortcuts (/ and Ctrl/Cmd + K)
-  useSearchKeyboard(inputRef, {
+  useSearchKeyboard(inputRef as React.RefObject<HTMLInputElement>, {
     enabled: true,
     onFocus: () => {
       // Select all text when focused via shortcut for easy replacement
@@ -86,6 +87,7 @@ export function ShowcaseSearchBar({
     event.preventDefault();
     const trimmed = currentValue.trim();
     if (trimmed) {
+      trackEvent("search", { search_term: trimmed });
       onSubmit?.(trimmed);
       setAnnouncement(`Searching for ${trimmed}`);
     }

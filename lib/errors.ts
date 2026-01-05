@@ -122,13 +122,13 @@ export function handleError(error: unknown) {
   );
 }
 
-export function successResponse<T>(data: T, status = 200) {
+export function successResponse<T>(data: T, status = 200, headers: Record<string, string> = {}) {
   return NextResponse.json(
     {
       success: true,
       data,
     },
-    { status }
+    { status, headers }
   );
 }
 

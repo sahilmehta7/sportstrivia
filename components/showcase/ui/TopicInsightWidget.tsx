@@ -1,9 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
-import { useTheme } from "next-themes";
-import type { ShowcaseTheme } from "@/components/showcase/ShowcaseThemeProvider";
 import { getSurfaceStyles, getTextColor, getChipStyles } from "@/lib/showcase-theme";
 
 interface TopicInsightWidgetProps {

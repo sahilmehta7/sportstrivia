@@ -248,12 +248,20 @@ export interface DailyQuizItem {
  * Fetches daily recurring quizzes and enriches them with user completion data
  * @param userId - Optional user ID to check completion status and streaks
  */
+export interface ComingSoonQuiz {
+  title: string;
+  sport: string;
+  difficulty: Difficulty;
+  estimatedDate: string;
+  description?: string;
+}
+
 /**
  * Fetches upcoming quizzes (published but with future start time)
  */
-export async function getComingSoonQuizzes(limit: number = 6) {
+export async function getComingSoonQuizzes(limit: number = 6): Promise<ComingSoonQuiz[]> {
   const now = new Date();
-  
+
   const quizzes = await prisma.quiz.findMany({
     where: {
       isPublished: true,
@@ -279,7 +287,7 @@ export async function getComingSoonQuizzes(limit: number = 6) {
     title: quiz.title,
     sport: quiz.sport || "Multi-sport",
     difficulty: quiz.difficulty,
-    estimatedDate: quiz.startTime 
+    estimatedDate: quiz.startTime
       ? new Date(quiz.startTime).toLocaleDateString("en-US", { month: "short", year: "numeric" })
       : "TBA",
     description: quiz.description || undefined,
@@ -334,11 +342,11 @@ export async function getDailyRecurringQuizzes(
 
   // Fetch user's attempts for these quizzes
   const quizIds = dailyQuizzes.map((q) => q.id);
-  
+
   // Get last 30 days for streak calculations
   const thirtyDaysAgo = new Date();
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-  
+
   const [todayAttempts, allStreakAttempts, userRanks] = await Promise.all([
     // Check if user completed any of these quizzes today
     prisma.quizAttempt.findMany({
@@ -400,7 +408,7 @@ export async function getDailyRecurringQuizzes(
   // Calculate streak for each quiz
   for (const quizId of quizIds) {
     const attempts = attemptsByQuiz.get(quizId) || [];
-    
+
     // Convert to unique dates (same day = one entry)
     const attemptDates = attempts
       .map((date) => {
@@ -414,7 +422,7 @@ export async function getDailyRecurringQuizzes(
     let streak = 0;
     for (let i = 0; i < uniqueDates.length; i++) {
       const expectedDate = todayTime - i * 86400000;
-      
+
       // Allow for today or yesterday as starting point
       if (i === 0 && (uniqueDates[i] === todayTime || uniqueDates[i] === yesterdayTime)) {
         streak++;

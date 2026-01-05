@@ -9,6 +9,7 @@ import { Card } from "@/components/ui/card";
 import { useShowcaseTheme } from "@/components/showcase/ShowcaseThemeProvider";
 import { getTextColor, getGlassCard } from "@/lib/showcase-theme";
 import { cn } from "@/lib/utils";
+import { motion } from "framer-motion";
 
 interface TopicItem {
   id: string;
@@ -163,9 +164,20 @@ export function TopicsContent({
     ? searchMeta?.total ?? (searchResults?.length ?? 0)
     : topics.length;
 
-  const filteredL2Topics = useMemo(() => {
-    if (hasActiveSearch) return {};
-    return l2TopicsByParent;
+
+  // Special sections derived from popular topics for the Bento Grid
+  // We'll prioritize Cricket and Football if they exist, or just take the first few
+  const bentoTopics = useMemo(() => {
+    if (hasActiveSearch) return [];
+
+    // Flatten L2 topics to find interesting ones or use top-level topics
+    const sportCategories = Object.entries(l2TopicsByParent).map(([parent, items]) => ({
+      title: parent,
+      items: items.slice(0, 4), // Top 4 subcategories
+      count: items.length
+    })).sort((a, b) => b.count - a.count); // Sort by number of subtopics
+
+    return sportCategories;
   }, [hasActiveSearch, l2TopicsByParent]);
 
   return (
@@ -176,161 +188,225 @@ export function TopicsContent({
       variant="vibrant"
       breadcrumbs={[{ label: "Home", href: "/" }, { label: "Topics" }]}
     >
-      <div className="space-y-12">
+      <div className="space-y-16 lg:space-y-24">
         {/* Search Section */}
-        <ShowcaseSearchBar
-          value={searchQuery}
-          placeholder="Search topics, sports, or categories..."
-          actionLabel="Search"
-          chips={chips}
-          onValueChange={setSearchQuery}
-          onSubmit={(value) => setSearchQuery(value)}
-          onChipToggle={(chip, active) => {
-            setActiveChips((prev) =>
-              active ? [...prev, chip.value] : prev.filter((c) => c !== chip.value)
-            );
-          }}
-        />
+        <div className="mx-auto max-w-3xl">
+          <ShowcaseSearchBar
+            value={searchQuery}
+            placeholder="Search topics, sports, or categories..."
+            actionLabel="Search"
+            chips={chips}
+            onValueChange={setSearchQuery}
+            onSubmit={(value) => setSearchQuery(value)}
+            onChipToggle={(chip, active) => {
+              setActiveChips((prev) =>
+                active ? [...prev, chip.value] : prev.filter((c) => c !== chip.value)
+              );
+            }}
+          />
+        </div>
 
         {hasActiveSearch ? (
-          <section className="space-y-6">
+          <section className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="text-center">
-              <h2 className={cn("text-2xl font-bold mb-2", getTextColor(theme, "primary"))}>
+              <h2 className={cn("text-3xl font-bold mb-3", getTextColor("primary"))}>
                 {totalResults > 0
-                  ? `Search Results (${totalResults.toLocaleString()})`
+                  ? `Search Results`
                   : "No topics found"}
               </h2>
-              <p className={cn("text-sm", getTextColor(theme, "secondary"))}>
+              <p className={cn("text-lg opacity-80", getTextColor("secondary"))}>
                 {totalResults > 0
-                  ? `Showing ${searchResults?.length ?? 0} of ${totalResults.toLocaleString()} matches for “${debouncedQuery}”`
+                  ? `Found ${totalResults.toLocaleString()} matches for “${debouncedQuery}”`
                   : `Nothing matched “${debouncedQuery}”. Try another team, sport, or league.`}
               </p>
             </div>
 
             {isSearching ? (
-              <Card className={cn("p-12 text-center", getGlassCard(theme))}>
-                <p className={cn("text-sm", getTextColor(theme, "secondary"))}>
-                  Searching the topic catalog…
-                </p>
+              <Card className={cn("p-16 text-center border-none shadow-2xl", getGlassCard())}>
+                <div className="flex flex-col items-center justify-center gap-4">
+                  <div className="h-8 w-8 animate-spin rounded-full border-4 border-current border-t-transparent opacity-50" />
+                  <p className={cn("text-lg font-medium", getTextColor("secondary"))}>
+                    Searching catalog...
+                  </p>
+                </div>
               </Card>
             ) : searchError ? (
-              <Card className={cn("p-12 text-center", getGlassCard(theme))}>
+              <Card className={cn("p-12 text-center", getGlassCard())}>
                 <div className="space-y-3">
-                  <h3 className={cn("text-xl font-semibold", getTextColor(theme, "primary"))}>
+                  <h3 className={cn("text-xl font-semibold", getTextColor("primary"))}>
                     We hit a snag
                   </h3>
-                  <p className={cn("text-sm", getTextColor(theme, "secondary"))}>
+                  <p className={cn("text-sm", getTextColor("secondary"))}>
                     {searchError}
                   </p>
                 </div>
               </Card>
             ) : (searchResults?.length ?? 0) > 0 ? (
-              <div className="flex flex-wrap justify-center gap-6">
-                {searchResults!.map((topic) => (
-                  <ShowcaseTopicCard
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {searchResults!.map((topic, idx) => (
+                  <motion.div
                     key={topic.id}
-                    title={topic.title}
-                    description={topic.description || "Explore quizzes in this category"}
-                    href={topic.href}
-                    accentDark={topic.accentDark}
-                    accentLight={topic.accentLight}
-                    variant={theme}
-                  />
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3, delay: idx * 0.05 }}
+                  >
+                    <ShowcaseTopicCard
+                      title={topic.title}
+                      description={topic.description || "Explore quizzes in this category"}
+                      href={topic.href}
+                      accentDark={topic.accentDark}
+                      accentLight={topic.accentLight}
+                      variant={theme}
+                    />
+                  </motion.div>
                 ))}
               </div>
             ) : (
-              <Card className={cn("p-12 text-center", getGlassCard(theme))}>
-                <div className="space-y-4">
-                  <div className="text-6xl">🔍</div>
-                  <h3 className={cn("text-xl font-semibold", getTextColor(theme, "primary"))}>
-                    No topics found
-                  </h3>
-                  <p className={cn("text-sm", getTextColor(theme, "secondary"))}>
-                    Try searching for different keywords or browse all topics above.
-                  </p>
+              <Card className={cn("p-16 text-center border-none shadow-xl", getGlassCard())}>
+                <div className="space-y-6">
+                  <div className="text-7xl">🔍</div>
+                  <div className="space-y-2">
+                    <h3 className={cn("text-2xl font-bold", getTextColor("primary"))}>
+                      No topics found
+                    </h3>
+                    <p className={cn("text-lg", getTextColor("secondary"))}>
+                      Try searching for different keywords or browse all topics below.
+                    </p>
+                  </div>
                 </div>
               </Card>
             )}
           </section>
         ) : (
-          <>
-            {/* Featured Topics */}
+          <div className="space-y-20 lg:space-y-24">
+            {/* Featured Topics Carousel */}
             {featured.length > 0 && (
               <section className="space-y-6">
-                <div className="text-center">
-                  <h2 className={cn("text-2xl font-bold mb-2", getTextColor(theme, "primary"))}>
-                    Featured Topics
+                <div className="flex items-center justify-between px-2">
+                  <div className="space-y-1">
+                    <h2 className={cn("text-2xl font-bold tracking-tight", getTextColor("primary"))}>
+                      Featured Collections
+                    </h2>
+                    <p className={cn("text-sm opacity-70", getTextColor("secondary"))}>
+                      Curated top picks for you
+                    </p>
+                  </div>
+                </div>
+                <div className="-mx-4 sm:mx-0">
+                  <ShowcaseTopicCarousel items={featured} variant={theme} />
+                </div>
+              </section>
+            )}
+
+            {/* Popular Categories Bento Grid */}
+            {bentoTopics.length > 0 && (
+              <section className="space-y-8">
+                <div className="text-center space-y-2">
+                  <h2 className={cn("text-3xl font-black uppercase tracking-tight", getTextColor("primary"))}>
+                    Popular Categories
                   </h2>
-                  <p className={cn("text-sm", getTextColor(theme, "secondary"))}>
-                    Popular sports categories with the most engaging quizzes
+                  <p className={cn("text-lg max-w-2xl mx-auto opacity-70", getTextColor("secondary"))}>
+                    Deep dive into major sports and their subcategories
                   </p>
                 </div>
-                <ShowcaseTopicCarousel items={featured} variant={theme} />
+
+                <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+                  {bentoTopics.slice(0, 6).map((sport, idx) => (
+                    <Card
+                      key={sport.title}
+                      className={cn(
+                        "overflow-hidden border-0 p-6 shadow-lg transition-all hover:scale-[1.02] hover:shadow-xl",
+                        getGlassCard(),
+                        idx === 0 ? "md:col-span-2 xl:col-span-1" : "" // Make first item span on medium screens for bento feel
+                      )}
+                    >
+                      <div className="flex flex-col h-full">
+                        <h3 className={cn("text-2xl font-bold mb-4", getTextColor("primary"))}>
+                          {sport.title}
+                        </h3>
+                        <div className="grid grid-cols-1 gap-3 mb-4 flex-grow">
+                          {sport.items.map(item => (
+                            <a
+                              key={item.id}
+                              href={item.href}
+                              className={cn(
+                                "flex items-center justify-between p-3 rounded-lg transition-colors",
+                                theme === 'light' ? "hover:bg-black/5 bg-black/5" : "hover:bg-white/10 bg-white/5"
+                              )}
+                            >
+                              <span className={cn("font-medium", getTextColor("primary"))}>{item.title}</span>
+                              <span className={cn("text-xs px-2 py-1 rounded-full bg-black/10 dark:bg-white/10 opacity-70", getTextColor("secondary"))}>
+                                View
+                              </span>
+                            </a>
+                          ))}
+                        </div>
+                        <a
+                          href={`/topics/${sport.items[0]?.parentSlug || ''}`}
+                          className={cn(
+                            "text-sm font-semibold mt-auto inline-flex items-center gap-1 opacity-70 hover:opacity-100 transition-opacity",
+                            getTextColor("primary")
+                          )}
+                        >
+                          View all {sport.title} topics →
+                        </a>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
               </section>
             )}
 
             {/* All Topics Grid */}
-            <section className="space-y-6">
-              <div className="text-center">
-                <h2 className={cn("text-2xl font-bold mb-2", getTextColor(theme, "primary"))}>
-                  All Sports ({topics.length})
-                </h2>
-                <p className={cn("text-sm", getTextColor(theme, "secondary"))}>
-                  Browse all available sports categories
-                </p>
+            <section className="space-y-8">
+              <div className="flex items-end justify-between border-b pb-4 border-white/10">
+                <div className="space-y-1">
+                  <h2 className={cn("text-2xl font-bold tracking-tight", getTextColor("primary"))}>
+                    All Sports
+                  </h2>
+                  <p className={cn("text-sm opacity-70", getTextColor("secondary"))}>
+                    From Archery to Wrestling, find it here
+                  </p>
+                </div>
+                <div className={cn("text-sm font-medium opacity-50", getTextColor("primary"))}>
+                  {topics.length} Sports
+                </div>
               </div>
 
-              <div className="flex flex-wrap justify-center gap-6">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
                 {topics.map((topic) => (
-                  <ShowcaseTopicCard
+                  <a
                     key={topic.id}
-                    title={topic.title}
-                    description={topic.description || "Explore quizzes in this category"}
                     href={topic.href}
-                    accentDark={topic.accentDark}
-                    accentLight={topic.accentLight}
-                    variant={theme}
-                  />
+                    className={cn(
+                      "group relative flex flex-col items-center justify-center p-6 text-center rounded-2xl transition-all duration-300",
+                      theme === 'light'
+                        ? "bg-white hover:shadow-lg hover:-translate-y-1 border border-slate-100"
+                        : "bg-white/5 hover:bg-white/10 hover:shadow-xl hover:-translate-y-1 border border-white/5"
+                    )}
+                  >
+                    <div
+                      className="mb-3 h-12 w-12 rounded-full flex items-center justify-center text-lg font-bold shadow-sm"
+                      style={{
+                        background: `linear-gradient(135deg, ${topic.accentDark} 0%, ${topic.accentDark}80 100%)`,
+                        color: topic.accentLight
+                      }}
+                    >
+                      {topic.title.charAt(0)}
+                    </div>
+                    <h3 className={cn("font-semibold text-sm line-clamp-2", getTextColor("primary"))}>
+                      {topic.title}
+                    </h3>
+                    {topic.quizCount !== undefined && (
+                      <span className={cn("mt-2 text-xs opacity-50", getTextColor("secondary"))}>
+                        {topic.quizCount} Quizzes
+                      </span>
+                    )}
+                  </a>
                 ))}
               </div>
             </section>
-
-            {/* Subcategories */}
-            {Object.keys(filteredL2Topics).length > 0 && (
-              <section className="space-y-8">
-                <div className="text-center">
-                  <h2 className={cn("text-2xl font-bold mb-2", getTextColor(theme, "primary"))}>
-                    Specialized Categories
-                  </h2>
-                  <p className={cn("text-sm", getTextColor(theme, "secondary"))}>
-                    Dive deeper into specific areas within each sport
-                  </p>
-                </div>
-
-                {Object.entries(filteredL2Topics).map(([parentName, l2Topics]) => (
-                  <div key={parentName} className="space-y-4">
-                    <h3 className={cn("text-lg font-semibold", getTextColor(theme, "primary"))}>
-                      {parentName} Subcategories
-                    </h3>
-                    <div className="flex flex-wrap justify-center gap-4">
-                      {l2Topics.slice(0, 8).map((topic) => (
-                        <ShowcaseTopicCard
-                          key={topic.id}
-                          title={topic.title}
-                          description={topic.description || "Specialized quizzes"}
-                          href={topic.href}
-                          accentDark={topic.accentDark}
-                          accentLight={topic.accentLight}
-                          variant={theme}
-                          className="h-[180px] w-[280px]"
-                        />
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </section>
-            )}
-          </>
+          </div>
         )}
       </div>
     </ShowcasePage>

@@ -27,8 +27,13 @@ const createPrismaFallback = () => {
 
 const prismaClient =
   globalForPrisma.prisma ??
-  (process.env.DATABASE_URL
-    ? new PrismaClient({
+  (() => {
+    if (process.env.NODE_ENV === "production" && !process.env.DATABASE_URL) {
+      throw new Error("DATABASE_URL is not defined in production environment");
+    }
+
+    return process.env.DATABASE_URL
+      ? new PrismaClient({
         log: process.env.NODE_ENV === "development" ? ["error", "warn"] : ["error"],
         datasources: {
           db: {
@@ -36,7 +41,8 @@ const prismaClient =
           },
         },
       })
-    : createPrismaFallback());
+      : createPrismaFallback();
+  })();
 
 export const prisma = prismaClient;
 

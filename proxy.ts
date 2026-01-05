@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import type { NextAuthRequest } from "next-auth";
-import { auth } from "@/lib/auth";
+import { auth } from "@/lib/auth-edge";
 
 // Protected routes requiring authentication
 const protectedRoutes = ["/profile", "/challenges", "/friends", "/notifications"];
@@ -30,7 +30,7 @@ function getAllowedOrigins(request: NextRequest): Set<string> {
   return origins;
 }
 
-export default auth(async function middleware(req: NextAuthRequest) {
+export default auth(async function proxy(req: NextAuthRequest) {
   const { nextUrl } = req;
   const pathname = nextUrl.pathname;
 

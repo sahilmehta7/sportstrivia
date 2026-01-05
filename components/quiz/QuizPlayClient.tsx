@@ -14,6 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { AttemptLimitBanner } from "@/components/quiz/AttemptLimitBanner";
 import { ENABLE_NEW_QUIZ_UI } from "@/lib/config/quiz-ui";
 import { QuizPlayUI } from "@/components/quiz/QuizPlayUI";
+import { trackEvent } from "@/lib/analytics";
 
 interface AttemptLimitClientInfo {
   max: number;
@@ -135,6 +136,12 @@ export function QuizPlayClient({ quizId, quizTitle, quizSlug, initialAttemptLimi
     [computeTimeLimit]
   );
 
+  const batchedAnswersRef = useRef<Array<{
+    questionId: string;
+    answerId: string | null;
+    timeSpent: number;
+  }>>([]);
+
   const completeAttempt = useCallback(
     async (attemptIdentifier?: string) => {
       const activeAttemptId = attemptIdentifier ?? attemptIdRef.current;
@@ -143,7 +150,13 @@ export function QuizPlayClient({ quizId, quizTitle, quizSlug, initialAttemptLimi
       try {
         const response = await fetch(`/api/attempts/${activeAttemptId}/complete`, {
           method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            answers: batchedAnswersRef.current,
+          }),
         });
+
+        trackEvent("quiz_complete", { quizId, quizTitle, attemptId: activeAttemptId });
 
         const result = await response.json();
 
@@ -198,8 +211,8 @@ export function QuizPlayClient({ quizId, quizTitle, quizSlug, initialAttemptLimi
 
         if (attemptData?.id) {
           const destinationSlug = attemptQuiz?.slug ?? quizSlug;
-        setFeedback(null);
-        setCurrentQuestion(null);
+          setFeedback(null);
+          setCurrentQuestion(null);
           setStatus("redirecting");
           router.push(`/quizzes/${destinationSlug}/results/${attemptData.id}?fresh=1`);
           return;
@@ -215,13 +228,16 @@ export function QuizPlayClient({ quizId, quizTitle, quizSlug, initialAttemptLimi
         setStatus("error");
       }
     },
-    [quizSlug, router, toast]
+    [quizId, quizTitle, quizSlug, router, toast]
   );
 
   const startAttempt = useCallback(async () => {
     setStatus("loading");
     clearTimer();
     clearAdvanceTimeout();
+    // Reset batched answers on new attempt
+    batchedAnswersRef.current = [];
+
     try {
       const response = await fetch("/api/attempts", {
         method: "POST",
@@ -301,6 +317,8 @@ export function QuizPlayClient({ quizId, quizTitle, quizSlug, initialAttemptLimi
         throw new Error("Quiz has no questions available right now.");
       }
 
+      trackEvent("quiz_start", { quizId, quizTitle });
+
       setQuestions(readyQuestions);
       setTotalQuestions(readyQuestions.length || totalFromServer || 0);
       setCurrentIndex(0);
@@ -325,7 +343,7 @@ export function QuizPlayClient({ quizId, quizTitle, quizSlug, initialAttemptLimi
       });
       setStatus("error");
     }
-  }, [clearAdvanceTimeout, clearTimer, initialAttemptLimit, quizId, quizSlug, router, toast]);
+  }, [clearAdvanceTimeout, clearTimer, initialAttemptLimit, quizId, quizSlug, quizTitle, router, toast]);
 
   useEffect(() => {
     if (initialAttemptLimit?.isLocked) {
@@ -370,10 +388,16 @@ export function QuizPlayClient({ quizId, quizTitle, quizSlug, initialAttemptLimi
         !!answerId && !!correctAnswerId && answerId === correctAnswerId && !wasSkipped;
 
       const previousIndex = currentIndex;
-      const previousQuestion = currentQuestion;
       const nextIndex = currentIndex + 1;
       const nextQuestion = questions[nextIndex];
       const isLastQuestion = previousIndex >= totalQuestions - 1;
+
+      // Batch the answer locally
+      batchedAnswersRef.current.push({
+        questionId: currentQuestion.id,
+        answerId,
+        timeSpent,
+      });
 
       setFeedback({
         isCorrect: optimisticIsCorrect,
@@ -381,8 +405,8 @@ export function QuizPlayClient({ quizId, quizTitle, quizSlug, initialAttemptLimi
         message: wasSkipped
           ? "Question skipped"
           : optimisticIsCorrect
-          ? "Correct answer!"
-          : "Incorrect answer",
+            ? "Correct answer!"
+            : "Incorrect answer",
         selectedAnswerId: answerId,
         correctAnswerId,
         correctAnswerText,
@@ -398,64 +422,23 @@ export function QuizPlayClient({ quizId, quizTitle, quizSlug, initialAttemptLimi
           setCurrentQuestion(nextQuestion);
           setFeedback(null);
           resetTimerForQuestion(nextQuestion);
+          setPendingQuestionId(null);
         }, fromTimer ? 350 : 550);
-      }
-
-      try {
-        const response = await fetch(`/api/attempts/${attemptIdRef.current}/answer`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            questionId: currentQuestion.id,
-            answerId,
-            timeSpent,
-          }),
-        });
-
-        const result = await response.json();
-
-        if (!response.ok) {
-          throw new Error(result.error || "Unable to submit answer");
+      } else if (isLastQuestion) {
+        // Last question - submit everything
+        if (ENABLE_NEW_QUIZ_UI) {
+          setIsReviewing(false);
+          startCompletion(async () => {
+            await completeAttempt();
+          });
+        } else {
+          startCompletion(async () => {
+            await completeAttempt();
+          });
         }
-
-        setFeedback((prev) =>
-          prev
-            ? {
-                ...prev,
-                isCorrect: result.data.isCorrect,
-                wasSkipped: result.data.wasSkipped,
-                message: result.data.message ?? prev.message,
-              }
-            : prev
-        );
-
-        if (isLastQuestion) {
-          // For new UI, complete immediately after feedback
-          if (ENABLE_NEW_QUIZ_UI) {
-            setIsReviewing(false);
-            startCompletion(async () => {
-              await completeAttempt();
-            });
-          } else {
-            startCompletion(async () => {
-              await completeAttempt();
-            });
-          }
-        }
-      } catch (error: any) {
-        clearAdvanceTimeout();
-
-        toast({
-          title: "Submission failed",
-          description: error?.message || "We couldn't record your answer.",
-          variant: "destructive",
-        });
-
-        setCurrentIndex(previousIndex);
-        setCurrentQuestion(previousQuestion);
-        setFeedback(null);
-        resetTimerForQuestion(previousQuestion);
-      } finally {
+        setPendingQuestionId(null);
+      } else {
+        // Just clear pending state, UI handles the rest (Review Button or similar)
         setPendingQuestionId(null);
       }
     },
@@ -473,7 +456,6 @@ export function QuizPlayClient({ quizId, quizTitle, quizSlug, initialAttemptLimi
       startCompletion,
       status,
       timeLeft,
-      toast,
       totalQuestions,
     ]
   );
@@ -809,7 +791,7 @@ export function QuizPlayClient({ quizId, quizTitle, quizSlug, initialAttemptLimi
                     !feedback && "hover:-translate-y-0.5 hover:border-primary hover:bg-primary/10",
                     feedback && "cursor-default",
                     isCorrectAnswer &&
-                      "border-emerald-500/80 bg-emerald-500/10 text-foreground shadow-[0_0_0_1px_rgba(16,185,129,0.2)]",
+                    "border-emerald-500/80 bg-emerald-500/10 text-foreground shadow-[0_0_0_1px_rgba(16,185,129,0.2)]",
                     isIncorrectSelection && "border-destructive/70 bg-destructive/10 text-foreground"
                   )}
                   disabled={Boolean(feedback) || pendingQuestionId === currentQuestion.id}
@@ -824,8 +806,8 @@ export function QuizPlayClient({ quizId, quizTitle, quizSlug, initialAttemptLimi
                           isCorrectAnswer
                             ? "text-emerald-600"
                             : isIncorrectSelection
-                            ? "text-destructive"
-                            : "text-muted-foreground"
+                              ? "text-destructive"
+                              : "text-muted-foreground"
                         )}
                       >
                         {statusHint}

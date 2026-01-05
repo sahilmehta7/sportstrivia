@@ -4,7 +4,7 @@ import { Fragment, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { Button } from "@/components/ui/button";
-import { Plus, Edit, Trash2, ChevronRight, ChevronDown } from "lucide-react";
+import { Plus, Edit, Trash2, ChevronRight, ChevronDown, GitMerge, Check, ChevronsUpDown } from "lucide-react";
 import Link from "next/link";
 import {
   Table,
@@ -24,6 +24,20 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
 
 interface TopicNode {
   id: string;
@@ -48,9 +62,14 @@ export function AdminTopicsClient({ topics }: AdminTopicsClientProps) {
   const { toast } = useToast();
   const router = useRouter();
   const [expandedTopics, setExpandedTopics] = useState<Set<string>>(new Set());
+  const [deleting, setDeleting] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [topicToDelete, setTopicToDelete] = useState<TopicNode | null>(null);
-  const [deleting, setDeleting] = useState(false);
+  const [mergeDialogOpen, setMergeDialogOpen] = useState(false);
+  const [topicToMerge, setTopicToMerge] = useState<TopicNode | null>(null);
+  const [destinationTopicId, setDestinationTopicId] = useState<string>("");
+  const [merging, setMerging] = useState(false);
+  const [comboboxOpen, setComboboxOpen] = useState(false);
 
   const totalTopics = useMemo(() => topics.length, [topics]);
 
@@ -108,6 +127,81 @@ export function AdminTopicsClient({ topics }: AdminTopicsClientProps) {
     setDeleteDialogOpen(true);
   };
 
+  const openMergeDialog = (topic: TopicNode) => {
+    setTopicToMerge(topic);
+    setDestinationTopicId("");
+    setComboboxOpen(false);
+    setMergeDialogOpen(true);
+  };
+
+  const handleMerge = async () => {
+    if (!topicToMerge || !destinationTopicId) return;
+
+    setMerging(true);
+    try {
+      const response = await fetch(`/api/admin/topics/${topicToMerge.id}/merge`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ destinationId: destinationTopicId }),
+      });
+      const result = await response.json();
+
+      if (!response.ok) {
+        toast({
+          title: "Merge Failed",
+          description: result.error || "Failed to merge topics",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Topics Merged!",
+          description: "Resources have been moved and the source topic was deleted.",
+        });
+        setMergeDialogOpen(false);
+        setTopicToMerge(null);
+        router.refresh();
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setMerging(false);
+    }
+  };
+
+  // Flattened topics for merge selection, excluding the source topic and its descendants
+  const getMergeableTopics = (sourceTopicId: string) => {
+    // Simple recursive function to find descendants
+    const getDescendantIds = (topic: TopicNode): string[] => {
+      const ids = [topic.id];
+      topic.children?.forEach(child => {
+        ids.push(...getDescendantIds(child));
+      });
+      return ids;
+    };
+
+
+    // Better to just filter from the full flattened list if we had one. 
+    // For now, let's just do a basic filter on top-level topics for simplicity or assume user knows
+    // In a real app we'd have a flattened list or searchable select.
+
+    const flatten = (nodes: TopicNode[]): TopicNode[] => {
+      return nodes.reduce((acc: TopicNode[], node) => {
+        return acc.concat([node], flatten(node.children || []));
+      }, []);
+    };
+
+    const allFlattened = flatten(topics);
+    const sourceNode = allFlattened.find(n => n.id === sourceTopicId);
+    if (!sourceNode) return allFlattened;
+
+    const sourceAndDescendantIds = getDescendantIds(sourceNode);
+    return allFlattened.filter(t => !sourceAndDescendantIds.includes(t.id));
+  };
+
   const renderTopicRow = (topic: TopicNode, depth: number = 0) => {
     const hasChildren = (topic.children?.length ?? 0) > 0;
     const isExpanded = expandedTopics.has(topic.id);
@@ -159,6 +253,14 @@ export function AdminTopicsClient({ topics }: AdminTopicsClientProps) {
                   <Edit className="h-4 w-4" />
                 </Button>
               </Link>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => openMergeDialog(topic)}
+                title="Merge into another topic"
+              >
+                <GitMerge className="h-4 w-4 text-blue-500" />
+              </Button>
               <Button
                 variant="outline"
                 size="sm"
@@ -255,10 +357,10 @@ export function AdminTopicsClient({ topics }: AdminTopicsClientProps) {
                   {(topicToDelete._count.questions > 0 ||
                     topicToDelete._count.children > 0 ||
                     topicToDelete._count.quizTopicConfigs > 0) && (
-                    <p className="mt-2 text-sm">
-                      You must remove/reassign all dependencies before deleting this topic.
-                    </p>
-                  )}
+                      <p className="mt-2 text-sm">
+                        You must remove/reassign all dependencies before deleting this topic.
+                      </p>
+                    )}
                 </div>
               )}
             </DialogDescription>
@@ -269,6 +371,96 @@ export function AdminTopicsClient({ topics }: AdminTopicsClientProps) {
             </Button>
             <Button variant="destructive" onClick={handleDelete} disabled={deleting}>
               {deleting ? "Deleting..." : "Delete Topic"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={mergeDialogOpen} onOpenChange={setMergeDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Merge Topic</DialogTitle>
+            <DialogDescription>
+              Merge &quot;{topicToMerge?.name}&quot; into another topic.
+              All questions, sub-topics, and stats will be moved.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="py-4 space-y-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Destination Topic</label>
+              <Popover open={comboboxOpen} onOpenChange={setComboboxOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={comboboxOpen}
+                    className="w-full justify-between"
+                  >
+                    {destinationTopicId
+                      ? (() => {
+                        const selected = topicToMerge && getMergeableTopics(topicToMerge.id).find((t) => t.id === destinationTopicId);
+                        return selected ? `${selected.name} ${selected.level > 0 ? `(Level ${selected.level})` : "(Root)"}` : "Select destination topic...";
+                      })()
+                      : "Select destination topic..."}
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[400px] p-0">
+                  <Command>
+                    <CommandInput placeholder="Search topics..." />
+                    <CommandList>
+                      <CommandEmpty>No topic found.</CommandEmpty>
+                      <CommandGroup>
+                        {topicToMerge && getMergeableTopics(topicToMerge.id).map((t) => (
+                          <CommandItem
+                            key={t.id}
+                            value={t.name}
+                            onSelect={() => {
+                              setDestinationTopicId(t.id);
+                              setComboboxOpen(false);
+                            }}
+                          >
+                            <Check
+                              className={cn(
+                                "mr-2 h-4 w-4",
+                                destinationTopicId === t.id ? "opacity-100" : "opacity-0"
+                              )}
+                            />
+                            {t.name} {t.level > 0 ? `(Level ${t.level})` : "(Root)"}
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
+            </div>
+
+            {topicToMerge && (
+              <div className="rounded-md bg-muted p-3 text-sm space-y-1">
+                <div className="font-medium mb-1 text-blue-600 dark:text-blue-400">Resources to be moved:</div>
+                <div>• {topicToMerge._count.questions} Question(s)</div>
+                <div>• {topicToMerge._count.children} Sub-topic(s)</div>
+                <div>• {topicToMerge._count.quizTopicConfigs} Quiz Config(s)</div>
+                <div className="mt-2 text-xs text-muted-foreground italic">
+                  Note: The source topic &quot;{topicToMerge.name}&quot; will be deleted.
+                </div>
+              </div>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setMergeDialogOpen(false)} disabled={merging}>
+              Cancel
+            </Button>
+            <Button
+              variant="default"
+              className="bg-blue-600 hover:bg-blue-700"
+              onClick={handleMerge}
+              disabled={merging || !destinationTopicId}
+            >
+              {merging ? "Merging..." : "Confirm Merge"}
             </Button>
           </DialogFooter>
         </DialogContent>

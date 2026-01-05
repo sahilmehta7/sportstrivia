@@ -1,6 +1,6 @@
 "use client";
 
-import { FeaturedQuizzesHero } from "@/components/quizzes/featured-quizzes-hero";
+import { FeaturedTradingCardsCarousel } from "@/components/quizzes/featured-trading-cards-carousel";
 import { ComingSoonWidget } from "@/components/quizzes/coming-soon-widget";
 import { ShowcaseDailyCarousel } from "@/components/showcase/ShowcaseDailyCarousel";
 import { QuizzesContent } from "./QuizzesContent";
@@ -31,11 +31,11 @@ export function QuizzesPageContent({
   pagination,
 }: QuizzesPageContentProps) {
   return (
-    <main className="min-h-screen bg-gradient-to-b from-background via-background to-muted/40 py-12">
+    <main className="min-h-screen bg-gradient-to-b from-background via-background to-muted/40 py-6 md:py-12">
       <PageContainer>
         {/* Featured Quizzes Hero Section */}
         {featuredQuizzes.length > 0 && (
-          <FeaturedQuizzesHero featuredQuizzes={featuredQuizzes} />
+          <FeaturedTradingCardsCarousel quizzes={featuredQuizzes} />
         )}
 
         {/* Daily Recurring Quizzes */}
@@ -45,7 +45,7 @@ export function QuizzesPageContent({
         <ComingSoonWidget quizzes={comingSoonQuizzes} />
 
         {/* Quizzes Content with Filters */}
-        <QuizzesContent 
+        <QuizzesContent
           quizzes={quizzes}
           filterGroups={filterGroups}
           pagination={pagination}

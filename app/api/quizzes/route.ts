@@ -10,13 +10,13 @@ import { searchRateLimiter, checkRateLimit } from "@/lib/rate-limit";
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    
+
     // Apply rate limiting (only if search query is present)
     const rawSearch = searchParams.get("search");
     if (rawSearch) {
-      const identifier = request.ip || request.headers.get("x-forwarded-for") || "anonymous";
+      const identifier = request.headers.get("x-forwarded-for")?.split(',')[0] || "anonymous";
       const rateLimitResult = await checkRateLimit(identifier, searchRateLimiter);
-      
+
       if (!rateLimitResult.success) {
         return new Response(
           JSON.stringify({
@@ -32,26 +32,27 @@ export async function GET(request: NextRequest) {
               "X-RateLimit-Remaining": rateLimitResult.remaining.toString(),
               "X-RateLimit-Reset": new Date(rateLimitResult.reset).toISOString(),
               "Retry-After": Math.ceil((rateLimitResult.reset - Date.now()) / 1000).toString(),
+              "Cache-Control": "no-store", // Do not cache rate limit errors
             },
           }
         );
       }
     }
-    
+
     // Validate and sanitize search query
     const search = rawSearch ? validateSearchQuery(rawSearch) : undefined;
-    
+
     // If search query was provided but is invalid/too long, return error
     if (rawSearch && !search && rawSearch.trim().length > 0) {
       throw new BadRequestError("Search query must be 200 characters or less");
     }
-    
+
     // Parse filters with type safety
     const filters: PublicQuizFilters = {
       page: parseInt(searchParams.get("page") || "1"),
       limit: parseInt(searchParams.get("limit") || "12"),
-      search,
-      sport: searchParams.get("sport") || undefined,
+      search: search ?? undefined,
+      sport: searchParams.get("sport") ?? undefined,
       difficulty: (searchParams.get("difficulty") as Difficulty) || undefined,
       tag: searchParams.get("tag") || undefined,
       topic: searchParams.get("topic") || undefined,
@@ -72,7 +73,9 @@ export async function GET(request: NextRequest) {
 
     const result = await getPublicQuizList(filters);
 
-    return successResponse(result);
+    return successResponse(result, 200, {
+      "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300",
+    });
   } catch (error) {
     return handleError(error);
   }

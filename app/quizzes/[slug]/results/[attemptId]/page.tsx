@@ -31,12 +31,6 @@ interface QuizResultsPageProps {
   searchParams?: Promise<Record<string, string | string[]>>;
 }
 
-function formatDateTime(date: Date) {
-  return new Intl.DateTimeFormat("en-US", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(date);
-}
 
 // Server-side reward renderer using the showcase PointsReward component
 function PointsRewardServer({ points, breakdown }: { points: number; breakdown: PointsBreakdown[] }) {
@@ -158,12 +152,12 @@ export default async function QuizResultsPage({
   // Build quiz-specific leaderboard (top 10) with recurring aggregation support
   let quizLeaderboard:
     | Array<{
-        userId: string;
-        user: { id: string; name: string | null; image: string | null } | null;
-        bestPoints?: number | null;
-        bestScore?: number | null;
-        averageResponseTime?: number | null;
-      }>
+      userId: string;
+      user: { id: string; name: string | null; image: string | null } | null;
+      bestPoints?: number | null;
+      bestScore?: number | null;
+      averageResponseTime?: number | null;
+    }>
     | [] = [];
 
   if (attempt.quiz.recurringType === "DAILY" || attempt.quiz.recurringType === "WEEKLY") {
@@ -318,7 +312,7 @@ export default async function QuizResultsPage({
   const leaderboardEntries = quizLeaderboard.map((entry, index) => {
     const user = (entry as any).user ?? null;
     const totalPoints =
-      Number((entry as any).bestPoints ?? entry.bestPoints ?? entry.totalPoints ?? entry.bestScore ?? 0) || 0;
+      Number((entry as any).bestPoints ?? entry.bestPoints ?? entry.bestScore ?? 0) || 0;
 
     return {
       userId: (entry as any).userId ?? user?.id ?? `anonymous-${index}`,
@@ -334,59 +328,59 @@ export default async function QuizResultsPage({
     <ShowcaseThemeProvider>
       <QuizResultsLayout>
         <div className="space-y-10">
-          <QuizResultsCard>
+
+          <div className="flex flex-col items-center space-y-8">
             <QuizResultsHeader
               title="Quiz Results"
               subtitle={attempt.quiz.title}
+              className="text-center"
             />
 
-            <div className="space-y-8 p-6">
-              {isFresh && (
-                <div className="rounded-2xl border border-emerald-400/30 bg-emerald-400/10 px-4 py-3 text-sm font-medium text-emerald-700 dark:border-emerald-400/40 dark:bg-emerald-400/20 dark:text-emerald-200">
-                  Quiz completed! Your detailed summary is ready below.
+            {isFresh && (
+              <div className="rounded-full border border-emerald-400/30 bg-emerald-400/10 px-6 py-2 text-sm font-medium text-emerald-700 dark:border-emerald-400/40 dark:bg-emerald-400/20 dark:text-emerald-200">
+                Quiz completed! Summary ready below.
+              </div>
+            )}
+
+            <QuizResultsSummary
+              data={summaryData}
+              confetti
+              className="w-full max-w-2xl"
+              footer={
+                <div className="flex flex-col items-center gap-3">
+                  <Badge
+                    variant={attempt.passed ? "default" : "destructive"}
+                    className={cn(
+                      "scale-110 px-4 py-1.5 text-sm",
+                      attempt.passed
+                        ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300"
+                        : "bg-rose-500/15 text-rose-700 dark:text-rose-400",
+                    )}
+                  >
+                    {attempt.passed ? (
+                      <>
+                        <Trophy className="mr-1.5 h-4 w-4" />
+                        Passed
+                      </>
+                    ) : (
+                      <>
+                        <XCircle className="mr-1.5 h-4 w-4" />
+                        Failed
+                      </>
+                    )}
+                  </Badge>
                 </div>
-              )}
+              }
+            />
 
-              <QuizResultsSummary
-                data={summaryData}
-                confetti
-                footer={
-                  <div className="flex flex-col items-center gap-3">
-                    <Badge
-                      variant={attempt.passed ? "default" : "destructive"}
-                      className={cn(
-                        "px-4 py-1.5 text-sm",
-                        attempt.passed
-                          ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300"
-                          : "bg-rose-500/15 text-rose-700 dark:text-rose-400",
-                      )}
-                    >
-                      {attempt.passed ? (
-                        <>
-                          <Trophy className="mr-1.5 h-4 w-4" />
-                          Passed
-                        </>
-                      ) : (
-                        <>
-                          <XCircle className="mr-1.5 h-4 w-4" />
-                          Failed
-                        </>
-                      )}
-                    </Badge>
-                    <p className="text-xs text-slate-600 dark:text-white/60">
-                      Completed {formatDateTime(attempt.completedAt!)}
-                    </p>
-                  </div>
-                }
-              />
+            <QuizResultsStatsGrid data={summaryData} className="w-full max-w-4xl" />
 
-              <QuizResultsStatsGrid data={summaryData} />
-
+            <div className="grid w-full gap-8 lg:grid-cols-2">
               <QuizResultsSection
                 title="Points & Progress"
-                className="rounded-[1.5rem] bg-white/60 p-6 shadow-sm dark:bg-white/10"
+                className="h-full rounded-[1.5rem] bg-white/40 p-6 shadow-sm backdrop-blur-md dark:bg-white/5"
               >
-                <div className="grid gap-6 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
+                <div className="space-y-8">
                   <div className="space-y-4">
                     <p className="text-xs uppercase tracking-widest text-slate-500 dark:text-white/60">
                       Total points earned
@@ -408,170 +402,159 @@ export default async function QuizResultsPage({
                           {progression.tierLabel}
                         </Badge>
                       </div>
-                      <div className="text-sm text-slate-600 dark:text-white/70">
-                        Career points:{" "}
-                        <span className="font-semibold text-slate-900 dark:text-white">
-                          {progression.totalPoints.toLocaleString()}
-                        </span>
+                      <div className="h-2 w-full rounded-full bg-slate-200/70 dark:bg-white/10">
+                        <div
+                          className="h-2 rounded-full bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 transition-all"
+                          style={{ width: `${progression.progressPercent}%` }}
+                        />
                       </div>
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between text-xs text-slate-500 dark:text-white/60">
-                          <span>
-                            Progress to {progression.nextTierLabel ?? progression.tierLabel}
-                          </span>
-                          <span>{progression.progressPercent}%</span>
-                        </div>
-                        <div className="h-2 w-full rounded-full bg-slate-200/70 dark:bg-white/10">
-                          <div
-                            className="h-2 rounded-full bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 transition-all"
-                            style={{ width: `${progression.progressPercent}%` }}
-                          />
-                        </div>
-                        {progression.pointsToNext !== null ? (
-                          <p className="text-xs text-slate-500 dark:text-white/60">
-                            {progression.pointsToNext.toLocaleString()} points until{" "}
-                            {progression.nextTierLabel}
-                          </p>
-                        ) : (
-                          <p className="text-xs text-slate-500 dark:text-white/60">
-                            You&apos;ve reached the top tier—legend status!
-                          </p>
-                        )}
-                      </div>
+                      {progression.pointsToNext !== null ? (
+                        <p className="text-xs text-slate-500 dark:text-white/60">
+                          {progression.pointsToNext.toLocaleString()} points until{" "}
+                          {progression.nextTierLabel}
+                        </p>
+                      ) : (
+                        <p className="text-xs text-slate-500 dark:text-white/60">
+                          You&apos;ve reached the top tier—legend status!
+                        </p>
+                      )}
                     </div>
                   ) : null}
                 </div>
               </QuizResultsSection>
 
-              <QuizResultsActions
-                className="justify-center"
-                primaryAction={
-                  <ResultsShareButton
-                    quizTitle={attempt.quiz.title}
-                    userName={attempt.user?.name || "Anonymous"}
-                    score={attempt.score || 0}
-                    correctAnswers={attempt.correctAnswers || 0}
-                    totalQuestions={attempt.totalQuestions}
-                    totalPoints={attempt.totalPoints || 0}
-                    timeSpent={attempt.totalTimeSpent || 0}
-                  >
-                    Share
-                  </ResultsShareButton>
-                }
-                secondaryAction={
-                  <Link href="/quizzes">
-                    <ShowcaseButton variant="secondary" size="md">
-                      Browse Quizzes
-                    </ShowcaseButton>
-                  </Link>
-                }
-                extraActions={
-                  <QuizResultsReviewButton
-                    quizSlug={slug}
-                    quizTitle={attempt.quiz.title}
-                    existingReview={existingReview}
-                  />
-                }
-              />
-                </div>
-          </QuizResultsCard>
+              <div className="flex h-full flex-col justify-center gap-6 rounded-[1.5rem] bg-white/40 p-6 shadow-sm backdrop-blur-md dark:bg-white/5">
+                <h3 className="text-lg font-bold text-slate-900 dark:text-white">Next Steps</h3>
+                <QuizResultsActions
+                  className="flex-col items-stretch gap-3"
+                  primaryAction={
+                    <ResultsShareButton
+                      quizTitle={attempt.quiz.title}
+                      userName={attempt.user?.name || "Anonymous"}
+                      score={attempt.score || 0}
+                      correctAnswers={attempt.correctAnswers || 0}
+                      totalQuestions={attempt.totalQuestions}
+                      totalPoints={attempt.totalPoints || 0}
+                      timeSpent={attempt.totalTimeSpent || 0}
+                    >
+                      <span className="w-full">Share Results</span>
+                    </ResultsShareButton>
+                  }
+                  secondaryAction={
+                    <Link href="/quizzes" className="w-full">
+                      <ShowcaseButton variant="secondary" size="md" className="w-full">
+                        Browse Quizzes
+                      </ShowcaseButton>
+                    </Link>
+                  }
+                  extraActions={
+                    <QuizResultsReviewButton
+                      quizSlug={slug}
+                      quizTitle={attempt.quiz.title}
+                      existingReview={existingReview}
+                    />
+                  }
+                />
+              </div>
+            </div>
+          </div>
 
           <Tabs defaultValue="leaderboard" className="space-y-4">
             <TabsList className="mx-auto flex w-full max-w-xs justify-center gap-2 rounded-full border border-slate-200/60 bg-white/70 p-1 backdrop-blur-sm dark:border-white/20 dark:bg-white/10">
-                <TabsTrigger value="leaderboard">Leaderboard</TabsTrigger>
-                <TabsTrigger value="answers">Answers</TabsTrigger>
-              </TabsList>
+              <TabsTrigger value="leaderboard">Leaderboard</TabsTrigger>
+              <TabsTrigger value="answers">Answers</TabsTrigger>
+            </TabsList>
 
-              <TabsContent value="leaderboard">
+            <TabsContent value="leaderboard">
               <QuizResultsCard className="mt-4">
                 <QuizResultsSection title="Top Players" className="p-6">
                   <QuizResultsLeaderboard entries={leaderboardEntries} />
                 </QuizResultsSection>
               </QuizResultsCard>
-              </TabsContent>
+            </TabsContent>
 
-              <TabsContent value="answers">
+            <TabsContent value="answers">
               <QuizResultsCard className="mt-4">
                 <QuizResultsSection
                   title="Answer Review"
                   className="space-y-4 p-6"
                 >
                   {attempt.userAnswers.map((userAnswer, index) => {
-                const isCorrect = userAnswer.isCorrect && !userAnswer.wasSkipped;
-                const wasSkipped = userAnswer.wasSkipped;
+                    const isCorrect = userAnswer.isCorrect && !userAnswer.wasSkipped;
+                    const wasSkipped = userAnswer.wasSkipped;
                     const correctAnswer = correctAnswersMap.get(userAnswer.questionId);
 
-                return (
-                  <div
-                    key={userAnswer.id}
-                        className="space-y-2 rounded-2xl border border-white/40 bg-white/60 p-4 backdrop-blur-sm dark:border-white/10 dark:bg-white/5"
-                  >
-                    <div className="flex items-start gap-3">
+                    return (
                       <div
+                        key={userAnswer.id}
+                        className="space-y-2 rounded-2xl border border-white/40 bg-white/60 p-4 backdrop-blur-sm dark:border-white/10 dark:bg-white/5"
+                      >
+                        <div className="flex items-start gap-3">
+                          <div
                             className={cn(
                               "flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white",
                               isCorrect ? "bg-emerald-500" : wasSkipped ? "bg-amber-500" : "bg-rose-500",
                             )}
-                      >
-                        {index + 1}
-                      </div>
-                      <div className="flex-1">
+                          >
+                            {index + 1}
+                          </div>
+                          <div className="flex-1">
                             <p className="font-medium text-slate-900 dark:text-white">
                               {userAnswer.question.questionText}
                             </p>
-                        
+
                             {userAnswer.question.questionImageUrl ? (
-                          <div className="relative mt-2 h-48 w-full max-w-md overflow-hidden rounded-lg">
-                            <Image
-                              src={userAnswer.question.questionImageUrl}
-                              alt="Question"
-                              fill
-                              className="object-contain"
-                            />
-                          </div>
+                              <div className="relative mt-2 h-48 w-full max-w-md overflow-hidden rounded-lg">
+                                <Image
+                                  src={userAnswer.question.questionImageUrl}
+                                  alt="Question"
+                                  fill
+                                  className="object-contain"
+                                />
+                              </div>
                             ) : null}
-                      </div>
-                    </div>
+                          </div>
+                        </div>
 
                         <div className="ml-11 space-y-3">
-                      <div className="flex items-center gap-2 text-sm">
+                          <div className="flex items-center gap-2 text-sm">
                             <span className="font-medium text-slate-600 dark:text-white/70">Your answer:</span>
-                        {wasSkipped ? (
+                            {wasSkipped ? (
                               <Badge variant="outline" className="border-amber-500 text-amber-600">
-                            Skipped
-                          </Badge>
-                        ) : userAnswer.answer ? (
-                          <span>{userAnswer.answer.answerText}</span>
-                        ) : (
+                                Skipped
+                              </Badge>
+                            ) : userAnswer.answer ? (
+                              <span>{userAnswer.answer.answerText}</span>
+                            ) : (
                               <span className="text-slate-500 dark:text-white/50">No answer</span>
-                        )}
-                      </div>
+                            )}
+                          </div>
 
-                      <div>
-                        {isCorrect ? (
+                          <div>
+                            {isCorrect ? (
                               <Badge variant="outline" className="border-emerald-500 text-emerald-600">
-                            <CheckCircle2 className="mr-1 h-3 w-3" />
-                            Correct
-                          </Badge>
-                        ) : wasSkipped ? (
+                                <CheckCircle2 className="mr-1 h-3 w-3" />
+                                Correct
+                              </Badge>
+                            ) : wasSkipped ? (
                               <Badge variant="outline" className="border-amber-500 text-amber-600">
-                            Skipped
-                          </Badge>
-                        ) : (
+                                Skipped
+                              </Badge>
+                            ) : (
                               <Badge variant="outline" className="border-rose-500 text-rose-600">
-                            <XCircle className="mr-1 h-3 w-3" />
-                            Incorrect
-                          </Badge>
-                        )}
-                      </div>
+                                <XCircle className="mr-1 h-3 w-3" />
+                                Incorrect
+                              </Badge>
+                            )}
+                          </div>
 
                           {revealAnswers && correctAnswer && !isCorrect && !wasSkipped ? (
-                          <div className="rounded-lg bg-emerald-500/10 p-3">
-                            <p className="mb-1 text-xs font-medium text-emerald-700 dark:text-emerald-400">
-                              Correct answer:
-                            </p>
+                            <div className="rounded-lg bg-emerald-500/10 p-3">
+                              <p className="mb-1 text-xs font-medium text-emerald-700 dark:text-emerald-400">
+                                Correct answer:
+                              </p>
                               <p className="text-sm text-slate-900 dark:text-white">{correctAnswer.answerText}</p>
-                          </div>
+                            </div>
                           ) : null}
 
                           {userAnswer.question.explanation ? (
@@ -580,22 +563,22 @@ export default async function QuizResultsPage({
                                 Explanation
                               </p>
                               <p>{userAnswer.question.explanation}</p>
-                        </div>
+                            </div>
                           ) : null}
 
                           {userAnswer.totalPoints ? (
                             <div className="text-xs text-slate-500 dark:text-white/60">
-                          +{userAnswer.totalPoints} points
+                              +{userAnswer.totalPoints} points
                             </div>
                           ) : null}
-                    </div>
-                  </div>
-                );
-              })}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </QuizResultsSection>
               </QuizResultsCard>
-              </TabsContent>
-            </Tabs>
+            </TabsContent>
+          </Tabs>
         </div>
       </QuizResultsLayout>
     </ShowcaseThemeProvider>

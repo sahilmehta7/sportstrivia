@@ -3,8 +3,8 @@
 import { Share2, Link as LinkIcon, Twitter, Facebook, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { useShowcaseTheme } from "@/components/showcase/ShowcaseThemeProvider";
 import { getSurfaceStyles, getTextColor } from "@/lib/showcase-theme";
+import { trackEvent } from "@/lib/analytics";
 
 interface ShowcaseShareStripProps {
   shareUrl?: string;
@@ -14,9 +14,9 @@ interface ShowcaseShareStripProps {
 }
 
 export function ShowcaseShareStrip({ shareUrl, message = "Challenge your friends", onShare, className }: ShowcaseShareStripProps) {
-  const { theme } = useShowcaseTheme();
 
   const handleShare = (channel: string) => {
+    trackEvent("share", { method: channel, url: shareUrl });
     onShare?.(channel);
     if (channel === "copy" && shareUrl) {
       void navigator.clipboard?.writeText(shareUrl);
@@ -31,10 +31,10 @@ export function ShowcaseShareStrip({ shareUrl, message = "Challenge your friends
   ];
 
   return (
-    <div className={cn("flex w-full flex-wrap items-center gap-3 rounded-[2rem] px-5 py-4", getSurfaceStyles(theme, "base"), className)}>
+    <div className={cn("flex w-full flex-wrap items-center gap-3 rounded-[2rem] px-5 py-4", getSurfaceStyles("base"), className)}>
       <div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.3em]">
         <Share2 className="h-4 w-4" />
-        <span className={getTextColor(theme, "secondary")}>{message}</span>
+        <span className={getTextColor("secondary")}>{message}</span>
       </div>
       <div className="ml-auto flex flex-wrap gap-2">
         {actions.map(({ id, icon: Icon, label }) => (
