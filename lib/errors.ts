@@ -65,8 +65,35 @@ export class InternalServerError extends AppError {
   }
 }
 
+/**
+ * Sanitize error messages for logging to prevent sensitive data exposure
+ * Redacts passwords, tokens, keys, and email addresses
+ */
+function sanitizeErrorForLogging(error: unknown): string {
+  let message: string;
+
+  if (error instanceof Error) {
+    message = error.message;
+  } else if (typeof error === "string") {
+    message = error;
+  } else {
+    message = String(error);
+  }
+
+  // Redact sensitive patterns
+  return message
+    .replace(/password[=:]\s*["']?[^\s"']+["']?/gi, "password=[REDACTED]")
+    .replace(/token[=:]\s*["']?[^\s"']+["']?/gi, "token=[REDACTED]")
+    .replace(/key[=:]\s*["']?[^\s"']+["']?/gi, "key=[REDACTED]")
+    .replace(/secret[=:]\s*["']?[^\s"']+["']?/gi, "secret=[REDACTED]")
+    .replace(/bearer\s+[^\s]+/gi, "Bearer [REDACTED]")
+    .replace(/\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/g, "[EMAIL]")
+    .replace(/\b(?:4[0-9]{12}(?:[0-9]{3})?|5[1-5][0-9]{14}|3[47][0-9]{13})\b/g, "[CARD]"); // Credit card patterns
+}
+
 export function handleError(error: unknown) {
-  console.error("API Error:", error);
+  // Log sanitized error to prevent sensitive data exposure
+  console.error("API Error:", sanitizeErrorForLogging(error));
 
   if (error instanceof AttemptLimitError) {
     return NextResponse.json(
