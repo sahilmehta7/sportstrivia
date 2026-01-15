@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { MainNavigation } from "@/components/shared/MainNavigation";
 import { MobileBottomNav } from "@/components/shared/MobileBottomNav";
 import { Footer } from "@/components/shared/Footer";
+import { OnboardingTour } from "@/components/features/onboarding/OnboardingTour";
 
 import { cn } from "@/lib/utils";
 
@@ -29,6 +30,7 @@ export function LayoutWrapper({ children }: { children: React.ReactNode }) {
       </main>
       <Footer />
       {!isQuizPlayRoute && <MobileBottomNav />}
+      {!isAdminRoute && !isQuizPlayRoute && <OnboardingTour />}
     </div>
   );
 }

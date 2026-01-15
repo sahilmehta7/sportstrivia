@@ -1,25 +1,14 @@
 "use client";
 
-import { useState, useEffect, useCallback, type FormEvent } from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { useState, useEffect } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Loader2, Search, Trophy } from "lucide-react";
+import { searchQuizzes, createChallenge } from "@/app/actions/challenge-actions";
+import { useDebounce } from "@/hooks/use-debounce";
 import { useToast } from "@/hooks/use-toast";
-import { useRouter } from "next/navigation";
+import { Badge } from "@/components/ui/badge";
 
 interface CreateChallengeModalProps {
   isOpen: boolean;
@@ -29,229 +18,146 @@ interface CreateChallengeModalProps {
   preselectedFriendId?: string;
 }
 
-interface Friend {
-  id: string;
-  friend: {
-    id: string;
-    name: string | null;
-    email: string;
-  };
-}
-
 interface Quiz {
   id: string;
   title: string;
-  slug: string;
-  difficulty: string;
+  sport: string | null;
+  difficulty: "EASY" | "MEDIUM" | "HARD";
+  description: string | null;
+  questionCount: number | null;
 }
 
 export function CreateChallengeModal({
   isOpen,
   onClose,
   onSuccess,
-  preselectedQuizId,
-  preselectedFriendId,
+  preselectedFriendId
 }: CreateChallengeModalProps) {
-  const { toast } = useToast();
-  const router = useRouter();
-  const [friends, setFriends] = useState<Friend[]>([]);
+  const [search, setSearch] = useState("");
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
-  const [selectedFriendId, setSelectedFriendId] = useState(
-    preselectedFriendId || ""
-  );
-  const [selectedQuizId, setSelectedQuizId] = useState(preselectedQuizId || "");
-  const [expiresInHours, setExpiresInHours] = useState("24");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [loading, setLoading] = useState(true);
-
-  const loadData = useCallback(async () => {
-    setLoading(true);
-    try {
-      const [friendsRes, quizzesRes] = await Promise.all([
-        fetch("/api/friends?type=friends"),
-        fetch("/api/quizzes?limit=50&status=PUBLISHED"),
-      ]);
-
-      if (friendsRes.ok) {
-        const friendsData = await friendsRes.json();
-        setFriends(friendsData.data?.friendships || []);
-      }
-
-      if (quizzesRes.ok) {
-        const quizzesData = await quizzesRes.json();
-        setQuizzes(quizzesData.data?.quizzes || []);
-      }
-    } catch (error) {
-      console.error("Failed to load challenge data:", error);
-      toast({
-        title: "Error",
-        description: "Failed to load data",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  }, [toast]);
+  const [loading, setLoading] = useState(false);
+  const [sending, setSending] = useState<string | null>(null);
+  const debouncedSearch = useDebounce(search, 500);
+  const { toast } = useToast();
 
   useEffect(() => {
     if (isOpen) {
-      void loadData();
+      setSearch("");
+      setQuizzes([]);
+      handleSearch("");
     }
-  }, [isOpen, loadData]);
+  }, [isOpen]);
 
-  const handleSubmit = async (event: FormEvent) => {
-    event.preventDefault();
+  useEffect(() => {
+    handleSearch(debouncedSearch);
+  }, [debouncedSearch]);
 
-    if (!selectedFriendId || !selectedQuizId) {
-      toast({
-        title: "Missing information",
-        description: "Please select both a friend and a quiz",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsSubmitting(true);
-
+  const handleSearch = async (query: string) => {
+    setLoading(true);
     try {
-      const response = await fetch("/api/challenges", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          challengedId: selectedFriendId,
-          quizId: selectedQuizId,
-          expiresInHours: parseInt(expiresInHours),
-        }),
-      });
+      const results = await searchQuizzes(query);
+      setQuizzes(results);
+    } catch (error) {
+      console.error("Failed to search quizzes", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-      const result = await response.json();
+  const handleChallenge = async (quiz: Quiz) => {
+    if (!preselectedFriendId) return;
 
-      if (!response.ok) {
-        throw new Error(result.error || "Failed to create challenge");
+    setSending(quiz.id);
+    try {
+      const result = await createChallenge(preselectedFriendId, quiz.id);
+      if (result.error) {
+        toast({
+          title: "Error",
+          description: result.error,
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Challenge Sent!",
+          description: `Challenge sent for ${quiz.title}.`,
+        });
+        onSuccess();
+        onClose();
       }
-
-      toast({
-        title: "Success",
-        description: "Challenge sent successfully!",
-      });
-
-      onSuccess();
-      onClose();
-      router.push("/challenges");
-    } catch (error: any) {
+    } catch (error) {
       toast({
         title: "Error",
-        description: error.message || "Failed to create challenge",
+        description: "Failed to send challenge",
         variant: "destructive",
       });
     } finally {
-      setIsSubmitting(false);
+      setSending(null);
     }
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Create Challenge</DialogTitle>
+          <DialogTitle>Send a Challenge</DialogTitle>
           <DialogDescription>
-            Challenge a friend to beat your score on a quiz!
+            Search for a quiz to challenge your friend. They'll have to beat your best score!
           </DialogDescription>
         </DialogHeader>
 
-        {loading ? (
-          <div className="py-8 text-center text-muted-foreground">
-            Loading...
+        <div className="space-y-4">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder="Search quizzes..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-9"
+            />
           </div>
-        ) : (
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="space-y-2">
-              <Label htmlFor="friend">Select Friend *</Label>
-              <Select
-                value={selectedFriendId}
-                onValueChange={setSelectedFriendId}
-                disabled={!!preselectedFriendId}
-              >
-                <SelectTrigger id="friend">
-                  <SelectValue placeholder="Choose a friend" />
-                </SelectTrigger>
-                <SelectContent>
-                  {friends.length === 0 ? (
-                    <div className="p-2 text-center text-sm text-muted-foreground">
-                      No friends available
+
+          <div className="max-h-[300px] overflow-y-auto space-y-2">
+            {loading && quizzes.length === 0 ? (
+              <div className="flex justify-center p-4">
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              </div>
+            ) : quizzes.length > 0 ? (
+              quizzes.map((quiz) => (
+                <div
+                  key={quiz.id}
+                  className="flex items-center justify-between p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors"
+                >
+                  <div className="space-y-1 overflow-hidden mr-3">
+                    <h4 className="font-semibold truncate text-sm">{quiz.title}</h4>
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <Badge variant="outline" className="text-[10px] h-5">
+                        {quiz.difficulty}
+                      </Badge>
+                      {quiz.sport && <span>• {quiz.sport}</span>}
                     </div>
-                  ) : (
-                    friends.map((friendship) => (
-                      <SelectItem
-                        key={friendship.friend.id}
-                        value={friendship.friend.id}
-                      >
-                        {friendship.friend.name || friendship.friend.email}
-                      </SelectItem>
-                    ))
-                  )}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="quiz">Select Quiz *</Label>
-              <Select
-                value={selectedQuizId}
-                onValueChange={setSelectedQuizId}
-                disabled={!!preselectedQuizId}
-              >
-                <SelectTrigger id="quiz">
-                  <SelectValue placeholder="Choose a quiz" />
-                </SelectTrigger>
-                <SelectContent>
-                  {quizzes.length === 0 ? (
-                    <div className="p-2 text-center text-sm text-muted-foreground">
-                      No quizzes available
-                    </div>
-                  ) : (
-                    quizzes.map((quiz) => (
-                      <SelectItem key={quiz.id} value={quiz.id}>
-                        {quiz.title} ({quiz.difficulty})
-                      </SelectItem>
-                    ))
-                  )}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="expires">Challenge Expires In</Label>
-              <Select value={expiresInHours} onValueChange={setExpiresInHours}>
-                <SelectTrigger id="expires">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="24">24 hours</SelectItem>
-                  <SelectItem value="48">48 hours</SelectItem>
-                  <SelectItem value="168">7 days</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={onClose}>
-                Cancel
-              </Button>
-              <Button
-                type="submit"
-                disabled={
-                  isSubmitting ||
-                  !selectedFriendId ||
-                  !selectedQuizId ||
-                  friends.length === 0
-                }
-              >
-                {isSubmitting ? "Sending..." : "Send Challenge"}
-              </Button>
-            </DialogFooter>
-          </form>
-        )}
+                  </div>
+                  <Button
+                    size="sm"
+                    disabled={sending === quiz.id}
+                    onClick={() => handleChallenge(quiz)}
+                    className="shrink-0"
+                  >
+                    {sending === quiz.id ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Trophy className="h-4 w-4 mr-1" />
+                    )}
+                    Challenge
+                  </Button>
+                </div>
+              ))
+            ) : (
+              <div className="text-center py-8 text-muted-foreground text-sm">
+                No quizzes found.
+              </div>
+            )}
+          </div>
+        </div>
       </DialogContent>
     </Dialog>
   );

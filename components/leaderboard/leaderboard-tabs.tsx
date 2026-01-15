@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useState } from "react";
 import { Medal } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -137,9 +138,8 @@ export function LeaderboardTabs({ daily, allTime }: LeaderboardTabsProps) {
                         )}
                       </div>
                       <p className="text-sm text-muted-foreground">
-                        {`${entry.count} ${activeDataset.countLabel}${
-                          entry.count === 1 ? "" : "s"
-                        } • Avg ${Math.round(entry.averageScore)}%`}
+                        {`${entry.count} ${activeDataset.countLabel}${entry.count === 1 ? "" : "s"
+                          } • Avg ${Math.round(entry.averageScore)}%`}
                       </p>
                     </div>
                   </div>

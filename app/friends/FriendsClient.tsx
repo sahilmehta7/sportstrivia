@@ -6,11 +6,12 @@ import { PageHeader } from "@/components/shared/PageHeader";
 import { FriendsList } from "@/components/friends/FriendsList";
 import { FriendRequests } from "@/components/friends/FriendRequests";
 import { AddFriendForm } from "@/components/friends/AddFriendForm";
+import { ChallengesList } from "@/components/features/social/ChallengesList";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Search, Users, Inbox, UserPlus } from "lucide-react";
+import { Search, Users, Inbox, UserPlus, Swords } from "lucide-react";
 
 interface FriendSummary {
   id: string;
@@ -41,16 +42,39 @@ interface FriendRequestSummary {
   createdAt: string;
 }
 
+interface Challenge {
+  id: string;
+  challengerId: string;
+  quizId: string;
+  challengerScore: number | null;
+  status: "PENDING" | "ACCEPTED" | "DECLINED" | "COMPLETED";
+  createdAt: Date;
+  challenger: {
+    id: string;
+    name: string | null;
+    image: string | null;
+  };
+  quiz: {
+    id: string;
+    title: string;
+    slug: string;
+    difficulty: "EASY" | "MEDIUM" | "HARD";
+    sport: string | null;
+  };
+}
+
 interface FriendsClientProps {
   friends: FriendSummary[];
   receivedRequests: FriendRequestSummary[];
   sentRequests: FriendRequestSummary[];
+  challenges: Challenge[];
 }
 
 export function FriendsClient({
   friends,
   receivedRequests,
   sentRequests,
+  challenges,
 }: FriendsClientProps) {
   const router = useRouter();
   const { toast } = useToast();
@@ -196,22 +220,31 @@ export function FriendsClient({
         />
 
         <Tabs defaultValue="friends" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="friends" className="flex items-center gap-2">
               <Users className="h-4 w-4" />
-              My Friends
+              <span className="hidden sm:inline">My Friends</span>
               <Badge variant="secondary">{friends.length}</Badge>
+            </TabsTrigger>
+            <TabsTrigger value="challenges" className="flex items-center gap-2">
+              <Swords className="h-4 w-4" />
+              <span className="hidden sm:inline">Challenges</span>
+              {challenges.length > 0 && (
+                <Badge variant="default" className="bg-orange-500 hover:bg-orange-600">
+                  {challenges.length}
+                </Badge>
+              )}
             </TabsTrigger>
             <TabsTrigger value="requests" className="flex items-center gap-2">
               <Inbox className="h-4 w-4" />
-              Requests
+              <span className="hidden sm:inline">Requests</span>
               {receivedRequests.length > 0 && (
                 <Badge variant="default">{receivedRequests.length}</Badge>
               )}
             </TabsTrigger>
             <TabsTrigger value="add" className="flex items-center gap-2">
               <UserPlus className="h-4 w-4" />
-              Add Friend
+              <span className="hidden sm:inline">Add Friend</span>
             </TabsTrigger>
           </TabsList>
 
@@ -227,6 +260,10 @@ export function FriendsClient({
             </div>
 
             <FriendsList friends={filteredFriends} onRemove={handleRemove} />
+          </TabsContent>
+
+          <TabsContent value="challenges">
+            <ChallengesList challenges={challenges} />
           </TabsContent>
 
           <TabsContent value="requests">

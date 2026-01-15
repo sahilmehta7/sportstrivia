@@ -181,29 +181,33 @@ export function ShowcaseSearchBar({
       </form>
 
       {chips.length > 0 && (
-        <div className="flex flex-wrap gap-2" role="group" aria-label="Search suggestions">
-          {chips.map((chip) => {
-            const active = Boolean(chip.active);
-            return (
-              <button
-                key={chip.value}
-                type="button"
-                onClick={() => onChipToggle?.(chip, !active)}
-                disabled={loading}
-                aria-pressed={active}
-                aria-label={`${active ? "Remove" : "Apply"} search filter: ${chip.label}`}
-                className={cn(
-                  "inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] transition",
-                  active ? getChipStyles("solid") : getChipStyles("outline")
-                )}
-              >
-                {chip.emoji && <span aria-hidden="true">{chip.emoji}</span>}
-                {chip.label}
-              </button>
-            );
-          })}
+        <div className="space-y-2">
+          <span className="text-xs font-medium text-muted-foreground ml-2 uppercase tracking-wider">Trending</span>
+          <div className="flex flex-wrap gap-2" role="group" aria-label="Search suggestions">
+            {chips.map((chip) => {
+              const active = Boolean(chip.active);
+              return (
+                <button
+                  key={chip.value}
+                  type="button"
+                  onClick={() => onChipToggle?.(chip, !active)}
+                  disabled={loading}
+                  aria-pressed={active}
+                  aria-label={`${active ? "Remove" : "Apply"} search filter: ${chip.label}`}
+                  className={cn(
+                    "inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] transition",
+                    active ? getChipStyles("solid") : getChipStyles("outline")
+                  )}
+                >
+                  {chip.emoji && <span aria-hidden="true">{chip.emoji}</span>}
+                  {chip.label}
+                </button>
+              );
+            })}
+          </div>
         </div>
       )}
     </div>
   );
 }
+

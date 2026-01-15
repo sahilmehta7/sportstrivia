@@ -1,8 +1,9 @@
 "use client";
 
+import { useMemo } from "react";
 import { cn } from "@/lib/utils";
-import { getSportGradient } from "@/lib/quiz-formatters";
 import { glassText } from "@/components/showcase/ui/typography";
+import { generatePattern } from "@/lib/pattern-generator";
 
 interface ShowcaseQuizCardProps {
   title: string;
@@ -14,15 +15,6 @@ interface ShowcaseQuizCardProps {
   className?: string;
 }
 
-function hashString(value: string): number {
-  let hash = 0;
-  for (let i = 0; i < value.length; i += 1) {
-    hash = (hash << 5) - hash + value.charCodeAt(i);
-    hash |= 0;
-  }
-  return Math.abs(hash);
-}
-
 export function ShowcaseQuizCard({
   title,
   badgeLabel,
@@ -32,7 +24,9 @@ export function ShowcaseQuizCard({
   coverImageUrl,
   className,
 }: ShowcaseQuizCardProps) {
-  const gradient = accent ?? getSportGradient(undefined, hashString(`${title}`));
+  const pattern = useMemo(() => generatePattern(title), [title]);
+  // Use accent if provided (assuming it's a class string), otherwise use pattern background
+
   const label = (badgeLabel ?? "Featured").toUpperCase();
 
   // Use design tokens for consistent SSR/CSR rendering
@@ -54,7 +48,16 @@ export function ShowcaseQuizCard({
     <div className={cn("w-[300px]", className)}>
       <div className={cardClasses}>
         <div className="relative aspect-[16/9] w-full overflow-hidden">
-          <div className={cn("absolute inset-0", `bg-gradient-to-br ${gradient}`)} />
+          {/* Background Layer */}
+          {accent ? (
+            <div className={cn("absolute inset-0", `bg-gradient-to-br ${accent}`)} />
+          ) : (
+            <div
+              className="absolute inset-0"
+              style={{ background: pattern.backgroundImage }}
+            />
+          )}
+
           {coverImageUrl && (
             <div
               className="absolute inset-0 bg-cover bg-center"

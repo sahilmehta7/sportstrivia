@@ -1,5 +1,6 @@
 import { auth } from "@/lib/auth";
 import { getFriendDashboardData } from "@/lib/services/friend.service";
+import { getPendingChallenges } from "@/app/actions/challenge-actions";
 import { FriendsClient } from "./FriendsClient";
 
 type FriendDashboardData = Awaited<ReturnType<typeof getFriendDashboardData>>;
@@ -16,6 +17,8 @@ export default async function FriendsPage() {
 
   const { friends, receivedRequests, sentRequests } =
     await getFriendDashboardData(userId);
+
+  const challenges = await getPendingChallenges();
 
   const serializeFriend = (friendship: FriendRecord) => ({
     id: friendship.id,
@@ -51,6 +54,7 @@ export default async function FriendsPage() {
       friends={friends.map(serializeFriend)}
       receivedRequests={receivedRequests.map(serializeRequest)}
       sentRequests={sentRequests.map(serializeRequest)}
+      challenges={challenges}
     />
   );
 }
