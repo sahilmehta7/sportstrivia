@@ -52,3 +52,38 @@ export async function GET(
   }
 }
 
+// DELETE /api/challenges/[id] - Cancel challenge (only challenger can cancel pending)
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const user = await requireAuth();
+    const { id } = await params;
+
+    const challenge = await prisma.challenge.findUnique({
+      where: { id },
+    });
+
+    if (!challenge) {
+      throw new NotFoundError("Challenge not found");
+    }
+
+    // Only the challenger can cancel, and only pending challenges
+    if (challenge.challengerId !== user.id) {
+      throw new ForbiddenError("Only the challenger can cancel this challenge");
+    }
+
+    if (challenge.status !== "PENDING") {
+      throw new ForbiddenError("Only pending challenges can be cancelled");
+    }
+
+    await prisma.challenge.delete({
+      where: { id },
+    });
+
+    return successResponse({ message: "Challenge cancelled successfully" });
+  } catch (error) {
+    return handleError(error);
+  }
+}

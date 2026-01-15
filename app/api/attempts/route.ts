@@ -62,16 +62,16 @@ export async function POST(request: NextRequest) {
 
     const attemptLimitMetadata = attemptLimitResult
       ? {
-          max: attemptLimitResult.max,
-          remaining: Math.max(
-            attemptLimitResult.remainingBeforeStart - 1,
-            0
-          ),
-          period: attemptLimitResult.period,
-          resetAt: attemptLimitResult.resetAt
-            ? attemptLimitResult.resetAt.toISOString()
-            : null,
-        }
+        max: attemptLimitResult.max,
+        remaining: Math.max(
+          attemptLimitResult.remainingBeforeStart - 1,
+          0
+        ),
+        period: attemptLimitResult.period,
+        resetAt: attemptLimitResult.resetAt
+          ? attemptLimitResult.resetAt.toISOString()
+          : null,
+      }
       : null;
 
     // Select questions based on selection mode
@@ -116,54 +116,59 @@ export async function POST(request: NextRequest) {
       throw new BadRequestError("Quiz has no questions available");
     }
 
-    // Create quiz attempt
-    const attempt = await prisma.quizAttempt.create({
-      data: {
-        userId: user.id,
-        quizId: quiz.id,
-        selectedQuestionIds,
-        totalQuestions: selectedQuestionIds.length,
-        isPracticeMode,
-      },
-      include: {
-        quiz: {
-          select: {
-            title: true,
-            slug: true,
-            duration: true,
-            timePerQuestion: true,
-            passingScore: true,
-            showHints: true,
-            negativeMarkingEnabled: true,
-            penaltyPercentage: true,
-            bonusPointsPerSecond: true,
-            timeBonusEnabled: true,
+    // Use transaction to ensure atomicity of attempt creation and question fetching
+    const { attempt, questionRecords } = await prisma.$transaction(async (tx) => {
+      // Create quiz attempt
+      const attemptResult = await tx.quizAttempt.create({
+        data: {
+          userId: user.id,
+          quizId: quiz.id,
+          selectedQuestionIds,
+          totalQuestions: selectedQuestionIds.length,
+          isPracticeMode,
+        },
+        include: {
+          quiz: {
+            select: {
+              title: true,
+              slug: true,
+              duration: true,
+              timePerQuestion: true,
+              passingScore: true,
+              showHints: true,
+              negativeMarkingEnabled: true,
+              penaltyPercentage: true,
+              bonusPointsPerSecond: true,
+              timeBonusEnabled: true,
+            },
           },
         },
-      },
-    });
+      });
 
-    const questionRecords = await prisma.question.findMany({
-      where: {
-        id: {
-          in: selectedQuestionIds,
-        },
-      },
-      include: {
-        answers: {
-          select: {
-            id: true,
-            answerText: true,
-            answerImageUrl: true,
-            answerVideoUrl: true,
-            answerAudioUrl: true,
-            isCorrect: true,
-          },
-          orderBy: {
-            displayOrder: "asc",
+      const questionResults = await tx.question.findMany({
+        where: {
+          id: {
+            in: selectedQuestionIds,
           },
         },
-      },
+        include: {
+          answers: {
+            select: {
+              id: true,
+              answerText: true,
+              answerImageUrl: true,
+              answerVideoUrl: true,
+              answerAudioUrl: true,
+              isCorrect: true,
+            },
+            orderBy: {
+              displayOrder: "asc",
+            },
+          },
+        },
+      });
+
+      return { attempt: attemptResult, questionRecords: questionResults };
     });
 
     const questionMap = new Map(questionRecords.map((record) => [record.id, record]));

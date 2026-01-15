@@ -420,15 +420,33 @@ export async function getDailyRecurringQuizzes(
 
     // Calculate consecutive days streak
     let streak = 0;
-    for (let i = 0; i < uniqueDates.length; i++) {
-      const expectedDate = todayTime - i * 86400000;
 
-      // Allow for today or yesterday as starting point
-      if (i === 0 && (uniqueDates[i] === todayTime || uniqueDates[i] === yesterdayTime)) {
+    if (uniqueDates.length === 0) {
+      streakMap.set(quizId, 0);
+      continue;
+    }
+
+    // Check if the most recent activity was today or yesterday
+    const mostRecentDate = uniqueDates[0];
+
+    // Only count streak if activity was today or yesterday
+    // (if last activity was 2+ days ago, streak is broken)
+    if (mostRecentDate !== todayTime && mostRecentDate !== yesterdayTime) {
+      streakMap.set(quizId, 0);
+      continue;
+    }
+
+    // Start counting from the most recent date
+    streak = 1;
+    let expectedNextDate = mostRecentDate - 86400000; // Previous day
+
+    // Count backwards through consecutive days
+    for (let i = 1; i < uniqueDates.length; i++) {
+      if (uniqueDates[i] === expectedNextDate) {
         streak++;
-      } else if (uniqueDates[i] === expectedDate) {
-        streak++;
+        expectedNextDate -= 86400000;
       } else {
+        // Gap in dates - streak is broken
         break;
       }
     }

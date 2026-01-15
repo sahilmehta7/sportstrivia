@@ -60,6 +60,7 @@ export const BADGE_CRITERIA = {
     name: "Challenger",
     description: "Win 5 challenges",
     check: async (userId: string) => {
+      // Use direct score fields (challengerScore/challengedScore) instead of attempt relations
       const challenges = await prisma.challenge.findMany({
         where: {
           OR: [
@@ -68,9 +69,11 @@ export const BADGE_CRITERIA = {
           ],
           status: "COMPLETED",
         },
-        include: {
-          challengerAttempt: { select: { score: true } },
-          challengedAttempt: { select: { score: true } },
+        select: {
+          challengerId: true,
+          challengedId: true,
+          challengerScore: true,
+          challengedScore: true,
         },
       });
 
@@ -78,12 +81,12 @@ export const BADGE_CRITERIA = {
       for (const challenge of challenges) {
         const userScore =
           challenge.challengerId === userId
-            ? challenge.challengerAttempt?.score || 0
-            : challenge.challengedAttempt?.score || 0;
+            ? challenge.challengerScore ?? 0
+            : challenge.challengedScore ?? 0;
         const opponentScore =
           challenge.challengerId === userId
-            ? challenge.challengedAttempt?.score || 0
-            : challenge.challengerAttempt?.score || 0;
+            ? challenge.challengedScore ?? 0
+            : challenge.challengerScore ?? 0;
 
         if (userScore > opponentScore) wins++;
       }
@@ -136,12 +139,31 @@ export const BADGE_CRITERIA = {
         select: { id: true },
       });
 
+      if (attempts.length === 0) return false;
+
+      // Batch fetch all answers for all attempts (fixes N+1 query)
+      const attemptIds = attempts.map((a) => a.id);
+      const allAnswers = await prisma.userAnswer.findMany({
+        where: { attemptId: { in: attemptIds } },
+        orderBy: { createdAt: "asc" },
+        select: {
+          attemptId: true,
+          isCorrect: true,
+          wasSkipped: true,
+        },
+      });
+
+      // Group answers by attempt
+      const answersByAttempt = new Map<string, typeof allAnswers>();
+      for (const answer of allAnswers) {
+        const existing = answersByAttempt.get(answer.attemptId) || [];
+        existing.push(answer);
+        answersByAttempt.set(answer.attemptId, existing);
+      }
+
+      // Check each attempt
       for (const attempt of attempts) {
-        const answers = await prisma.userAnswer.findMany({
-          where: { attemptId: attempt.id },
-          orderBy: { createdAt: "asc" },
-          select: { isCorrect: true, wasSkipped: true },
-        });
+        const answers = answersByAttempt.get(attempt.id) || [];
 
         let incorrectCount = 0;
         let recovered = false;

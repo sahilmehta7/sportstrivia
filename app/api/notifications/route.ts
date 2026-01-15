@@ -55,3 +55,53 @@ export async function GET(request: NextRequest) {
   }
 }
 
+// DELETE /api/notifications - Delete notifications
+export async function DELETE(request: NextRequest) {
+  try {
+    const user = await requireAuth();
+    const { searchParams } = new URL(request.url);
+
+    const notificationId = searchParams.get("id");
+    const deleteAll = searchParams.get("all") === "true";
+
+    if (deleteAll) {
+      // Delete all notifications for user
+      const result = await prisma.notification.deleteMany({
+        where: { userId: user.id },
+      });
+      return successResponse({
+        message: `Deleted ${result.count} notifications`,
+        deletedCount: result.count,
+      });
+    }
+
+    if (notificationId) {
+      // Delete single notification (must belong to user)
+      const result = await prisma.notification.deleteMany({
+        where: {
+          id: notificationId,
+          userId: user.id,
+        },
+      });
+
+      if (result.count === 0) {
+        return successResponse({
+          message: "Notification not found or already deleted",
+          deletedCount: 0,
+        });
+      }
+
+      return successResponse({
+        message: "Notification deleted",
+        deletedCount: 1,
+      });
+    }
+
+    // No id or all flag provided
+    return successResponse({
+      error: "Specify notification id or all=true",
+    }, 400);
+  } catch (error) {
+    return handleError(error);
+  }
+}

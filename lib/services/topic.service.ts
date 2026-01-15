@@ -11,7 +11,7 @@ interface TopicCache {
   lastUpdated: number;
 }
 
-const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes in milliseconds
+const CACHE_DURATION = 30 * 60 * 1000; // 30 minutes in milliseconds (topics rarely change)
 
 let topicCache: TopicCache | null = null;
 

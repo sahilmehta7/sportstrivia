@@ -493,6 +493,7 @@ model Challenge {
   @@index([challengerId])
   @@index([challengedId])
   @@index([quizId])
+  @@index([status, expiresAt])
 }
 
 model Badge {
@@ -531,6 +532,7 @@ model Notification {
 
   @@index([userId])
   @@index([read])
+  @@index([userId, read, createdAt])
 }
 
 model QuizReview {

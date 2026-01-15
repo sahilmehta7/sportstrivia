@@ -131,7 +131,8 @@ export async function computeLevelFromPoints(totalPoints: number): Promise<Compu
 
   if (!levels || levels.length === 0) {
     // Fallback to on-the-fly curve if DB empty
-    let level = 0;
+    // All users start at minimum level 1
+    let level = 1;
     for (let i = 1; i <= LEVELS_MAX; i++) {
       if (pointsForLevel(i) <= totalPoints) level = i;
     }
@@ -146,10 +147,10 @@ export async function computeLevelFromPoints(totalPoints: number): Promise<Compu
   for (const l of levels) {
     if (l.isActive && l.pointsRequired <= totalPoints) achievedLevel = l.level;
   }
-  // Safety: if we didn't pick any level but user meets the first threshold, set to level 1
-  const firstActive = levels.find((l) => l.isActive) ?? levels[0];
-  if (achievedLevel === 0 && firstActive && totalPoints >= firstActive.pointsRequired) {
-    achievedLevel = firstActive.level;
+  // All users get at least level 1 (minimum level)
+  // This ensures new users with 0 points are still classified
+  if (achievedLevel === 0) {
+    achievedLevel = 1;
   }
   const next = levels.find((l) => l.level === achievedLevel + 1) || null;
   const currentReq = levels.find((l) => l.level === achievedLevel)?.pointsRequired ?? 0;
@@ -203,16 +204,19 @@ export async function recomputeUserProgress(userId: string) {
 
 export async function recomputeAllUsers(batchSize: number = 200) {
   let cursor: string | null = null;
-  // simple batching using createdAt ordering
-  // fallback if no createdAt index: iterate by id
-  // @ts-ignore createdAt exists on User
-  for (;;) {
-    const users = await prisma.user.findMany({
+  // simple batching using id ordering
+  let hasMore = true;
+  while (hasMore) {
+    const users: Array<{ id: string }> = await prisma.user.findMany({
       take: batchSize,
       ...(cursor ? { skip: 1, cursor: { id: cursor } } : {}),
       orderBy: { id: "asc" },
+      select: { id: true },
     });
-    if (users.length === 0) break;
+    if (users.length === 0) {
+      hasMore = false;
+      break;
+    }
     for (const u of users) {
       await recomputeUserProgress(u.id);
     }

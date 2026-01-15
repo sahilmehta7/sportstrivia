@@ -13,20 +13,25 @@ export async function GET(request: NextRequest) {
     const period = (searchParams.get("period") || "all-time") as LeaderboardPeriod;
     const limit = parseInt(searchParams.get("limit") || "100");
 
-    // Get user's friends
+    // Get user's friends (both directions)
     const friendships = await prisma.friend.findMany({
       where: {
-        userId: user.id,
-        status: FriendStatus.ACCEPTED,
+        OR: [
+          { userId: user.id, status: FriendStatus.ACCEPTED },
+          { friendId: user.id, status: FriendStatus.ACCEPTED },
+        ],
       },
-      select: { friendId: true },
+      select: { userId: true, friendId: true },
     });
 
-    const friendIds = friendships.map((f) => f.friendId);
+    // Extract the OTHER user's ID from each friendship
+    const friendIds = friendships.map((f) =>
+      f.userId === user.id ? f.friendId : f.userId
+    );
     // Include current user in the leaderboard
     const userIds = [user.id, ...friendIds];
 
-    if (userIds.length === 0) {
+    if (userIds.length === 1) {
       return successResponse({
         leaderboard: [],
         period,
