@@ -203,8 +203,64 @@ export default async function QuizDetailPage({ params }: QuizDetailPageProps) {
 
   let sidebarLeaderboard: any[] = [];
   if (quiz.recurringType === "DAILY" || quiz.recurringType === "WEEKLY") {
-    // ... recurring logic omitted for brevity as it remains same, just ensuring correct mapping below
-    const rows = await prisma.$queryRaw<any[]>(Prisma.sql`...`); // Simplified for replacement logic
+    const isDaily = quiz.recurringType === "DAILY";
+    const rows = await prisma.$queryRaw<any[]>(
+      isDaily
+        ? Prisma.sql`
+            WITH per_period_best AS (
+              SELECT
+                "userId",
+                date_trunc('day', "completedAt") AS period_start,
+                MAX("totalPoints") AS best_points,
+                AVG(COALESCE("averageResponseTime", 0)) AS avg_response
+              FROM "QuizAttempt"
+              WHERE "quizId" = ${quiz.id}
+                AND "isPracticeMode" = false
+                AND "completedAt" IS NOT NULL
+              GROUP BY "userId", date_trunc('day', "completedAt")
+            ),
+            aggregated AS (
+              SELECT
+                "userId",
+                SUM(best_points) AS sum_points,
+                AVG(avg_response) AS avg_response
+              FROM per_period_best
+              GROUP BY "userId"
+            )
+            SELECT a."userId", a.sum_points::int AS "bestPoints", a.avg_response, u.name, u.email
+            FROM aggregated a
+            JOIN "User" u ON u.id = a."userId"
+            ORDER BY a.sum_points DESC, a.avg_response ASC
+            LIMIT 5
+          `
+        : Prisma.sql`
+            WITH per_period_best AS (
+              SELECT
+                "userId",
+                date_trunc('week', "completedAt") AS period_start,
+                MAX("totalPoints") AS best_points,
+                AVG(COALESCE("averageResponseTime", 0)) AS avg_response
+              FROM "QuizAttempt"
+              WHERE "quizId" = ${quiz.id}
+                AND "isPracticeMode" = false
+                AND "completedAt" IS NOT NULL
+              GROUP BY "userId", date_trunc('week', "completedAt")
+            ),
+            aggregated AS (
+              SELECT
+                "userId",
+                SUM(best_points) AS sum_points,
+                AVG(avg_response) AS avg_response
+              FROM per_period_best
+              GROUP BY "userId"
+            )
+            SELECT a."userId", a.sum_points::int AS "bestPoints", a.avg_response, u.name, u.email
+            FROM aggregated a
+            JOIN "User" u ON u.id = a."userId"
+            ORDER BY a.sum_points DESC, a.avg_response ASC
+            LIMIT 5
+          `
+    );
     sidebarLeaderboard = (rows || []).map((r, index) => ({
       name: r.name || r.email?.split("@")[0] || `Player ${index + 1}`,
       score: r.bestPoints || 0,
@@ -227,9 +283,8 @@ export default async function QuizDetailPage({ params }: QuizDetailPageProps) {
   return (
     <ShowcaseThemeProvider>
       <ArticleJsonLd
-        useAppDir={true}
         url={quizUrl}
-        title={quiz.title}
+        headline={quiz.title}
         images={articleImages}
         datePublished={quiz.createdAt?.toISOString() || ""}
         dateModified={quiz.updatedAt?.toISOString() || ""}
@@ -241,7 +296,7 @@ export default async function QuizDetailPage({ params }: QuizDetailPageProps) {
       {totalReviews > 0 && averageRating > 0 && (
         <AggregateRatingJsonLd
           itemReviewed={{
-            "@type": "Thing",
+            "@type": "Product",
             name: quiz.title,
             url: quizUrl
           }}

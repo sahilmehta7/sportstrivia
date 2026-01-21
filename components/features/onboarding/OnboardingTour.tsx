@@ -129,65 +129,74 @@ export function OnboardingTour() {
         localStorage.setItem("hasSeenOnboarding", "true");
     };
 
-    if (!isVisible) return null;
-
     const step = steps[currentStep];
     const isCenter = step.position === "center";
 
     return (
         <AnimatePresence>
-            <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm transition-opacity" />
+            {isVisible && (
+                <>
+                    <motion.div
+                        key="tour-overlay"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm transition-opacity"
+                    />
 
-            <motion.div
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.9 }}
-                className={cn(
-                    "fixed z-50 w-[300px] md:w-[350px]",
-                )}
-                style={{
-                    top: position.top,
-                    left: position.left,
-                    transform: "translate(-50%, -50%)", // Always center the card on the calculated top/left coordinates
-                }}
-            >
-                <Card className="shadow-2xl border-primary/20 bg-background text-foreground">
-                    <CardContent className="p-6 space-y-4">
-                        <div className="flex justify-between items-start">
-                            <h3 className="font-bold text-lg text-primary">{step.title}</h3>
-                            <button onClick={handleClose} className="text-muted-foreground hover:text-foreground">
-                                <X className="h-4 w-4" />
-                            </button>
-                        </div>
+                    <motion.div
+                        key={`tour-card-${currentStep}`}
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.9 }}
+                        className={cn(
+                            "fixed z-50 w-[300px] md:w-[350px]",
+                        )}
+                        style={{
+                            top: position.top,
+                            left: position.left,
+                            transform: "translate(-50%, -50%)", // Always center the card on the calculated top/left coordinates
+                        }}
+                    >
+                        <Card className="shadow-2xl border-primary/20 bg-background text-foreground">
+                            <CardContent className="p-6 space-y-4">
+                                <div className="flex justify-between items-start">
+                                    <h3 className="font-bold text-lg text-primary">{step.title}</h3>
+                                    <button onClick={handleClose} className="text-muted-foreground hover:text-foreground">
+                                        <X className="h-4 w-4" />
+                                    </button>
+                                </div>
 
-                        <p className="text-sm text-muted-foreground">
-                            {step.description}
-                        </p>
+                                <p className="text-sm text-muted-foreground">
+                                    {step.description}
+                                </p>
 
-                        <div className="flex justify-between items-center pt-2">
-                            <div className="flex gap-1">
-                                {steps.map((_, i) => (
-                                    <div
-                                        key={i}
-                                        className={cn(
-                                            "h-1.5 w-1.5 rounded-full transition-colors",
-                                            i === currentStep ? "bg-primary" : "bg-muted"
+                                <div className="flex justify-between items-center pt-2">
+                                    <div className="flex gap-1">
+                                        {steps.map((_, i) => (
+                                            <div
+                                                key={i}
+                                                className={cn(
+                                                    "h-1.5 w-1.5 rounded-full transition-colors",
+                                                    i === currentStep ? "bg-primary" : "bg-muted"
+                                                )}
+                                            />
+                                        ))}
+                                    </div>
+
+                                    <Button size="sm" onClick={handleNext}>
+                                        {currentStep === steps.length - 1 ? (
+                                            <>Get Started <Check className="ml-2 h-3 w-3" /></>
+                                        ) : (
+                                            <>Next <ChevronRight className="ml-2 h-3 w-3" /></>
                                         )}
-                                    />
-                                ))}
-                            </div>
-
-                            <Button size="sm" onClick={handleNext}>
-                                {currentStep === steps.length - 1 ? (
-                                    <>Get Started <Check className="ml-2 h-3 w-3" /></>
-                                ) : (
-                                    <>Next <ChevronRight className="ml-2 h-3 w-3" /></>
-                                )}
-                            </Button>
-                        </div>
-                    </CardContent>
-                </Card>
-            </motion.div>
+                                    </Button>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </motion.div>
+                </>
+            )}
         </AnimatePresence>
     );
 }

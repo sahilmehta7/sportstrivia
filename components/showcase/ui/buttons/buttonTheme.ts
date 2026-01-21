@@ -8,7 +8,8 @@ export type ButtonVariant =
   | "outline"
   | "ghost"
   | "link"
-  | "neon";
+  | "neon"
+  | "glass";
 
 export type ButtonSize = "xs" | "sm" | "md" | "lg" | "xl";
 
@@ -120,6 +121,14 @@ export const variantClasses: Record<ButtonVariant, string> = {
     "bg-transparent border-0 p-0 h-auto",
     "text-primary hover:text-primary/80",
     "underline underline-offset-8 decoration-2",
+  ].join(" "),
+
+  glass: [
+    glassBase,
+    "text-foreground",
+    "border-white/20",
+    "hover:bg-white/20 hover:border-white/30",
+    "active:scale-95",
   ].join(" "),
 };
 
