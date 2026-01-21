@@ -10,6 +10,8 @@ import { FilterBar } from "@/components/quizzes/filter-bar";
 import type { ShowcaseFilterGroup } from "@/components/showcase/ui/FilterBar";
 import type { PublicQuizListItem } from "@/lib/services/public-quiz.service";
 import { getSportGradient } from "@/lib/quiz-formatters";
+import { cn } from "@/lib/utils";
+import { getGradientText } from "@/lib/showcase-theme";
 
 interface QuizzesContentProps {
   quizzes: PublicQuizListItem[];
@@ -47,9 +49,8 @@ export function QuizzesContent({ quizzes, filterGroups, pagination }: QuizzesCon
       }
     }
 
-    params.delete("page"); // Reset to page 1 when filters change
+    params.delete("page");
 
-    // Use startTransition for optimistic UI updates
     startTransition(() => {
       router.push(`/quizzes?${params.toString()}`);
     });
@@ -59,64 +60,71 @@ export function QuizzesContent({ quizzes, filterGroups, pagination }: QuizzesCon
     const params = new URLSearchParams(searchParams.toString());
     params.set("page", page.toString());
 
-    // Use startTransition for optimistic UI updates
     startTransition(() => {
       router.push(`/quizzes?${params.toString()}`);
     });
   };
 
   return (
-    <>
-      {/* All Quizzes Section */}
-      <section className="mt-4 md:mt-8">
-        <div className="mb-6">
-          <h2 className={glassText.h2}>All Quizzes</h2>
-          <p className={"mt-1 " + glassText.subtitle}>
-            Discover and play quizzes from all categories
+    <section className="space-y-10">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+        <div className="space-y-2">
+          <div className="flex items-center gap-4">
+            <div className="h-6 w-1 rounded-full bg-secondary shadow-neon-magenta" />
+            <h2 className="text-2xl font-black tracking-tight uppercase">The Library</h2>
+          </div>
+          <p className="text-sm text-muted-foreground font-medium">
+            Browse every contested arena in the trivia universe.
           </p>
         </div>
 
-        {/* Filter Bar - Integrated styling */}
-        <div className="mb-6">
-          <FilterBar
-            groups={filterGroups}
-            onChange={handleFilterChange}
-            className="border-0 bg-transparent p-0"
-          />
+        <FilterBar
+          groups={filterGroups}
+          onChange={handleFilterChange}
+          className="border-0 bg-transparent p-0"
+        />
+      </div>
+
+      {quizzes.length > 0 ? (
+        <div className="grid gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-3">
+          {quizzes.map((quiz) => {
+            const gradient = getSportGradient(quiz.sport, hashString(`${quiz.title}`));
+            const durationLabel = quiz.duration ? `${Math.round(quiz.duration / 60)} min` : "Flexible";
+            const playersLabel = `${quiz._count?.attempts || 0} players`;
+
+            return (
+              <Link key={quiz.id} href={`/quizzes/${quiz.slug}`} className="block h-full">
+                <ShowcaseQuizCard
+                  title={quiz.title}
+                  badgeLabel={quiz.sport || quiz.difficulty || "Quiz"}
+                  durationLabel={durationLabel}
+                  playersLabel={playersLabel}
+                  accent={gradient}
+                  coverImageUrl={quiz.descriptionImageUrl}
+                  className="w-full"
+                />
+              </Link>
+            );
+          })}
         </div>
-
-        {quizzes.length > 0 ? (
-          <div className="grid gap-6 sm:grid-cols-2">
-            {quizzes.map((quiz) => {
-              const gradient = getSportGradient(quiz.sport, hashString(`${quiz.title}`));
-              const durationLabel = quiz.duration ? `${Math.round(quiz.duration / 60)} min` : "Flexible";
-              const playersLabel = `${quiz._count?.attempts || 0} players`;
-
-              return (
-                <Link key={quiz.id} href={`/quizzes/${quiz.slug}`} className="block">
-                  <ShowcaseQuizCard
-                    title={quiz.title}
-                    badgeLabel={quiz.sport || quiz.difficulty || "Quiz"}
-                    durationLabel={durationLabel}
-                    playersLabel={playersLabel}
-                    accent={gradient}
-                    coverImageUrl={quiz.descriptionImageUrl}
-                  />
-                </Link>
-              );
-            })}
+      ) : (
+        <div className="flex min-h-[400px] flex-col items-center justify-center rounded-[3rem] border border-dashed border-white/10 glass bg-white/5 p-12 text-center">
+          <div className="relative mb-6">
+            <div className="absolute inset-0 bg-primary/20 blur-3xl rounded-full" />
+            <div className="relative h-20 w-20 rounded-full glass border border-white/10 flex items-center justify-center text-4xl">
+              🔎
+            </div>
           </div>
-        ) : (
-          <div className="flex min-h-[200px] flex-col items-center justify-center rounded-xl border border-dashed border-border/60 bg-card/60 p-12 text-center text-muted-foreground">
-            <h2 className="text-lg font-semibold text-foreground">No quizzes match your filters</h2>
-            <p className="mt-2 max-w-md text-sm text-muted-foreground">
-              Try adjusting your filters or check back soon as new trivia challenges are added regularly.
-            </p>
-          </div>
-        )}
+          <h2 className="text-2xl font-black tracking-tight uppercase mb-2">No Arenas Found</h2>
+          <p className="max-w-md text-muted-foreground font-medium">
+            Try adjusting your filters or check back soon for new challenges.
+          </p>
+        </div>
+      )}
 
-        {/* Pagination */}
-        <div className="mt-8">
+      {/* Pagination */}
+      {pagination.pages > 1 && (
+        <div className="pt-12">
           <QuizPagination
             page={pagination.page}
             pages={pagination.pages}
@@ -125,7 +133,7 @@ export function QuizzesContent({ quizzes, filterGroups, pagination }: QuizzesCon
             onPageChange={handlePageChange}
           />
         </div>
-      </section>
-    </>
+      )}
+    </section>
   );
 }

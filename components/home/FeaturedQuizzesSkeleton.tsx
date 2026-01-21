@@ -1,18 +1,17 @@
 export function FeaturedQuizzesSkeleton() {
   return (
-    <section className="px-4 py-12 sm:px-6 lg:py-16">
-      <div className="mx-auto max-w-6xl animate-pulse">
-        <div className="mb-8 w-full max-w-5xl rounded-[1.75rem] border border-border/60 bg-card/40 p-8 backdrop-blur-xl">
-          <div className="mx-auto h-6 w-48 rounded-full bg-muted" />
-          <div className="mx-auto mt-4 h-4 w-80 rounded-full bg-muted" />
+    <section className="px-4 py-16 sm:px-6 lg:py-24">
+      <div className="mx-auto max-w-7xl animate-pulse">
+        <div className="mb-12">
+          <div className="h-12 w-64 rounded-xl bg-muted/40" />
+          <div className="mt-4 h-6 w-96 rounded-lg bg-muted/20" />
         </div>
-        <div className="flex gap-6 overflow-hidden">
+        <div className="flex gap-8 overflow-hidden">
           {Array.from({ length: 3 }).map((_, index) => (
-            <div key={index} className="h-[360px] w-[300px] flex-shrink-0 rounded-[2.25rem] border border-border/60 bg-card/40" />
+            <div key={index} className="h-[400px] w-[320px] shrink-0 rounded-[2rem] border border-white/5 bg-white/5" />
           ))}
         </div>
       </div>
     </section>
   );
 }
-

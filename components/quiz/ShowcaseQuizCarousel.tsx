@@ -1,9 +1,10 @@
 "use client";
 
-import Link from "next/link";
 import { useMemo, useRef, useState } from "react";
 import { ShowcaseQuizCard } from "./ShowcaseQuizCard";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 interface CarouselItem {
   id: string;
@@ -21,115 +22,77 @@ interface ShowcaseQuizCarouselProps {
   className?: string;
 }
 
-const CARD_WIDTH = 300;
-const CARD_GAP = 32;
-const SWIPE_THRESHOLD = 60;
-
 export function ShowcaseQuizCarousel({ items, className }: ShowcaseQuizCarouselProps) {
-  const [index, setIndex] = useState(0);
-  const [dragOffset, setDragOffset] = useState(0);
-  const total = items.length;
-  const pointerState = useRef({ startX: 0, isDragging: false, pointerId: null as number | null });
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [showLeftArrow, setShowLeftArrow] = useState(false);
+  const [showRightArrow, setShowRightArrow] = useState(true);
 
-  const clampedIndex = useMemo(() => {
-    if (index < 0) return 0;
-    if (index > Math.max(0, total - 1)) return Math.max(0, total - 1);
-    return index;
-  }, [index, total]);
-
-  const baseOffset = -(CARD_WIDTH + CARD_GAP) * clampedIndex;
-  const offset = baseOffset + dragOffset;
-
-  const handlePointerUp = (deltaX: number) => {
-    if (total <= 1) return;
-
-    if (deltaX <= -SWIPE_THRESHOLD && clampedIndex < total - 1) {
-      setIndex((prev) => Math.min(prev + 1, total - 1));
-    } else if (deltaX >= SWIPE_THRESHOLD && clampedIndex > 0) {
-      setIndex((prev) => Math.max(prev - 1, 0));
+  const handleScroll = () => {
+    if (scrollRef.current) {
+      const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
+      setShowLeftArrow(scrollLeft > 20);
+      setShowRightArrow(scrollLeft < scrollWidth - clientWidth - 20);
     }
+  };
 
-    setDragOffset(0);
+  const scroll = (direction: "left" | "right") => {
+    if (scrollRef.current) {
+      const scrollAmount = 340; // Card width + gap
+      scrollRef.current.scrollBy({
+        left: direction === "left" ? -scrollAmount : scrollAmount,
+        behavior: "smooth",
+      });
+    }
   };
 
   return (
-    <div className={cn("relative w-full max-w-6xl", className)}>
+    <div className={cn("group relative w-full", className)}>
+      {/* Scrollable Container */}
       <div
-        className="overflow-hidden touch-pan-y"
-        onPointerDown={(event) => {
-          if (!event.isPrimary) return;
-          pointerState.current.startX = event.clientX;
-          pointerState.current.isDragging = true;
-          pointerState.current.pointerId = event.pointerId;
-          (event.currentTarget as HTMLElement).setPointerCapture(event.pointerId);
-        }}
-        onPointerMove={(event) => {
-          if (!pointerState.current.isDragging) return;
-          const deltaX = event.clientX - pointerState.current.startX;
-          setDragOffset(deltaX);
-        }}
-        onPointerUp={(event) => {
-          if (!pointerState.current.isDragging) return;
-          const pointerId = pointerState.current.pointerId ?? event.pointerId;
-          pointerState.current.isDragging = false;
-          (event.currentTarget as HTMLElement).releasePointerCapture(pointerId);
-          handlePointerUp(event.clientX - pointerState.current.startX);
-          pointerState.current.pointerId = null;
-        }}
-        onPointerCancel={(event) => {
-          if (!pointerState.current.isDragging) return;
-          const pointerId = pointerState.current.pointerId ?? event.pointerId;
-          pointerState.current.isDragging = false;
-          (event.currentTarget as HTMLElement).releasePointerCapture(pointerId);
-          setDragOffset(0);
-          pointerState.current.pointerId = null;
-        }}
-        onPointerLeave={(event) => {
-          if (!pointerState.current.isDragging) return;
-          const pointerId = pointerState.current.pointerId ?? event.pointerId;
-          pointerState.current.isDragging = false;
-          (event.currentTarget as HTMLElement).releasePointerCapture(pointerId);
-          setDragOffset(0);
-          pointerState.current.pointerId = null;
-        }}
+        ref={scrollRef}
+        onScroll={handleScroll}
+        className="flex gap-6 overflow-x-auto pb-8 pt-2 scrollbar-hide no-scrollbar -mx-4 px-4 sm:mx-0 sm:px-0"
+        style={{ scrollSnapType: "x mandatory", WebkitOverflowScrolling: "touch" }}
       >
-        <div
-          className={cn(
-            "flex transition-transform duration-500 ease-out",
-            pointerState.current.isDragging && "!transition-none"
-          )}
-          style={{ transform: `translateX(${offset}px)` }}
-        >
-          {items.map((item) => {
-            const card = (
-              <ShowcaseQuizCard
-                title={item.title}
-                badgeLabel={item.badgeLabel}
-                durationLabel={item.durationLabel}
-                playersLabel={item.playersLabel}
-                accent={item.accent}
-                coverImageUrl={item.coverImageUrl}
-              />
-            );
-
-            return (
-              <div key={item.id} className="mr-8 last:mr-0" style={{ width: CARD_WIDTH }}>
-                {item.href ? (
-                  <Link
-                    href={item.href}
-                    className="block h-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-2 focus-visible:ring-offset-background transition-transform hover:-translate-y-1"
-                    aria-label={`View quiz ${item.title}`}
-                  >
-                    {card}
-                  </Link>
-                ) : (
-                  card
-                )}
-              </div>
-            );
-          })}
-        </div>
+        {items.map((item) => (
+          <div
+            key={item.id}
+            className="shrink-0 first:pl-0 last:pr-0"
+            style={{ scrollSnapAlign: "start" }}
+          >
+            <ShowcaseQuizCard
+              title={item.title}
+              badgeLabel={item.badgeLabel}
+              durationLabel={item.durationLabel}
+              playersLabel={item.playersLabel}
+              accent={item.accent}
+              coverImageUrl={item.coverImageUrl}
+            />
+          </div>
+        ))}
       </div>
+
+      {/* Navigation Arrows (Desktop Only) */}
+      {showLeftArrow && (
+        <Button
+          variant="glass"
+          size="icon"
+          className="absolute left-4 top-1/2 -translate-y-1/2 rounded-full shadow-lg hidden lg:flex border-white/20 bg-black/40 backdrop-blur-md"
+          onClick={() => scroll("left")}
+        >
+          <ChevronLeft className="h-6 w-6" />
+        </Button>
+      )}
+      {showRightArrow && (
+        <Button
+          variant="glass"
+          size="icon"
+          className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full shadow-lg hidden lg:flex border-white/20 bg-black/40 backdrop-blur-md"
+          onClick={() => scroll("right")}
+        >
+          <ChevronRight className="h-6 w-6" />
+        </Button>
+      )}
     </div>
   );
 }

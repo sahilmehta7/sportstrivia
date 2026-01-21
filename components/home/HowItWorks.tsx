@@ -1,104 +1,87 @@
 "use client";
 
-import { getGlassCard, getTextColor, getAccentColor } from "@/lib/showcase-theme";
+import { getGlassCard, getTextColor, getGradientText } from "@/lib/showcase-theme";
 import { cn } from "@/lib/utils";
 import { Search, Play, Trophy } from "lucide-react";
 
 export function HowItWorks() {
-  // Theme logic handled via CSS
-
   const steps = [
     {
       icon: Search,
-      title: "Choose a Quiz",
-      description: "Browse our extensive collection of sports quizzes and pick one that interests you.",
-      color: "primary" as const,
+      title: "Select Arena",
+      description: "Browse the playbook and pick the arena that fits your expertise.",
+      color: "text-primary",
+      glow: "shadow-neon-cyan/20",
     },
     {
       icon: Play,
-      title: "Answer Questions",
-      description: "Test your knowledge with carefully crafted questions across different difficulty levels.",
-      color: "success" as const,
+      title: "Show Mastery",
+      description: "Tackle premium questions across different difficulty tiers.",
+      color: "text-secondary",
+      glow: "shadow-neon-magenta/20",
     },
     {
       icon: Trophy,
-      title: "Compete & Win",
-      description: "See how you rank against other players and climb the leaderboards to become a champion.",
-      color: "warning" as const,
+      title: "Claim Glory",
+      description: "Dominate the global rankings and earn your championship status.",
+      color: "text-accent",
+      glow: "shadow-neon-lime/20",
     },
   ];
 
   return (
-    <section className="px-4 py-12 sm:px-6 lg:py-16">
-      <div className="mx-auto max-w-6xl">
-        <div className={cn(
-          "relative w-full max-w-5xl mx-auto rounded-[1.75rem] border p-6 sm:p-8 backdrop-blur-xl mb-8",
-          getGlassCard()
-        )}>
-          <div className="text-center">
-            <h2 className={cn(
-              "text-2xl sm:text-3xl font-bold mb-4",
-              getTextColor("primary")
-            )}>
-              How It Works
-            </h2>
-            <p className={cn(
-              "text-base sm:text-lg",
-              getTextColor("secondary")
-            )}>
-              Get started in three simple steps
-            </p>
-          </div>
+    <section className="px-4 py-16 sm:px-6 lg:py-24">
+      <div className="mx-auto max-w-7xl">
+        <div className="mb-20 text-center">
+          <h2 className={cn("text-4xl font-black tracking-tighter sm:text-6xl mb-4", getGradientText("neon"))}>
+            THE ROAD TO GLORY
+          </h2>
+          <p className="mx-auto max-w-2xl text-lg text-muted-foreground font-medium">
+            Three steps to go from a rookie to a trivia legend.
+          </p>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-6 sm:gap-8">
+        <div className="grid md:grid-cols-3 gap-12 sm:gap-16">
           {steps.map((step, index) => {
             const Icon = step.icon;
             return (
               <div
                 key={index}
-                className={cn(
-                  "relative rounded-xl sm:rounded-2xl p-6 sm:p-8 text-center backdrop-blur-sm transition-all duration-200 hover:scale-105",
-                  getGlassCard()
-                )}
+                className="relative flex flex-col items-center group"
               >
-                {/* Step number */}
+                {/* Connection line for desktop */}
+                {index < steps.length - 1 && (
+                  <div className="hidden lg:block absolute top-14 left-[calc(50%+4rem)] w-[calc(100%-8rem)] h-[1px] bg-gradient-to-r from-primary/30 to-transparent" />
+                )}
+
+                {/* Step indicator */}
+                <div className="absolute -top-6 flex h-12 w-12 items-center justify-center rounded-full glass-elevated border-primary/20 text-primary font-black shadow-neon-cyan z-10 transition-transform group-hover:scale-110">
+                  0{index + 1}
+                </div>
+
+                {/* Icon card */}
                 <div className={cn(
-                  "absolute -top-3 sm:-top-4 left-1/2 transform -translate-x-1/2 w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-xs sm:text-sm font-bold",
-                  "bg-blue-600 text-white",
-                  "dark:bg-emerald-500 dark:text-white"
+                  "relative rounded-[2.5rem] p-10 text-center glass border-white/5 transition-all duration-500",
+                  "group-hover:border-primary/20 group-hover:bg-white/5",
+                  step.glow
                 )}>
-                  {index + 1}
-                </div>
-
-                {/* Icon */}
-                <div className="flex justify-center mb-4 sm:mb-6 mt-2 sm:mt-4">
-                  <div className={cn(
-                    "rounded-full p-4 sm:p-6",
-                    "bg-white/80 shadow-lg",
-                    "dark:bg-white/10 dark:shadow-lg"
-                  )}>
-                    <Icon className={cn(
-                      "h-8 w-8 sm:h-12 sm:w-12",
-                      getAccentColor(step.color)
-                    )} />
+                  <div className="flex justify-center mb-8">
+                    <div className="relative">
+                      <div className={cn("absolute inset-0 rounded-full blur-2xl opacity-20", step.color)} />
+                      <div className="relative rounded-2xl glass-elevated border-white/10 p-6">
+                        <Icon className={cn("h-12 w-12", step.color)} />
+                      </div>
+                    </div>
                   </div>
+
+                  <h3 className="text-2xl font-black tracking-tight mb-4">
+                    {step.title}
+                  </h3>
+
+                  <p className="text-sm leading-relaxed text-muted-foreground font-medium">
+                    {step.description}
+                  </p>
                 </div>
-
-                {/* Content */}
-                <h3 className={cn(
-                  "text-lg sm:text-xl font-bold mb-3 sm:mb-4",
-                  getTextColor("primary")
-                )}>
-                  {step.title}
-                </h3>
-
-                <p className={cn(
-                  "text-sm leading-relaxed",
-                  getTextColor("secondary")
-                )}>
-                  {step.description}
-                </p>
               </div>
             );
           })}

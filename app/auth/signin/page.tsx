@@ -2,10 +2,10 @@
 
 import { signInWithGoogleAction } from "./actions";
 import { Button } from "@/components/ui/button";
-import { Trophy, Sparkles } from "lucide-react";
+import { Trophy, Sparkles, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTheme } from "next-themes";
-import { getBlurCircles, getGlassCard } from "@/lib/showcase-theme";
+import { getBlurCircles, getGradientText } from "@/lib/showcase-theme";
 import { useEffect, useState } from "react";
 
 export const dynamic = "force-dynamic";
@@ -21,82 +21,67 @@ export default function SignInPage() {
   // Use theme if mounted, otherwise default to dark to prevent hydration mismatch
   const effectiveTheme = mounted && theme ? theme : "dark";
   const blur = getBlurCircles(effectiveTheme);
-  const backgroundVariant = effectiveTheme === "light"
-    ? "bg-gradient-to-br from-white/80 via-slate-50/90 to-blue-50/80"
-    : "bg-slate-950";
 
   return (
-    <div className={cn("relative flex min-h-screen items-center justify-center overflow-hidden p-4", backgroundVariant)}>
-      {/* Animated blur circles - matching showcase pattern */}
-      <div className="absolute inset-0 -z-10 opacity-70">
-        <div className={cn("absolute -left-20 top-24 h-72 w-72 rounded-full blur-[120px]", blur.circle1)} />
-        <div className={cn("absolute right-12 top-12 h-64 w-64 rounded-full blur-[100px]", blur.circle2)} />
-        <div className={cn("absolute bottom-8 left-1/2 h-56 w-56 -translate-x-1/2 rounded-full blur-[90px]", blur.circle3)} />
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-background p-4 sm:p-6 lg:p-8">
+      {/* Neon Arena Background Effects */}
+      <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none select-none">
+        <div className={cn(
+          "absolute -left-[10%] top-[10%] h-[50%] w-[50%] rounded-full blur-[120px] opacity-20 animate-pulse-glow",
+          blur.circle1
+        )} />
+        <div className={cn(
+          "absolute -right-[5%] top-[5%] h-[40%] w-[40%] rounded-full blur-[100px] opacity-15",
+          blur.circle2
+        )} />
+        <div className={cn(
+          "absolute -bottom-[10%] left-[30%] h-[35%] w-[35%] rounded-full blur-[90px] opacity-10 animate-pulse-glow",
+          blur.circle3
+        )} />
       </div>
 
-      {/* Main signin card with glassmorphism */}
-      <div className="relative z-10 w-full max-w-md">
+      {/* Main signin card with Neon Arena glassmorphism */}
+      <div className="relative z-10 w-full max-w-[480px]">
         <div className={cn(
-          "rounded-[2rem] border p-6 sm:p-8 md:p-10",
-          "backdrop-blur-2xl shadow-2xl",
-          getGlassCard(effectiveTheme),
-          effectiveTheme === "light"
-            ? "shadow-[0_40px_120px_-40px_rgba(59,130,246,0.25)]"
-            : "shadow-[0_40px_120px_-40px_rgba(0,0,0,0.8)]"
+          "overflow-hidden rounded-[3rem] border border-white/10 p-8 sm:p-12",
+          "glass-elevated shadow-glass-lg"
         )}>
+          {/* Decorative background glow */}
+          <div className="absolute -top-24 -left-24 h-64 w-64 rounded-full bg-primary/10 blur-[100px] animate-pulse-glow pointer-events-none" />
+
           {/* Icon container */}
-          <div className="mb-6 sm:mb-8 flex justify-center">
-            <div className={cn(
-              "relative rounded-2xl p-4 sm:p-5 shadow-lg transition-all duration-300",
-              "backdrop-blur-sm",
-              effectiveTheme === "light"
-                ? "bg-white/60 border border-slate-200/50 shadow-[0_16px_40px_-24px_rgba(59,130,246,0.3)]"
-                : "bg-white/10 border border-white/20 shadow-[0_16px_40px_-24px_rgba(34,197,94,0.4)]"
-            )}>
-              <Trophy className={cn(
-                "h-10 w-10 sm:h-12 sm:w-12 transition-colors",
-                effectiveTheme === "light" ? "text-blue-600" : "text-emerald-300"
-              )} />
-              
-              {/* Decorative sparkle */}
-              <Sparkles className={cn(
-                "absolute -top-1 -right-1 h-5 w-5 animate-pulse",
-                effectiveTheme === "light" ? "text-blue-400/70" : "text-emerald-400/70"
-              )} />
+          <div className="mb-10 flex justify-center">
+            <div className="relative">
+              <div className="absolute inset-0 rounded-full bg-primary/20 blur-2xl animate-pulse" />
+              <div className="relative rounded-[2rem] glass-elevated border-white/20 p-6 shadow-neon-cyan/20">
+                <Trophy className="h-12 w-12 text-primary" />
+                <Sparkles className="absolute -top-2 -right-2 h-6 w-6 text-accent animate-pulse" />
+              </div>
             </div>
           </div>
 
-          {/* Title */}
-          <h1 className={cn(
-            "mb-3 text-center text-2xl sm:text-3xl font-bold",
-            effectiveTheme === "light" ? "text-slate-900" : "text-white"
-          )}>
-            Welcome to Sports Trivia
-          </h1>
-
-          {/* Subtitle */}
-          <p className={cn(
-            "mb-6 sm:mb-8 text-center text-sm sm:text-base",
-            effectiveTheme === "light" ? "text-slate-600" : "text-white/70"
-          )}>
-            Test your sports knowledge and compete with friends
-          </p>
+          {/* Title & Subtitle */}
+          <div className="space-y-4 text-center mb-10">
+            <h1 className={cn(
+              "text-4xl font-black tracking-tighter sm:text-5xl leading-none",
+              getGradientText("neon")
+            )}>
+              ENTER THE <br /> ARENA
+            </h1>
+            <p className="text-base text-muted-foreground font-medium leading-relaxed">
+              Join the elite circle of sports fans. Your legacy starts here.
+            </p>
+          </div>
 
           {/* Sign in button */}
-          <form action={signInWithGoogleAction}>
-            <Button 
-              type="submit" 
-              className={cn(
-                "w-full h-12 text-base font-semibold rounded-xl",
-                "transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]",
-                "shadow-lg",
-                effectiveTheme === "light"
-                  ? "bg-blue-600 hover:bg-blue-700 shadow-[0_12px_32px_-16px_rgba(59,130,246,0.5)]"
-                  : "bg-blue-500 hover:bg-blue-400 shadow-[0_12px_32px_-16px_rgba(59,130,246,0.4)]"
-              )}
-              size="lg"
+          <form action={signInWithGoogleAction} className="space-y-6">
+            <Button
+              type="submit"
+              variant="neon"
+              size="xl"
+              className="w-full gap-3 font-black uppercase tracking-widest text-lg"
             >
-              <svg className="mr-2 h-5 w-5" viewBox="0 0 24 24">
+              <svg className="h-6 w-6" viewBox="0 0 24 24">
                 <path
                   fill="currentColor"
                   d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -116,25 +101,44 @@ export default function SignInPage() {
               </svg>
               Continue with Google
             </Button>
+
+            <div className="flex items-center gap-4 py-2">
+              <div className="h-[1px] flex-1 bg-white/5" />
+              <span className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground/50">SECURE REGISTRATION</span>
+              <div className="h-[1px] flex-1 bg-white/5" />
+            </div>
+
+            <Button
+              variant="glass"
+              size="xl"
+              asChild
+              className="w-full gap-3 font-black uppercase tracking-widest text-lg"
+            >
+              <a href="/quizzes">
+                Explore Guest Passes
+                <ArrowRight className="h-6 w-6" />
+              </a>
+            </Button>
           </form>
 
           {/* Footer text */}
-          <p className={cn(
-            "mt-6 text-center text-xs sm:text-sm",
-            effectiveTheme === "light" ? "text-slate-500" : "text-white/50"
-          )}>
-            By signing in, you agree to our{" "}
-            <a href="/terms" className="underline hover:opacity-70 transition-opacity">
-              Terms of Service
-            </a>{" "}
-            and{" "}
-            <a href="/privacy" className="underline hover:opacity-70 transition-opacity">
-              Privacy Policy
-            </a>
-          </p>
+          <div className="mt-12 text-center space-y-2">
+            <p className="text-[10px] font-black tracking-widest text-muted-foreground/60 uppercase">
+              By entering, you accept our
+            </p>
+            <div className="flex justify-center gap-4 text-[10px] font-black tracking-widest uppercase">
+              <a href="/terms" className="text-primary hover:underline transition-all">Terms</a>
+              <span className="text-white/10">•</span>
+              <a href="/privacy" className="text-primary hover:underline transition-all">Privacy</a>
+            </div>
+          </div>
+        </div>
+
+        {/* Animated bottom bar */}
+        <div className="mt-8 flex justify-center">
+          <div className="h-1 w-24 rounded-full bg-gradient-to-r from-transparent via-primary to-transparent shadow-neon-cyan" />
         </div>
       </div>
     </div>
   );
 }
-

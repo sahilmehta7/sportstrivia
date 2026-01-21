@@ -1,6 +1,6 @@
 "use client";
 
-import { getGlassCard, getTextColor, getAccentColor } from "@/lib/showcase-theme";
+import { getGlassCard, getTextColor, getGradientText } from "@/lib/showcase-theme";
 import { cn } from "@/lib/utils";
 import {
   BookOpen,
@@ -12,105 +12,91 @@ import {
 } from "lucide-react";
 
 export function Features() {
-  // Theme styling via CSS
-
   const features = [
     {
       icon: BookOpen,
-      title: "Diverse Quiz Topics",
-      description: "From cricket to basketball, explore quizzes across all major sports and disciplines.",
-      color: "primary" as const,
+      title: "Global Playbook",
+      description: "Explore 150+ quizzes across every major sport and deep-dive topics.",
+      glow: "shadow-neon-cyan/10",
+      iconColor: "text-primary",
     },
     {
       icon: Trophy,
-      title: "Real-time Leaderboards",
-      description: "Compete with players worldwide and see your ranking update in real-time.",
-      color: "warning" as const,
+      title: "Neon Leaderboards",
+      description: "Climb the ranks and claim your spot among the legendary sport fanatics.",
+      glow: "shadow-neon-magenta/10",
+      iconColor: "text-secondary",
     },
     {
       icon: Calendar,
-      title: "Daily Challenges",
-      description: "New challenges every day to keep your sports knowledge sharp and engaging.",
-      color: "success" as const,
+      title: "Match Day Drill",
+      description: "Fresh challenges every single day to keep your game sharp.",
+      glow: "shadow-neon-lime/10",
+      iconColor: "text-accent",
     },
     {
       icon: BarChart3,
-      title: "Track Your Progress",
-      description: "Monitor your improvement with detailed statistics and performance analytics.",
-      color: "primary" as const,
-    },
-    {
-      icon: Users,
-      title: "Compete with Friends",
-      description: "Challenge your friends and create private competitions to see who knows more.",
-      color: "success" as const,
+      title: "Pro Statistics",
+      description: "Detailed analytics on your performance to help you level up.",
+      glow: "shadow-neon-cyan/10",
+      iconColor: "text-primary",
     },
     {
       icon: Award,
-      title: "Earn Badges",
-      description: "Unlock achievements and badges as you master different sports and topics.",
-      color: "warning" as const,
+      title: "Hall of Fame",
+      description: "Unlock premium badges and achievements as you master new topics.",
+      glow: "shadow-neon-magenta/10",
+      iconColor: "text-secondary",
+    },
+    {
+      icon: Users,
+      title: "Versus Mode",
+      description: "Challenge friends directly and see who truly owns the arena.",
+      glow: "shadow-neon-lime/10",
+      iconColor: "text-accent",
     },
   ];
 
   return (
-    <section className="px-4 py-12 sm:px-6 lg:py-16">
-      <div className="mx-auto max-w-6xl">
-        <div className={cn(
-          "relative w-full max-w-5xl mx-auto rounded-[1.75rem] border p-6 sm:p-8 backdrop-blur-xl mb-8",
-          getGlassCard()
-        )}>
-          <div className="text-center">
-            <h2 className={cn(
-              "text-2xl sm:text-3xl font-bold mb-4",
-              getTextColor("primary")
-            )}>
-              Why Choose Sports Trivia?
-            </h2>
-            <p className={cn(
-              "text-base sm:text-lg",
-              getTextColor("secondary")
-            )}>
-              Discover what makes our platform the ultimate destination for sports fans
-            </p>
-          </div>
+    <section className="px-4 py-16 sm:px-6 lg:py-24">
+      <div className="mx-auto max-w-7xl">
+        <div className="mb-16">
+          <h2 className={cn("text-4xl font-black tracking-tighter sm:text-6xl mb-4", getGradientText("neon"))}>
+            BUILT FOR THE CHASE
+          </h2>
+          <p className="max-w-2xl text-lg text-muted-foreground font-medium">
+            Everything you need to dominate the sports trivia world.
+          </p>
         </div>
 
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {features.map((feature, index) => {
             const Icon = feature.icon;
             return (
               <div
                 key={index}
                 className={cn(
-                  "rounded-xl sm:rounded-2xl p-4 sm:p-6 backdrop-blur-sm transition-all duration-200 hover:scale-105",
-                  getGlassCard()
+                  "group relative overflow-hidden rounded-[2.5rem] border border-white/5 bg-white/5 p-8 transition-all duration-300",
+                  "hover:border-primary/20 hover:bg-white/10 hover:-translate-y-2 hover:shadow-glass-lg",
+                  feature.glow
                 )}
               >
-                <div className="flex items-start space-x-3 sm:space-x-4">
+                {/* Decorative background glow */}
+                <div className={cn("absolute -right-8 -bottom-8 h-32 w-32 rounded-full blur-[60px] opacity-0 group-hover:opacity-20 transition-opacity", feature.iconColor)} />
+
+                <div className="relative flex flex-col gap-6">
                   <div className={cn(
-                    "rounded-lg p-2 sm:p-3 flex-shrink-0",
-                    "bg-white/80 shadow-lg",
-                    "dark:bg-white/10 dark:shadow-lg"
+                    "flex h-14 w-14 items-center justify-center rounded-2xl glass-elevated border-white/10 p-3",
+                    feature.iconColor
                   )}>
-                    <Icon className={cn(
-                      "h-5 w-5 sm:h-6 sm:w-6",
-                      getAccentColor(feature.color)
-                    )} />
+                    <Icon className="h-full w-full" />
                   </div>
 
-                  <div className="flex-1">
-                    <h3 className={cn(
-                      "text-base sm:text-lg font-bold mb-2",
-                      getTextColor("primary")
-                    )}>
+                  <div className="space-y-2">
+                    <h3 className="text-2xl font-black tracking-tight group-hover:text-primary transition-colors">
                       {feature.title}
                     </h3>
-
-                    <p className={cn(
-                      "text-xs sm:text-sm leading-relaxed",
-                      getTextColor("secondary")
-                    )}>
+                    <p className="text-sm text-muted-foreground leading-relaxed font-medium">
                       {feature.description}
                     </p>
                   </div>

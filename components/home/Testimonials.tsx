@@ -1,102 +1,77 @@
 "use client";
 
-import { getGlassCard, getTextColor } from "@/lib/showcase-theme";
+import { getGlassCard, getTextColor, getGradientText } from "@/lib/showcase-theme";
 import { cn } from "@/lib/utils";
-import { Star } from "lucide-react";
+import { Star, Quote } from "lucide-react";
 
 export function Testimonials() {
-  // Theme styling via CSS
-
   const testimonials = [
     {
-      name: "Sarah Johnson",
-      title: "Cricket Enthusiast",
-      quote: "This platform has completely changed how I test my cricket knowledge. The questions are challenging and the competition keeps me coming back daily.",
+      name: "SARAH JOHNSON",
+      title: "CRICKET ELITE",
+      quote: "The arena where knowledge meets competition. The daily drills keep me sharp and the climb to the top is exhilarating.",
       rating: 5,
+      accent: "text-primary shadow-neon-cyan/20",
     },
     {
-      name: "Mike Chen",
-      title: "Basketball Fan",
-      quote: "The real-time leaderboards are amazing! I love competing with friends and seeing my ranking improve as I learn more about basketball.",
+      name: "MIKE CHEN",
+      title: "HOOP SCHOLAR",
+      quote: "Real-time rankings are a game changer. Every correct answer feels like a three-pointer at the buzzer.",
       rating: 5,
+      accent: "text-secondary shadow-neon-magenta/20",
     },
     {
-      name: "Emma Rodriguez",
-      title: "Sports Blogger",
-      quote: "As someone who writes about sports, this platform helps me stay sharp on facts and trivia. The variety of topics is impressive.",
+      name: "EMMA RODRIGUEZ",
+      title: "PRO ANALYST",
+      quote: "Unmatched variety and depth. It's the ultimate destination for anyone serious about showing off their sports IQ.",
       rating: 5,
+      accent: "text-accent shadow-neon-lime/20",
     },
   ];
 
   return (
-    <section className="px-4 py-12 sm:px-6 lg:py-16">
-      <div className="mx-auto max-w-6xl">
-        <div className={cn(
-          "relative w-full max-w-5xl mx-auto rounded-[1.75rem] border p-6 sm:p-8 backdrop-blur-xl mb-8",
-          getGlassCard()
-        )}>
-          <div className="text-center">
-            <h2 className={cn(
-              "text-2xl sm:text-3xl font-bold mb-4",
-              getTextColor("primary")
-            )}>
-              What Our Players Say
-            </h2>
-            <p className={cn(
-              "text-base sm:text-lg",
-              getTextColor("secondary")
-            )}>
-              Join thousands of satisfied sports fans
-            </p>
-          </div>
+    <section className="px-4 py-16 sm:px-6 lg:py-24">
+      <div className="mx-auto max-w-7xl">
+        <div className="mb-20">
+          <h2 className={cn("text-4xl font-black tracking-tighter sm:text-6xl mb-4", getGradientText("neon"))}>
+            VOICES FROM THE ARENA
+          </h2>
+          <p className="max-w-2xl text-lg text-muted-foreground font-medium">
+            Hear from the champions who have conquered our leagues.
+          </p>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-6 sm:gap-8">
+        <div className="grid md:grid-cols-3 gap-8 sm:gap-10">
           {testimonials.map((testimonial, index) => (
             <div
               key={index}
               className={cn(
-                "rounded-xl sm:rounded-2xl p-6 sm:p-8 backdrop-blur-sm transition-all duration-200 hover:scale-105",
-                getGlassCard()
+                "relative group rounded-[2.5rem] p-10 glass border-white/5 transition-all duration-500",
+                "hover:border-white/10 hover:bg-white/5 hover:-translate-y-2",
+                testimonial.accent
               )}
             >
-              {/* Stars */}
-              <div className="flex justify-center mb-4">
+              <Quote className="absolute top-8 right-8 h-8 w-8 text-white/5" />
+
+              <div className="flex gap-1 mb-8">
                 {[...Array(testimonial.rating)].map((_, i) => (
                   <Star
                     key={i}
-                    className={cn(
-                      "h-4 w-4 sm:h-5 sm:w-5",
-                      "text-yellow-500",
-                      "dark:text-yellow-400"
-                    )}
+                    className="h-4 w-4 text-accent drop-shadow-[0_0_8px_hsl(var(--neon-lime)/0.5)]"
                     fill="currentColor"
                   />
                 ))}
               </div>
 
-              {/* Quote */}
-              <blockquote
-                className={cn(
-                  "text-center mb-4 sm:mb-6 italic text-sm sm:text-base",
-                  getTextColor("secondary")
-                )}
-              >
+              <blockquote className="mb-10 text-lg leading-relaxed font-medium text-foreground italic">
                 &ldquo;{testimonial.quote}&rdquo;
               </blockquote>
 
-              {/* Author */}
-              <div className="text-center">
-                <div className={cn(
-                  "font-bold text-sm sm:text-base",
-                  getTextColor("primary")
-                )}>
+              <div className="border-l-2 border-primary/30 pl-4 py-1">
+                <div className="font-black text-sm tracking-widest uppercase">
                   {testimonial.name}
                 </div>
-                <div className={cn(
-                  "text-xs sm:text-sm",
-                  getTextColor("muted")
-                )}>
+                <div className="text-[10px] font-black tracking-[0.25em] text-muted-foreground uppercase mt-1">
                   {testimonial.title}
                 </div>
               </div>

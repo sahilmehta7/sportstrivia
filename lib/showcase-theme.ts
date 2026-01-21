@@ -1,159 +1,289 @@
+/**
+ * Neon Arena Theme Utilities
+ * 
+ * A unified theme system using CSS variables from globals.css.
+ * All utilities work with both light and dark modes via CSS variables.
+ */
 
-export type BackgroundVariant = "default" | "dark" | "vibrant" | "cool";
+export type BackgroundVariant = "default" | "dark" | "vibrant" | "cool" | "neon";
+export type SurfaceVariant = "base" | "raised" | "sunken" | "glass";
+export type ChipEmphasis = "solid" | "outline" | "ghost" | "neon";
+export type NeonColor = "cyan" | "magenta" | "lime";
 
-function composeThemeClasses(light: string, dark: string) {
-  const darkPrefixed = dark
-    .split(/\s+/)
-    .filter(Boolean)
-    .map((cls) => (cls.startsWith("dark:") ? cls : `dark:${cls}`))
-    .join(" ");
-  return `${light} ${darkPrefixed}`.trim();
+/* ===================
+   GLASS CARD STYLES
+   =================== */
+
+/**
+ * Standard glass card with backdrop blur
+ */
+export function getGlassCard(): string {
+  return "glass rounded-lg";
 }
 
-export function getGlassCard() {
-  return composeThemeClasses(
-    "bg-white/60 backdrop-blur-sm shadow-[inset_0_1px_0_rgba(0,0,0,0.05)] border border-slate-200/50",
-    "bg-white/5 backdrop-blur-sm shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] border-white/10",
-  );
+/**
+ * Elevated glass card with stronger glow
+ */
+export function getGlassCardElevated(): string {
+  return "glass-elevated rounded-lg";
 }
 
-export function getGlassBackground() {
-  return composeThemeClasses(
-    "bg-gradient-to-br from-white/80 via-slate-50/90 to-blue-50/80",
-    "bg-gradient-to-br from-black/70 via-slate-900/60 to-indigo-900/80",
-  );
+/**
+ * Glass card with hover glow effect
+ */
+export function getGlassCardInteractive(): string {
+  return "glass rounded-lg transition-all duration-base hover:shadow-glass-lg hover:border-primary/20";
 }
 
-export function getGlassBorder() {
-  return composeThemeClasses("border-white/20", "border-white/10");
+/* ===================
+   BACKGROUND VARIANTS
+   =================== */
+
+export function getBackgroundVariant(variant: BackgroundVariant): string {
+  switch (variant) {
+    case "default":
+      return "bg-background";
+    case "dark":
+      return "bg-card";
+    case "vibrant":
+      return "bg-gradient-to-br from-secondary/10 via-background to-primary/10";
+    case "cool":
+      return "bg-gradient-to-br from-primary/10 via-background to-accent/10";
+    case "neon":
+      return "bg-gradient-to-br from-neon-cyan/5 via-background to-neon-magenta/5";
+    default:
+      return "bg-background";
+  }
 }
 
-export function getTextColor(variant: "primary" | "secondary" | "muted" = "primary") {
-  const tokens = {
-    primary: composeThemeClasses("text-slate-900", "text-white"),
-    secondary: composeThemeClasses("text-slate-700", "text-white/80"),
-    muted: composeThemeClasses("text-slate-600", "text-white/60"),
+/**
+ * Animated background with blur circles
+ */
+export function getAnimatedBackground(): string {
+  return "relative overflow-hidden bg-background";
+}
+
+/* ===================
+   BLUR CIRCLES
+   =================== */
+
+export type BlurCircles = {
+  circle1: string;
+  circle2: string;
+  circle3: string;
+};
+
+/**
+ * Get blur circle classes for animated backgrounds
+ */
+export function getBlurCircles(): BlurCircles {
+  return {
+    circle1: "blur-circle blur-circle-cyan",
+    circle2: "blur-circle blur-circle-magenta",
+    circle3: "blur-circle blur-circle-lime",
+  };
+}
+
+/* ===================
+   TEXT COLORS
+   =================== */
+
+export function getTextColor(variant: "primary" | "secondary" | "muted" = "primary"): string {
+  const tokens: Record<string, string> = {
+    primary: "text-foreground",
+    secondary: "text-muted-foreground",
+    muted: "text-muted-foreground/70",
   };
   return tokens[variant] ?? tokens.primary;
 }
 
+/**
+ * Gradient text effect
+ */
+export function getGradientText(variant: "neon" | "accent" = "neon"): string {
+  return variant === "neon" ? "text-gradient-neon" : "text-gradient-accent";
+}
+
+/* ===================
+   ACCENT COLORS
+   =================== */
+
 export function getAccentColor(
-  type: "primary" | "secondary" | "success" | "warning" | "error",
-) {
-  const tokens = {
-    primary: composeThemeClasses("text-blue-600", "text-blue-300"),
-    secondary: composeThemeClasses("text-purple-600", "text-purple-300"),
-    success: composeThemeClasses("text-emerald-600", "text-emerald-300"),
-    warning: composeThemeClasses("text-amber-600", "text-amber-300"),
-    error: composeThemeClasses("text-red-600", "text-red-300"),
+  type: "primary" | "secondary" | "success" | "warning" | "error"
+): string {
+  const tokens: Record<string, string> = {
+    primary: "text-primary",
+    secondary: "text-secondary",
+    success: "text-success",
+    warning: "text-warning",
+    error: "text-destructive",
   };
   return tokens[type] ?? tokens.primary;
 }
 
-export function getBackgroundVariant(variant: BackgroundVariant) {
-  switch (variant) {
-    case "default":
-      return composeThemeClasses(
-        "bg-gradient-to-br from-white/80 via-slate-50/90 to-blue-50/80",
-        "bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950",
-      );
-    case "dark":
-      return composeThemeClasses(
-        "bg-gradient-to-br from-slate-100/90 via-slate-50/80 to-white/70",
-        "bg-gradient-to-br from-black via-slate-950 to-slate-900",
-      );
-    case "vibrant":
-      return composeThemeClasses(
-        "bg-gradient-to-br from-purple-50/80 via-pink-50/90 to-rose-50/80",
-        "bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950",
-      );
-    case "cool":
-      return composeThemeClasses(
-        "bg-gradient-to-br from-cyan-50/80 via-blue-50/90 to-indigo-50/80",
-        "bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950",
-      );
-    default:
-      return composeThemeClasses(
-        "bg-gradient-to-br from-white/80 via-slate-50/90 to-blue-50/80",
-        "bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950",
-      );
-  }
-}
+/* ===================
+   NEON GLOW EFFECTS
+   =================== */
 
-export function getBlurCircles() {
-  const circle = (light: string, dark: string) => composeThemeClasses(light, dark);
-  return {
-    circle1: circle("bg-emerald-400/20", "bg-emerald-400/40"),
-    circle2: circle("bg-pink-500/20", "bg-pink-500/40"),
-    circle3: circle("bg-blue-500/15", "bg-blue-500/30"),
+/**
+ * Get neon glow box-shadow class
+ */
+export function getNeonGlow(color: NeonColor = "cyan"): string {
+  const glows: Record<NeonColor, string> = {
+    cyan: "shadow-neon-cyan",
+    magenta: "shadow-neon-magenta",
+    lime: "shadow-neon-lime",
   };
+  return glows[color];
 }
 
-export function getShadowColor() {
-  return composeThemeClasses(
-    "shadow-[0_40px_120px_-40px_rgba(59,130,246,0.15)]",
-    "shadow-[0_40px_120px_-40px_rgba(0,0,0,0.8)]",
-  );
+/**
+ * Get neon glow utility class
+ */
+export function getNeonGlowClass(color: NeonColor = "cyan"): string {
+  const classes: Record<NeonColor, string> = {
+    cyan: "neon-glow-cyan",
+    magenta: "neon-glow-magenta",
+    lime: "neon-glow-lime",
+  };
+  return classes[color];
 }
 
-export type SurfaceVariant = "base" | "raised" | "sunken";
+/**
+ * Animated neon glow
+ */
+export function getAnimatedNeonGlow(): string {
+  return "animate-glow-pulse";
+}
 
-export function getSurfaceStyles(variant: SurfaceVariant = "base") {
+/* ===================
+   SURFACE STYLES
+   =================== */
+
+export function getSurfaceStyles(variant: SurfaceVariant = "base"): string {
   switch (variant) {
     case "raised":
-      return composeThemeClasses(
-        "bg-white/90 border border-white/70 shadow-[0_24px_60px_-30px_rgba(15,23,42,0.25)]",
-        "bg-white/12 border-white/20 shadow-[0_32px_80px_-40px_rgba(15,23,42,0.45)]",
-      );
+      return "bg-card-elevated border border-border shadow-glass";
     case "sunken":
-      return composeThemeClasses(
-        "bg-white/65 border border-white/50 shadow-[inset_0_16px_40px_-24px_rgba(15,23,42,0.15)]",
-        "bg-white/6 border-white/12 shadow-[inset_0_18px_45px_-30px_rgba(0,0,0,0.6)]",
-      );
+      return "bg-muted border border-border/50 shadow-inner";
+    case "glass":
+      return "glass";
     default:
-      return composeThemeClasses(
-        "bg-white/80 border border-white/60 shadow-[inset_0_1px_0_rgba(255,255,255,0.5)]",
-        "bg-white/8 border-white/15 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]",
-      );
+      return "bg-card border border-border";
   }
 }
 
-export function getInputStyles() {
-  return composeThemeClasses(
-    "bg-white/80 border border-slate-200/70 text-slate-900 placeholder:text-slate-400 focus:border-blue-300 focus:ring-2 focus:ring-blue-200/70",
-    "bg-white/10 border-white/15 text-white placeholder:text-white/50 focus:border-blue-400/70 focus:ring-2 focus:ring-blue-500/40",
-  );
+/* ===================
+   INPUT STYLES
+   =================== */
+
+export function getInputStyles(): string {
+  return [
+    "h-input w-full rounded-md",
+    "bg-input border border-border",
+    "text-foreground placeholder:text-muted-foreground",
+    "focus:border-primary focus:ring-2 focus:ring-primary/20",
+    "transition-colors duration-fast",
+  ].join(" ");
 }
 
-export type ChipEmphasis = "solid" | "outline" | "ghost";
+export function getInputStylesCompact(): string {
+  return [
+    "h-input-sm w-full rounded-md",
+    "bg-input border border-border",
+    "text-foreground placeholder:text-muted-foreground",
+    "focus:border-primary focus:ring-2 focus:ring-primary/20",
+    "transition-colors duration-fast",
+  ].join(" ");
+}
 
-export function getChipStyles(emphasis: ChipEmphasis = "solid") {
+/* ===================
+   CHIP/BADGE STYLES
+   =================== */
+
+export function getChipStyles(emphasis: ChipEmphasis = "solid"): string {
+  const base = "inline-flex items-center rounded-full px-3 py-1 text-sm font-medium transition-colors";
+
   switch (emphasis) {
     case "outline":
-      return composeThemeClasses(
-        "border border-slate-200 text-slate-600 bg-white/70 hover:bg-white/90",
-        "border-white/25 text-white/80 bg-white/5 hover:bg-white/10",
-      );
+      return `${base} border border-border text-muted-foreground hover:bg-muted`;
     case "ghost":
-      return composeThemeClasses(
-        "border border-transparent text-slate-500 hover:bg-slate-100/70",
-        "border-transparent text-white/70 hover:bg-white/10",
-      );
+      return `${base} text-muted-foreground hover:bg-muted`;
+    case "neon":
+      return `${base} bg-primary/10 text-primary border border-primary/30 shadow-neon-cyan`;
     default:
-      return composeThemeClasses(
-        "bg-slate-900 text-white border border-slate-900 shadow-[0_12px_24px_-16px_rgba(15,23,42,0.45)]",
-        "bg-white/15 text-white border-white/20 shadow-[0_12px_30px_-18px_rgba(59,130,246,0.45)]",
-      );
+      return `${base} bg-primary text-primary-foreground`;
   }
 }
 
-export function getDividerStyles() {
-  return composeThemeClasses("bg-slate-200", "bg-white/10");
+/* ===================
+   BUTTON STYLES
+   =================== */
+
+export type ButtonVariant = "primary" | "secondary" | "ghost" | "outline" | "neon" | "destructive";
+
+export function getButtonStyles(variant: ButtonVariant = "primary"): string {
+  const base = [
+    "inline-flex items-center justify-center",
+    "min-h-touch rounded-md px-4",
+    "font-medium transition-all duration-base",
+    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+    "disabled:pointer-events-none disabled:opacity-50",
+  ].join(" ");
+
+  switch (variant) {
+    case "secondary":
+      return `${base} bg-secondary text-secondary-foreground hover:bg-secondary/80`;
+    case "ghost":
+      return `${base} hover:bg-muted text-muted-foreground`;
+    case "outline":
+      return `${base} border border-border bg-transparent hover:bg-muted`;
+    case "neon":
+      return `${base} bg-primary text-primary-foreground shadow-neon-cyan hover:shadow-neon-cyan/60 hover:scale-105`;
+    case "destructive":
+      return `${base} bg-destructive text-destructive-foreground hover:bg-destructive/90`;
+    default:
+      return `${base} bg-primary text-primary-foreground hover:bg-primary/90`;
+  }
 }
 
-export function getCardGlow() {
-  return composeThemeClasses(
-    "shadow-[0_26px_60px_-24px_rgba(59,130,246,0.25)]",
-    "shadow-[0_32px_80px_-32px_rgba(15,23,42,0.65)]",
-  );
+/* ===================
+   CARD GLOW EFFECT
+   =================== */
+
+export function getCardGlow(): string {
+  return "shadow-glass hover:shadow-glass-lg transition-shadow duration-base";
+}
+
+/* ===================
+   DIVIDER
+   =================== */
+
+export function getDividerStyles(): string {
+  return "bg-border";
+}
+
+/* ===================
+   LEGACY COMPATIBILITY
+   =================== */
+
+/**
+ * @deprecated Use getBackgroundVariant instead
+ */
+export function getGlassBackground(): string {
+  return getBackgroundVariant("neon");
+}
+
+/**
+ * @deprecated Use getSurfaceStyles("glass") instead
+ */
+export function getGlassBorder(): string {
+  return "border-border";
+}
+
+/**
+ * @deprecated Use getNeonGlow instead
+ */
+export function getShadowColor(): string {
+  return "shadow-glass";
 }

@@ -1,6 +1,6 @@
 import { cache } from 'react';
 import { prisma } from '@/lib/db';
-import { auth } from '@/auth';
+import { auth } from '@/lib/auth';
 
 /**
  * Get current user with React.cache for per-request deduplication.

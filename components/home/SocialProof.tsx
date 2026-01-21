@@ -1,6 +1,6 @@
 "use client";
 
-import { getGlassCard, getTextColor, getAccentColor } from "@/lib/showcase-theme";
+import { getGlassCard, getTextColor, getGradientText } from "@/lib/showcase-theme";
 import { cn } from "@/lib/utils";
 import { Trophy, Users, BookOpen, Star } from "lucide-react";
 
@@ -14,56 +14,47 @@ interface SocialProofProps {
 }
 
 export function SocialProof({ stats }: SocialProofProps) {
-  // Theme styling via CSS
-
   const socialProofItems = [
     {
       icon: BookOpen,
       value: `${stats.totalQuizzes.toLocaleString()}+`,
-      label: "Quizzes Available",
-      color: "primary" as const,
+      label: "Quizzes",
+      glow: "shadow-neon-cyan/20",
+      iconColor: "text-primary",
     },
     {
       icon: Users,
       value: `${stats.activeUsers.toLocaleString()}+`,
-      label: "Active Players",
-      color: "success" as const,
+      label: "Players",
+      glow: "shadow-neon-magenta/20",
+      iconColor: "text-secondary",
     },
     {
       icon: Trophy,
       value: `${stats.questionsAnswered.toLocaleString()}+`,
-      label: "Questions Answered",
-      color: "warning" as const,
+      label: "Answers",
+      glow: "shadow-neon-lime/20",
+      iconColor: "text-accent",
     },
     {
       icon: Star,
       value: `${stats.averageRating.toFixed(1)}/5`,
-      label: "Average Rating",
-      color: "warning" as const,
+      label: "Rating",
+      glow: "shadow-neon-cyan/20",
+      iconColor: "text-primary",
     },
   ];
 
   return (
-    <section className="px-4 py-12 sm:px-6 lg:py-16">
-      <div className="mx-auto max-w-6xl">
-        <div className={cn(
-          "relative w-full max-w-5xl mx-auto rounded-[1.75rem] border p-6 sm:p-8 backdrop-blur-xl mb-8",
-          getGlassCard()
-        )}>
-          <div className="text-center">
-            <h2 className={cn(
-              "text-2xl sm:text-3xl font-bold mb-4",
-              getTextColor("primary")
-            )}>
-              Trusted by Sports Fans Worldwide
-            </h2>
-            <p className={cn(
-              "text-base sm:text-lg",
-              getTextColor("secondary")
-            )}>
-              Join thousands of players who test their knowledge daily
-            </p>
-          </div>
+    <section className="px-4 py-16 sm:px-6 lg:py-24">
+      <div className="mx-auto max-w-7xl">
+        <div className="mb-16 text-center">
+          <h2 className={cn("text-4xl font-black tracking-tighter sm:text-5xl mb-4", getGradientText("neon"))}>
+            TRUSTED BY THE BEST
+          </h2>
+          <p className="mx-auto max-w-2xl text-lg text-muted-foreground font-medium">
+            Join thousands of fans in the world's most competitive sports trivia arena.
+          </p>
         </div>
 
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
@@ -73,34 +64,26 @@ export function SocialProof({ stats }: SocialProofProps) {
               <div
                 key={index}
                 className={cn(
-                  "rounded-xl sm:rounded-2xl p-6 sm:p-8 text-center backdrop-blur-sm transition-all duration-200 hover:scale-105",
-                  getGlassCard()
+                  "relative group rounded-[2rem] p-8 text-center",
+                  "glass border-white/5 transition-all duration-500",
+                  "hover:border-primary/20 hover:bg-white/10 hover:-translate-y-2",
+                  item.glow
                 )}
               >
-                <div className="flex justify-center mb-3 sm:mb-4">
-                  <div className={cn(
-                    "rounded-full p-3 sm:p-4",
-                    "bg-white/80 shadow-lg",
-                    "dark:bg-white/10 dark:shadow-lg"
-                  )}>
-                    <Icon className={cn(
-                      "h-6 w-6 sm:h-8 sm:w-8",
-                      getAccentColor(item.color)
-                    )} />
+                <div className="flex justify-center mb-6">
+                  <div className="relative">
+                    <div className={cn("absolute inset-0 rounded-full blur-xl opacity-20", item.iconColor)} />
+                    <div className="relative rounded-2xl glass-elevated border-white/10 p-4">
+                      <Icon className={cn("h-8 w-8", item.iconColor)} />
+                    </div>
                   </div>
                 </div>
 
-                <div className={cn(
-                  "text-2xl sm:text-3xl font-bold mb-2",
-                  getTextColor("primary")
-                )}>
+                <div className="text-3xl font-black tracking-tighter mb-1">
                   {item.value}
                 </div>
 
-                <div className={cn(
-                  "text-sm font-medium",
-                  getTextColor("secondary")
-                )}>
+                <div className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground">
                   {item.label}
                 </div>
               </div>

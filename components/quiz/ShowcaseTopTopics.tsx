@@ -5,9 +5,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { getGlassCard, getTextColor } from "@/lib/showcase-theme";
+import { getGlassCard, getTextColor, getGradientText } from "@/lib/showcase-theme";
 import { cn } from "@/lib/utils";
-import { Users, BookOpen, TrendingUp, Loader2 } from "lucide-react";
+import { Users, BookOpen, TrendingUp, Loader2, ArrowRight } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import type { TopicSummary } from "@/types/home";
@@ -29,40 +29,18 @@ interface ShowcaseTopTopicsProps {
   initialTopics?: TopicSummary[];
 }
 
-// Topic icons mapping
 const topicIcons: Record<string, string> = {
-  "Mathematics": "📐",
-  "Science": "🧪",
-  "Drama": "🎭",
-  "Art & Craft": "🎨",
-  "Knowledge": "📚",
-  "Language": "🗣️",
-  "Sports": "⚽",
-  "History": "🏛️",
-  "Geography": "🌍",
-  "Music": "🎵",
-  "Literature": "📖",
-  "Technology": "💻",
-  "Biology": "🧬",
-  "Chemistry": "⚗️",
-  "Physics": "⚛️",
-  "default": "📝",
+  "default": "🏆",
 };
 
-// Color pairs for topic backgrounds (matching showcase topic cards)
-const colorPairs = [
-  { dark: "#7c2d12", light: "#fde68a" },
-  { dark: "#065f46", light: "#bbf7d0" },
-  { dark: "#1e3a8a", light: "#bfdbfe" },
-  { dark: "#7c3aed", light: "#e9d5ff" },
-  { dark: "#9d174d", light: "#fecdd3" },
-  { dark: "#0f172a", light: "#cbd5f5" },
-  { dark: "#14532d", light: "#bef264" },
-  { dark: "#92400e", light: "#fed7aa" },
+const neonAccents = [
+  { border: "border-primary/20", glow: "shadow-neon-cyan/20", text: "text-primary", bg: "bg-primary/5" },
+  { border: "border-secondary/20", glow: "shadow-neon-magenta/20", text: "text-secondary", bg: "bg-secondary/5" },
+  { border: "border-accent/20", glow: "shadow-neon-lime/20", text: "text-accent", bg: "bg-accent/5" },
 ];
 
 export function ShowcaseTopTopics({
-  title = "Top Quiz Categories",
+  title,
   showViewAll = true,
   viewAllHref = "/topics",
   defaultSortBy = "users",
@@ -70,10 +48,6 @@ export function ShowcaseTopTopics({
   className,
   initialTopics,
 }: ShowcaseTopTopicsProps) {
-  // Actually, let's keep `theme` mostly unused for classes, but we might validly use it for logical things if any exist. 
-  // Wait, I should try to remove it entirely to solve the mismatch. 
-  // If I need dynamic colors, I'll pass them via CSS vars.
-
   const initialTopicsProvided = Array.isArray(initialTopics) && initialTopics.length > 0;
   const [topics, setTopics] = useState<TopicSummary[]>(initialTopics ?? []);
   const [sortBy, setSortBy] = useState<"users" | "quizzes">(defaultSortBy);
@@ -96,242 +70,107 @@ export function ShowcaseTopTopics({
       try {
         setLoading(true);
         setError(null);
-
         const response = await fetch(`/api/topics/top?sortBy=${sortBy}&limit=${limit}`);
-
-        if (!response.ok) {
-          throw new Error(`Failed to fetch topics: ${response.statusText}`);
-        }
-
+        if (!response.ok) throw new Error(`Failed to fetch topics`);
         const data: TopTopicsResponse = await response.json();
-        if (!ignore) {
-          setTopics(data.topics ?? []);
-        }
+        if (!ignore) setTopics(data.topics ?? []);
       } catch (err) {
-        console.error("Error fetching top topics:", err);
-        if (!ignore) {
-          setError(err instanceof Error ? err.message : "Failed to fetch topics");
-        }
+        if (!ignore) setError("Failed to fetch topics");
       } finally {
-        if (!ignore) {
-          setLoading(false);
-        }
+        if (!ignore) setLoading(false);
       }
     };
-
     void fetchTopTopics();
+    return () => { ignore = true; };
+  }, [sortBy, limit, initialTopicsProvided, defaultSortBy]);
 
-    return () => {
-      ignore = true;
-    };
-  }, [sortBy, limit, defaultSortBy, initialTopicsProvided]);
-
-  const getTopicIcon = (topicName: string) => {
-    return topicIcons[topicName] || topicIcons.default;
-  };
-
-  const getSortLabel = (sort: "users" | "quizzes") => {
-    return sort === "users" ? "Most Active Users" : "Most Quizzes";
-  };
-
-  if (loading) {
-    return (
-      <div className={cn("w-full max-w-6xl mx-auto", className)}>
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="h-8 w-8 animate-spin" />
-          <span className={cn("ml-2 text-sm", getTextColor("secondary"))}>
-            Loading top topics...
-          </span>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className={cn("w-full max-w-6xl mx-auto", className)}>
-        <Card className={cn("p-6 text-center", getGlassCard())}>
-          <p className={cn("text-sm", getTextColor("secondary"))}>
-            Error: {error}
-          </p>
-        </Card>
-      </div>
-    );
-  }
+  if (loading) return (
+    <div className="flex h-64 items-center justify-center">
+      <Loader2 className="h-12 w-12 animate-spin text-primary" />
+    </div>
+  );
 
   return (
-    <div className={cn("w-full max-w-6xl mx-auto space-y-6", className)}>
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className={cn("text-2xl font-bold", getTextColor("primary"))}>
-            {title}
-          </h2>
-          <p className={cn("text-sm mt-1", getTextColor("secondary"))}>
-            {getSortLabel(sortBy)} in the last 30 days
-          </p>
-        </div>
+    <div className={cn("space-y-8", className)}>
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+        {title && (
+          <h2 className="text-2xl font-black tracking-tight uppercase">{title}</h2>
+        )}
 
-        <div className="flex items-center gap-4">
-          {/* Sort Selector */}
-          <Select value={sortBy} onValueChange={(value: "users" | "quizzes") => setSortBy(value)}>
-            <SelectTrigger className="w-40">
+        <div className="flex items-center gap-3 w-full sm:w-auto">
+          <Select value={sortBy} onValueChange={(v: any) => setSortBy(v)}>
+            <SelectTrigger className="glass-elevated border-white/10 h-11 min-w-[160px] font-bold uppercase tracking-widest text-[10px]">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="users">
-                <div className="flex items-center gap-2">
-                  <Users className="h-4 w-4" />
-                  Most Users
-                </div>
-              </SelectItem>
-              <SelectItem value="quizzes">
-                <div className="flex items-center gap-2">
-                  <BookOpen className="h-4 w-4" />
-                  Most Quizzes
-                </div>
-              </SelectItem>
+            <SelectContent className="glass-elevated border-white/10">
+              <SelectItem value="users" className="font-bold uppercase tracking-widest text-[10px]">Top Players</SelectItem>
+              <SelectItem value="quizzes" className="font-bold uppercase tracking-widest text-[10px]">Massive Libraries</SelectItem>
             </SelectContent>
           </Select>
 
-          {/* View All Button */}
           {showViewAll && (
-            <Button asChild variant="outline" size="sm">
-              <Link href={viewAllHref}>
-                View All
-              </Link>
+            <Button asChild variant="glass" size="lg" className="h-11 font-black uppercase tracking-widest text-[10px]">
+              <Link href={viewAllHref}>Explore All</Link>
             </Button>
           )}
         </div>
       </div>
 
-      {/* Topics Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {topics.map((topic, index) => {
-          const colorPair = colorPairs[index % colorPairs.length];
+          const accent = neonAccents[index % neonAccents.length];
 
           return (
-            <Card key={topic.id} className={cn("group cursor-pointer transition-all duration-200 hover:scale-105 overflow-hidden", getGlassCard())}>
-              <Link href={`/topics/${topic.slug}`}>
-                <CardContent className="p-0">
-                  {/* Background Section with Accent Color */}
-                  <div
-                    className="p-6 text-center space-y-4"
-                    style={{
-                      // Use CSS variables to handle theming for arbitrary colors
-                      ['--topic-light' as string]: colorPair.light,
-                      ['--topic-dark' as string]: colorPair.dark,
-                      backgroundColor: 'var(--topic-bg)',
-                    }}
-                  >
-                    <style jsx>{`
-                      div[style] {
-                        --topic-bg: var(--topic-light);
-                      }
-                      :global(.dark) div[style] {
-                        --topic-bg: var(--topic-dark);
-                      }
-                    `}</style>
-                    {/* Topic Icon */}
-                    <div className="flex justify-center">
-                      <div className={cn(
-                        "w-16 h-16 rounded-2xl flex items-center justify-center text-3xl transition-all duration-200 group-hover:scale-110 backdrop-blur-sm",
-                        "bg-white/80 shadow-lg shadow-black/10",
-                        "dark:bg-black/20 dark:shadow-lg dark:shadow-black/30"
-                      )}>
-                        {topic.imageUrl ? (
-                          <Image
-                            src={topic.imageUrl}
-                            alt={topic.name}
-                            width={48}
-                            height={48}
-                            className="rounded-lg object-cover"
-                          />
-                        ) : (
-                          <span className="text-3xl">{getTopicIcon(topic.name)}</span>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Topic Name */}
-                    <div>
-                      <h3 className={cn(
-                        "font-semibold text-lg group-hover:underline",
-                        "text-slate-900 drop-shadow-[0_2px_8px_rgba(0,0,0,0.1)]",
-                        "dark:text-white dark:drop-shadow-[0_2px_8px_rgba(0,0,0,0.3)]"
-                      )}>
-                        {topic.name}
-                      </h3>
-                      {topic.description && (
-                        <p className={cn(
-                          "text-xs mt-1 line-clamp-2",
-                          "text-slate-700 dark:text-white/80"
-                        )}>
-                          {topic.description}
-                        </p>
+            <Link key={topic.id} href={`/topics/${topic.slug}`} className="group block">
+              <Card className={cn(
+                "relative overflow-hidden transition-all duration-300",
+                "glass-elevated border-white/5 hover:border-white/10 hover:-translate-y-2 hover:shadow-glass-lg",
+                accent.glow
+              )}>
+                <CardContent className="p-8">
+                  <div className="flex items-start gap-6">
+                    <div className={cn(
+                      "relative h-16 w-16 shrink-0 rounded-2xl flex items-center justify-center text-3xl",
+                      "glass border-white/10 shadow-sm",
+                      "group-hover:scale-110 transition-transform duration-300"
+                    )}>
+                      {topic.imageUrl ? (
+                        <Image src={topic.imageUrl} alt={topic.name} fill className="rounded-2xl object-cover p-1" />
+                      ) : (
+                        <span>{topicIcons.default}</span>
                       )}
                     </div>
 
-                    {/* Stats */}
-                    <div className="flex items-center justify-center gap-4 text-xs">
-                      <div className={cn(
-                        "flex items-center gap-1 px-2 py-1 rounded-full backdrop-blur-sm",
-                        "bg-white/60 text-slate-700",
-                        "dark:bg-black/30 dark:text-white/80"
-                      )}>
-                        <Users className="h-3 w-3" />
-                        <span>
-                          {sortBy === "users" ? topic.userCount : topic.quizCount}
-                        </span>
+                    <div className="flex-1 space-y-3">
+                      <div className="space-y-1">
+                        <h3 className="text-xl font-black tracking-tight leading-none group-hover:text-primary transition-colors">
+                          {topic.name}
+                        </h3>
+                        <p className="text-xs text-muted-foreground font-medium line-clamp-1">
+                          {topic.description}
+                        </p>
                       </div>
-                      <div className={cn(
-                        "flex items-center gap-1 px-2 py-1 rounded-full backdrop-blur-sm",
-                        "bg-white/60 text-slate-700",
-                        "dark:bg-black/30 dark:text-white/80"
-                      )}>
-                        <BookOpen className="h-3 w-3" />
-                        <span>
-                          {topic.quizCount}
-                        </span>
+
+                      <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                          <Users className={cn("h-3 w-3", accent.text)} />
+                          {topic.userCount.toLocaleString()}
+                        </div>
+                        <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                          <BookOpen className={cn("h-3 w-3", accent.text)} />
+                          {topic.quizCount} Quizzes
+                        </div>
                       </div>
                     </div>
-
-                    {/* Trending Badge */}
-                    {sortBy === "users" && topic.userCount > 0 && (
-                      <Badge
-                        variant="secondary"
-                        className={cn(
-                          "text-xs backdrop-blur-sm",
-                          "bg-emerald-100/80 text-emerald-700 border-emerald-200/50",
-                          "dark:bg-emerald-900/50 dark:text-emerald-300 dark:border-emerald-700/50"
-                        )}
-                      >
-                        <TrendingUp className="h-3 w-3 mr-1" />
-                        Trending
-                      </Badge>
-                    )}
                   </div>
                 </CardContent>
-              </Link>
-            </Card>
+
+                <div className={cn("absolute bottom-0 left-0 h-1 w-0 group-hover:w-full transition-all duration-500", accent.bg.replace('/5', ''))} />
+              </Card>
+            </Link>
           );
         })}
       </div>
-
-      {/* Empty State */}
-      {topics.length === 0 && (
-        <Card className={cn("p-12 text-center", getGlassCard())}>
-          <div className="space-y-4">
-            <div className="text-4xl">📝</div>
-            <h3 className={cn("text-lg font-semibold", getTextColor("primary"))}>
-              No topics found
-            </h3>
-            <p className={cn("text-sm", getTextColor("secondary"))}>
-              Try adjusting your sorting criteria or check back later.
-            </p>
-          </div>
-        </Card>
-      )}
     </div>
   );
 }

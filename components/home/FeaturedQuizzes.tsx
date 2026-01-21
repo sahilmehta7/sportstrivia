@@ -1,6 +1,7 @@
 import { cn } from "@/lib/utils";
 import { ShowcaseQuizCarousel } from "@/components/quiz/ShowcaseQuizCarousel";
 import { getFeaturedQuizzes } from "@/lib/services/home-page.service";
+import { getGradientText } from "@/lib/showcase-theme";
 
 export async function FeaturedQuizzes() {
   const quizzes = await getFeaturedQuizzes();
@@ -21,44 +22,24 @@ export async function FeaturedQuizzes() {
       badgeLabel: quiz.isFeatured ? "Featured" : "Quiz",
       durationLabel: durationMinutes ? `${durationMinutes} min` : "Flexible",
       playersLabel: `${quiz._count?.attempts || 0} players`,
-      accent: "#7c2d12", // Default accent color
+      accent: "hsl(var(--neon-cyan))",
       coverImageUrl: quiz.descriptionImageUrl,
       href: quiz.slug ? `/quizzes/${quiz.slug}` : `/quizzes/${quiz.id}`,
     };
   });
 
   return (
-    <section className="px-4 py-12 sm:px-6 lg:py-16">
-      <div className="mx-auto max-w-6xl">
-        <div
-          className={cn(
-            "relative mx-auto mb-8 w-full max-w-5xl rounded-[1.75rem] border p-6 sm:p-8 backdrop-blur-xl",
-            "border-slate-200/50 bg-white/60 shadow-[inset_0_1px_0_rgba(0,0,0,0.05)]",
-            "dark:border-white/10 dark:bg-white/5 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.12)]"
-          )}
-        >
-          <div className="text-center">
-            <h2
-              className={cn(
-                "mb-4 text-2xl font-bold sm:text-3xl",
-                "text-slate-900",
-                "dark:text-white"
-              )}
-            >
-              Featured Quizzes
-            </h2>
-            <p
-              className={cn(
-                "text-base sm:text-lg",
-                "text-slate-700",
-                "dark:text-white/80"
-              )}
-            >
-              Hand-picked quizzes to challenge your sports knowledge
-            </p>
-          </div>
+    <section className="px-4 py-16 sm:px-6 lg:py-24">
+      <div className="mx-auto max-w-7xl">
+        <div className="mb-12">
+          <h2 className={cn("text-4xl font-black tracking-tighter sm:text-6xl mb-4", getGradientText("neon"))}>
+            FEATURED ARENAS
+          </h2>
+          <p className="max-w-2xl text-lg text-muted-foreground font-medium">
+            Hand-picked challenges for elite trivia players.
+          </p>
         </div>
-        
+
         <ShowcaseQuizCarousel items={carouselItems} />
       </div>
     </section>

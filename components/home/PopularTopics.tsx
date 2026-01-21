@@ -1,38 +1,21 @@
 import { cn } from "@/lib/utils";
-import { getGlassCard, getTextColor } from "@/lib/showcase-theme";
 import { ShowcaseTopTopics } from "@/components/quiz/ShowcaseTopTopics";
 import { getTopTopics } from "@/lib/services/home-page.service";
+import { getGradientText } from "@/lib/showcase-theme";
 
 export async function PopularTopics() {
   const topTopics = await getTopTopics();
 
   return (
-    <section className="px-4 py-12 sm:px-6 lg:py-16">
-      <div className="mx-auto max-w-6xl">
-        <div
-          className={cn(
-            "relative mx-auto mb-8 w-full max-w-5xl rounded-[1.75rem] border p-6 sm:p-8 backdrop-blur-xl",
-            getGlassCard()
-          )}
-        >
-          <div className="text-center">
-            <h2
-              className={cn(
-                "mb-4 text-2xl font-bold sm:text-3xl",
-                getTextColor("primary")
-              )}
-            >
-              Popular Topics
-            </h2>
-            <p
-              className={cn(
-                "text-base sm:text-lg",
-                getTextColor("secondary")
-              )}
-            >
-              Explore the most popular sports categories
-            </p>
-          </div>
+    <section className="px-4 py-16 sm:px-6 lg:py-24">
+      <div className="mx-auto max-w-7xl">
+        <div className="mb-12">
+          <h2 className={cn("text-4xl font-black tracking-tighter sm:text-6xl mb-4", getGradientText("neon"))}>
+            POPULAR REGIONS
+          </h2>
+          <p className="max-w-2xl text-lg text-muted-foreground font-medium">
+            The most contested categories in the trivia universe.
+          </p>
         </div>
 
         <ShowcaseTopTopics

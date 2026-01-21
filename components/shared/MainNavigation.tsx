@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { UserAvatar } from "@/components/shared/UserAvatar";
 import { NotificationsDropdown } from "@/components/shared/NotificationsDropdown";
-import { User, LogOut, Settings, Menu, X, Moon, Sun, Shuffle, Trophy } from "lucide-react";
+import { User, LogOut, Settings, Menu, X, Moon, Sun, Shuffle, Trophy, Gamepad2, Compass } from "lucide-react";
 import { useTheme } from "next-themes";
 import { signOut, useSession } from "next-auth/react";
 import { cn } from "@/lib/utils";
@@ -18,13 +18,13 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import { getGlassCard, getTextColor, getGradientText } from "@/lib/showcase-theme";
 
 export function MainNavigation() {
   const pathname = usePathname();
   const { data: session } = useSession();
   const { theme, setTheme } = useTheme();
   const [unreadCount, setUnreadCount] = useState(0);
-  const [avatarOpen, setAvatarOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const fetchUnreadCount = useCallback(async () => {
@@ -47,7 +47,6 @@ export function MainNavigation() {
 
   // ARIA live region for notification count updates
   useEffect(() => {
-    // Announce unread count changes to screen readers
     if (unreadCount > 0) {
       const announcement = document.getElementById('notification-announcement');
       if (announcement) {
@@ -56,46 +55,24 @@ export function MainNavigation() {
     }
   }, [unreadCount]);
 
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (avatarOpen) {
-        const target = event.target as Node;
-        const button = document.querySelector('[data-avatar-button]');
-        const menu = document.querySelector('[data-avatar-menu]');
-        
-        if (button && menu && !button.contains(target) && !menu.contains(target)) {
-          setAvatarOpen(false);
-        }
-      }
-    }
-
-    if (avatarOpen) {
-      document.addEventListener("mousedown", handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [avatarOpen]);
-
   const navLinks = [
-    { href: "/quizzes", label: "Quizzes" },
-    { href: "/topics", label: "Discover" },
-    { href: "/leaderboard", label: "Leaderboard" },
+    { href: "/quizzes", label: "Quizzes", icon: Gamepad2 },
+    { href: "/topics", label: "Discover", icon: Compass },
+    { href: "/leaderboard", label: "Ranking", icon: Trophy },
   ];
 
   const isActive = (href: string) => pathname.startsWith(href);
 
   if (!session?.user) {
     return (
-      <nav className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <nav className="sticky top-0 z-50 border-b glass">
         <div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-          <Link href="/" className="text-xl font-bold">
-            Sports Trivia
+          <Link href="/" className={cn("text-xl font-black tracking-tighter", getGradientText("neon"))}>
+            SPORTS TRIVIA
           </Link>
           <div className="flex items-center gap-4">
             <Link href="/auth/signin">
-              <Button variant="outline">Sign In</Button>
+              <Button variant="neon">Sign In</Button>
             </Link>
           </div>
         </div>
@@ -105,7 +82,6 @@ export function MainNavigation() {
 
   return (
     <>
-      {/* ARIA live region for notifications */}
       <div
         id="notification-announcement"
         role="status"
@@ -113,170 +89,140 @@ export function MainNavigation() {
         aria-atomic="true"
         className="sr-only"
       />
-      <nav className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="mx-auto flex w-full max-w-7xl items-center gap-4 px-4 py-3 sm:px-6 lg:px-8">
-        {/* Header with rounded-full styling */}
-        <header
-          className={cn(
-            "flex w-full items-center gap-4 rounded-full px-6 py-3",
-            "bg-card border border-border shadow-sm"
-          )}
-        >
-          <div className="flex flex-shrink-0 items-center gap-6">
-            <Link href="/" className="text-sm font-black uppercase tracking-[0.35em]">
-              Sports Trivia
-            </Link>
-            {/* Nav Links - Desktop */}
-            <nav className="hidden items-center gap-6 text-sm font-semibold uppercase tracking-[0.25em] lg:flex">
-              {navLinks.map((link) => (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className={cn(
-                    "transition hover:opacity-80",
-                    isActive(link.href) && "opacity-100 underline",
-                    !isActive(link.href) && "opacity-70"
-                  )}
-                >
-                  {link.label}
-                </Link>
-              ))}
-            </nav>
-          </div>
+      <nav className="sticky top-0 z-50 w-full px-4 py-3 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-7xl">
+          <header
+            className={cn(
+              "flex w-full items-center gap-4 rounded-xl px-4 py-2 sm:px-6 sm:py-3",
+              "glass shadow-glass border-primary/10"
+            )}
+          >
+            <div className="flex items-center gap-6">
+              <Link href="/" className={cn("text-lg font-black tracking-tight", getGradientText("neon"))}>
+                TRIVIA
+              </Link>
 
-          <GlobalQuizSearch className="flex-1 max-w-xl" />
+              {/* Nav Links - Desktop */}
+              <nav className="hidden items-center gap-1 lg:flex">
+                {navLinks.map((link) => (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    className={cn(
+                      "flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-bold uppercase tracking-wider transition-all",
+                      isActive(link.href)
+                        ? "bg-primary/10 text-primary shadow-neon-cyan"
+                        : "text-muted-foreground hover:bg-muted"
+                    )}
+                  >
+                    <link.icon className="h-3.5 w-3.5" />
+                    {link.label}
+                  </Link>
+                ))}
+              </nav>
+            </div>
 
-          {/* Right Section */}
-          <div className="flex flex-shrink-0 items-center gap-2">
-            {/* Random Quiz Button */}
-            <Link href="/random-quiz" aria-label="Go to random quiz">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-9 w-9 rounded-full"
-                title="Random Quiz"
-                aria-label="Random Quiz"
-              >
-                <Shuffle className="h-4 w-4" />
-              </Button>
-            </Link>
+            <GlobalQuizSearch className="flex-1 max-w-xl mx-2" />
 
-            {/* Notifications */}
-            <NotificationsDropdown
-              unreadCount={unreadCount}
-              onUnreadCountChange={setUnreadCount}
-            />
-
-            {/* Mobile Menu - Using Sheet for proper accessibility */}
-            <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
-              <SheetTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-9 w-9 rounded-full lg:hidden"
-                  aria-label={mobileMenuOpen ? "Close mobile menu" : "Open mobile menu"}
-                  aria-expanded={mobileMenuOpen}
-                  aria-controls="mobile-menu"
-                >
-                  {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            {/* Right Section */}
+            <div className="flex items-center gap-2">
+              <Link href="/random-quiz" className="hidden sm:block">
+                <Button variant="ghost" size="icon-sm" className="rounded-full" title="Random Quiz">
+                  <Shuffle className="h-4 w-4" />
                 </Button>
-              </SheetTrigger>
-              <SheetContent
-                side="right"
-                id="mobile-menu"
-                className="flex h-full w-full flex-col p-0 sm:max-w-md"
-                onOpenAutoFocus={(event) => event.preventDefault()}
-              >
-                <SheetHeader className="border-b px-6 pb-4 pt-6">
-                  <SheetTitle>Menu</SheetTitle>
-                </SheetHeader>
-                <div className="flex-1 overflow-y-auto px-6 pb-6">
-                  <div className="py-4">
-                    <GlobalQuizSearch showOnMobile className="w-full" />
-                  </div>
+              </Link>
 
-                  <div className="flex flex-col gap-3">
-                    {/* Navigation Links */}
-                    {navLinks.map((link) => (
-                      <Link
-                        key={link.href}
-                        href={link.href}
-                        className={cn(
-                          "rounded-2xl px-4 py-3 text-sm font-semibold uppercase tracking-[0.25em] transition",
-                          "hover:bg-accent",
-                          isActive(link.href) && "bg-accent"
-                        )}
-                        onClick={() => setMobileMenuOpen(false)}
-                      >
-                        {link.label}
-                      </Link>
-                    ))}
+              <NotificationsDropdown
+                unreadCount={unreadCount}
+                onUnreadCountChange={setUnreadCount}
+              />
 
-                    {/* Random Quiz Link */}
-                    <Link
-                      href="/random-quiz"
-                      className="flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold uppercase tracking-[0.25em] transition hover:bg-accent"
-                      onClick={() => setMobileMenuOpen(false)}
-                    >
-                      <Shuffle className="h-4 w-4" />
-                      <span>Random Quiz</span>
-                    </Link>
+              {/* Mobile Menu Trigger */}
+              <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+                <SheetTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    className="rounded-full lg:hidden"
+                    aria-label="Toggle menu"
+                  >
+                    <Menu className="h-5 w-5" />
+                  </Button>
+                </SheetTrigger>
+                <SheetContent
+                  side="right"
+                  id="mobile-menu"
+                  className="flex h-full w-full flex-col p-0 glass-elevated border-l-primary/10"
+                >
+                  <SheetHeader className="border-b border-white/10 px-6 py-6">
+                    <SheetTitle className={cn("text-left font-black tracking-tighter text-2xl", getGradientText("neon"))}>
+                      MENU
+                    </SheetTitle>
+                  </SheetHeader>
+                  <div className="flex-1 overflow-y-auto px-6 py-6">
+                    <div className="mb-8">
+                      <GlobalQuizSearch showOnMobile className="w-full" />
+                    </div>
 
-                    {/* User Section */}
-                    <div className="border-t pt-3">
-                      <div className="mb-2 px-3 py-2">
-                        <p className="text-sm font-semibold">{session.user.name}</p>
-                        <p className="text-xs text-muted-foreground">{session.user.email}</p>
-                      </div>
-
-                      <Link
-                        href="/profile/me"
-                        className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm transition hover:bg-accent"
-                        onClick={() => setMobileMenuOpen(false)}
-                      >
-                        <User className="h-4 w-4" />
-                        <span>My Profile</span>
-                      </Link>
-
-                      <Link
-                        href="/challenges"
-                        className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm transition hover:bg-accent"
-                        onClick={() => setMobileMenuOpen(false)}
-                      >
-                        <Trophy className="h-4 w-4" />
-                        <span>Challenges</span>
-                      </Link>
-
-                      {session.user.role === "ADMIN" && (
+                    <div className="flex flex-col gap-2">
+                      <p className="px-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1">Navigation</p>
+                      {navLinks.map((link) => (
                         <Link
-                          href="/admin"
-                          className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm transition hover:bg-accent"
+                          key={link.href}
+                          href={link.href}
+                          className={cn(
+                            "flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-bold uppercase tracking-widest transition-all",
+                            isActive(link.href)
+                              ? "bg-primary/10 text-primary border border-primary/20 shadow-neon-cyan"
+                              : "hover:bg-muted"
+                          )}
                           onClick={() => setMobileMenuOpen(false)}
                         >
-                          <Settings className="h-4 w-4" />
-                          <span>Admin Panel</span>
+                          <link.icon className="h-4 w-4" />
+                          {link.label}
                         </Link>
-                      )}
+                      ))}
+
+                      <p className="mt-6 px-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1">Account</p>
+
+                      <div className="rounded-2xl bg-muted/30 p-4 mb-2">
+                        <div className="flex items-center gap-3 mb-4">
+                          <UserAvatar src={session.user.image} alt={session.user.name || "User"} size="sm" />
+                          <div>
+                            <p className="text-sm font-bold truncate max-w-[150px]">{session.user.name}</p>
+                            <p className="text-[10px] text-muted-foreground truncate max-w-[150px]">{session.user.email}</p>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-2">
+                          <Link
+                            href="/profile/me"
+                            className="flex flex-col items-center justify-center gap-2 rounded-xl bg-white/5 p-3 text-[10px] font-bold uppercase tracking-widest hover:bg-white/10 transition-colors"
+                            onClick={() => setMobileMenuOpen(false)}
+                          >
+                            <User className="h-4 w-4" />
+                            Profile
+                          </Link>
+                          <Link
+                            href="/challenges"
+                            className="flex flex-col items-center justify-center gap-2 rounded-xl bg-white/5 p-3 text-[10px] font-bold uppercase tracking-widest hover:bg-white/10 transition-colors"
+                            onClick={() => setMobileMenuOpen(false)}
+                          >
+                            <Trophy className="h-4 w-4" />
+                            Challenges
+                          </Link>
+                        </div>
+                      </div>
 
                       <button
                         onClick={() => {
                           setTheme(theme === "dark" ? "light" : "dark");
                           setMobileMenuOpen(false);
                         }}
-                        className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm transition hover:bg-accent"
-                        aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
+                        className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-xs font-bold uppercase tracking-widest hover:bg-muted transition-colors"
                       >
-                        {theme === "dark" ? (
-                          <>
-                            <Sun className="h-4 w-4" />
-                            <span>Switch to Light</span>
-                          </>
-                        ) : (
-                          <>
-                            <Moon className="h-4 w-4" />
-                            <span>Switch to Dark</span>
-                          </>
-                        )}
+                        {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+                        {theme === "dark" ? "Light Mode" : "Dark Mode"}
                       </button>
 
                       <button
@@ -284,137 +230,31 @@ export function MainNavigation() {
                           setMobileMenuOpen(false);
                           signOut({ callbackUrl: "/" });
                         }}
-                        className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm transition hover:bg-accent text-destructive"
+                        className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-xs font-bold uppercase tracking-widest hover:bg-destructive/10 text-destructive transition-colors mt-4"
                       >
                         <LogOut className="h-4 w-4" />
-                        <span>Sign Out</span>
+                        Sign Out
                       </button>
                     </div>
                   </div>
-                </div>
-              </SheetContent>
-            </Sheet>
+                </SheetContent>
+              </Sheet>
 
-            {/* Avatar Dropdown */}
-            <div className="relative hidden lg:block">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-9 w-9 rounded-full"
-                onClick={() => setAvatarOpen(!avatarOpen)}
-                data-avatar-button
-                aria-label="Open user menu"
-                aria-expanded={avatarOpen}
-                aria-controls="avatar-menu"
-              >
-                <UserAvatar
-                  src={session.user.image}
-                  alt={session.user.name || "User"}
-                  size="sm"
-                />
-              </Button>
-
-              {avatarOpen && (
-                <div
-                  className={cn(
-                    "absolute right-0 top-full mt-2 w-56 rounded-2xl border bg-card p-2 shadow-xl z-50"
-                  )}
-                  data-avatar-menu
-                  id="avatar-menu"
-                >
-                  <div className="flex flex-col gap-1">
-                    {/* User Info */}
-                    <div className="px-3 py-2 border-b">
-                      <p className="text-sm font-semibold">{session.user.name}</p>
-                      <p className="text-xs text-muted-foreground">{session.user.email}</p>
-                    </div>
-
-                    {/* Menu Items */}
-                    <Link
-                      href="/profile/me"
-                      className={cn(
-                        "flex items-center gap-3 rounded-xl px-3 py-2 text-sm transition",
-                        "hover:bg-accent"
-                      )}
-                      onClick={() => setAvatarOpen(false)}
-                    >
-                      <User className="h-4 w-4" />
-                      <span>My Profile</span>
-                    </Link>
-
-                    <Link
-                      href="/challenges"
-                      className={cn(
-                        "flex items-center gap-3 rounded-xl px-3 py-2 text-sm transition",
-                        "hover:bg-accent"
-                      )}
-                      onClick={() => setAvatarOpen(false)}
-                    >
-                      <Trophy className="h-4 w-4" />
-                      <span>Challenges</span>
-                    </Link>
-
-                    {session.user.role === "ADMIN" && (
-                      <Link
-                        href="/admin"
-                        className={cn(
-                          "flex items-center gap-3 rounded-xl px-3 py-2 text-sm transition",
-                          "hover:bg-accent"
-                        )}
-                        onClick={() => setAvatarOpen(false)}
-                      >
-                        <Settings className="h-4 w-4" />
-                        <span>Admin Panel</span>
-                      </Link>
-                    )}
-
-                    <button
-                      onClick={() => {
-                        setTheme(theme === "dark" ? "light" : "dark");
-                        setAvatarOpen(false);
-                      }}
-                      className={cn(
-                        "flex items-center gap-3 rounded-xl px-3 py-2 text-sm transition",
-                        "hover:bg-accent"
-                      )}
-                      aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
-                    >
-                      {theme === "dark" ? (
-                        <>
-                          <Sun className="h-4 w-4" />
-                          <span>Switch to Light</span>
-                        </>
-                      ) : (
-                        <>
-                          <Moon className="h-4 w-4" />
-                          <span>Switch to Dark</span>
-                        </>
-                      )}
-                    </button>
-
-                    <div className="border-t my-1" />
-
-                    <button
-                      onClick={() => {
-                        setAvatarOpen(false);
-                        signOut({ callbackUrl: "/" });
-                      }}
-                      className={cn(
-                        "flex items-center gap-3 rounded-xl px-3 py-2 text-sm transition",
-                        "hover:bg-accent text-destructive"
-                      )}
-                    >
-                      <LogOut className="h-4 w-4" />
-                      <span>Sign Out</span>
-                    </button>
-                  </div>
-                </div>
-              )}
+              {/* Avatar Dropdown - Desktop */}
+              <div className="hidden lg:block">
+                <Link href="/profile/me">
+                  <UserAvatar
+                    src={session.user.image}
+                    alt={session.user.name || "User"}
+                    size="sm"
+                    className="cursor-pointer border border-primary/20 hover:border-primary transition-colors"
+                  />
+                </Link>
+              </div>
             </div>
-          </div>
-        </header>
-      </div>
-    </nav>
+          </header>
+        </div>
+      </nav>
     </>
   );
 }

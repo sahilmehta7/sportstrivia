@@ -11,34 +11,38 @@ export function MobileBottomNav() {
     const navLinks = [
         {
             href: "/quizzes",
-            label: "Quizzes",
+            label: "Play",
             icon: Gamepad2,
         },
         {
             href: "/topics",
-            label: "Discover",
+            label: "Explore",
             icon: Compass,
         },
         {
             href: "/leaderboard",
-            label: "Leaderboard",
+            label: "Rank",
             icon: Trophy,
         },
         {
             href: "/profile/me",
-            label: "Profile",
+            label: "Me",
             icon: User,
         },
     ];
 
     const isActive = (href: string) => {
-        if (href === "/quizzes" && pathname === "/") return false; // specialized check if needed, but usually exact match or prefix
+        if (href === "/quizzes" && (pathname === "/" || pathname === "")) return false;
         return pathname.startsWith(href);
     };
 
     return (
-        <nav className="fixed bottom-0 left-0 z-50 w-full border-t bg-background/80 backdrop-blur-lg lg:hidden pb-safe">
-            <div className="flex h-16 items-center justify-around px-2">
+        <nav className="fixed bottom-0 left-0 z-40 w-full px-4 pb-4 lg:hidden pointer-events-none">
+            <div className={cn(
+                "flex h-16 w-full items-center justify-around rounded-2xl",
+                "glass shadow-glass-lg border-primary/20 pointer-events-auto",
+                "safe-area-bottom"
+            )}>
                 {navLinks.map((link) => {
                     const Icon = link.icon;
                     const active = isActive(link.href);
@@ -48,18 +52,24 @@ export function MobileBottomNav() {
                             key={link.href}
                             href={link.href}
                             className={cn(
-                                "flex flex-1 flex-col items-center justify-center gap-1 py-2 text-xs font-medium transition-colors",
+                                "relative flex flex-1 flex-col items-center justify-center gap-1 h-full transition-all duration-300",
                                 active
-                                    ? "text-primary"
-                                    : "text-muted-foreground hover:text-foreground"
+                                    ? "text-primary scale-110"
+                                    : "text-muted-foreground opacity-60 hover:opacity-100"
                             )}
                         >
-                            <Icon className={cn("h-6 w-6", active && "fill-current")} />
-                            <span>{link.label}</span>
+                            <Icon className={cn("h-5 w-5", active && "drop-shadow-[0_0_8px_hsl(var(--neon-cyan))]")} />
+                            <span className="text-[10px] font-black uppercase tracking-tighter">{link.label}</span>
+
+                            {active && (
+                                <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-primary shadow-neon-cyan" />
+                            )}
                         </Link>
                     );
                 })}
             </div>
+            {/* Added spacer for safe area inset on physical mobile devices */}
+            <div className="h-safe-bottom" />
         </nav>
     );
 }

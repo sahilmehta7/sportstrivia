@@ -2,14 +2,15 @@
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Clock, Calendar, Sparkles } from "lucide-react";
+import { Clock, Calendar, Sparkles, Plus } from "lucide-react";
 import { Difficulty } from "@prisma/client";
 import { cn } from "@/lib/utils";
+import { getGradientText } from "@/lib/showcase-theme";
 
 const difficultyColors: Record<Difficulty, string> = {
-  EASY: "bg-emerald-500/10 text-emerald-600 border-emerald-500/30",
-  MEDIUM: "bg-amber-500/10 text-amber-600 border-amber-500/30",
-  HARD: "bg-rose-500/10 text-rose-600 border-rose-500/30",
+  EASY: "text-emerald-400 border-emerald-500/20 shadow-neon-lime/10",
+  MEDIUM: "text-cyan-400 border-cyan-500/20 shadow-neon-cyan/10",
+  HARD: "text-magenta-400 border-magenta-500/20 shadow-neon-magenta/10",
 };
 
 interface ComingSoonQuiz {
@@ -30,76 +31,78 @@ export function ComingSoonWidget({ quizzes }: ComingSoonWidgetProps) {
   }
 
   return (
-    <section className="mb-12">
-      <div className="mb-6 flex items-center gap-3">
-        <Sparkles className="h-6 w-6 text-primary" />
-        <h2 className="text-2xl font-bold">Coming Soon</h2>
-        <Badge variant="secondary" className="ml-auto">
-          {quizzes.length} new {quizzes.length === 1 ? "quiz" : "quizzes"}
-        </Badge>
+    <section className="space-y-8">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-1">
+        <div className="flex items-center gap-4">
+          <div className="h-6 w-1 rounded-full bg-accent shadow-neon-lime" />
+          <h2 className="text-2xl font-black tracking-tight uppercase">Coming Soon</h2>
+        </div>
+        <div className="inline-flex items-center gap-3 px-4 py-2 rounded-2xl glass border border-white/10">
+          <Sparkles className="h-4 w-4 text-accent animate-pulse" />
+          <span className="text-[10px] font-black uppercase tracking-widest text-accent">
+            {quizzes.length} IN DEVELOPMENT
+          </span>
+        </div>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {quizzes.map((quiz, index) => {
-          const difficultyLabel = `${quiz.difficulty.charAt(0)}${quiz.difficulty
-            .slice(1)
-            .toLowerCase()}`;
+          const difficultyLabel = quiz.difficulty.toUpperCase();
 
           return (
-            <Card
+            <div
               key={index}
-              className="group relative overflow-hidden border-dashed border-primary/30 bg-gradient-to-br from-primary/5 via-background to-background transition-all hover:border-primary/50 hover:shadow-lg"
+              className="group relative overflow-hidden rounded-[2.5rem] border border-dashed border-white/10 bg-white/[0.02] transition-all duration-300 hover:border-white/20 hover:bg-white/[0.04] p-8"
             >
-              <CardContent className="p-6">
-                <div className="mb-4 flex items-start justify-between gap-2">
-                  <Badge
-                    variant="secondary"
-                    className="bg-primary/10 text-primary"
-                  >
-                    Coming Soon
-                  </Badge>
-                  <Badge
-                    className={cn(
-                      "rounded-full px-2.5 py-0.5 text-xs",
-                      difficultyColors[quiz.difficulty]
-                    )}
-                  >
+              {/* Decorative Pattern Background */}
+              <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
+                <Sparkles className="h-24 w-24 text-white" />
+              </div>
+
+              <div className="relative z-10 space-y-6">
+                <div className="flex items-start justify-between">
+                  <div className={cn(
+                    "px-3 py-1 rounded-full glass border text-[10px] font-black tracking-widest uppercase",
+                    difficultyColors[quiz.difficulty]
+                  )}>
                     {difficultyLabel}
-                  </Badge>
+                  </div>
+                  <div className="h-10 w-10 rounded-full glass border border-white/5 flex items-center justify-center text-muted-foreground group-hover:text-accent transition-colors">
+                    <Plus className="h-5 w-5" />
+                  </div>
                 </div>
 
-                <h3 className="mb-2 text-lg font-semibold leading-tight">
-                  {quiz.title}
-                </h3>
-
-                {quiz.description && (
-                  <p className="mb-4 line-clamp-2 text-sm text-muted-foreground">
-                    {quiz.description}
-                  </p>
-                )}
-
-                <div className="flex flex-col gap-2 text-sm text-muted-foreground">
-                  <div className="flex items-center gap-2">
-                    <Clock className="h-4 w-4" />
-                    <span>{quiz.sport}</span>
-                  </div>
-                  {quiz.estimatedDate && (
-                    <div className="flex items-center gap-2">
-                      <Calendar className="h-4 w-4" />
-                      <span>Expected: {quiz.estimatedDate}</span>
-                    </div>
+                <div className="space-y-2">
+                  <h3 className="text-xl font-black uppercase tracking-tight leading-tight group-hover:text-primary transition-colors">
+                    {quiz.title}
+                  </h3>
+                  {quiz.description && (
+                    <p className="line-clamp-2 text-sm text-muted-foreground font-medium leading-relaxed">
+                      {quiz.description}
+                    </p>
                   )}
                 </div>
 
-                <div className="absolute right-4 top-4 opacity-5 transition-opacity group-hover:opacity-10">
-                  <Sparkles className="h-16 w-16" />
+                <div className="pt-4 flex flex-col gap-3">
+                  <div className="flex items-center gap-3 text-[10px] font-black uppercase tracking-widest text-muted-foreground/80">
+                    <Clock className="h-3 w-3 text-secondary" />
+                    <span>{quiz.sport}</span>
+                  </div>
+                  {quiz.estimatedDate && (
+                    <div className="flex items-center gap-3 text-[10px] font-black uppercase tracking-widest text-muted-foreground/80">
+                      <Calendar className="h-3 w-3 text-primary" />
+                      <span>RELEASING: {quiz.estimatedDate}</span>
+                    </div>
+                  )}
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+
+              {/* Animated corner accent */}
+              <div className="absolute bottom-0 right-0 h-16 w-16 bg-gradient-to-br from-transparent to-white/5 translate-x-1/2 translate-y-1/2 rotate-45 group-hover:scale-150 transition-transform duration-700" />
+            </div>
           );
         })}
       </div>
     </section>
   );
 }
-

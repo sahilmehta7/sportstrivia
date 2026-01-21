@@ -2,73 +2,69 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { getGlassCard, getTextColor } from "@/lib/showcase-theme";
+import { getGradientText } from "@/lib/showcase-theme";
 import { cn } from "@/lib/utils";
-import { ArrowRight, Play } from "lucide-react";
+import { ArrowRight, Trophy } from "lucide-react";
 
 export function FinalCTA() {
-  // Theme styling handled via CSS
-
   return (
-    <section className="px-4 py-12 sm:px-6 lg:py-16">
-      <div className="mx-auto max-w-4xl">
+    <section className="px-4 py-16 sm:px-6 lg:py-24 lg:pb-32">
+      <div className="mx-auto max-w-5xl">
         <div className={cn(
-          "relative rounded-[1.5rem] sm:rounded-[2rem] p-6 sm:p-8 lg:p-12 text-center backdrop-blur-xl",
-          getGlassCard()
+          "relative rounded-[3rem] p-8 sm:p-12 lg:p-20 text-center overflow-hidden",
+          "glass-elevated border-primary/20 shadow-glass-lg"
         )}>
-          <h2 className={cn(
-            "text-2xl sm:text-3xl lg:text-4xl font-bold mb-4 sm:mb-6",
-            getTextColor("primary")
-          )}>
-            Ready to Test Your Sports Knowledge?
-          </h2>
+          {/* Decorative background glow elements */}
+          <div className="absolute -top-32 -left-32 h-96 w-96 rounded-full bg-primary/10 blur-[120px] animate-pulse-glow pointer-events-none" />
+          <div className="absolute -bottom-32 -right-32 h-96 w-96 rounded-full bg-secondary/10 blur-[120px] pointer-events-none" />
 
-          <p className={cn(
-            "text-base sm:text-lg mb-6 sm:mb-8 max-w-2xl mx-auto",
-            getTextColor("secondary")
-          )}>
-            Join thousands of sports fans who challenge themselves daily.
-            Start your trivia journey today and climb the leaderboards!
-          </p>
+          <div className="relative space-y-8">
+            <div className="inline-flex items-center gap-2 rounded-full glass border-white/10 px-4 py-1.5 text-[10px] font-black uppercase tracking-[0.4em] text-primary">
+              <Trophy className="h-4 w-4" /> Final Boss Level
+            </div>
 
-          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center">
-            <Link href="/auth/signin">
-              <Button
-                size="lg"
-                className={cn(
-                  "w-full sm:min-w-[200px] gap-2 text-base sm:text-lg font-semibold transition-all duration-200 hover:scale-105",
-                  "bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-500/25",
-                  "dark:bg-emerald-600 dark:hover:bg-emerald-700 dark:text-white dark:shadow-lg dark:shadow-emerald-600/25"
-                )}
-              >
-                Get Started Now
-                <ArrowRight className="h-4 w-4 sm:h-5 sm:w-5" />
-              </Button>
-            </Link>
-
-            <Link href="/quizzes">
-              <Button
-                size="lg"
-                variant="outline"
-                className={cn(
-                  "w-full sm:min-w-[200px] gap-2 text-base sm:text-lg font-semibold backdrop-blur-sm transition-all duration-200 hover:scale-105",
-                  "border-blue-200 bg-white/60 text-blue-700 hover:bg-blue-50",
-                  "dark:border-white/20 dark:bg-white/5 dark:text-white dark:hover:bg-white/10"
-                )}
-              >
-                Browse Quizzes
-                <Play className="h-4 w-4 sm:h-5 sm:w-5" />
-              </Button>
-            </Link>
-          </div>
-
-          <div className="mt-6 sm:mt-8 pt-4 sm:pt-6 border-t border-white/10">
-            <p className={cn(
-              "text-xs sm:text-sm",
-              getTextColor("muted")
+            <h2 className={cn(
+              "text-5xl sm:text-7xl font-black tracking-tighter leading-[0.9]",
+              getGradientText("neon")
             )}>
-              Free to join • No credit card required • Start playing instantly
+              ARE YOU READY <br /> FOR THE ARENA?
+            </h2>
+
+            <p className="mx-auto max-w-2xl text-lg sm:text-xl text-muted-foreground font-medium leading-relaxed">
+              Join thousands of elite sports fans who challenge their instincts daily.
+              Your legacy starts the moment you enter the arena.
             </p>
+
+            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-4">
+              <Link href="/auth/signin" className="w-full sm:w-auto">
+                <Button
+                  size="xl"
+                  variant="neon"
+                  className="w-full sm:min-w-[240px] gap-3 font-black uppercase tracking-widest text-lg"
+                >
+                  Enter Arena Now
+                  <ArrowRight className="h-6 w-6" />
+                </Button>
+              </Link>
+
+              <Link href="/quizzes" className="w-full sm:w-auto">
+                <Button
+                  size="xl"
+                  variant="glass"
+                  className="w-full sm:min-w-[240px] gap-3 font-black uppercase tracking-widest text-lg"
+                >
+                  Watch Replays
+                </Button>
+              </Link>
+            </div>
+
+            <div className="pt-10 border-t border-white/5">
+              <div className="flex flex-wrap justify-center gap-x-12 gap-y-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">
+                <span className="flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-primary shadow-neon-cyan" /> Free Entrance</span>
+                <span className="flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-secondary shadow-neon-magenta" /> Daily Challenges</span>
+                <span className="flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-accent shadow-neon-lime" /> Global Rankings</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>

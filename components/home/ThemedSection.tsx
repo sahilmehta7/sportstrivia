@@ -10,23 +10,48 @@ interface ThemedSectionProps {
   children: ReactNode;
   showBlur?: boolean;
   className?: string;
+  withContainer?: boolean;
 }
 
-export function ThemedSection({ variant, children, showBlur = true, className }: ThemedSectionProps) {
-  // Theme logic is now handled via CSS classes
+export function ThemedSection({
+  variant,
+  children,
+  showBlur = true,
+  className,
+  withContainer = false
+}: ThemedSectionProps) {
   const blurCircles = getBlurCircles();
 
   return (
-    <section className={cn("relative", getBackgroundVariant(variant), className)}>
+    <section className={cn(
+      "relative overflow-hidden",
+      getBackgroundVariant(variant),
+      className
+    )}>
       {showBlur && (
-        <div className="absolute inset-0 -z-10 opacity-70">
-          <div className={cn("absolute -left-20 top-24 h-72 w-72 rounded-full blur-[120px]", blurCircles.circle1)} />
-          <div className={cn("absolute right-12 top-12 h-64 w-64 rounded-full blur-[100px]", blurCircles.circle2)} />
-          <div className={cn("absolute bottom-8 left-1/2 h-56 w-56 -translate-x-1/2 rounded-full blur-[90px]", blurCircles.circle3)} />
+        <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none select-none">
+          <div className={cn(
+            "absolute -left-[10%] top-[10%] h-[40%] w-[40%] rounded-full blur-[120px] opacity-40 animate-pulse-glow",
+            blurCircles.circle1
+          )} />
+          <div className={cn(
+            "absolute -right-[5%] top-[5%] h-[35%] w-[35%] rounded-full blur-[100px] opacity-30",
+            blurCircles.circle2
+          )} />
+          <div className={cn(
+            "absolute -bottom-[10%] left-[30%] h-[30%] w-[30%] rounded-full blur-[90px] opacity-20 animate-pulse-glow",
+            blurCircles.circle3
+          )} />
         </div>
       )}
-      {children}
+
+      {withContainer ? (
+        <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
+          {children}
+        </div>
+      ) : (
+        children
+      )}
     </section>
   );
 }
-

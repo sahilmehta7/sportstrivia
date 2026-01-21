@@ -3,6 +3,7 @@
 import * as React from "react"
 import * as DialogPrimitive from "@radix-ui/react-dialog"
 import { X } from "lucide-react"
+import { cva, type VariantProps } from "class-variance-authority"
 
 import { cn } from "@/lib/utils"
 
@@ -21,7 +22,10 @@ const DialogOverlay = React.forwardRef<
   <DialogPrimitive.Overlay
     ref={ref}
     className={cn(
-      "fixed inset-0 z-[60] bg-black/80 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
+      "fixed inset-0 z-[60]",
+      "bg-background/80 backdrop-blur-sm",
+      "data-[state=open]:animate-in data-[state=closed]:animate-out",
+      "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
       className
     )}
     {...props}
@@ -29,25 +33,87 @@ const DialogOverlay = React.forwardRef<
 ))
 DialogOverlay.displayName = DialogPrimitive.Overlay.displayName
 
+const dialogContentVariants = cva(
+  [
+    "fixed z-[70] grid gap-4 p-4 sm:p-6 shadow-lg",
+    "duration-base",
+    "data-[state=open]:animate-in data-[state=closed]:animate-out",
+  ].join(" "),
+  {
+    variants: {
+      variant: {
+        default: "border bg-background",
+        glass: "glass-elevated",
+        neon: "border border-primary/30 bg-background shadow-neon-cyan",
+      },
+      position: {
+        // Desktop: centered, Mobile: full-width bottom sheet
+        center: [
+          // Mobile: bottom sheet
+          "inset-x-0 bottom-0 rounded-t-xl max-h-[85vh]",
+          // Desktop: centered
+          "sm:inset-auto sm:left-[50%] sm:top-[50%] sm:-translate-x-1/2 sm:-translate-y-1/2",
+          "sm:rounded-lg sm:max-h-[85vh] sm:w-full sm:max-w-lg",
+          // Animations
+          "data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom",
+          "sm:data-[state=closed]:fade-out-0 sm:data-[state=open]:fade-in-0",
+          "sm:data-[state=closed]:zoom-out-95 sm:data-[state=open]:zoom-in-95",
+          "sm:data-[state=closed]:slide-out-to-left-1/2 sm:data-[state=closed]:slide-out-to-top-[48%]",
+          "sm:data-[state=open]:slide-in-from-left-1/2 sm:data-[state=open]:slide-in-from-top-[48%]",
+        ].join(" "),
+        // Always centered (desktop behavior)
+        "center-always": [
+          "left-[50%] top-[50%] -translate-x-1/2 -translate-y-1/2",
+          "w-[calc(100%-2rem)] max-w-lg rounded-lg",
+          "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
+          "data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
+        ].join(" "),
+        // Full screen on mobile
+        fullscreen: [
+          "inset-0 sm:inset-auto",
+          "sm:left-[50%] sm:top-[50%] sm:-translate-x-1/2 sm:-translate-y-1/2",
+          "sm:rounded-lg sm:w-full sm:max-w-lg sm:max-h-[85vh]",
+          "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
+        ].join(" "),
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+      position: "center",
+    },
+  }
+)
+
+export interface DialogContentProps
+  extends React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>,
+  VariantProps<typeof dialogContentVariants> {
+  hideClose?: boolean
+}
+
 const DialogContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
-  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>
->(({ className, children, ...props }, ref) => (
+  DialogContentProps
+>(({ className, children, variant, position, hideClose = false, ...props }, ref) => (
   <DialogPortal>
     <DialogOverlay />
     <DialogPrimitive.Content
       ref={ref}
-      className={cn(
-        "fixed left-[50%] top-[50%] z-[70] grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-lg",
-        className
-      )}
+      className={cn(dialogContentVariants({ variant, position }), className)}
       {...props}
     >
       {children}
-      <DialogPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground">
-        <X className="h-4 w-4" />
-        <span className="sr-only">Close</span>
-      </DialogPrimitive.Close>
+      {!hideClose && (
+        <DialogPrimitive.Close className={cn(
+          "absolute right-4 top-4 rounded-sm",
+          "opacity-70 transition-opacity hover:opacity-100",
+          "focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
+          "disabled:pointer-events-none",
+          "touch-target min-h-touch min-w-touch flex items-center justify-center"
+        )}>
+          <X className="h-4 w-4" />
+          <span className="sr-only">Close</span>
+        </DialogPrimitive.Close>
+      )}
     </DialogPrimitive.Content>
   </DialogPortal>
 ))
@@ -73,7 +139,7 @@ const DialogFooter = ({
 }: React.HTMLAttributes<HTMLDivElement>) => (
   <div
     className={cn(
-      "flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2",
+      "flex flex-col-reverse gap-2 sm:flex-row sm:justify-end",
       className
     )}
     {...props}
@@ -119,4 +185,5 @@ export {
   DialogFooter,
   DialogTitle,
   DialogDescription,
+  dialogContentVariants,
 }
