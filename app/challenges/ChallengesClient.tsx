@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { PageHeader } from "@/components/shared/PageHeader";
 import { ChallengeCard } from "@/components/challenges/ChallengeCard";
 import { ChallengeResultsModal } from "@/components/challenges/ChallengeResultsModal";
 import { CreateChallengeModal } from "@/components/challenges/CreateChallengeModal";
@@ -16,8 +15,14 @@ import {
   Inbox,
   Send,
   Plus,
+  Zap,
+  LayoutDashboard,
+  ShieldCheck,
   type LucideIcon,
 } from "lucide-react";
+import { PageContainer } from "@/components/shared/PageContainer";
+import { getBlurCircles, getGradientText } from "@/lib/showcase-theme";
+import { cn } from "@/lib/utils";
 
 interface ChallengeListItem {
   id: string;
@@ -59,225 +64,141 @@ export function ChallengesClient({
     challengedScore: number;
   } | null>(null);
 
-  const refreshChallenges = () => {
-    router.refresh();
-  };
+  const refreshChallenges = () => router.refresh();
 
   const handleAccept = async (challengeId: string) => {
     try {
-      const response = await fetch(`/api/challenges/${challengeId}/accept`, {
-        method: "PATCH",
-      });
-
-      if (!response.ok) {
-        const result = await response.json();
-        throw new Error(result.error || "Failed to accept challenge");
-      }
-
-      toast({
-        title: "Success",
-        description: "Challenge accepted! Take the quiz to compete.",
-      });
-
+      const response = await fetch(`/api/challenges/${challengeId}/accept`, { method: "PATCH" });
+      if (!response.ok) throw new Error((await response.json()).error || "Failed to accept challenge");
+      toast({ title: "Success", description: "Challenge accepted! Take the quiz to compete." });
       refreshChallenges();
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
+    } catch (e: any) {
+      toast({ title: "Error", description: e.message, variant: "destructive" });
     }
   };
 
   const handleDecline = async (challengeId: string) => {
     try {
-      const response = await fetch(`/api/challenges/${challengeId}/decline`, {
-        method: "PATCH",
-      });
-
-      if (!response.ok) {
-        const result = await response.json();
-        throw new Error(result.error || "Failed to decline challenge");
-      }
-
-      toast({
-        title: "Success",
-        description: "Challenge declined",
-      });
-
+      const response = await fetch(`/api/challenges/${challengeId}/decline`, { method: "PATCH" });
+      if (!response.ok) throw new Error((await response.json()).error || "Failed to decline challenge");
+      toast({ title: "Success", description: "Challenge declined" });
       refreshChallenges();
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
+    } catch (e: any) {
+      toast({ title: "Error", description: e.message, variant: "destructive" });
     }
   };
 
   const handleCancel = async (challengeId: string) => {
     try {
-      const response = await fetch(`/api/challenges/${challengeId}`, {
-        method: "DELETE",
-      });
-
-      if (!response.ok) {
-        const result = await response.json();
-        throw new Error(result.error || "Failed to cancel challenge");
-      }
-
-      toast({
-        title: "Success",
-        description: "Challenge cancelled",
-      });
-
+      const response = await fetch(`/api/challenges/${challengeId}`, { method: "DELETE" });
+      if (!response.ok) throw new Error((await response.json()).error || "Failed to cancel challenge");
+      toast({ title: "Success", description: "Challenge cancelled" });
       refreshChallenges();
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
+    } catch (e: any) {
+      toast({ title: "Error", description: e.message, variant: "destructive" });
     }
   };
 
   const handleViewResults = (challenge: ChallengeListItem) => {
-    if (
-      challenge.challengerScore === null ||
-      challenge.challengedScore === null
-    ) {
-      return;
-    }
-
+    if (challenge.challengerScore === null || challenge.challengedScore === null) return;
     setSelectedChallenge({
-      id: challenge.id,
-      quiz: {
-        title: challenge.quiz.title,
-        slug: challenge.quiz.slug,
-      },
-      challenger: challenge.challenger,
-      challenged: challenge.challenged,
-      challengerScore: challenge.challengerScore,
-      challengedScore: challenge.challengedScore,
+      id: challenge.id, quiz: { title: challenge.quiz.title, slug: challenge.quiz.slug },
+      challenger: challenge.challenger, challenged: challenge.challenged,
+      challengerScore: challenge.challengerScore, challengedScore: challenge.challengedScore,
     });
   };
 
-  const renderChallenges = (
-    challenges: ChallengeListItem[],
-    emptyIcon: LucideIcon,
-    emptyTitle: string,
-    emptyDescription: string,
-    actions: (challenge: ChallengeListItem) => {
-      onAccept?: () => void;
-      onDecline?: () => void;
-      onViewResults?: () => void;
-    }
-  ) => {
+  const renderChallengesList = (challenges: ChallengeListItem[], icon: LucideIcon, title: string, desc: string, isReceived: boolean = false, isSent: boolean = false) => {
     if (challenges.length === 0) {
       return (
-        <EmptyState
-          icon={emptyIcon}
-          title={emptyTitle}
-          description={emptyDescription}
-        />
+        <div className="py-24 text-center space-y-6 rounded-[3rem] glass border border-dashed border-white/10">
+          <div className="h-16 w-16 mx-auto rounded-full glass border border-white/5 flex items-center justify-center text-muted-foreground/20">
+            {icon({ className: "h-8 w-8" } as any)}
+          </div>
+          <div className="space-y-1">
+            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground/40">{title}</p>
+            <p className="text-xs text-muted-foreground/60 font-medium uppercase tracking-widest">{desc}</p>
+          </div>
+        </div>
       );
     }
-
-    return challenges.map((challenge) => (
-      <ChallengeCard
-        key={challenge.id}
-        challenge={challenge}
-        currentUserId={currentUserId}
-        {...actions(challenge)}
-      />
-    ));
+    return (
+      <div className="grid gap-8">
+        {challenges.map((c) => (
+          <ChallengeCard key={c.id} challenge={c} currentUserId={currentUserId}
+            onAccept={isReceived ? () => handleAccept(c.id) : undefined}
+            onDecline={isReceived ? () => handleDecline(c.id) : (isSent ? () => handleCancel(c.id) : undefined)}
+            onViewResults={() => handleViewResults(c)}
+          />
+        ))}
+      </div>
+    );
   };
 
   return (
-    <main className="min-h-screen bg-background py-8">
-      <div className="mx-auto max-w-6xl space-y-6 px-4">
-        <div className="flex items-center justify-between">
-          <PageHeader
-            title="Challenges"
-            description="Compete with your friends on quizzes"
-          />
-          <Button onClick={() => setShowCreateModal(true)}>
-            <Plus className="mr-2 h-4 w-4" />
-            New Challenge
+    <main className="relative min-h-screen overflow-hidden pt-12 pb-24 lg:pt-20">
+      <div className="absolute inset-0 -z-10">{getBlurCircles()}</div>
+
+      <PageContainer className="space-y-16">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-8 pt-4">
+          <div className="space-y-4">
+            <div className="flex items-center gap-4">
+              <div className="h-10 w-1 rounded-full bg-primary shadow-neon-cyan" />
+              <h1 className={cn("text-5xl lg:text-7xl font-black uppercase tracking-tighter", getGradientText("neon"))}>
+                CHALLENGES
+              </h1>
+            </div>
+            <p className="text-sm font-bold tracking-widest text-muted-foreground uppercase lg:pl-5">
+              COMBAT ZONE • DIRECT COMPETITION INTERFACE
+            </p>
+          </div>
+          <Button variant="neon" size="lg" onClick={() => setShowCreateModal(true)} className="rounded-full px-10">
+            <Plus className="mr-3 h-5 w-5" />
+            INITIATE CHALLENGE
           </Button>
         </div>
 
-        <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as typeof activeTab)}>
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="active" className="flex items-center gap-2">
-              <Swords className="h-4 w-4" />
-              Active
-              {activeChallenges.length > 0 && (
-                <Badge variant="secondary">{activeChallenges.length}</Badge>
-              )}
-            </TabsTrigger>
-            <TabsTrigger value="received" className="flex items-center gap-2">
-              <Inbox className="h-4 w-4" />
-              Received
-              {receivedChallenges.length > 0 && (
-                <Badge variant="default">{receivedChallenges.length}</Badge>
-              )}
-            </TabsTrigger>
-            <TabsTrigger value="sent" className="flex items-center gap-2">
-              <Send className="h-4 w-4" />
-              Sent
-              {sentChallenges.length > 0 && (
-                <Badge variant="secondary">{sentChallenges.length}</Badge>
-              )}
-            </TabsTrigger>
-          </TabsList>
+        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="space-y-12">
+          <div className="flex justify-center">
+            <TabsList className="h-auto p-1.5 rounded-[2rem] glass border border-white/10 shadow-glass-lg">
+              {[
+                { value: "active", label: "Active", count: activeChallenges.length, icon: Swords },
+                { value: "received", label: "Pending", count: receivedChallenges.length, icon: Inbox },
+                { value: "sent", label: "Dispatched", count: sentChallenges.length, icon: Send },
+              ].map((tab) => (
+                <TabsTrigger
+                  key={tab.value}
+                  value={tab.value}
+                  className="rounded-[1.75rem] px-8 py-3 text-[10px] font-black uppercase tracking-widest transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-neon-cyan/40 relative"
+                >
+                  <tab.icon className="h-3.5 w-3.5 mr-2" />
+                  {tab.label}
+                  {tab.count > 0 && (
+                    <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-secondary text-white text-[8px] flex items-center justify-center border-2 border-background shadow-neon-magenta-sm">
+                      {tab.count}
+                    </span>
+                  )}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </div>
 
-          <TabsContent value="active" className="space-y-4">
-            {renderChallenges(
-              activeChallenges,
-              Swords,
-              "No active challenges",
-              "Accept challenges or create new ones to get started!",
-              (challenge) => ({
-                onViewResults: () => handleViewResults(challenge),
-              })
-            )}
+          <TabsContent value="active">
+            {renderChallengesList(activeChallenges, Swords, "NO ACTIVE COMBAT", "ENGAGE TARGETS OR INITIATE NEW MISSION")}
           </TabsContent>
-
-          <TabsContent value="received" className="space-y-4">
-            {renderChallenges(
-              receivedChallenges,
-              Inbox,
-              "No pending challenges",
-              "You don't have any pending challenges from friends",
-              (challenge) => ({
-                onAccept: () => handleAccept(challenge.id),
-                onDecline: () => handleDecline(challenge.id),
-              })
-            )}
+          <TabsContent value="received">
+            {renderChallengesList(receivedChallenges, Inbox, "NO INBOUND SIGNALS", "AWAITING EXTERNAL TRANSMISSIONS", true)}
           </TabsContent>
-
-          <TabsContent value="sent" className="space-y-4">
-            {renderChallenges(
-              sentChallenges,
-              Send,
-              "No sent challenges",
-              "Challenge your friends to compete on quizzes!",
-              (challenge) => ({
-                onDecline: () => handleCancel(challenge.id),
-              })
-            )}
+          <TabsContent value="sent">
+            {renderChallengesList(sentChallenges, Send, "NO OUTBOUND DISPATCHES", "TRANSMIT CHALLENGES TO TARGETS", false, true)}
           </TabsContent>
         </Tabs>
-      </div>
+      </PageContainer>
 
       <CreateChallengeModal
         isOpen={showCreateModal}
         onClose={() => setShowCreateModal(false)}
-        onSuccess={() => {
-          setShowCreateModal(false);
-          refreshChallenges();
-        }}
+        onSuccess={() => { setShowCreateModal(false); refreshChallenges(); }}
       />
 
       {selectedChallenge && (

@@ -1,9 +1,9 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+"use client";
+
 import { Badge } from "@/components/ui/badge";
-import { Clock, CheckCircle2, XCircle, Sparkles } from "lucide-react";
+import { Clock, CheckCircle2, XCircle, Zap, ShieldCheck, ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
-import { glassText } from "@/components/showcase/ui/typography";
 
 interface QuizAttempt {
   id: string;
@@ -31,86 +31,89 @@ export function ActivityFeed({ attempts }: ActivityFeedProps) {
   };
 
   return (
-    <Card className="relative overflow-hidden rounded-[2rem] border shadow-xl bg-card/80 backdrop-blur-lg border-border/60">
-      {/* Background blur circles */}
-      <div className="absolute -top-20 -right-14 h-56 w-56 rounded-full bg-orange-500/20 blur-[160px]" />
-      <div className="absolute -bottom-24 -left-10 h-64 w-64 rounded-full bg-blue-500/15 blur-[160px]" />
-      
-      <CardHeader className="relative">
-        <CardTitle className={cn("flex items-center gap-2", glassText.h2)}>
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-r from-orange-500/30 to-pink-500/30">
-            <Clock className="h-4 w-4 text-orange-100" />
+    <div className="space-y-10">
+      <div className="flex items-center justify-between px-2">
+        <div className="space-y-1">
+          <div className="flex items-center gap-4">
+            <div className="h-6 w-1 rounded-full bg-accent shadow-neon-lime" />
+            <h4 className="text-2xl font-black uppercase tracking-tight">Mission Logs</h4>
           </div>
-          Recent Activity
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="relative">
-        {attempts.length === 0 ? (
-          <div className="py-12 text-center">
-            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-muted/50">
-              <Clock className="h-8 w-8 text-muted-foreground" />
-            </div>
-            <p className={cn("text-sm", glassText.subtitle)}>
-              No quiz attempts yet
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {attempts.map((attempt) => (
-              <Link
-                key={attempt.id}
-                href={`/quizzes/${attempt.quiz.slug}`}
-                className="block"
-              >
-                <div className="group relative overflow-hidden rounded-[1.5rem] border border-border/40 bg-muted/30 p-4 transition-all duration-200 hover:scale-105 hover:shadow-lg hover:bg-muted/50">
-                  {/* Subtle glow effect */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-accent/10 opacity-0 transition-opacity group-hover:opacity-100" />
-                  
-                  <div className="relative flex items-center justify-between">
+          <p className="text-xs text-muted-foreground font-medium uppercase tracking-widest pl-5">
+            CHRONOLOGICAL DEPLOYMENT HISTORY
+          </p>
+        </div>
+      </div>
+
+      <div className="grid gap-4">
+        {attempts.slice(0, 10).map((attempt) => (
+          <Link
+            key={attempt.id}
+            href={`/quizzes/${attempt.quiz.slug}`}
+            className="group block"
+          >
+            <div className="relative overflow-hidden rounded-2xl glass p-6 border border-white/5 transition-all duration-300 group-hover:border-white/20 group-hover:bg-white/5 group-hover:translate-x-1">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+                <div className="flex items-center gap-5">
+                  <div className={cn(
+                    "flex h-12 w-12 items-center justify-center rounded-xl glass border transition-all duration-300 shadow-glass",
+                    attempt.passed
+                      ? "border-emerald-500/30 text-emerald-400 shadow-neon-lime/10"
+                      : "border-red-500/30 text-red-400 shadow-neon-red/10"
+                  )}>
+                    {attempt.passed ? <ShieldCheck className="h-6 w-6" /> : <Zap className="h-6 w-6" />}
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-sm font-black uppercase tracking-tight group-hover:text-primary transition-colors">
+                      {attempt.quiz.title}
+                    </p>
                     <div className="flex items-center gap-3">
-                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-r from-orange-500/30 to-pink-500/30">
-                        {attempt.passed ? (
-                          <CheckCircle2 className="h-4 w-4 text-green-100" />
-                        ) : (
-                          <XCircle className="h-4 w-4 text-red-100" />
-                        )}
-                      </div>
-                      <div>
-                        <p className={cn("font-medium", glassText.h3)}>{attempt.quiz.title}</p>
-                        <p className={cn("text-xs", glassText.subtitle)}>
-                          {formatDate(attempt.completedAt)}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {attempt.score !== null && (
-                        <div className="flex items-center gap-1">
-                          <Sparkles className="h-3 w-3 text-primary" />
-                          <span className={cn("text-sm font-semibold", glassText.badge)}>
-                            {attempt.score.toFixed(0)}%
-                          </span>
-                        </div>
-                      )}
-                      <Badge
-                        variant={attempt.passed ? "default" : "secondary"}
-                        className={cn(
-                          "text-xs rounded-full",
-                          attempt.passed 
-                            ? "bg-green-500/20 text-green-100 border-green-500/30" 
-                            : "bg-red-500/20 text-red-100 border-red-500/30"
-                        )}
-                      >
-                        {attempt.passed ? "Passed" : "Failed"}
-                      </Badge>
+                      <p className="text-[10px] font-bold tracking-widest text-muted-foreground uppercase">
+                        {formatDate(attempt.completedAt)}
+                      </p>
+                      <div className="h-1 w-1 rounded-full bg-white/10" />
+                      <p className={cn(
+                        "text-[10px] font-black uppercase tracking-widest",
+                        attempt.passed ? "text-emerald-500" : "text-red-500"
+                      )}>
+                        {attempt.passed ? "MISSION SUCCESS" : "MISSION FAILED"}
+                      </p>
                     </div>
                   </div>
                 </div>
-              </Link>
-            ))}
+
+                <div className="flex items-center justify-between sm:justify-end gap-6 border-t border-white/5 pt-4 sm:border-0 sm:pt-0">
+                  {attempt.score !== null && (
+                    <div className="text-right">
+                      <div className="text-xl font-black tracking-tighter text-primary">
+                        {Math.round(attempt.score)}%
+                      </div>
+                      <p className="text-[8px] font-bold tracking-widest text-muted-foreground uppercase">ACCURACY</p>
+                    </div>
+                  )}
+                  <div className="h-10 w-10 rounded-xl glass border border-white/5 flex items-center justify-center group-hover:border-primary/40 group-hover:text-primary transition-all">
+                    <ArrowRight className="h-4 w-4" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </Link>
+        ))}
+
+        {attempts.length === 0 && (
+          <div className="py-20 text-center space-y-4 rounded-[3rem] glass border border-dashed border-white/10">
+            <Clock className="h-12 w-12 mx-auto text-muted-foreground/20" />
+            <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/40">NO RECENT ACTIVITY DETECTED</p>
           </div>
         )}
-      </CardContent>
-    </Card>
+      </div>
+
+      {attempts.length > 10 && (
+        <div className="text-center pt-4">
+          <Link href="/profile/activity" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-primary transition-colors">
+            VIEW ALL CHRONICLES →
+          </Link>
+        </div>
+      )}
+    </div>
   );
 }
-

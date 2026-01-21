@@ -6,7 +6,6 @@ import { ProfileHeader } from "@/components/profile/ProfileHeader";
 import { StatsCard } from "@/components/profile/StatsCard";
 import { BadgeShowcase } from "@/components/profile/BadgeShowcase";
 import { ActivityFeed } from "@/components/profile/ActivityFeed";
-// import { TopTopics } from "@/components/profile/TopTopics";
 import {
   Card,
   CardContent,
@@ -30,9 +29,11 @@ import {
   Settings,
   Award,
   Sparkles,
+  Zap,
+  Target,
+  ArrowRight
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { glassText } from "@/components/showcase/ui/typography";
 import { ShowcaseTopicWiseStats, ShowcaseContinuePlayingQueue } from "@/showcase/components";
 import { ShowcaseProgressTrackerRibbon } from "@/components/showcase/ui/ProgressTrackerRibbon";
 import { pointsForLevel } from "@/lib/config/gamification";
@@ -42,6 +43,7 @@ import { PushSubscriptionCard } from "@/components/notifications/PushSubscriptio
 import { DigestPreferencesCard } from "@/components/notifications/DigestPreferencesCard";
 import { JsonLdScript } from "next-seo";
 import { PageContainer } from "@/components/shared/PageContainer";
+import { getBlurCircles, getGradientText } from "@/lib/showcase-theme";
 
 interface ProfileData {
   id: string;
@@ -156,87 +158,31 @@ export function ProfileMeClient({
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setSaving(true);
-
     try {
       const updateData = {
         name: formData.name,
         bio: formData.bio || null,
         favoriteTeams: formData.favoriteTeams
-          ? formData.favoriteTeams
-              .split(",")
-              .map((team) => team.trim())
-              .filter(Boolean)
+          ? formData.favoriteTeams.split(",").map((t) => t.trim()).filter(Boolean)
           : [],
       };
-
       const response = await fetch("/api/users/me", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(updateData),
       });
-
       const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || "Failed to update profile");
-      }
-
+      if (!response.ok) throw new Error(result.error || "Failed to update profile");
       if (result.data?.user) {
-        const updatedUser = result.data.user as {
-          id: string;
-          name: string | null;
-          email: string;
-          image: string | null;
-          bio: string | null;
-          role: string;
-          favoriteTeams?: string[];
-          totalPoints: number | null;
-          experienceTier: string | null;
-          currentStreak: number;
-          longestStreak: number;
-          createdAt: string | Date;
-        };
-
-        const normalizedProfile: ProfileData = {
-          id: updatedUser.id,
-          name: updatedUser.name,
-          email: updatedUser.email,
-          image: updatedUser.image,
-          bio: updatedUser.bio,
-          role: updatedUser.role,
-          favoriteTeams: updatedUser.favoriteTeams ?? [],
-          totalPoints: updatedUser.totalPoints,
-          experienceTier: updatedUser.experienceTier,
-          currentStreak: updatedUser.currentStreak,
-          longestStreak: updatedUser.longestStreak,
-          createdAt:
-            typeof updatedUser.createdAt === "string"
-              ? updatedUser.createdAt
-              : updatedUser.createdAt.toISOString(),
-        };
-
-        setProfile({
-          ...normalizedProfile,
-        });
-        setFormData({
-          name: normalizedProfile.name ?? "",
-          bio: normalizedProfile.bio ?? "",
-          favoriteTeams: normalizedProfile.favoriteTeams.join(", "),
-        });
+        const u = result.data.user;
+        setProfile({ ...profile, ...u, favoriteTeams: u.favoriteTeams ?? [] });
+        setFormData({ name: u.name ?? "", bio: u.bio ?? "", favoriteTeams: (u.favoriteTeams ?? []).join(", ") });
       }
-
-      toast({
-        title: "Success",
-        description: "Profile updated successfully",
-      });
-
+      toast({ title: "Success", description: "Profile updated successfully" });
+      setEditOpen(false);
       router.refresh();
     } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
+      toast({ title: "Error", description: error.message, variant: "destructive" });
     } finally {
       setSaving(false);
     }
@@ -254,429 +200,217 @@ export function ProfileMeClient({
     const attempts = (stats?.recentAttempts ?? []).filter(
       (a) => a.quiz && (a.quiz as any).recurringType && (a.quiz as any).recurringType !== "NONE" && a.completedAt
     );
-    // Group by quiz slug
-    const map = new Map<string, { slug: string; title: string; dates: number[]; lastCompletedAt: number }>();
+    const map = new Map<string, any>();
     for (const a of attempts) {
-      const slug = a.quiz.slug;
-      const title = a.quiz.title;
       const dayTs = new Date(a.completedAt as any).setHours(0, 0, 0, 0);
       const ts = new Date(a.completedAt as any).getTime();
-      const entry = map.get(slug) ?? { slug, title, dates: [], lastCompletedAt: 0 };
+      const entry = map.get(a.quiz.slug) ?? { id: a.quiz.slug, title: a.quiz.title, slug: a.quiz.slug, dates: [], lastCompletedAt: 0 };
       entry.dates.push(dayTs);
       entry.lastCompletedAt = Math.max(entry.lastCompletedAt, ts);
-      map.set(slug, entry);
+      map.set(a.quiz.slug, entry);
     }
-    // Create items sorted by latest activity, limited to 5
-    const now = new Date();
     const last7 = Array.from({ length: 7 }).map((_, i) => {
-      const d = new Date(now);
-      d.setDate(now.getDate() - (6 - i));
-      d.setHours(0, 0, 0, 0);
-      return d.getTime();
+      const d = new Date(); d.setDate(d.getDate() - (6 - i)); d.setHours(0, 0, 0, 0); return d.getTime();
     });
     return Array.from(map.values())
       .sort((a, b) => b.lastCompletedAt - a.lastCompletedAt)
       .slice(0, 5)
       .map((g) => {
-        const uniqueDaysDesc = Array.from(new Set(g.dates)).sort((a, b) => b - a);
-        const daysOfWeek = last7.map((t) => uniqueDaysDesc.includes(t));
-        let streak = 0;
-        if (uniqueDaysDesc.length > 0) {
-          streak = 1;
-          for (let i = 1; i < uniqueDaysDesc.length; i++) {
-            if (uniqueDaysDesc[i - 1] - uniqueDaysDesc[i] === 24 * 60 * 60 * 1000) streak += 1; else break;
-          }
-        }
+        const uniqueDaysDesc = Array.from(new Set(g.dates)).sort((a: any, b: any) => b - a);
+        const daysOfWeek = last7.map((t) => (uniqueDaysDesc as any).includes(t));
+        let streak = 0; if (uniqueDaysDesc.length > 0) { streak = 1; for (let i = 1; i < uniqueDaysDesc.length; i++) { if ((uniqueDaysDesc[i - 1] as any) - (uniqueDaysDesc[i] as any) === 86400000) streak += 1; else break; } }
         return {
-          id: g.slug,
-          title: g.title,
-          progress: 0,
+          id: g.id, title: g.title, progress: 0,
           lastPlayedLabel: new Intl.DateTimeFormat("en-US", { dateStyle: "medium" }).format(new Date(g.lastCompletedAt)),
-          slug: g.slug,
-          daysOfWeek,
-          streak,
+          slug: g.slug, daysOfWeek, streak,
         };
       });
   })();
 
   return (
-    <main className="relative min-h-screen bg-background py-8">
-      {/* Background blur circles */}
-      <div className="absolute inset-0 -z-10 opacity-70">
-        <div className="absolute -left-20 top-24 h-72 w-72 rounded-full bg-blue-500/20 blur-[120px]" />
-        <div className="absolute right-12 top-12 h-64 w-64 rounded-full bg-emerald-500/20 blur-[100px]" />
-        <div className="absolute bottom-8 left-1/2 h-56 w-56 -translate-x-1/2 rounded-full bg-purple-500/20 blur-[90px]" />
-      </div>
-      
-      <PageContainer className="relative space-y-8">
-        <ProfileHeader user={profile} isOwnProfile showEditButton={false} />
+    <ShowcaseThemeProvider>
+      <main className="relative min-h-screen overflow-hidden pt-12 pb-24 lg:pt-20">
+        <div className="absolute inset-0 -z-10">{getBlurCircles()}</div>
 
-        <Tabs defaultValue="overview" className="space-y-8">
-          <TabsList className={cn(
-            "grid w-full grid-cols-4 rounded-[1.5rem] border shadow-lg",
-            "bg-card/60 backdrop-blur-md border-border/60",
-            "lg:w-auto lg:inline-grid"
-          )}>
-            <TabsTrigger 
-              value="overview" 
-              className={cn(
-                "gap-2 rounded-[1rem] transition-all",
-                "data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
-              )}
-            >
-              <LayoutDashboard className="h-4 w-4" />
-              <span className="hidden sm:inline">Overview</span>
-            </TabsTrigger>
-            <TabsTrigger 
-              value="activity" 
-              className={cn(
-                "gap-2 rounded-[1rem] transition-all",
-                "data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
-              )}
-            >
-              <Activity className="h-4 w-4" />
-              <span className="hidden sm:inline">Activity</span>
-            </TabsTrigger>
-            <TabsTrigger 
-              value="achievements" 
-              className={cn(
-                "gap-2 rounded-[1rem] transition-all",
-                "data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
-              )}
-            >
-              <Award className="h-4 w-4" />
-              <span className="hidden sm:inline">Achievements</span>
-            </TabsTrigger>
-            <TabsTrigger 
-              value="settings" 
-              className={cn(
-                "gap-2 rounded-[1rem] transition-all",
-                "data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
-              )}
-            >
-              <Settings className="h-4 w-4" />
-              <span className="hidden sm:inline">Profile Info</span>
-            </TabsTrigger>
-          </TabsList>
+        <PageContainer className="space-y-16">
+          <ProfileHeader user={profile as any} isOwnProfile showEditButton={false} />
 
-          <TabsContent value="overview" className="space-y-8">
-            {stats && (
-              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-                <StatsCard
-                  title="Total Quizzes"
-                  value={stats.stats.totalAttempts}
-                  icon={Trophy}
-                  subtitle={`${stats.stats.passedQuizzes} passed`}
-                />
-                <StatsCard
-                  title="Average Score"
-                  value={`${stats.stats.averageScore.toFixed(1)}%`}
-                  icon={BarChart3}
-                  subtitle={`${stats.stats.passRate.toFixed(0)}% pass rate`}
-                />
-                {(() => {
-                  const totalPoints = profile.totalPoints ?? 0;
-                  const level = profile.level ?? 0;
-                  const currentReq = profile.levelCurrentPointsRequired ?? pointsForLevel(level);
-                  const nextReq = profile.nextLevelPoints ?? (level < 100 ? pointsForLevel(level + 1) : null);
-                  const span = profile.levelSpanPoints ?? (nextReq ? Math.max(nextReq - currentReq, 1) : 1);
-                  const progress = profile.levelProgressPoints ?? (nextReq ? Math.min(Math.max(totalPoints - currentReq, 0), span) : span);
-                  return (
-                    <ShowcaseThemeProvider>
-                      <ShowcaseProgressTrackerRibbon
-                        label={`${profile.tierName || profile.experienceTier || "Rookie"}`}
-                        current={progress}
-                        goal={span}
-                        rightTitle="Level"
-                        rightValue={level}
-                        milestoneLabel={undefined}
-                        footerRight={<Link href="/profile/me/points" className="underline">Points History</Link>}
-                      />
-                    </ShowcaseThemeProvider>
-                  );
-                })()}
-                <StatsCard
-                  title="Current Streak"
-                  value={`${stats.stats.currentStreak} days`}
-                  subtitle={`Best: ${stats.stats.longestStreak} days`}
-                  icon={TrendingUp}
-                />
-              </div>
-            )}
+          <Tabs defaultValue="overview" className="space-y-12">
+            <div className="flex justify-center">
+              <TabsList className="h-auto p-1.5 rounded-[2rem] glass border border-white/10 shadow-glass-lg">
+                {[
+                  { value: "overview", label: "Overview", icon: LayoutDashboard },
+                  { value: "activity", label: "Chronicle", icon: Activity },
+                  { value: "achievements", label: "Matrix", icon: Award },
+                  { value: "settings", label: "Settings", icon: Settings },
+                ].map((tab) => (
+                  <TabsTrigger
+                    key={tab.value}
+                    value={tab.value}
+                    className="rounded-[1.75rem] px-6 py-3 text-[10px] font-black uppercase tracking-widest transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-neon-cyan/40"
+                  >
+                    <tab.icon className="h-3.5 w-3.5 mr-2" />
+                    {tab.label}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+            </div>
 
-            {(continueItems.length > 0 || stats) && (
-              <div className="grid gap-8 md:grid-cols-2">
-                {stats && (
-                  <ShowcaseTopicWiseStats
-                    title="Top Topics"
-                    description="Your best-performing topics"
-                    topics={mappedTopTopics}
-                    limit={5}
-                    viewAllHref="/showcase/topic-wise-stats-complete"
-                    className="col-span-2 md:col-span-1"
-                  />
+            <TabsContent value="overview" className="space-y-16">
+              {stats && (
+                <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+                  <StatsCard title="RECORDS" value={stats.stats.totalAttempts} variant="cyan" icon={Trophy} subtitle={`${stats.stats.passedQuizzes} MISSIONS SUCCESS`} />
+                  <StatsCard title="ACCURACY" value={`${stats.stats.averageScore.toFixed(0)}%`} variant="magenta" icon={Target} subtitle={`${stats.stats.passRate.toFixed(0)}% RATE`} />
+                  <StatsCard title="STREAK" value={`${stats.stats.currentStreak} DAYS`} variant="lime" icon={TrendingUp} subtitle={`BEST: ${stats.stats.longestStreak} D`} />
+                  {(() => {
+                    const totalPoints = profile.totalPoints ?? 0;
+                    const level = profile.level ?? 0;
+                    const currentReq = profile.levelCurrentPointsRequired ?? pointsForLevel(level);
+                    const nextReq = profile.nextLevelPoints ?? (level < 100 ? pointsForLevel(level + 1) : null);
+                    const span = profile.levelSpanPoints ?? (nextReq ? Math.max(nextReq - currentReq, 1) : 1);
+                    const progress = profile.levelProgressPoints ?? (nextReq ? Math.min(Math.max(totalPoints - currentReq, 0), span) : span);
+                    return (
+                      <div className="flex flex-col gap-1 p-6 rounded-[2rem] glass-elevated border border-white/5 shadow-neon-cyan/5">
+                        <div className="flex items-center justify-between mb-4">
+                          <Zap className="h-5 w-5 text-primary" />
+                          <div className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground/60">TIER {level}</div>
+                        </div>
+                        <ShowcaseProgressTrackerRibbon
+                          label={`${profile.tierName || profile.experienceTier || "ROOKIE"}`}
+                          current={progress}
+                          goal={span}
+                          rightTitle="XP"
+                          rightValue={totalPoints.toLocaleString()}
+                          milestoneLabel={undefined}
+                          footerRight={<Link href="/profile/me/points" className="text-[10px] font-black text-primary hover:underline">HISTORY →</Link>}
+                        />
+                      </div>
+                    );
+                  })()}
+                </div>
+              )}
+
+              <div className="grid gap-12 lg:grid-cols-2">
+                {stats && mappedTopTopics.length > 0 && (
+                  <div className="space-y-8">
+                    <div className="flex items-center gap-4 px-2">
+                      <div className="h-6 w-1 rounded-full bg-primary shadow-neon-cyan" />
+                      <h4 className="text-2xl font-black uppercase tracking-tight">Sector Insights</h4>
+                    </div>
+                    <ShowcaseTopicWiseStats
+                      title=""
+                      description=""
+                      topics={mappedTopTopics}
+                      limit={5}
+                      className="bg-transparent border-0 p-0 shadow-none"
+                    />
+                  </div>
                 )}
                 {continueItems.length > 0 && (
-                  <Card className="relative overflow-hidden rounded-[2rem] border shadow-xl bg-card/80 backdrop-blur-lg border-border/60 col-span-2 md:col-span-1">
-                    <CardHeader className="relative pb-2">
-                      <CardTitle className={cn("flex items-center gap-2", glassText.h2)}>
-                        Continue Playing
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="relative pt-0">
-                      <ShowcaseThemeProvider>
-                        <ShowcaseContinuePlayingQueue
-                          embedded
-                          items={continueItems.map(({ slug: _slug, ...rest }) => rest as any)}
-                          onResume={(item: any) => router.push(`/quizzes/${continueItems.find((i:any)=>i.id===item.id)?.slug}`)}
-                        />
-                      </ShowcaseThemeProvider>
-                    </CardContent>
-                  </Card>
+                  <div className="space-y-8">
+                    <div className="flex items-center gap-4 px-2">
+                      <div className="h-6 w-1 rounded-full bg-secondary shadow-neon-magenta" />
+                      <h4 className="text-2xl font-black uppercase tracking-tight">Active Arenas</h4>
+                    </div>
+                    <div className="rounded-[2.5rem] p-8 glass-elevated border border-white/10">
+                      <ShowcaseContinuePlayingQueue
+                        embedded
+                        items={continueItems}
+                        onResume={(item: any) => router.push(`/quizzes/${item.slug}`)}
+                      />
+                    </div>
+                  </div>
                 )}
               </div>
-            )}
-          </TabsContent>
+            </TabsContent>
 
-          <TabsContent value="activity" className="space-y-8">
-            {stats && <ActivityFeed attempts={stats.recentAttempts || []} />}
-          </TabsContent>
+            <TabsContent value="activity">
+              {stats && <ActivityFeed attempts={stats.recentAttempts || []} />}
+            </TabsContent>
 
-          <TabsContent value="achievements" className="space-y-8">
-            <BadgeShowcase badges={badges} />
+            <TabsContent value="achievements">
+              <BadgeShowcase badges={badges as any} />
+            </TabsContent>
 
-            {stats && (
-              <Card className="relative overflow-hidden rounded-[2rem] border shadow-xl bg-card/80 backdrop-blur-lg border-border/60">
-                {/* Background blur circles */}
-                <div className="absolute -top-20 -right-14 h-56 w-56 rounded-full bg-orange-500/20 blur-[160px]" />
-                <div className="absolute -bottom-24 -left-10 h-64 w-64 rounded-full bg-blue-500/15 blur-[160px]" />
-                
-                <CardHeader className="relative">
-                  <CardTitle className={cn("flex items-center gap-2", glassText.h2)}>
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-r from-orange-500/30 to-pink-500/30">
-                      <BarChart3 className="h-4 w-4 text-orange-100" />
+            <TabsContent value="settings" className="space-y-12 shrink-0">
+              <div className="grid gap-12 lg:grid-cols-2">
+                <div className="space-y-8">
+                  <div className="flex items-center gap-4 px-2">
+                    <div className="h-6 w-1 rounded-full bg-primary shadow-neon-cyan" />
+                    <h4 className="text-2xl font-black uppercase tracking-tight">System Access</h4>
+                  </div>
+                  <div className="space-y-6">
+                    <PushSubscriptionCard />
+                    <DigestPreferencesCard />
+                  </div>
+                </div>
+
+                <div className="space-y-8">
+                  <div className="flex items-center gap-4 px-2 flex-row justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className="h-6 w-1 rounded-full bg-secondary shadow-neon-magenta" />
+                      <h4 className="text-2xl font-black uppercase tracking-tight">Profile Config</h4>
                     </div>
-                    Performance Summary
-                  </CardTitle>
-                  <CardDescription className={cn(glassText.subtitle)}>
-                    Your overall quiz performance metrics
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="relative space-y-6">
-                  <div className="grid gap-6 sm:grid-cols-2">
-                    <div className="space-y-2">
-                      <p className={cn("text-sm", glassText.badge)}>Total Questions Answered</p>
-                      <p className={cn("text-2xl font-bold", glassText.h3)}>
-                        {stats.stats.totalAttempts * 10 || 0}
-                      </p>
+                    {!editOpen && (
+                      <Button variant="glass" size="sm" onClick={() => setEditOpen(true)} className="rounded-2xl">CONFIGURE</Button>
+                    )}
+                  </div>
+
+                  {editOpen ? (
+                    <div className="rounded-[2.5rem] p-8 glass-elevated border border-primary/20 shadow-neon-cyan/5">
+                      <form onSubmit={handleSubmit} className="space-y-8">
+                        <div className="grid gap-6 sm:grid-cols-2">
+                          <div className="space-y-2">
+                            <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">IDENTIFIER</Label>
+                            <Input value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} className="rounded-2xl glass h-12" />
+                          </div>
+                          <div className="space-y-2">
+                            <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">AFFILIATED TEAMS</Label>
+                            <Input value={formData.favoriteTeams} onChange={(e) => setFormData({ ...formData, favoriteTeams: e.target.value })} className="rounded-2xl glass h-12" />
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">BIOGRAPHICAL DATA</Label>
+                          <Textarea value={formData.bio} onChange={(e) => setFormData({ ...formData, bio: e.target.value })} rows={4} className="rounded-2xl glass" />
+                        </div>
+                        <div className="flex gap-4">
+                          <Button type="submit" variant="neon" size="lg" disabled={saving} className="flex-1">
+                            <Save className="mr-3 h-4 w-4" />
+                            {saving ? "UPLOADING..." : "SYNC PROFILE"}
+                          </Button>
+                          <Button type="button" variant="glass" size="lg" onClick={() => setEditOpen(false)}>ABORT</Button>
+                        </div>
+                      </form>
                     </div>
-                    <div className="space-y-2">
-                      <p className={cn("text-sm", glassText.badge)}>Accuracy Rate</p>
-                      <p className={cn("text-2xl font-bold text-primary", glassText.h3)}>
-                        {stats.stats.averageScore.toFixed(1)}%
-                      </p>
+                  ) : (
+                    <div className="rounded-[2.5rem] p-8 glass-elevated border border-white/10 space-y-8">
+                      <div className="grid gap-8 sm:grid-cols-2">
+                        <InfoItem label="EMAIL" value={profile.email} />
+                        <InfoItem label="ROLE" value={profile.role} />
+                        <InfoItem label="JOINED" value={new Intl.DateTimeFormat("en-US", { month: "long", year: "numeric" }).format(new Date(profile.createdAt))} />
+                        <InfoItem label="STATUS" value="ONLINE - SECURE" color="text-emerald-400" />
+                      </div>
+                      {profile.bio && <InfoItem label="BIO" value={profile.bio} fullWidth />}
+                      {profile.favoriteTeams.length > 0 && <InfoItem label="TEAMS" value={profile.favoriteTeams.join(", ")} fullWidth />}
                     </div>
-                    <div className="space-y-2">
-                      <p className={cn("text-sm", glassText.badge)}>Perfect Scores</p>
-                      <p className={cn("text-2xl font-bold", glassText.h3)}>
-                        {stats.perfectScores || 0}
-                      </p>
-                    </div>
-                    <div className="space-y-2">
-                      <p className={cn("text-sm", glassText.badge)}>Badges Earned</p>
-                      <p className={cn("text-2xl font-bold", glassText.h3)}>
-                        {badges.filter((b) => b.earned || b.earnedAt).length} / {badges.length}
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-          </TabsContent>
-
-          <TabsContent value="settings" className="space-y-8">
-            <PushSubscriptionCard />
-            <DigestPreferencesCard />
-            {/* Profile Info widget moved here, read-only by default */}
-            <Card className="relative overflow-hidden rounded-[2rem] border shadow-xl bg-card/80 backdrop-blur-lg border-border/60">
-              {/* Background blur circles */}
-              <div className="absolute -top-20 -right-14 h-56 w-56 rounded-full bg-orange-500/20 blur-[160px]" />
-              <div className="absolute -bottom-24 -left-10 h-64 w-64 rounded-full bg-blue-500/15 blur-[160px]" />
-              
-              <CardHeader className="relative flex-row items-center justify-between">
-                <CardTitle className={cn("flex items-center gap-2", glassText.h2)}>
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-r from-orange-500/30 to-pink-500/30">
-                    <Sparkles className="h-4 w-4 text-orange-100" />
-                  </div>
-                  Profile Info
-                </CardTitle>
-                <Button onClick={() => setEditOpen(true)} className="rounded-full">
-                  Edit Profile
-                </Button>
-              </CardHeader>
-              <CardContent className="relative space-y-4">
-                {profile.bio && (
-                  <div>
-                    <p className={cn("text-sm", glassText.badge)}>Bio</p>
-                    <p className={cn("mt-2", glassText.subtitle)}>{profile.bio}</p>
-                  </div>
-                )}
-                {profile.favoriteTeams.length > 0 && (
-                  <div>
-                    <p className={cn("text-sm", glassText.badge)}>Favorite Teams</p>
-                    <p className={cn("mt-2", glassText.subtitle)}>
-                      {profile.favoriteTeams.join(", ")}
-                    </p>
-                  </div>
-                )}
-                <div>
-                  <p className={cn("text-sm", glassText.badge)}>Member since</p>
-                  <p className={cn("mt-2", glassText.subtitle)}>
-                    {new Intl.DateTimeFormat("en-US", {
-                      month: "long",
-                      year: "numeric",
-                    }).format(new Date(profile.createdAt))}
-                  </p>
+                  )}
                 </div>
-                <div>
-                  <p className={cn("text-sm", glassText.badge)}>Email</p>
-                  <p className={cn("mt-2", glassText.subtitle)}>{profile.email}</p>
-                </div>
-              </CardContent>
-            </Card>
+              </div>
+            </TabsContent>
+          </Tabs>
+        </PageContainer>
 
-            {editOpen && (
-            <Card className="relative overflow-hidden rounded-[2rem] border shadow-xl bg-card/80 backdrop-blur-lg border-border/60">
-              {/* Background blur circles */}
-              <div className="absolute -top-20 -right-14 h-56 w-56 rounded-full bg-orange-500/20 blur-[160px]" />
-              <div className="absolute -bottom-24 -left-10 h-64 w-64 rounded-full bg-blue-500/15 blur-[160px]" />
-              
-              <CardHeader className="relative">
-                <CardTitle className={cn("flex items-center gap-2", glassText.h2)}>
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-r from-orange-500/30 to-pink-500/30">
-                    <Settings className="h-4 w-4 text-orange-100" />
-                  </div>
-                  Edit Profile
-                </CardTitle>
-                <CardDescription className={cn(glassText.subtitle)}>
-                  Update your profile information
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="relative">
-                <form onSubmit={handleSubmit} className="space-y-6">
-                  <div className="space-y-2">
-                    <Label htmlFor="name" className={cn(glassText.badge)}>Name</Label>
-                    <Input
-                      id="name"
-                      value={formData.name}
-                      onChange={(e) =>
-                        setFormData({ ...formData, name: e.target.value })
-                      }
-                      placeholder="Your name"
-                      className="rounded-[1rem] border-border/60 bg-background/60 backdrop-blur-sm"
-                    />
-                  </div>
+        <JsonLdScript scriptKey="person-jsonld" data={{ "@context": "https://schema.org", "@type": "Person", name: profile.name || "UNREGISTERED", image: profile.image, description: profile.bio }} />
+      </main>
+    </ShowcaseThemeProvider>
+  );
+}
 
-                  <div className="space-y-2">
-                    <Label htmlFor="bio" className={cn(glassText.badge)}>Bio</Label>
-                    <Textarea
-                      id="bio"
-                      value={formData.bio}
-                      onChange={(e) =>
-                        setFormData({ ...formData, bio: e.target.value })
-                      }
-                      placeholder="Tell us about yourself..."
-                      rows={3}
-                      className="rounded-[1rem] border-border/60 bg-background/60 backdrop-blur-sm"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="favoriteTeams" className={cn(glassText.badge)}>Favorite Teams</Label>
-                    <Input
-                      id="favoriteTeams"
-                      value={formData.favoriteTeams}
-                      onChange={(e) =>
-                        setFormData({ ...formData, favoriteTeams: e.target.value })
-                      }
-                      placeholder="Team 1, Team 2, Team 3"
-                      className="rounded-[1rem] border-border/60 bg-background/60 backdrop-blur-sm"
-                    />
-                    <p className={cn("text-xs", glassText.subtitle)}>
-                      Comma-separated list of your favorite teams
-                    </p>
-                  </div>
-
-                  <div className="flex gap-3">
-                    <Button 
-                      type="submit" 
-                      disabled={saving}
-                      className="rounded-full bg-gradient-to-r from-orange-400 to-pink-500 px-6 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-white shadow-[0_12px_30px_-16px_rgba(249,115,22,0.55)] transition hover:-translate-y-0.5"
-                    >
-                      <Save className="mr-2 h-4 w-4" />
-                      {saving ? "Saving..." : "Save Changes"}
-                    </Button>
-                    <Button type="button" variant="outline" onClick={() => setEditOpen(false)} className="rounded-full">
-                      Cancel
-                    </Button>
-                  </div>
-                </form>
-              </CardContent>
-            </Card>
-            )}
-
-            <Card className="relative overflow-hidden rounded-[2rem] border shadow-xl bg-card/80 backdrop-blur-lg border-border/60">
-              {/* Background blur circles */}
-              <div className="absolute -top-20 -right-14 h-56 w-56 rounded-full bg-orange-500/20 blur-[160px]" />
-              <div className="absolute -bottom-24 -left-10 h-64 w-64 rounded-full bg-blue-500/15 blur-[160px]" />
-              
-              <CardHeader className="relative">
-                <CardTitle className={cn("flex items-center gap-2", glassText.h2)}>
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-r from-orange-500/30 to-pink-500/30">
-                    <Sparkles className="h-4 w-4 text-orange-100" />
-                  </div>
-                  Account Information
-                </CardTitle>
-                <CardDescription className={cn(glassText.subtitle)}>
-                  Your account details
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="relative space-y-4">
-                <div className="flex items-center justify-between text-sm">
-                  <span className={cn(glassText.badge)}>Email</span>
-                  <span className={cn("font-medium", glassText.subtitle)}>{profile.email}</span>
-                </div>
-                <div className="flex items-center justify-between text-sm">
-                  <span className={cn(glassText.badge)}>Role</span>
-                  <span className={cn("font-medium", glassText.subtitle)}>{profile.role}</span>
-                </div>
-                <div className="flex items-center justify-between text-sm">
-                  <span className={cn(glassText.badge)}>Experience Tier</span>
-                  <span className={cn("font-medium", glassText.subtitle)}>{profile.experienceTier || "ROOKIE"}</span>
-                </div>
-                <div className="flex items-center justify-between text-sm">
-                  <span className={cn(glassText.badge)}>Total Points</span>
-                  <span className={cn("font-medium", glassText.subtitle)}>
-                    {profile.totalPoints?.toLocaleString() || "0"}
-                  </span>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
-      </PageContainer>
-
-      {/* Structured Data */}
-      <JsonLdScript
-        scriptKey="person-jsonld"
-        data={{
-          "@context": "https://schema.org",
-          "@type": "Person",
-          name: profile.name || "Anonymous User",
-          ...(profile.image ? { image: profile.image } : {}),
-          ...(profile.bio ? { description: profile.bio } : {}),
-        }}
-      />
-    </main>
+function InfoItem({ label, value, color, fullWidth }: { label: string, value: string, color?: string, fullWidth?: boolean }) {
+  return (
+    <div className={cn("space-y-1.5", fullWidth && "sm:col-span-2")}>
+      <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">{label}</p>
+      <p className={cn("text-sm font-bold tracking-tight", color || "text-foreground")}>{value}</p>
+    </div>
   );
 }
