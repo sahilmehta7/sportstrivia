@@ -2,10 +2,10 @@
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { getSurfaceStyles, getTextColor } from "@/lib/showcase-theme";
 import { ShowcaseReviewCard } from "@/components/showcase/ui/ReviewCard";
 import { ShowcaseEmptyState } from "@/components/showcase/ui/EmptyState";
 import { trackEvent } from "@/lib/analytics";
+import { MessageSquarePlus } from "lucide-react";
 
 interface ReviewItem {
   id: string;
@@ -33,32 +33,47 @@ export function ShowcaseReviewsPanel({ reviews, onAddReview, className }: Showca
     onAddReview?.();
   };
 
-  // Ensure reviews is always an array
   const safeReviews = Array.isArray(reviews) ? reviews : [];
 
   if (safeReviews.length === 0) {
     return (
       <ShowcaseEmptyState
         icon="💬"
-        title="No reviews yet"
-        description="Be the first to share your thoughts about this quiz."
-        {...(canAddReview ? { actionLabel: "Add a review", onAction: handleAdd } : {})}
+        title="BE THE FIRST TO COMMENT"
+        description="This arena has no records yet. Share your experience with the community."
+        {...(canAddReview ? { actionLabel: "DEPLOY REVIEW", onAction: handleAdd } : {})}
         className={className}
       />
     );
   }
 
   return (
-    <div className={cn("rounded-[1.5rem] p-4 sm:p-6", getSurfaceStyles("base"), className)}>
-      <div className="mb-3 sm:mb-4 flex items-center justify-between gap-2">
-        <h4 className={cn("text-sm sm:text-base font-semibold", getTextColor("primary"))}>Reviews ({safeReviews.length})</h4>
+    <div className={cn("space-y-10", className)}>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 px-1">
+        <div className="space-y-1">
+          <div className="flex items-center gap-4">
+            <div className="h-6 w-1 rounded-full bg-primary shadow-neon-cyan" />
+            <h4 className="text-2xl font-black uppercase tracking-tight">Transmission Feed</h4>
+          </div>
+          <p className="text-xs text-muted-foreground font-medium uppercase tracking-widest pl-5">
+            {safeReviews.length} Community Logs Available
+          </p>
+        </div>
+
         {canAddReview && (
-          <Button size="sm" className="rounded-full" onClick={handleAdd}>
-            Add review
+          <Button
+            variant="glass"
+            size="sm"
+            className="rounded-2xl border-white/10 hover:border-primary/40 hover:text-primary transition-all pr-6"
+            onClick={handleAdd}
+          >
+            <MessageSquarePlus className="mr-2 h-4 w-4" />
+            ADD LOG
           </Button>
         )}
       </div>
-      <div className="space-y-4">
+
+      <div className="grid gap-6">
         {safeReviews.map((r) => (
           <ShowcaseReviewCard
             key={r.id}

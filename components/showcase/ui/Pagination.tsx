@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
-import { getChipStyles, getTextColor } from "@/lib/showcase-theme";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
@@ -37,38 +36,26 @@ export function ShowcasePagination({
     const half = Math.floor(maxPageNumbers / 2);
 
     if (totalPages <= maxPageNumbers) {
-      // Show all pages if total is less than max
       for (let i = 1; i <= totalPages; i++) {
         pages.push(i);
       }
     } else {
-      // Show first page
       pages.push(1);
-
-      // Show ellipsis or pages in the middle
       if (currentPage - half > 2) {
         pages.push("...");
       }
-
-      // Show pages around current page
       const start = Math.max(2, currentPage - half);
       const end = Math.min(totalPages - 1, currentPage + half);
-
       for (let i = start; i <= end; i++) {
         pages.push(i);
       }
-
-      // Show ellipsis or last page
       if (currentPage + half < totalPages - 1) {
         pages.push("...");
       }
-
-      // Show last page (if not already included)
       if (totalPages > 1) {
         pages.push(totalPages);
       }
     }
-
     return pages;
   };
 
@@ -85,20 +72,16 @@ export function ShowcasePagination({
   }
 
   return (
-    <div className={cn("flex items-center justify-center gap-2", className)}>
+    <div className={cn("flex items-center justify-center gap-2 sm:gap-3", className)}>
       {/* First page button */}
       {showFirstLast && (
         <Button
-          variant="ghost"
+          variant="glass"
           size="icon"
           onClick={() => handlePageChange(1)}
           disabled={currentPage === 1}
           aria-label="Go to first page"
-          className={cn(
-            "h-9 w-9 rounded-full transition",
-            getChipStyles("ghost"),
-            currentPage === 1 && "opacity-50"
-          )}
+          className="h-10 w-10 rounded-2xl transition-all duration-300 disabled:opacity-20 hidden sm:flex"
         >
           <ChevronsLeft className="h-4 w-4" />
         </Button>
@@ -106,34 +89,27 @@ export function ShowcasePagination({
 
       {/* Previous page button */}
       <Button
-        variant="ghost"
+        variant="glass"
         size="icon"
         onClick={() => handlePageChange(currentPage - 1)}
         disabled={currentPage === 1}
         aria-label="Go to previous page"
-        className={cn(
-          "h-9 w-9 rounded-full transition",
-          getChipStyles("ghost"),
-          currentPage === 1 && "opacity-50"
-        )}
+        className="h-10 w-10 rounded-2xl transition-all duration-300 shadow-sm border-white/5 disabled:opacity-20"
       >
         <ChevronLeft className="h-4 w-4" />
       </Button>
 
       {/* Page numbers */}
       {showPageNumbers && (
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1.5 sm:gap-2">
           {pageNumbers.map((page, index) => {
             if (page === "...") {
               return (
                 <span
                   key={`ellipsis-${index}`}
-                  className={cn(
-                    "flex h-9 w-9 items-center justify-center rounded-full text-xs font-semibold",
-                    getTextColor("muted")
-                  )}
+                  className="flex h-10 w-8 items-center justify-center text-[10px] font-black tracking-widest text-muted-foreground/40"
                 >
-                  ...
+                  •••
                 </span>
               );
             }
@@ -142,19 +118,21 @@ export function ShowcasePagination({
             const isActive = pageNum === currentPage;
 
             return (
-              <button
+              <Button
                 key={pageNum}
+                variant={isActive ? "neon" : "glass"}
+                size="icon"
                 onClick={() => handlePageChange(pageNum)}
                 disabled={isActive}
                 aria-label={isActive ? `Current page, page ${pageNum}` : `Go to page ${pageNum}`}
                 aria-current={isActive ? "page" : undefined}
                 className={cn(
-                  "h-9 w-9 rounded-full text-xs font-semibold transition",
-                  isActive ? getChipStyles("solid") : getChipStyles("ghost")
+                  "h-10 w-10 rounded-2xl text-[10px] font-black transition-all duration-300",
+                  isActive ? "shadow-neon-cyan/20 scale-105" : "border-white/5 opacity-80 hover:opacity-100"
                 )}
               >
                 {pageNum}
-              </button>
+              </Button>
             );
           })}
         </div>
@@ -162,16 +140,12 @@ export function ShowcasePagination({
 
       {/* Next page button */}
       <Button
-        variant="ghost"
+        variant="glass"
         size="icon"
         onClick={() => handlePageChange(currentPage + 1)}
         disabled={currentPage === totalPages}
         aria-label="Go to next page"
-        className={cn(
-          "h-9 w-9 rounded-full transition",
-          getChipStyles("ghost"),
-          currentPage === totalPages && "opacity-50"
-        )}
+        className="h-10 w-10 rounded-2xl transition-all duration-300 shadow-sm border-white/5 disabled:opacity-20"
       >
         <ChevronRight className="h-4 w-4" />
       </Button>
@@ -179,16 +153,12 @@ export function ShowcasePagination({
       {/* Last page button */}
       {showFirstLast && (
         <Button
-          variant="ghost"
+          variant="glass"
           size="icon"
           onClick={() => handlePageChange(totalPages)}
           disabled={currentPage === totalPages}
           aria-label="Go to last page"
-          className={cn(
-            "h-9 w-9 rounded-full transition",
-            getChipStyles("ghost"),
-            currentPage === totalPages && "opacity-50"
-          )}
+          className="h-10 w-10 rounded-2xl transition-all duration-300 disabled:opacity-20 hidden sm:flex"
         >
           <ChevronsRight className="h-4 w-4" />
         </Button>

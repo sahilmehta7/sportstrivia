@@ -8,40 +8,38 @@ export function QuizCardSkeleton({ className }: QuizCardSkeletonProps) {
   return (
     <div
       className={cn(
-        "group relative w-[280px] overflow-hidden rounded-[2rem] border border-white/40 bg-white animate-pulse",
+        "group relative w-full overflow-hidden rounded-[2.5rem] border border-white/5 bg-white/5 animate-pulse",
         className
       )}
     >
-      <div className="relative flex h-full flex-col overflow-hidden rounded-[2rem] bg-white">
-        {/* Image skeleton */}
-        <div className="relative aspect-[4/3] w-full overflow-hidden bg-gradient-to-br from-slate-200 to-slate-100" />
-        
+      <div className="flex h-full flex-col">
+        {/* Placeholder for Aspect Ratio */}
+        <div className="relative aspect-[16/9] w-full bg-white/5" />
+
         {/* Content skeleton */}
-        <div className="flex flex-1 flex-col gap-4 px-6 pb-6 pt-5">
+        <div className="flex flex-1 flex-col gap-6 p-8">
           {/* Title */}
-          <div className="space-y-2">
-            <div className="h-5 w-3/4 rounded bg-slate-200" />
-            <div className="h-5 w-1/2 rounded bg-slate-200" />
+          <div className="space-y-3">
+            <div className="h-6 w-3/4 rounded-lg bg-white/10" />
+            <div className="h-6 w-1/2 rounded-lg bg-white/10" />
           </div>
-          
-          {/* Meta info */}
-          <div className="flex items-center gap-2">
-            <div className="h-4 w-16 rounded bg-slate-200" />
-            <div className="h-4 w-1 rounded-full bg-slate-300" />
-            <div className="h-4 w-20 rounded bg-slate-200" />
-          </div>
-          
-          {/* Coach info */}
-          <div className="mt-auto flex items-center gap-3">
-            <div className="h-9 w-9 rounded-full bg-slate-200" />
-            <div className="space-y-1">
-              <div className="h-3 w-12 rounded bg-slate-200" />
-              <div className="h-4 w-20 rounded bg-slate-200" />
+
+          {/* Stats info */}
+          <div className="mt-4 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="h-4 w-4 rounded-full bg-white/10" />
+              <div className="h-3 w-12 rounded-md bg-white/10" />
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="h-4 w-4 rounded-full bg-white/10" />
+              <div className="h-3 w-12 rounded-md bg-white/10" />
             </div>
           </div>
         </div>
+
+        {/* Bottom bar placeholder */}
+        <div className="h-1 w-full bg-white/5" />
       </div>
     </div>
   );
 }
-

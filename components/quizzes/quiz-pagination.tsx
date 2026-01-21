@@ -2,6 +2,7 @@
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { ShowcasePagination } from "@/components/showcase/ui/Pagination";
+import { cn } from "@/lib/utils";
 
 interface QuizPaginationProps {
   page: number;
@@ -9,9 +10,10 @@ interface QuizPaginationProps {
   total: number;
   pageSize: number;
   onPageChange?: (page: number) => void;
+  className?: string;
 }
 
-export function QuizPagination({ page, pages, total, pageSize, onPageChange }: QuizPaginationProps) {
+export function QuizPagination({ page, pages, total, pageSize, onPageChange, className }: QuizPaginationProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -32,25 +34,23 @@ export function QuizPagination({ page, pages, total, pageSize, onPageChange }: Q
   const startResult = total === 0 ? 0 : (page - 1) * pageSize + 1;
   const endResult = Math.min(total, page * pageSize);
 
-  if (pages <= 1) {
-    return (
-      <div className="mt-8 flex items-center justify-between text-sm text-muted-foreground">
-        <span>{total.toLocaleString()} quizzes</span>
-      </div>
-    );
-  }
-
   return (
-    <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-      <div className="text-sm text-muted-foreground">
-        Showing {startResult.toLocaleString()} – {endResult.toLocaleString()} of {" "}
-        {total.toLocaleString()} quizzes
+    <div className={cn("flex flex-col gap-8 sm:flex-row sm:items-center sm:justify-between", className)}>
+      <div className="flex items-center gap-3">
+        <div className="h-1 w-8 rounded-full bg-primary" />
+        <div className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+          Showing <span className="text-foreground">{startResult.toLocaleString()} – {endResult.toLocaleString()}</span> of {" "}
+          <span className="text-foreground">{total.toLocaleString()}</span> Arenas
+        </div>
       </div>
-      <ShowcasePagination
-        currentPage={page}
-        totalPages={pages}
-        onPageChange={goToPage}
-      />
+
+      {pages > 1 && (
+        <ShowcasePagination
+          currentPage={page}
+          totalPages={pages}
+          onPageChange={goToPage}
+        />
+      )}
     </div>
   );
 }
