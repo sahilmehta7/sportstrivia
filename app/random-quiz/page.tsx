@@ -2,179 +2,143 @@ import { prisma } from "@/lib/db";
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { ShowcaseFeaturedQuizCard } from "@/components/quiz/ShowcaseFeaturedQuizCard";
-import {
-  formatPlayerCount,
-  formatQuizDuration,
-  getSportGradient,
-} from "@/lib/quiz-formatters";
-import { Card, CardContent } from "@/components/ui/card";
+import { formatPlayerCount, formatQuizDuration, getSportGradient } from "@/lib/quiz-formatters";
 import { Button } from "@/components/ui/button";
-import { GlassButton } from "@/components/showcase/ui";
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Target, ShieldAlert, Sparkles, Activity } from "lucide-react";
 import type { Metadata } from "next";
 import type { Prisma } from "@prisma/client";
 import { PageContainer } from "@/components/shared/PageContainer";
+import { ShowcaseThemeProvider } from "@/components/showcase/ShowcaseThemeProvider";
+import { getBlurCircles, getGradientText } from "@/lib/showcase-theme";
+import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = {
-  title: "Random Quiz Challenge | Sports Trivia",
-  description: "Test your knowledge with a randomly selected sports trivia quiz. One chance to prove yourself!",
-  openGraph: {
-    title: "Random Quiz Challenge",
-    description: "Take on a randomly selected sports trivia challenge with only one attempt to prove your knowledge.",
-    type: "website",
-  },
+  title: "Random Matrix | Sports Trivia",
+  description: "Test your knowledge with a randomly selected sports trivia quiz.",
 };
-
-function renderNoRandomQuiz() {
-  return (
-    <main className="min-h-screen bg-gradient-to-b from-background via-background to-muted/40 py-12">
-      <PageContainer>
-        <Link href="/quizzes">
-          <Button variant="ghost" className="mb-6">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Quizzes
-          </Button>
-        </Link>
-
-        <Card className="max-w-2xl mx-auto">
-          <CardContent className="pt-6">
-            <div className="text-center space-y-4">
-              <h1 className="text-3xl font-bold">No Random Quiz Available</h1>
-              <p className="text-muted-foreground">
-                You&apos;ve either attempted all single-attempt quizzes or there are none available at the moment.
-              </p>
-              <GlassButton asChild tone="light" className="mt-6">
-                <Link href="/quizzes">Browse All Quizzes</Link>
-              </GlassButton>
-            </div>
-          </CardContent>
-        </Card>
-      </PageContainer>
-    </main>
-  );
-}
 
 export default async function RandomQuizPage() {
   const session = await auth();
   const userId = session?.user?.id;
+  if (!userId) redirect("/auth/signin");
 
-  if (!userId) {
-    redirect("/auth/signin");
-  }
+  const { circle1, circle2, circle3 } = getBlurCircles();
 
-  // Fetch all single-attempt quizzes that haven't been attempted by the user
   const attemptedQuizIds = await prisma.quizAttempt.findMany({
-    where: {
-      userId,
-      completedAt: { not: null },
-    },
-    select: {
-      quizId: true,
-    },
+    where: { userId, completedAt: { not: null } },
+    select: { quizId: true },
   });
-
   const attemptedIds = attemptedQuizIds.map((attempt) => attempt.quizId);
 
   const singleAttemptWhere: Prisma.QuizWhereInput = {
     isPublished: true,
     status: "PUBLISHED",
-    maxAttemptsPerUser: 1, // Single attempt quiz
-    ...(attemptedIds.length > 0
-      ? {
-          id: {
-            notIn: attemptedIds,
-          },
-        }
-      : {}),
+    maxAttemptsPerUser: 1,
+    ...(attemptedIds.length > 0 ? { id: { notIn: attemptedIds } } : {}),
   };
 
-  const availableCount = await prisma.quiz.count({
-    where: singleAttemptWhere,
-  });
+  const availableCount = await prisma.quiz.count({ where: singleAttemptWhere });
 
   if (availableCount === 0) {
-    return renderNoRandomQuiz();
+    return (
+      <ShowcaseThemeProvider>
+        <main className="relative min-h-screen overflow-hidden pt-24 pb-24">
+          <div className="absolute inset-0 -z-10">{circle1}{circle2}{circle3}</div>
+          <PageContainer className="max-w-2xl px-4 py-20 text-center space-y-12">
+            <div className="space-y-6">
+              <div className="h-20 w-20 mx-auto rounded-[2rem] glass border border-white/10 flex items-center justify-center text-red-500/20 shadow-neon-magenta/5">
+                <ShieldAlert className="h-10 w-10" />
+              </div>
+              <div className="space-y-4">
+                <h1 className={cn("text-5xl font-black uppercase tracking-tighter", getGradientText("neon"))}>NO MATRICES</h1>
+                <p className="text-sm font-bold tracking-[0.2em] text-muted-foreground/60 uppercase">ALL SINGLE-ATTEMPT SECTORS HAVE BEEN RESOLVED</p>
+              </div>
+            </div>
+            <Button asChild variant="glass" size="xl" className="rounded-2xl px-10">
+              <Link href="/quizzes">RETURN TO REGISTRY</Link>
+            </Button>
+          </PageContainer>
+        </main>
+      </ShowcaseThemeProvider>
+    );
   }
 
   const randomIndex = Math.floor(Math.random() * availableCount);
-
   const quiz = await prisma.quiz.findFirst({
     where: singleAttemptWhere,
     skip: randomIndex,
-    orderBy: {
-      createdAt: "asc",
-    },
+    orderBy: { createdAt: "asc" },
     include: {
-      _count: {
-        select: {
-          attempts: true,
-        },
-      },
+      _count: { select: { attempts: true } },
       topicConfigs: {
-        include: {
-          topic: {
-            select: {
-              name: true,
-            },
-          },
-        },
-        orderBy: {
-          createdAt: "asc",
-        },
+        include: { topic: { select: { name: true } } },
+        orderBy: { createdAt: "asc" },
         take: 1,
       },
     },
   });
 
-  if (!quiz) {
-    return renderNoRandomQuiz();
-  }
+  if (!quiz) redirect("/quizzes");
 
-  const category = quiz.topicConfigs?.[0]?.topic?.name ?? quiz.sport ?? "Featured";
+  const category = quiz.topicConfigs?.[0]?.topic?.name ?? quiz.sport ?? "Arena";
   const durationLabel = formatQuizDuration(quiz.duration ?? quiz.timePerQuestion);
-  const playersLabel = `${formatPlayerCount(quiz._count?.attempts ?? 0)} players`;
-  const difficultyLabel = (quiz.difficulty ?? "Medium").toString().toLowerCase().replace(/_/g, " ");
+  const playersLabel = formatPlayerCount(quiz._count?.attempts ?? 0);
+  const difficultyLabel = (quiz.difficulty ?? "Medium").toString().toUpperCase().replace(/_/g, " ");
   const ratingLabel = quiz.averageRating && quiz.averageRating > 0 ? `${quiz.averageRating.toFixed(1)} / 5` : undefined;
   const accent = getSportGradient(quiz.sport);
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-background via-background to-muted/40 py-12">
-      <PageContainer>
-        <Link href="/quizzes">
-          <Button variant="ghost" className="mb-6">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Quizzes
-          </Button>
-        </Link>
+    <ShowcaseThemeProvider>
+      <main className="relative min-h-screen overflow-hidden pt-12 pb-24 lg:pt-20">
+        <div className="absolute inset-0 -z-10">{circle1}{circle2}{circle3}</div>
 
-        <div className="mb-10 space-y-4 text-center md:text-left">
-          <h1 className="text-4xl font-black uppercase tracking-tight text-foreground drop-shadow-[0_18px_45px_rgba(15,23,42,0.18)] sm:text-5xl">
-            <span className="bg-gradient-to-r from-amber-400 via-pink-500 to-purple-500 bg-clip-text text-transparent">
-              Random Quiz
-            </span>{" "}
-            Challenge
-          </h1>
-          <p className="mx-auto max-w-2xl text-sm text-muted-foreground/90 sm:text-base md:mx-0">
-            Test your knowledge with this randomly selected quiz
-          </p>
-        </div>
+        <PageContainer className="space-y-20">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-10 pt-4">
+            <div className="space-y-6">
+              <div className="flex items-center gap-4">
+                <div className="h-10 w-1 rounded-full bg-primary shadow-neon-cyan" />
+                <h1 className={cn("text-5xl lg:text-8xl font-black uppercase tracking-tighter leading-[0.8]", getGradientText("neon"))}>
+                  MATRIX SHIFT
+                </h1>
+              </div>
+              <p className="text-[10px] font-black tracking-[0.4em] text-muted-foreground uppercase lg:pl-5 opacity-60">
+                RANDOM SECTOR RESOLVED • INITIATING MISSION
+              </p>
+            </div>
 
-        <div className="mx-auto flex w-full max-w-5xl justify-center">
-          <ShowcaseFeaturedQuizCard
-            title={quiz.title}
-            subtitle={quiz.description}
-            category={category}
-            durationLabel={durationLabel}
-            difficultyLabel={difficultyLabel}
-            playersLabel={playersLabel}
-            ratingLabel={ratingLabel}
-            coverImageUrl={quiz.descriptionImageUrl ?? undefined}
-            accent={accent}
-            ctaHref={`/quizzes/${quiz.slug}`}
-          />
+            <Button asChild variant="glass" size="sm" className="rounded-2xl border-white/10 px-6 h-12 text-[10px] font-black uppercase tracking-widest">
+              <Link href="/quizzes">
+                <ArrowLeft className="mr-3 h-4 w-4" />
+                REGISTRY
+              </Link>
+            </Button>
+          </div>
+
+          <div className="mx-auto flex w-full justify-center scale-[0.9] sm:scale-100 transition-transform origin-top">
+            <ShowcaseFeaturedQuizCard
+              title={quiz.title}
+              subtitle={quiz.description}
+              category={category}
+              durationLabel={durationLabel}
+              difficultyLabel={difficultyLabel}
+              playersLabel={playersLabel}
+              ratingLabel={ratingLabel}
+              coverImageUrl={quiz.descriptionImageUrl ?? undefined}
+              accent={accent}
+              ctaHref={`/quizzes/${quiz.slug}`}
+            />
+          </div>
+        </PageContainer>
+
+        {/* Tactical decor */}
+        <div className="fixed bottom-20 -left-20 pointer-events-none opacity-[0.03] rotate-12">
+          <Target className="h-64 w-64" />
         </div>
-      </PageContainer>
-    </main>
+        <div className="fixed top-1/2 -right-20 pointer-events-none opacity-[0.02]">
+          <Activity className="h-96 w-96" />
+        </div>
+      </main>
+    </ShowcaseThemeProvider>
   );
 }

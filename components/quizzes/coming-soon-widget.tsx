@@ -2,7 +2,7 @@
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Clock, Calendar, Sparkles, Plus } from "lucide-react";
+import { Clock, Calendar, Sparkles, Plus, Binary, Database, Zap } from "lucide-react";
 import { Difficulty } from "@prisma/client";
 import { cn } from "@/lib/utils";
 import { getGradientText } from "@/lib/showcase-theme";
@@ -26,82 +26,76 @@ interface ComingSoonWidgetProps {
 }
 
 export function ComingSoonWidget({ quizzes }: ComingSoonWidgetProps) {
-  if (quizzes.length === 0) {
-    return null;
-  }
+  if (quizzes.length === 0) return null;
 
   return (
-    <section className="space-y-8">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-1">
+    <section className="space-y-10 px-1">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
         <div className="flex items-center gap-4">
-          <div className="h-6 w-1 rounded-full bg-accent shadow-neon-lime" />
-          <h2 className="text-2xl font-black tracking-tight uppercase">Coming Soon</h2>
+          <div className="h-4 w-1 rounded-full bg-secondary shadow-neon-magenta" />
+          <h2 className="text-2xl font-black uppercase tracking-tight">Development Pipeline</h2>
         </div>
-        <div className="inline-flex items-center gap-3 px-4 py-2 rounded-2xl glass border border-white/10">
-          <Sparkles className="h-4 w-4 text-accent animate-pulse" />
-          <span className="text-[10px] font-black uppercase tracking-widest text-accent">
-            {quizzes.length} IN DEVELOPMENT
+        <div className="inline-flex items-center gap-3 px-4 py-2 rounded-2xl glass border border-white/10 shadow-neon-magenta/5">
+          <Sparkles className="h-4 w-4 text-secondary animate-pulse shadow-neon-magenta" />
+          <span className="text-[10px] font-black uppercase tracking-widest text-secondary">
+            {quizzes.length} MATRICES IN SYNTHESIS
           </span>
         </div>
       </div>
 
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {quizzes.map((quiz, index) => {
-          const difficultyLabel = quiz.difficulty.toUpperCase();
-
-          return (
-            <div
-              key={index}
-              className="group relative overflow-hidden rounded-[2.5rem] border border-dashed border-white/10 bg-white/[0.02] transition-all duration-300 hover:border-white/20 hover:bg-white/[0.04] p-8"
-            >
-              {/* Decorative Pattern Background */}
-              <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
-                <Sparkles className="h-24 w-24 text-white" />
-              </div>
-
-              <div className="relative z-10 space-y-6">
-                <div className="flex items-start justify-between">
+        {quizzes.map((quiz, index) => (
+          <div key={index} className="group relative overflow-hidden rounded-[3rem] border border-dashed border-white/10 bg-white/[0.01] transition-all duration-500 hover:border-primary/20 hover:bg-white/[0.03] p-10">
+            <div className="relative z-10 space-y-8 flex flex-col h-full justify-between">
+              <div className="space-y-6">
+                <div className="flex items-center justify-between">
                   <div className={cn(
-                    "px-3 py-1 rounded-full glass border text-[10px] font-black tracking-widest uppercase",
+                    "px-3 py-1 rounded-full glass border text-[8px] font-black tracking-[0.2em] uppercase",
                     difficultyColors[quiz.difficulty]
                   )}>
-                    {difficultyLabel}
+                    {quiz.difficulty}
                   </div>
-                  <div className="h-10 w-10 rounded-full glass border border-white/5 flex items-center justify-center text-muted-foreground group-hover:text-accent transition-colors">
-                    <Plus className="h-5 w-5" />
+                  <div className="h-10 w-10 rounded-2xl glass border border-white/5 flex items-center justify-center text-muted-foreground group-hover:border-primary/40 group-hover:text-primary transition-all shadow-glass">
+                    <Binary className="h-5 w-5 opacity-40 group-hover:opacity-100" />
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <h3 className="text-xl font-black uppercase tracking-tight leading-tight group-hover:text-primary transition-colors">
+                <div className="space-y-3">
+                  <h3 className="text-2xl font-black uppercase tracking-tighter leading-tight group-hover:text-primary transition-colors">
                     {quiz.title}
                   </h3>
                   {quiz.description && (
-                    <p className="line-clamp-2 text-sm text-muted-foreground font-medium leading-relaxed">
+                    <p className="line-clamp-2 text-xs font-bold tracking-widest text-muted-foreground/40 uppercase leading-relaxed">
                       {quiz.description}
                     </p>
                   )}
                 </div>
-
-                <div className="pt-4 flex flex-col gap-3">
-                  <div className="flex items-center gap-3 text-[10px] font-black uppercase tracking-widest text-muted-foreground/80">
-                    <Clock className="h-3 w-3 text-secondary" />
-                    <span>{quiz.sport}</span>
-                  </div>
-                  {quiz.estimatedDate && (
-                    <div className="flex items-center gap-3 text-[10px] font-black uppercase tracking-widest text-muted-foreground/80">
-                      <Calendar className="h-3 w-3 text-primary" />
-                      <span>RELEASING: {quiz.estimatedDate}</span>
-                    </div>
-                  )}
-                </div>
               </div>
 
-              {/* Animated corner accent */}
-              <div className="absolute bottom-0 right-0 h-16 w-16 bg-gradient-to-br from-transparent to-white/5 translate-x-1/2 translate-y-1/2 rotate-45 group-hover:scale-150 transition-transform duration-700" />
+              <div className="space-y-4 pt-6 border-t border-white/5">
+                <div className="flex items-center gap-4">
+                  <div className="h-8 w-8 rounded-xl glass border border-white/5 flex items-center justify-center">
+                    <Database className="h-4 w-4 text-secondary/40" />
+                  </div>
+                  <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">{quiz.sport} MODULE</span>
+                </div>
+                {quiz.estimatedDate && (
+                  <div className="flex items-center gap-4">
+                    <div className="h-8 w-8 rounded-xl glass border border-white/5 flex items-center justify-center">
+                      <Calendar className="h-4 w-4 text-primary/40" />
+                    </div>
+                    <span className="text-[10px] font-black uppercase tracking-widest text-primary/60">DEPLOYMENT: {quiz.estimatedDate.toUpperCase()}</span>
+                  </div>
+                )}
+              </div>
             </div>
-          );
-        })}
+
+            {/* Background Decor */}
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-[0.01] group-hover:opacity-[0.03] transition-opacity pointer-events-none scale-150 rotate-12">
+              <Plus className="h-64 w-64 text-white" />
+            </div>
+          </div>
+        ))}
       </div>
     </section>
   );

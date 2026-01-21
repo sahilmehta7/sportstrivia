@@ -1,7 +1,10 @@
-import { AlertCircle, RefreshCw, Home, ArrowLeft } from "lucide-react";
+"use client";
+
+import { ShieldAlert, RefreshCw, Home, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
+import { getGradientText } from "@/lib/showcase-theme";
 
 interface ErrorStateProps {
   title?: string;
@@ -15,53 +18,45 @@ interface ErrorStateProps {
 }
 
 export function ErrorState({
-  title = "Something went wrong",
-  message = "An unexpected error occurred. Please try again.",
-  action = "Try again",
+  title = "System Failure",
+  message = "A critical synchronization error has occurred.",
+  action = "RE-INITIALIZE",
   onRetry,
   showBackButton = true,
   backHref = "/",
-  backLabel = "Go home",
+  backLabel = "BASE COMMAND",
   className,
 }: ErrorStateProps) {
   return (
-    <div
-      className={cn(
-        "flex min-h-screen flex-col items-center justify-center gap-6 p-4",
-        className
-      )}
-    >
-      <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-6 max-w-md w-full">
-        <div className="flex items-start gap-4">
-          <AlertCircle className="h-6 w-6 text-destructive mt-0.5 flex-shrink-0" />
-          <div className="flex-1 space-y-2">
-            <h3 className="font-semibold text-destructive text-lg">{title}</h3>
-            <p className="text-sm text-destructive/90">{message}</p>
-          </div>
+    <div className={cn("flex min-h-[60vh] flex-col items-center justify-center p-8 text-center space-y-10 items-center", className)}>
+      <div className="relative group">
+        <div className="absolute -inset-1 bg-gradient-to-r from-red-500/20 to-orange-500/20 blur-xl opacity-40 group-hover:opacity-60 transition-opacity rounded-full" />
+        <div className="relative h-24 w-24 rounded-[2.5rem] glass border border-red-500/20 flex items-center justify-center text-red-400 shadow-neon-magenta/10">
+          <ShieldAlert className="h-12 w-12 animate-pulse" />
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center justify-center gap-4">
+      <div className="space-y-4 max-w-md mx-auto">
+        <h3 className={cn("text-4xl font-black uppercase tracking-tighter", getGradientText("neon"))}>
+          {title.toUpperCase()}
+        </h3>
+        <p className="text-sm font-black tracking-widest text-muted-foreground/60 uppercase leading-relaxed">
+          {message.toUpperCase()}
+        </p>
+      </div>
+
+      <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
         {onRetry && (
-          <Button onClick={onRetry} variant="default">
-            <RefreshCw className="mr-2 h-4 w-4" />
-            {action}
+          <Button onClick={onRetry} variant="neon" size="xl" className="w-full sm:w-auto rounded-2xl px-10 shadow-neon-magenta/20">
+            <RefreshCw className="mr-3 h-5 w-5 group-hover:rotate-180 transition-transform duration-500" />
+            {action.toUpperCase()}
           </Button>
         )}
         {showBackButton && (
-          <Button asChild variant="outline">
+          <Button asChild variant="glass" size="xl" className="w-full sm:w-auto rounded-2xl px-10 border-white/5">
             <Link href={backHref}>
-              {backHref === "/" ? (
-                <>
-                  <Home className="mr-2 h-4 w-4" />
-                  {backLabel}
-                </>
-              ) : (
-                <>
-                  <ArrowLeft className="mr-2 h-4 w-4" />
-                  {backLabel}
-                </>
-              )}
+              <Home className="mr-3 h-5 w-5" />
+              {backLabel.toUpperCase()}
             </Link>
           </Button>
         )}
@@ -69,4 +64,3 @@ export function ErrorState({
     </div>
   );
 }
-

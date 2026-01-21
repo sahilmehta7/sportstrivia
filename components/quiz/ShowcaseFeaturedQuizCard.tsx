@@ -2,10 +2,10 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { Star, Users, Clock } from "lucide-react";
+import { Star, Users, Clock, Trophy, Zap, PlayCircle, Activity, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useTheme } from "next-themes";
-import { GlassButton } from "@/components/showcase/ui";
+import { Button } from "@/components/ui/button";
+import { getGradientText } from "@/lib/showcase-theme";
 
 interface ShowcaseFeaturedQuizCardProps {
   title: string;
@@ -31,220 +31,99 @@ export function ShowcaseFeaturedQuizCard({
   playersLabel,
   ratingLabel,
   coverImageUrl,
-  accent = "from-orange-500/90 via-pink-500/80 to-purple-600/80",
+  accent = "rgba(34,211,238,0.2)",
   className,
   ctaHref,
-  ctaLabel = "Start Quiz",
+  ctaLabel = "INITIALIZE MISSION",
 }: ShowcaseFeaturedQuizCardProps) {
-  const { theme: themeMode } = useTheme();
-  const isLight = themeMode === "light";
-  const cardShellClasses = isLight
-    ? "border border-slate-200/50 bg-white/85 text-slate-900 shadow-[0_30px_90px_-40px_rgba(249,115,22,0.25)]"
-    : "border border-white/15 bg-slate-950/85 text-white shadow-[0_40px_120px_-50px_rgba(15,23,42,0.65)]";
-
   return (
-    <div
-      className={cn(
-        "relative flex w-full max-w-4xl flex-col overflow-hidden rounded-[2.75rem] backdrop-blur-xl transition-shadow duration-500 md:flex-row",
-        cardShellClasses,
-        className
-      )}
-    >
-      <div
-        className={cn(
-          "absolute inset-0 -z-10 bg-gradient-to-br",
-          accent,
-          isLight ? "opacity-60" : "opacity-70"
-        )}
-      />
-      <div
-        className={cn(
-          "absolute inset-0 -z-20",
-          isLight
-            ? "bg-[radial-gradient(circle_at_top,_rgba(15,23,42,0.1),_transparent_55%)]"
-            : "bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.35),_transparent_55%)]"
-        )}
-      />
+    <div className={cn("relative group w-full max-w-5xl", className)}>
+      {/* Massive glow backdrop */}
+      <div className="absolute -inset-4 bg-gradient-to-r from-primary/20 via-primary/5 to-secondary/20 blur-3xl opacity-40 group-hover:opacity-60 transition-opacity rounded-[4rem]" />
 
-      {/* Image Section - Now on top for mobile */}
-      <div
-        className={cn(
-          "relative flex aspect-[16/9] min-h-[240px] flex-1 items-center justify-center overflow-hidden rounded-t-[2.75rem] md:order-2 md:rounded-l-[2.75rem] md:rounded-tr-none",
-          isLight ? "bg-slate-100/60" : "bg-white/5"
-        )}
-      >
-        {coverImageUrl ? (
-          <Image
-            src={coverImageUrl}
-            alt={title}
-            fill
-            className="object-cover"
-            sizes="(min-width: 1024px) 480px, 100vw"
-            priority
-          />
-        ) : (
-          <div
-            className={cn(
-              "flex h-full w-full items-center justify-center text-6xl",
-              isLight
-                ? "bg-gradient-to-br from-slate-200 to-transparent text-slate-400"
-                : "bg-gradient-to-br from-white/15 to-transparent text-white/60"
-            )}
-          >
-            🏆
-          </div>
-        )}
-      </div>
-
-      <div className="flex flex-1 flex-col gap-6 px-8 py-10 md:order-1 md:px-12 md:py-12">
-        <div
-          className={cn(
-            "inline-flex w-fit items-center gap-2 rounded-full px-4 py-1 text-xs font-semibold uppercase tracking-[0.35em]",
-            isLight ? "bg-slate-900/10 text-slate-900" : "bg-white/15 text-white/80"
+      <div className="relative overflow-hidden rounded-[3.5rem] glass-elevated border border-white/10 flex flex-col md:flex-row transition-all duration-500 group-hover:border-primary/20 shadow-2xl">
+        {/* Image Section */}
+        <div className="relative aspect-[16/9] md:aspect-auto md:w-2/5 overflow-hidden">
+          {coverImageUrl ? (
+            <Image
+              src={coverImageUrl}
+              alt={title}
+              fill
+              className="object-cover grayscale-[0.4] group-hover:grayscale-0 group-hover:scale-110 transition-all duration-700"
+              sizes="(min-width: 1024px) 40vw, 100vw"
+              priority
+            />
+          ) : (
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-secondary/10" />
           )}
-        >
-          {category}
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-background/40 to-background hidden md:block" />
+          <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent md:hidden" />
+
+          {/* Tactical Overlays */}
+          <div className="absolute top-8 left-8">
+            <div className="flex items-center gap-3 px-4 py-1.5 rounded-full glass border border-white/10 text-[10px] font-black uppercase tracking-[0.3em] shadow-lg">
+              <div className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse shadow-neon-cyan" />
+              {category.toUpperCase()}
+            </div>
+          </div>
+
+          <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-500 scale-90 group-hover:scale-100">
+            <div className="h-20 w-20 rounded-full glass border border-white/20 flex items-center justify-center text-primary shadow-neon-cyan/40 backdrop-blur-md">
+              <PlayCircle className="h-10 w-10 fill-primary/10" />
+            </div>
+          </div>
         </div>
 
-        <div className={cn("space-y-3", isLight ? "text-slate-900" : "text-white")}> 
-          <h2 className="text-4xl font-black leading-tight md:text-5xl">{title}</h2>
-          {subtitle && (
-            <p className={cn("max-w-xl text-sm", isLight ? "text-slate-600" : "text-white/80")}> 
-              {subtitle}
-            </p>
-          )}
-        </div>
-
-        <div className="grid gap-3 text-sm sm:grid-cols-2">
-          <div
-            className={cn(
-              "flex items-center gap-3 rounded-[1.5rem] px-4 py-3",
-              isLight ? "bg-slate-900/5 text-slate-700" : "bg-white/10 text-white/80"
-            )}
-          >
-            <Clock className={cn("h-4 w-4", isLight ? "text-slate-700" : "text-white/80")} />
-            <div>
-              <p
-                className={cn(
-                  "text-xs uppercase tracking-[0.3em]",
-                  isLight ? "text-slate-500" : "text-white/50"
-                )}
-              >
-                Duration
-              </p>
-              <p className={cn("text-sm font-semibold", isLight ? "text-slate-900" : "text-white")}>{durationLabel}</p>
-            </div>
-          </div>
-          <div
-            className={cn(
-              "flex items-center gap-3 rounded-[1.5rem] px-4 py-3",
-              isLight ? "bg-slate-900/5 text-slate-700" : "bg-white/10 text-white/80"
-            )}
-          >
-            <Users className={cn("h-4 w-4", isLight ? "text-slate-700" : "text-white/80")} />
-            <div>
-              <p
-                className={cn(
-                  "text-xs uppercase tracking-[0.3em]",
-                  isLight ? "text-slate-500" : "text-white/50"
-                )}
-              >
-                Players
-              </p>
-              <p className={cn("text-sm font-semibold", isLight ? "text-slate-900" : "text-white")}>{playersLabel}</p>
-            </div>
-          </div>
-          <div
-            className={cn(
-              "flex items-center gap-3 rounded-[1.5rem] px-4 py-3",
-              isLight ? "bg-slate-900/5 text-slate-700" : "bg-white/10 text-white/80"
-            )}
-          >
-            <span className="text-base font-semibold">🎯</span>
-            <div>
-              <p
-                className={cn(
-                  "text-xs uppercase tracking-[0.3em]",
-                  isLight ? "text-slate-500" : "text-white/50"
-                )}
-              >
-                Difficulty
-              </p>
-              <p className={cn("text-sm font-semibold capitalize", isLight ? "text-slate-900" : "text-white")}>{difficultyLabel}</p>
-            </div>
-          </div>
-          {ratingLabel && (
-            <div
-              className={cn(
-                "flex items-center gap-3 rounded-[1.5rem] px-4 py-3",
-                isLight ? "bg-slate-900/5 text-slate-700" : "bg-white/10 text-white/80"
-              )}
-            >
-              <Star className={cn("h-4 w-4", isLight ? "text-slate-700" : "text-white/80")} />
-              <div>
-                <p
-                  className={cn(
-                    "text-xs uppercase tracking-[0.3em]",
-                    isLight ? "text-slate-500" : "text-white/50"
-                  )}
-                >
-                  Rating
-                </p>
-                <p className={cn("text-sm font-semibold", isLight ? "text-slate-900" : "text-white")}>{ratingLabel}</p>
+        <div className="flex-1 p-10 lg:p-16 flex flex-col justify-between gap-10">
+          <div className="space-y-8">
+            <div className="space-y-6">
+              <div className="flex items-center gap-4">
+                <div className="h-10 w-1 rounded-full bg-primary shadow-neon-cyan" />
+                <span className="text-xs font-black uppercase tracking-[0.5em] text-primary">MISSION CRITICAL</span>
               </div>
-            </div>
-          )}
-        </div>
-
-        <div
-          className={cn(
-            "flex flex-wrap gap-3 text-xs",
-            isLight ? "text-slate-600" : "text-white/70"
-          )}
-        >
-          <span
-            className={cn(
-              "inline-flex items-center gap-2 rounded-full px-4 py-2",
-              isLight ? "bg-slate-900/10" : "bg-white/15"
-            )}
-          >
-            Live Leaderboard
-          </span>
-          <span
-            className={cn(
-              "inline-flex items-center gap-2 rounded-full px-4 py-2",
-              isLight ? "bg-slate-900/10" : "bg-white/15"
-            )}
-          >
-            Bonus Rounds
-          </span>
-          <span
-            className={cn(
-              "inline-flex items-center gap-2 rounded-full px-4 py-2",
-              isLight ? "bg-slate-900/10" : "bg-white/15"
-            )}
-          >
-            Coach Insights
-          </span>
-        </div>
-
-        {ctaHref && (
-          <div className="pt-2">
-            <GlassButton
-              asChild
-              size="lg"
-              tone={isLight ? "light" : "dark"}
-              className={cn(
-                "group w-full justify-center text-sm font-semibold uppercase tracking-[0.25em]",
-                isLight
-                  ? "bg-gradient-to-r from-blue-600 via-indigo-500 to-purple-500 text-white hover:shadow-[0_18px_55px_-28px_rgba(99,102,241,0.55)]"
-                  : "bg-gradient-to-r from-amber-300 via-pink-500 to-rose-500 text-slate-900 hover:shadow-[0_22px_60px_-28px_rgba(244,114,182,0.55)]"
+              <h2 className={cn("text-5xl lg:text-7xl font-black uppercase tracking-tighter leading-[0.85] group-hover:text-primary transition-colors", getGradientText("neon"))}>
+                {title}
+              </h2>
+              {subtitle && (
+                <p className="max-w-xl text-sm lg:text-base font-bold tracking-widest text-muted-foreground/60 uppercase leading-relaxed line-clamp-2">
+                  {subtitle}
+                </p>
               )}
-            >
-              <Link href={ctaHref}>{ctaLabel}</Link>
-            </GlassButton>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              {[
+                { label: "DURATION", value: durationLabel, icon: Clock, color: "primary" },
+                { label: "ENTRIES", value: playersLabel, icon: Users, color: "secondary" },
+                { label: "DIFFICULTY", value: difficultyLabel, icon: Zap, color: "primary" },
+                { label: "RATING", value: ratingLabel || "NEW", icon: Star, color: "secondary" },
+              ].map((stat) => (
+                <div key={stat.label} className="p-4 rounded-2xl glass border border-white/5 space-y-1 group/stat">
+                  <div className="flex items-center gap-3">
+                    <stat.icon className={cn("h-3.5 w-3.5 opacity-40 group-hover:opacity-100 transition-opacity", stat.color === "primary" ? "text-primary" : "text-secondary")} />
+                    <span className="text-[8px] font-black tracking-widest text-muted-foreground/40 uppercase">{stat.label}</span>
+                  </div>
+                  <div className="text-sm font-black tracking-widest uppercase">{stat.value}</div>
+                </div>
+              ))}
+            </div>
           </div>
-        )}
+
+          {ctaHref && (
+            <Button asChild variant="neon" size="xl" className="rounded-2xl px-12 group-hover:scale-[1.05] transition-transform w-full sm:w-fit">
+              <Link href={ctaHref}>
+                {ctaLabel}
+                <ChevronRight className="ml-3 h-6 w-6 group-hover:translate-x-1 transition-transform" />
+              </Link>
+            </Button>
+          )}
+        </div>
+
+        {/* Background decor */}
+        <div className="absolute top-10 right-10 opacity-[0.03] group-hover:opacity-[0.08] transition-opacity pointer-events-none">
+          <Activity className="h-40 w-40" />
+        </div>
+        <div className="absolute bottom-0 left-0 h-1 w-full bg-gradient-to-r from-transparent via-primary/20 to-transparent" />
       </div>
     </div>
   );
