@@ -65,11 +65,15 @@ export default async function LeaderboardPage() {
     "all-time": allTime,
   };
 
+  const { circle1, circle2, circle3 } = getBlurCircles();
+
   return (
     <main className="relative min-h-screen overflow-hidden pt-12 pb-24 lg:pt-24">
       {/* Background Animated Elements */}
       <div className="absolute inset-0 -z-10">
-        {getBlurCircles()}
+        {circle1}
+        {circle2}
+        {circle3}
       </div>
 
       <PageContainer variant="narrow" className="space-y-16 lg:space-y-24">

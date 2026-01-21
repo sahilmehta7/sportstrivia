@@ -122,10 +122,16 @@ export function FriendsClient({
     }
   };
 
+  const { circle1, circle2, circle3 } = getBlurCircles();
+
   return (
     <ShowcaseThemeProvider>
       <main className="relative min-h-screen overflow-hidden pt-12 pb-24 lg:pt-20">
-        <div className="absolute inset-0 -z-10">{getBlurCircles()}</div>
+        <div className="absolute inset-0 -z-10">
+          {circle1}
+          {circle2}
+          {circle3}
+        </div>
 
         <PageContainer className="space-y-16">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-8 pt-4">

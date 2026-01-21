@@ -33,152 +33,103 @@ export function TopicQuizSearchBar({
   const lastExecutedQueryRef = useRef<string | null>(null);
   const isInitialMountRef = useRef(true);
 
-  // Debounce the query value
   const debouncedQuery = useDebouncedValue(query, debounceMs);
-  
-  // Track loading state for search operations
   const { isLoading, error: loadingError, clearError } = useSearchLoading(debouncedQuery, { debounceMs });
 
-  // Sync with initial query prop
   useEffect(() => {
     if (isInitialMountRef.current) {
       isInitialMountRef.current = false;
       const urlQuery = searchParams.get("search") ?? "";
-      if (urlQuery) {
-        setQuery(urlQuery);
-      } else if (initialQuery) {
-    setQuery(initialQuery);
-      }
+      if (urlQuery) setQuery(urlQuery);
+      else if (initialQuery) setQuery(initialQuery);
       return;
     }
-
-    // Update query from URL if it changed externally
     const urlQuery = searchParams.get("search") ?? "";
-    if (urlQuery !== query) {
-      setQuery(urlQuery);
-    }
+    if (urlQuery !== query) setQuery(urlQuery);
   }, [initialQuery, searchParams, query]);
 
-  // Sync with URL params changes (external navigation)
   useEffect(() => {
     const urlQuery = searchParams.get("search") ?? "";
     if (urlQuery !== query && urlQuery !== debouncedQuery) {
       setQuery(urlQuery);
       lastExecutedQueryRef.current = urlQuery || null;
     }
-    if (!urlQuery) {
-      setActiveChip(null);
-    }
+    if (!urlQuery) setActiveChip(null);
   }, [searchParams, query, debouncedQuery]);
 
-  // Execute search when debounced query changes
   useEffect(() => {
-    // Skip on initial mount
-    if (isInitialMountRef.current) {
-      return;
-    }
-
+    if (isInitialMountRef.current) return;
     const trimmed = debouncedQuery.trim();
-    
-    // Check minimum length - if query is too short, clear search
-    if (trimmed.length > 0 && trimmed.length < minQueryLength) {
-      // Query too short, don't search yet
-      return;
-    }
-
-    // Prevent duplicate searches
+    if (trimmed.length > 0 && trimmed.length < minQueryLength) return;
     const normalizedQuery = trimmed || null;
-    if (normalizedQuery === lastExecutedQueryRef.current) {
-      return;
-    }
+    if (normalizedQuery === lastExecutedQueryRef.current) return;
 
-    // Execute search
     const executeSearch = async () => {
       try {
         setError(null);
-      const params = new URLSearchParams(searchParams.toString());
-
-        if (normalizedQuery) {
-          params.set("search", normalizedQuery);
-      } else {
-        params.delete("search");
-      }
-
-      params.delete("page");
-
-      const next = params.toString();
+        const params = new URLSearchParams(searchParams.toString());
+        if (normalizedQuery) params.set("search", normalizedQuery);
+        else params.delete("search");
+        params.delete("page");
+        const next = params.toString();
         await router.push(next ? `${pathname}?${next}` : pathname, { scroll: false });
-        
-        // Update last executed query
         lastExecutedQueryRef.current = normalizedQuery;
       } catch (err) {
-        console.error("Search navigation error:", err);
-        setError(err instanceof Error ? err.message : "Failed to update search. Please try again.");
+        setError("Failed to update search.");
       }
     };
-
     executeSearch();
   }, [debouncedQuery, pathname, router, searchParams, minQueryLength]);
 
   useEffect(() => {
-    if (!query) {
-      setActiveChip(null);
-      return;
-    }
-
+    if (!query) { setActiveChip(null); return; }
     const matchingSuggestion = suggestions.find((chip) => chip.value === query);
     setActiveChip(matchingSuggestion ? matchingSuggestion.value : null);
   }, [query, suggestions]);
 
   const chips = useMemo(
-    () =>
-      suggestions.map((chip) => ({
-        ...chip,
-        active: chip.value === activeChip,
-      })),
+    () => suggestions.map((chip) => ({ ...chip, active: chip.value === activeChip })),
     [suggestions, activeChip]
   );
-
   const displayError = error || (loadingError ? loadingError.message : null);
 
   return (
     <SearchErrorBoundary>
-      <div className="space-y-4">
-        {displayError && (
-          <ErrorMessage
-            title="Search Error"
-            message={displayError}
-          />
-        )}
-    <div className="rounded-3xl border border-border/50 bg-background/60 p-4 shadow-lg backdrop-blur">
-      <ShowcaseSearchBar
-        value={query}
-        placeholder="Search quizzes within this topic..."
-        actionLabel="Search"
-        chips={chips}
-            loading={isLoading}
-            onValueChange={(value) => {
-              setQuery(value);
-              setError(null);
-              if (loadingError) clearError();
-            }}
-        onSubmit={(value) => setQuery(value)}
-            onClear={() => {
-              setQuery("");
-              setError(null);
-              if (loadingError) clearError();
-            }}
-        onChipToggle={(chip, active) => {
-          if (active) {
-            setActiveChip(chip.value);
-            setQuery(chip.value);
-          } else {
-            setActiveChip(null);
-            setQuery("");
-          }
-        }}
-      />
-    </div>
+      <div className="space-y-6">
+        {displayError && <ErrorMessage title="Search Error" message={displayError} />}
+
+        <div className="relative group">
+          <div className="absolute -inset-1 bg-gradient-to-r from-primary/20 to-secondary/20 blur-xl opacity-0 group-focus-within:opacity-100 transition-opacity rounded-[2rem]" />
+          <div className="relative rounded-[2rem] border border-white/5 bg-background/40 p-2 shadow-glass backdrop-blur-xl group-focus-within:border-primary/20 transition-all">
+            <ShowcaseSearchBar
+              value={query}
+              placeholder="SCAN QUIZZES WITHIN THIS SECTOR..."
+              actionLabel="INITIALIZE SCAN"
+              chips={chips}
+              loading={isLoading}
+              onValueChange={(value) => {
+                setQuery(value);
+                setError(null);
+                if (loadingError) clearError();
+              }}
+              onSubmit={(value) => setQuery(value)}
+              onClear={() => {
+                setQuery("");
+                setError(null);
+                if (loadingError) clearError();
+              }}
+              onChipToggle={(chip, active) => {
+                if (active) {
+                  setActiveChip(chip.value);
+                  setQuery(chip.value);
+                } else {
+                  setActiveChip(null);
+                  setQuery("");
+                }
+              }}
+            />
+          </div>
+        </div>
       </div>
     </SearchErrorBoundary>
   );

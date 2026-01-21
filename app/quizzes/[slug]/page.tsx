@@ -167,7 +167,7 @@ export default async function QuizDetailPage({ params }: QuizDetailPageProps) {
   const leaderboardRecords = ensureArray(quiz.leaderboard);
   const durationLabel = formatQuizDuration(quiz.duration ?? quiz.timePerQuestion);
   const playersLabel = formatPlayerCount(uniqueUsersCount);
-  const badgeLabel = topicConfigs[0]?.topic?.name ?? quiz.sport ?? quiz.difficulty ?? "Arena";
+  const badgeLabel = (topicConfigs[0] as any)?.topic?.name ?? quiz.sport ?? quiz.difficulty ?? "Arena";
 
   const now = new Date();
   const hasAttemptLimit = quiz.maxAttemptsPerUser != null;
@@ -222,23 +222,29 @@ export default async function QuizDetailPage({ params }: QuizDetailPageProps) {
   const totalReviews = typeof quiz.totalReviews === "number" ? quiz.totalReviews : quiz._count?.reviews ?? 0;
   const quizUrl = getCanonicalUrl(`/quizzes/${quiz.slug}`) || `/quizzes/${quiz.slug}`;
   const articleImages = heroImageUrl ? [heroImageUrl] : [];
+  const { circle1, circle2, circle3 } = getBlurCircles();
 
   return (
     <ShowcaseThemeProvider>
       <ArticleJsonLd
+        useAppDir={true}
         url={quizUrl}
         title={quiz.title}
-        description={quiz.description || ""}
         images={articleImages}
-        datePublished={quiz.createdAt?.toISOString()}
-        dateModified={quiz.updatedAt?.toISOString()}
+        datePublished={quiz.createdAt?.toISOString() || ""}
+        dateModified={quiz.updatedAt?.toISOString() || ""}
         authorName="Sports Trivia Team"
         publisherName="Sports Trivia"
         publisherLogo={getCanonicalUrl("/logo.png") || ""}
+        description={quiz.description || ""}
       />
       {totalReviews > 0 && averageRating > 0 && (
         <AggregateRatingJsonLd
-          itemReviewed={{ "@type": "Article", name: quiz.title, url: quizUrl }}
+          itemReviewed={{
+            "@type": "Thing",
+            name: quiz.title,
+            url: quizUrl
+          }}
           ratingValue={averageRating}
           reviewCount={totalReviews}
           bestRating={5}
@@ -247,7 +253,11 @@ export default async function QuizDetailPage({ params }: QuizDetailPageProps) {
       )}
 
       <main className="relative min-h-screen overflow-hidden pt-12 pb-24 lg:pt-20">
-        <div className="absolute inset-0 -z-10">{getBlurCircles()}</div>
+        <div className="absolute inset-0 -z-10">
+          {circle1}
+          {circle2}
+          {circle3}
+        </div>
 
         <PageContainer>
           <div className="flex flex-col lg:flex-row gap-12 lg:gap-16">
