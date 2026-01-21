@@ -38,28 +38,44 @@ interface PreviewResultItem {
   attempts?: number;
 }
 
+// API response types for type safety
+interface APISuggestionItem {
+  query: string;
+  resultCount?: number | null;
+  lastSearchedAt?: string | null;
+}
+
+interface APIQuizItem {
+  id: string;
+  title: string;
+  slug: string;
+  sport?: string | null;
+  difficulty?: string | null;
+  _count?: { attempts?: number };
+}
+
 type DropdownItem =
   | {
-      kind: "suggestion";
-      id: string;
-      label: string;
-      value: string;
-      source: SuggestionSource;
-      meta?: string;
-    }
+    kind: "suggestion";
+    id: string;
+    label: string;
+    value: string;
+    source: SuggestionSource;
+    meta?: string;
+  }
   | {
-      kind: "preview";
-      id: string;
-      label: string;
-      href: string;
-      meta?: string;
-    }
+    kind: "preview";
+    id: string;
+    label: string;
+    href: string;
+    meta?: string;
+  }
   | {
-      kind: "action";
-      id: string;
-      label: string;
-      value: string;
-    };
+    kind: "action";
+    id: string;
+    label: string;
+    value: string;
+  };
 
 interface GlobalQuizSearchProps {
   className?: string;
@@ -165,8 +181,8 @@ export function GlobalQuizSearch({ className, showOnMobile = false }: GlobalQuiz
         }
 
         const recentRaw: SuggestionItem[] = (json?.data?.suggestions?.recent ?? []).map(
-          (item: any) => ({
-            value: item.query as string,
+          (item: APISuggestionItem) => ({
+            value: item.query,
             source: "recent" as SuggestionSource,
             resultCount: item.resultCount ?? null,
             lastSearchedAt: item.lastSearchedAt ?? null,
@@ -174,8 +190,8 @@ export function GlobalQuizSearch({ className, showOnMobile = false }: GlobalQuiz
         );
 
         const trendingRaw: SuggestionItem[] = (json?.data?.suggestions?.trending ?? []).map(
-          (item: any) => ({
-            value: item.query as string,
+          (item: APISuggestionItem) => ({
+            value: item.query,
             source: "trending" as SuggestionSource,
             resultCount: item.resultCount ?? null,
             lastSearchedAt: item.lastSearchedAt ?? null,
@@ -254,13 +270,13 @@ export function GlobalQuizSearch({ className, showOnMobile = false }: GlobalQuiz
           return;
         }
 
-        const quizzes: PreviewResultItem[] = (json?.data?.quizzes ?? []).map((quiz: any) => ({
-          id: quiz.id as string,
-          title: quiz.title as string,
-          slug: quiz.slug as string,
+        const quizzes: PreviewResultItem[] = (json?.data?.quizzes ?? []).map((quiz: APIQuizItem) => ({
+          id: quiz.id,
+          title: quiz.title,
+          slug: quiz.slug,
           sport: quiz.sport ?? null,
           difficulty: quiz.difficulty ?? null,
-          attempts: quiz?._count?.attempts ?? undefined,
+          attempts: quiz._count?.attempts ?? undefined,
         }));
 
         setPreviewResults(quizzes);
@@ -308,7 +324,7 @@ export function GlobalQuizSearch({ className, showOnMobile = false }: GlobalQuiz
         meta: metaParts.join(" • ") || undefined,
       };
     }),
-  [previewResults]);
+    [previewResults]);
 
   const suggestionItems = useMemo(() => {
     const mapSuggestion = (item: SuggestionItem) => ({

@@ -11,7 +11,7 @@ export type LeaderboardPeriod = "daily" | "weekly" | "monthly" | "all-time";
  */
 export function getDateRangeForPeriod(period: LeaderboardPeriod): Date | null {
   const now = new Date();
-  
+
   switch (period) {
     case "daily":
       {
@@ -52,7 +52,6 @@ export interface LeaderboardEntry {
   averageResponseTime?: number;
   rank: number;
   attempts?: number;
-  [key: string]: any;
 }
 
 /**
@@ -67,7 +66,7 @@ export async function buildGlobalLeaderboard(
 
   const startDate = getDateRangeForPeriod(period);
 
-  const whereClause: any = {
+  const whereClause: Prisma.QuizAttemptWhereInput = {
     completedAt: { not: null },
     isPracticeMode: false,
   };
@@ -188,7 +187,7 @@ export async function buildTopicLeaderboard(
     return [];
   }
 
-  const whereClause: any = {
+  const whereClause: Prisma.UserAnswerWhereInput = {
     questionId: { in: questionIds },
     isCorrect: true,
   };

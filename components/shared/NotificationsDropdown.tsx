@@ -97,7 +97,7 @@ export function NotificationsDropdown({
 
       const wasUnread = notifications.find((n) => n.id === notificationId)?.read === false;
       setNotifications(notifications.filter((n) => n.id !== notificationId));
-      
+
       if (wasUnread) {
         onUnreadCountChange(Math.max(0, unreadCount - 1));
       }
@@ -184,9 +184,9 @@ export function NotificationsDropdown({
   return (
     <DropdownMenu open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger asChild>
-        <Button 
-          variant="ghost" 
-          size="sm" 
+        <Button
+          variant="ghost"
+          size="sm"
           className="relative"
           aria-label={`Notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ""}`}
           aria-expanded={open}
@@ -215,9 +215,9 @@ export function NotificationsDropdown({
             </p>
           </div>
           {unreadCount > 0 && (
-            <Button 
-              variant="ghost" 
-              size="sm" 
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={markAllAsRead}
               aria-label="Mark all notifications as read"
             >
@@ -329,6 +329,12 @@ export function NotificationsDropdown({
 }
 
 // Separate component for notification item to avoid duplication
+interface NotificationContent {
+  title?: string;
+  description?: string;
+  challengeId?: string;
+}
+
 function NotificationItem({
   notification,
   content,
@@ -336,8 +342,8 @@ function NotificationItem({
   formatDate,
 }: {
   notification: Notification;
-  content: any;
-  Icon: any;
+  content: NotificationContent;
+  Icon: React.ComponentType<{ className?: string }>;
   formatDate: (date: string) => string;
 }) {
   return (

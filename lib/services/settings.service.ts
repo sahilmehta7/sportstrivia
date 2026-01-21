@@ -61,7 +61,7 @@ export const AVAILABLE_AI_MODELS = [
   { value: "gpt-5-mini", label: "GPT-5 Mini", description: "Fast, cost-effective GPT-5 variant" },
   { value: "gpt-5-nano", label: "GPT-5 Nano", description: "Ultra-fast, minimal latency" },
   { value: "gpt-5-chat", label: "GPT-5 Chat", description: "Optimized for conversational tasks" },
-  
+
   // GPT-4o Series (Previous flagship, still excellent)
   { value: "gpt-4o", label: "GPT-4o (Latest)", description: "Recommended - Fast, capable, 128K context" },
   { value: "gpt-4o-2024-11-20", label: "GPT-4o (Nov 2024)", description: "Stable snapshot" },
@@ -69,7 +69,7 @@ export const AVAILABLE_AI_MODELS = [
   { value: "gpt-4o-2024-05-13", label: "GPT-4o (May 2024)", description: "Original GPT-4o release" },
   { value: "gpt-4o-mini", label: "GPT-4o Mini", description: "Fast, affordable, 128K context" },
   { value: "gpt-4o-mini-2024-07-18", label: "GPT-4o Mini (July 2024)", description: "Mini stable snapshot" },
-  
+
   // o1 Series (Advanced reasoning - slower, no JSON mode)
   { value: "o1", label: "o1 (Latest)", description: "⚠️ Reasoning model, 200K - May fail JSON parsing" },
   { value: "o1-2024-12-17", label: "o1 (Dec 2024)", description: "⚠️ Reasoning - No JSON mode" },
@@ -77,16 +77,16 @@ export const AVAILABLE_AI_MODELS = [
   { value: "o1-preview-2024-09-12", label: "o1 Preview (Sept 2024)", description: "⚠️ No JSON mode" },
   { value: "o1-mini", label: "o1 Mini", description: "⚠️ Faster reasoning - No JSON mode" },
   { value: "o1-mini-2024-09-12", label: "o1 Mini (Sept 2024)", description: "⚠️ No JSON mode" },
-  
+
   // GPT-4 Turbo Series (Previous generation)
   { value: "gpt-4-turbo", label: "GPT-4 Turbo", description: "Previous flagship, 128K context" },
   { value: "gpt-4-turbo-2024-04-09", label: "GPT-4 Turbo (Apr 2024)", description: "Turbo snapshot" },
   { value: "gpt-4-turbo-preview", label: "GPT-4 Turbo Preview", description: "Turbo preview" },
-  
+
   // GPT-4 Series (Legacy - 8K context only)
   { value: "gpt-4", label: "GPT-4", description: "Original GPT-4, 8K context" },
   { value: "gpt-4-0613", label: "GPT-4 (June 2023)", description: "GPT-4 snapshot" },
-  
+
   // GPT-3.5 Series (Budget option - good for testing)
   { value: "gpt-3.5-turbo", label: "GPT-3.5 Turbo", description: "Budget-friendly, fast, 16K context" },
   { value: "gpt-3.5-turbo-0125", label: "GPT-3.5 Turbo (Jan 2024)", description: "Latest 3.5 snapshot" },
@@ -106,14 +106,17 @@ export async function getSetting(key: string): Promise<string | null> {
       console.warn("AppSettings model not available - using defaults");
       return null;
     }
-    
+
     const setting = await prisma.appSettings.findUnique({
       where: { key },
     });
     return setting?.value || null;
-  } catch (error: any) {
+  } catch (error: unknown) {
     // If table doesn't exist (P2021) or other database errors, return null
-    if (error.code === 'P2021' || error.message?.includes('does not exist')) {
+    const isPrismaError = error instanceof Error && 'code' in error;
+    const errorCode = isPrismaError ? (error as { code?: string }).code : undefined;
+    const errorMessage = error instanceof Error ? error.message : '';
+    if (errorCode === 'P2021' || errorMessage.includes('does not exist')) {
       console.warn("AppSettings table does not exist yet - run 'npx prisma db push'");
       return null;
     }
@@ -133,7 +136,7 @@ export async function setSetting(
     if (!prisma.appSettings) {
       throw new Error("AppSettings table not available. Run 'npx prisma db push' to create the table.");
     }
-    
+
     await prisma.appSettings.upsert({
       where: { key },
       update: {
@@ -148,8 +151,11 @@ export async function setSetting(
         updatedBy,
       },
     });
-  } catch (error: any) {
-    if (error.code === 'P2021' || error.message?.includes('does not exist')) {
+  } catch (error: unknown) {
+    const isPrismaError = error instanceof Error && 'code' in error;
+    const errorCode = isPrismaError ? (error as { code?: string }).code : undefined;
+    const errorMessage = error instanceof Error ? error.message : '';
+    if (errorCode === 'P2021' || errorMessage.includes('does not exist')) {
       throw new Error("AppSettings table does not exist. Please run 'npx prisma db push' to create the table.");
     }
     console.error("Error setting value:", error);
