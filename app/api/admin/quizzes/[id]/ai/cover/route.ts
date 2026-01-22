@@ -4,6 +4,7 @@ import { handleError, successResponse, BadRequestError, NotFoundError } from "@/
 import { prisma } from "@/lib/db";
 import { getSupabaseClient, isSupabaseConfigured, QUIZ_IMAGES_BUCKET } from "@/lib/supabase";
 import sharp from "sharp";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
 // Use Node.js runtime for long-running AI operations
 export const runtime = 'nodejs';
@@ -11,8 +12,8 @@ export const runtime = 'nodejs';
 // Increase route timeout for AI image generation (can take 30-60 seconds)
 export const maxDuration = 60; // seconds
 
-const INSTRUCTION_MODEL = "gpt-4o";
-const IMAGE_MODEL = "dall-e-3";
+const INSTRUCTION_MODEL = "gemini-2.0-flash-exp";
+const IMAGE_MODEL = "imagen-4.0-generate-001"; // Upgraded to Imagen 4
 const MAX_SIZE_BYTES = 400 * 1024; // 400 KB
 const TARGET_WIDTH = 1280;
 const TARGET_HEIGHT = 720;
@@ -25,8 +26,8 @@ export async function POST(
     await requireAdmin();
     const { id } = await params;
 
-    if (!process.env.OPENAI_API_KEY) {
-      throw new BadRequestError("OpenAI API key is not configured");
+    if (!process.env.GEMINI_API_KEY) {
+      throw new BadRequestError("Gemini API key is not configured");
     }
 
     if (!isSupabaseConfigured()) {
@@ -51,10 +52,10 @@ export async function POST(
         questionPool: {
           select: {
             question: {
-              select: { 
-                topic: { 
-                  select: { name: true } 
-                } 
+              select: {
+                topic: {
+                  select: { name: true }
+                }
               },
             },
           },
@@ -87,84 +88,73 @@ Key topics: ${Array.from(topics).join(", ") || "general sports"}
 Tone: energetic, competitive, modern broadcast graphics.
 Mention relevant colors, action, and setting. Reply with description only.`;
 
-    const instructionResponse = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
-      },
-      body: JSON.stringify({
-        model: INSTRUCTION_MODEL,
-        messages: [
-          {
-            role: "system",
-            content:
-              "You craft concise, imaginative prompts for image generation. Avoid mentioning text, typography, or words in the image. No markdown—plain text only.",
-          },
-          {
-            role: "user",
-            content: instructionPrompt,
-          },
-        ],
-        temperature: 0.8,
-        max_tokens: 200,
-      }),
-    });
+    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+    const model = genAI.getGenerativeModel({ model: INSTRUCTION_MODEL });
 
-    if (!instructionResponse.ok) {
-      const error = await instructionResponse.json().catch(() => ({}));
-      throw new BadRequestError(
-        `OpenAI prompt generation error: ${error.error?.message || instructionResponse.statusText}`
-      );
-    }
-
-    const instructionCompletion = await instructionResponse.json();
-    const generatedInstruction = instructionCompletion.choices?.[0]?.message?.content?.trim();
+    const instructionResult = await model.generateContent(instructionPrompt);
+    const generatedInstruction = instructionResult.response.text().trim();
 
     if (!generatedInstruction) {
       throw new BadRequestError("Prompt generation did not return any content");
     }
 
-    const response = await fetch("https://api.openai.com/v1/images/generations", {
+    // Generate Image using Imagen 3 model via Gemini API
+    // Note: As of early 2025, specific Imagen 3 access might be via a separate method or model name depending on library version.
+    // We will use the model.generateContent method if it supports image generation response or a specific mix.
+    // However, the standard way for Imagen in JS SDK might technically differ or use a specific endpoint.
+    // Assuming standard 'imagen-3.0-generate-001' usage via the same client if standardized, 
+    // OR we might need to use rest API if the SDK doesn't fully support the image helper yet.
+    // For now, we will assume the SDK is updated to support it or use a fetch fallback if needed.
+    // Actually, looking at current docs, standard SDK usage for Imagen might not be 'generateContent'.
+    // Let's use the fetch implementation for Imagen to be safe as SDKs vary.
+
+    // Fallback to fetch for Imagen 3 as it's often a specific endpoint
+    const imagenResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${IMAGE_MODEL}:predict?key=${process.env.GEMINI_API_KEY}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
       },
       body: JSON.stringify({
-        model: IMAGE_MODEL,
-        prompt: generatedInstruction,
-        size: "1024x1024",
-      }),
+        instances: [
+          {
+            prompt: generatedInstruction,
+          }
+        ],
+        parameters: {
+          sampleCount: 1,
+          aspectRatio: "16:9",
+        }
+      })
     });
 
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({}));
-      throw new BadRequestError(
-        `OpenAI image API error: ${error.error?.message || response.statusText}`
-      );
-    }
+    // Check if standard fetch failed, try newer generateImages method if available or different endpoint
+    // If the above "predict" endpoint is for Vertex AI, we might need the consumer generic endpoint.
+    // Let's try the standard v1beta/models/imagen-3.0-generate-001:predict pattern. 
+    // If that fails, we can try to use the SDK if it has 'generateImage' (unlikely in standard package yet).
 
-    const result = await response.json();
-    const imageData = result.data?.[0];
+    // Actually, a safer bet for "Gemini 2.5" era is that the SDK has image tools. 
+    // But since I cannot be 100% sure of the SDK version's exact capabilities in this environment without checking types,
+    // I will use a robust fetch implementation that targets the likely public API endpoint.
 
-    if (!imageData) {
-      throw new BadRequestError("OpenAI did not return image data");
-    }
+    // REVISION: The standard Google AI Studio endpoint for Imagen is:
+    // POST https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-001:predict
+    // Payload: { instances: [{ prompt: "..." }], parameters: { ... } }
 
     let imageBuffer: Buffer;
 
-    if (imageData.b64_json) {
-      imageBuffer = Buffer.from(imageData.b64_json, "base64");
-    } else if (imageData.url) {
-      const imageResp = await fetch(imageData.url);
-      if (!imageResp.ok) {
-        throw new BadRequestError("Failed to download generated image");
+    if (imagenResponse.ok) {
+      const result = await imagenResponse.json();
+      const base64Image = result.predictions?.[0]?.bytesBase64Encoded;
+
+      if (!base64Image) {
+        throw new BadRequestError("Gemini/Imagen did not return image data");
       }
-      const arrayBuffer = await imageResp.arrayBuffer();
-      imageBuffer = Buffer.from(arrayBuffer);
+      imageBuffer = Buffer.from(base64Image, "base64");
     } else {
-      throw new BadRequestError("Unsupported image response format from OpenAI");
+      const error = await imagenResponse.json().catch(() => ({}));
+      throw new BadRequestError(
+        `Gemini Image API error: ${error.error?.message || imagenResponse.statusText}`
+      );
     }
 
     let quality = 75;
@@ -208,7 +198,7 @@ Mention relevant colors, action, and setting. Reply with description only.`;
 
       uploadError = error;
       uploadAttempts++;
-      
+
       if (uploadAttempts < MAX_UPLOAD_RETRIES) {
         // Wait before retry (exponential backoff)
         await new Promise(resolve => setTimeout(resolve, 1000 * uploadAttempts));

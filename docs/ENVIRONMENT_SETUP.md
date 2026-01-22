@@ -36,6 +36,15 @@ Get API key from: https://platform.openai.com/api-keys
 - AI Quiz Generator will show a configuration warning ⚠️
 - All other features work normally ✅
 
+### Gemini API (For AI Image Generation)
+```bash
+GEMINI_API_KEY="your-gemini-api-key-here"
+```
+Get API key from: https://aistudio.google.com/app/apikey
+
+**Note:** AI Cover Image generation requires this key. It replaces the previous DALL-E-3 implementation.
+
+
 ### Supabase Storage (For Image Uploads)
 ```bash
 NEXT_PUBLIC_SUPABASE_URL="https://your-project.supabase.co"
