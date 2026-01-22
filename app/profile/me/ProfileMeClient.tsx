@@ -230,7 +230,16 @@ export function ProfileMeClient({
   return (
     <ShowcaseThemeProvider>
       <main className="relative min-h-screen overflow-hidden pt-12 pb-24 lg:pt-20">
-        <div className="absolute inset-0 -z-10">{getBlurCircles()}</div>
+        {(() => {
+          const { circle1, circle2, circle3 } = getBlurCircles();
+          return (
+            <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none">
+              <div className={cn("absolute -left-[10%] top-[10%] h-[40%] w-[40%] rounded-full opacity-20 blur-[120px]", circle1)} />
+              <div className={cn("absolute -right-[10%] top-[20%] h-[40%] w-[40%] rounded-full opacity-20 blur-[120px]", circle2)} />
+              <div className={cn("absolute left-[20%] -bottom-[10%] h-[40%] w-[40%] rounded-full opacity-20 blur-[120px]", circle3)} />
+            </div>
+          );
+        })()}
 
         <PageContainer className="space-y-16">
           <ProfileHeader user={profile as any} isOwnProfile showEditButton={false} />
@@ -295,7 +304,7 @@ export function ProfileMeClient({
                   <div className="space-y-8">
                     <div className="flex items-center gap-4 px-2">
                       <div className="h-6 w-1 rounded-full bg-primary shadow-neon-cyan" />
-                      <h4 className="text-2xl font-black uppercase tracking-tight">Sector Insights</h4>
+                      <h1 className={cn("text-5xl lg:text-8xl font-bold uppercase tracking-tighter leading-[0.8]", getGradientText("editorial"))}>Sector Insights</h1>
                     </div>
                     <ShowcaseTopicWiseStats
                       title=""
@@ -374,7 +383,7 @@ export function ProfileMeClient({
                           <Textarea value={formData.bio} onChange={(e) => setFormData({ ...formData, bio: e.target.value })} rows={4} className="rounded-2xl glass" />
                         </div>
                         <div className="flex gap-4">
-                          <Button type="submit" variant="neon" size="lg" disabled={saving} className="flex-1">
+                          <Button type="submit" variant="accent" size="lg" disabled={saving} className="flex-1">
                             <Save className="mr-3 h-4 w-4" />
                             {saving ? "UPLOADING..." : "SYNC PROFILE"}
                           </Button>

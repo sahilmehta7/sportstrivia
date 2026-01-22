@@ -139,10 +139,10 @@ export function ChallengesClient({
 
   return (
     <main className="relative min-h-screen overflow-hidden pt-12 pb-24 lg:pt-20">
-      <div className="absolute inset-0 -z-10">
-        {circle1}
-        {circle2}
-        {circle3}
+      <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none">
+        <div className={cn("absolute -left-[10%] top-[10%] h-[40%] w-[40%] rounded-full opacity-20 blur-[120px]", circle1)} />
+        <div className={cn("absolute -right-[10%] top-[20%] h-[40%] w-[40%] rounded-full opacity-20 blur-[120px]", circle2)} />
+        <div className={cn("absolute left-[20%] -bottom-[10%] h-[40%] w-[40%] rounded-full opacity-20 blur-[120px]", circle3)} />
       </div>
 
       <PageContainer className="space-y-16">
@@ -150,7 +150,7 @@ export function ChallengesClient({
           <div className="space-y-4">
             <div className="flex items-center gap-4">
               <div className="h-10 w-1 rounded-full bg-primary shadow-neon-cyan" />
-              <h1 className={cn("text-5xl lg:text-7xl font-black uppercase tracking-tighter", getGradientText("neon"))}>
+              <h1 className={cn("text-5xl lg:text-7xl font-bold uppercase tracking-tighter", getGradientText("editorial"))}>
                 CHALLENGES
               </h1>
             </div>
@@ -158,7 +158,7 @@ export function ChallengesClient({
               COMBAT ZONE • DIRECT COMPETITION INTERFACE
             </p>
           </div>
-          <Button variant="neon" size="lg" onClick={() => setShowCreateModal(true)} className="rounded-full px-10">
+          <Button variant="accent" size="lg" onClick={() => setShowCreateModal(true)} className="rounded-full px-10">
             <Plus className="mr-3 h-5 w-5" />
             INITIATE CHALLENGE
           </Button>

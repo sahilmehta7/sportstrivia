@@ -71,7 +71,11 @@ export default async function LeaderboardPage() {
     <main className="relative min-h-screen overflow-hidden pt-12 pb-24 lg:pt-24">
       {/* Background Animated Elements */}
       <div className="absolute inset-0 -z-10">
-        {circle1}
+        <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none">
+          <div className={cn("absolute -left-[10%] top-[10%] h-[40%] w-[40%] rounded-full opacity-20 blur-[120px]", circle1)} />
+          <div className={cn("absolute -right-[10%] top-[20%] h-[40%] w-[40%] rounded-full opacity-20 blur-[120px]", circle2)} />
+          <div className={cn("absolute left-[20%] -bottom-[10%] h-[40%] w-[40%] rounded-full opacity-20 blur-[120px]", circle3)} />
+        </div>
         {circle2}
         {circle3}
       </div>
@@ -86,10 +90,7 @@ export default async function LeaderboardPage() {
               </span>
               Live Arena Rankings
             </div>
-            <h1 className={cn(
-              "text-5xl font-black tracking-tighter lg:text-8xl lg:leading-[0.8] uppercase",
-              getGradientText("neon")
-            )}>
+            <h1 className={cn("text-5xl lg:text-8xl font-bold uppercase tracking-tighter leading-[0.85]", getGradientText("editorial"))}>
               THE HALL <br className="hidden lg:block" /> OF HEROES
             </h1>
           </div>

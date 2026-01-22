@@ -13,7 +13,11 @@ export default function NotFound() {
   return (
     <ShowcaseThemeProvider>
       <div className="relative min-h-screen overflow-hidden flex items-center justify-center p-6">
-        <div className="absolute inset-0 -z-10">{circle1}{circle2}{circle3}</div>
+        <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none">
+          <div className={cn("absolute -left-[10%] top-[10%] h-[40%] w-[40%] rounded-full opacity-20 blur-[120px]", circle1)} />
+          <div className={cn("absolute -right-[10%] top-[20%] h-[40%] w-[40%] rounded-full opacity-20 blur-[120px]", circle2)} />
+          <div className={cn("absolute left-[20%] -bottom-[10%] h-[40%] w-[40%] rounded-full opacity-20 blur-[120px]", circle3)} />
+        </div>
 
         <div className="relative max-w-xl w-full group">
           <div className="absolute -inset-1 bg-gradient-to-r from-primary/20 via-primary/5 to-secondary/20 blur-3xl opacity-40 group-hover:opacity-60 transition-opacity rounded-[3.5rem]" />
@@ -25,7 +29,7 @@ export default function NotFound() {
               </div>
               <div className="space-y-4">
                 <p className="text-[10px] font-black uppercase tracking-[0.5em] text-muted-foreground/40">SECTOR NOT FOUND • 404</p>
-                <h1 className={cn("text-5xl sm:text-7xl font-black uppercase tracking-tighter leading-[0.85]", getGradientText("neon"))}>
+                <h1 className={cn("text-8xl lg:text-[12rem] font-bold uppercase tracking-tighter leading-[0.8] mb-4", getGradientText("editorial"))}>
                   ARENA <br /> DE-SYNC
                 </h1>
               </div>
@@ -35,11 +39,9 @@ export default function NotFound() {
             </div>
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
-              <Button asChild variant="neon" size="xl" className="w-full sm:w-auto rounded-2xl px-10">
-                <Link href="/">
-                  <Home className="mr-3 h-5 w-5" />
-                  RETURN BASE
-                </Link>
+              <Button variant="accent" size="xl" className="w-full sm:w-auto h-20 rounded-[2rem] px-12 group" onClick={() => (window.location.href = "/")}>
+                <Home className="mr-3 h-5 w-5" />
+                RETURN BASE
               </Button>
               <Button asChild variant="glass" size="xl" className="w-full sm:w-auto rounded-2xl px-10 border-white/5">
                 <Link href="/quizzes">

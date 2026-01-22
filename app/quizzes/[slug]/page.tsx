@@ -287,9 +287,13 @@ export default async function QuizDetailPage({ params }: QuizDetailPageProps) {
         image={articleImages}
         datePublished={quiz.createdAt?.toISOString() || ""}
         dateModified={quiz.updatedAt?.toISOString() || ""}
-        authorName="Sports Trivia Team"
-        publisherName="Sports Trivia"
-        publisherLogo={getCanonicalUrl("/logo.png") || ""}
+        author={{
+          name: "Sports Trivia Team",
+        }}
+        publisher={{
+          name: "Sports Trivia",
+          logo: getCanonicalUrl("/logo.png") || "",
+        }}
         description={quiz.description || ""}
       />
       {totalReviews > 0 && averageRating > 0 && (
@@ -307,10 +311,10 @@ export default async function QuizDetailPage({ params }: QuizDetailPageProps) {
       )}
 
       <main className="relative min-h-screen overflow-hidden pt-12 pb-24 lg:pt-20">
-        <div className="absolute inset-0 -z-10">
-          {circle1}
-          {circle2}
-          {circle3}
+        <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none">
+          <div className={cn("absolute -left-[10%] top-[10%] h-[40%] w-[40%] rounded-full opacity-20 blur-[120px]", circle1)} />
+          <div className={cn("absolute -right-[10%] top-[20%] h-[40%] w-[40%] rounded-full opacity-20 blur-[120px]", circle2)} />
+          <div className={cn("absolute left-[20%] -bottom-[10%] h-[40%] w-[40%] rounded-full opacity-20 blur-[120px]", circle3)} />
         </div>
 
         <PageContainer>
@@ -344,8 +348,8 @@ export default async function QuizDetailPage({ params }: QuizDetailPageProps) {
                   </div>
 
                   <h1 className={cn(
-                    "text-4xl sm:text-6xl lg:text-8xl font-black uppercase tracking-tighter leading-[0.9]",
-                    getGradientText("neon")
+                    "text-4xl sm:text-6xl lg:text-8xl font-bold uppercase tracking-tighter leading-[0.9]",
+                    getGradientText("editorial")
                   )}>
                     {quiz.title}
                   </h1>

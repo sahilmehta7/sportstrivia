@@ -133,10 +133,10 @@ export default function NotificationsPage() {
   return (
     <ShowcaseThemeProvider>
       <main className="relative min-h-screen overflow-hidden pt-12 pb-24 lg:pt-20">
-        <div className="absolute inset-0 -z-10">
-          {circle1}
-          {circle2}
-          {circle3}
+        <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none">
+          <div className={cn("absolute -left-[10%] top-[10%] h-[40%] w-[40%] rounded-full opacity-20 blur-[120px]", circle1)} />
+          <div className={cn("absolute -right-[10%] top-[20%] h-[40%] w-[40%] rounded-full opacity-20 blur-[120px]", circle2)} />
+          <div className={cn("absolute left-[20%] -bottom-[10%] h-[40%] w-[40%] rounded-full opacity-20 blur-[120px]", circle3)} />
         </div>
 
         <PageContainer className="max-w-4xl space-y-16">
@@ -144,7 +144,7 @@ export default function NotificationsPage() {
             <div className="space-y-4">
               <div className="flex items-center gap-4">
                 <div className="h-10 w-1 rounded-full bg-primary shadow-neon-cyan" />
-                <h1 className={cn("text-5xl lg:text-7xl font-black uppercase tracking-tighter", getGradientText("neon"))}>
+                <h1 className={cn("text-2xl font-bold uppercase tracking-tighter", getGradientText("editorial"))}>
                   TRANSMISSIONS
                 </h1>
               </div>
@@ -153,7 +153,7 @@ export default function NotificationsPage() {
               </p>
             </div>
             {unreadCount > 0 && (
-              <Button variant="neon" size="lg" onClick={markAllAsRead} className="rounded-full px-8">
+              <Button variant="accent" size="lg" onClick={markAllAsRead} className="rounded-full px-8">
                 <Check className="mr-2 h-5 w-5" />
                 CLEAR SIGNALS
               </Button>

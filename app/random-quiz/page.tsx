@@ -44,14 +44,18 @@ export default async function RandomQuizPage() {
     return (
       <ShowcaseThemeProvider>
         <main className="relative min-h-screen overflow-hidden pt-24 pb-24">
-          <div className="absolute inset-0 -z-10">{circle1}{circle2}{circle3}</div>
+          <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none">
+            <div className={cn("absolute -left-[10%] top-[10%] h-[40%] w-[40%] rounded-full opacity-20 blur-[120px]", circle1)} />
+            <div className={cn("absolute -right-[10%] top-[20%] h-[40%] w-[40%] rounded-full opacity-20 blur-[120px]", circle2)} />
+            <div className={cn("absolute left-[20%] -bottom-[10%] h-[40%] w-[40%] rounded-full opacity-20 blur-[120px]", circle3)} />
+          </div>
           <PageContainer className="max-w-2xl px-4 py-20 text-center space-y-12">
             <div className="space-y-6">
               <div className="h-20 w-20 mx-auto rounded-[2rem] glass border border-white/10 flex items-center justify-center text-red-500/20 shadow-neon-magenta/5">
                 <ShieldAlert className="h-10 w-10" />
               </div>
               <div className="space-y-4">
-                <h1 className={cn("text-5xl font-black uppercase tracking-tighter", getGradientText("neon"))}>NO MATRICES</h1>
+                <h1 className={cn("text-5xl lg:text-7xl font-bold uppercase tracking-tighter", getGradientText("editorial"))}>NO MATRICES</h1>
                 <p className="text-sm font-bold tracking-[0.2em] text-muted-foreground/60 uppercase">ALL SINGLE-ATTEMPT SECTORS HAVE BEEN RESOLVED</p>
               </div>
             </div>
@@ -91,14 +95,18 @@ export default async function RandomQuizPage() {
   return (
     <ShowcaseThemeProvider>
       <main className="relative min-h-screen overflow-hidden pt-12 pb-24 lg:pt-20">
-        <div className="absolute inset-0 -z-10">{circle1}{circle2}{circle3}</div>
+        <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none">
+          <div className={cn("absolute -left-[10%] top-[10%] h-[40%] w-[40%] rounded-full opacity-20 blur-[120px]", circle1)} />
+          <div className={cn("absolute -right-[10%] top-[20%] h-[40%] w-[40%] rounded-full opacity-20 blur-[120px]", circle2)} />
+          <div className={cn("absolute left-[20%] -bottom-[10%] h-[40%] w-[40%] rounded-full opacity-20 blur-[120px]", circle3)} />
+        </div>
 
         <PageContainer className="space-y-20">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-10 pt-4">
             <div className="space-y-6">
               <div className="flex items-center gap-4">
                 <div className="h-10 w-1 rounded-full bg-primary shadow-neon-cyan" />
-                <h1 className={cn("text-5xl lg:text-8xl font-black uppercase tracking-tighter leading-[0.8]", getGradientText("neon"))}>
+                <h1 className={cn("text-5xl lg:text-8xl font-bold uppercase tracking-tighter leading-[1]", getGradientText("editorial"))}>
                   MATRIX SHIFT
                 </h1>
               </div>

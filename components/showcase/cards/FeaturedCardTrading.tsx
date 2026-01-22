@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { ShieldCheck, Zap, Trophy, TrendingUp, ShieldAlert, Play } from "lucide-react";
+import { ShieldCheck, Zap, TrendingUp, ShieldAlert, Play } from "lucide-react";
 import type { PublicQuizListItem } from "@/lib/services/public-quiz.service";
 import { cn } from "@/lib/utils";
 import { getGradientText } from "@/lib/showcase-theme";

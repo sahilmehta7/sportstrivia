@@ -135,7 +135,11 @@ export function AdminShell({ navigation, children }: AdminShellProps) {
   return (
     <ShowcaseThemeProvider>
       <div className="relative min-h-screen bg-background overflow-hidden flex flex-col lg:flex-row">
-        <div className="absolute inset-0 -z-10">{circle1}{circle2}{circle3}</div>
+        <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none">
+          <div className={cn("absolute -left-[10%] top-[10%] h-[40%] w-[40%] rounded-full opacity-20 blur-[120px]", circle1)} />
+          <div className={cn("absolute -right-[10%] top-[20%] h-[40%] w-[40%] rounded-full opacity-20 blur-[120px]", circle2)} />
+          <div className={cn("absolute left-[20%] -bottom-[10%] h-[40%] w-[40%] rounded-full opacity-20 blur-[120px]", circle3)} />
+        </div>
 
         {/* Mobile Nav */}
         <div className="lg:hidden relative z-50 glass border-b border-white/10 px-4 py-4 flex items-center justify-between">
@@ -143,7 +147,7 @@ export function AdminShell({ navigation, children }: AdminShellProps) {
             <div className="h-8 w-1 rounded-full bg-primary shadow-neon-cyan" />
             <span className="text-xl font-black uppercase tracking-tighter">COMMAND</span>
           </div>
-          <Button variant="glass" size="icon" className="rounded-xl h-10 w-10" onClick={() => setMobileOpen(!mobileOpen)}>
+          <Button variant="glass" size="icon" className="rounded-xl h-10 w-10 flex lg:hidden" onClick={() => setMobileOpen(!mobileOpen)}>
             {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </Button>
         </div>
@@ -155,7 +159,7 @@ export function AdminShell({ navigation, children }: AdminShellProps) {
               <Link href="/" className="flex items-center justify-between text-[10px] font-black uppercase tracking-widest text-muted-foreground">
                 SITE OVERVIEW <Globe className="h-4 w-4" />
               </Link>
-              <Button variant="neon" className="w-full rounded-2xl h-12" onClick={handleSignOut}>
+              <Button variant="accent" className="w-full rounded-2xl h-12" onClick={handleSignOut}>
                 TERMINATE SESSION
               </Button>
             </div>
@@ -167,7 +171,7 @@ export function AdminShell({ navigation, children }: AdminShellProps) {
           <div className="p-8 border-b border-white/5">
             <div className="flex items-center gap-4">
               <div className="h-10 w-1 rounded-full bg-primary shadow-neon-cyan" />
-              <h1 className={cn("text-2xl font-black uppercase tracking-tighter", getGradientText("neon"))}>
+              <h1 className={cn("text-2xl font-bold uppercase tracking-tighter", getGradientText("editorial"))}>
                 COMMAND
               </h1>
             </div>

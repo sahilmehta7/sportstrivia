@@ -29,18 +29,9 @@ export default function SignInPage() {
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-background p-4 sm:p-6 lg:p-8">
       {/* Neon Arena Background Effects */}
       <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none select-none">
-        <div className={cn(
-          "absolute -left-[10%] top-[10%] h-[50%] w-[50%] rounded-full blur-[120px] opacity-20 animate-pulse-glow",
-          blur.circle1
-        )} />
-        <div className={cn(
-          "absolute -right-[5%] top-[5%] h-[40%] w-[40%] rounded-full blur-[100px] opacity-15",
-          blur.circle2
-        )} />
-        <div className={cn(
-          "absolute -bottom-[10%] left-[30%] h-[35%] w-[35%] rounded-full blur-[90px] opacity-10 animate-pulse-glow",
-          blur.circle3
-        )} />
+        <div className={cn("absolute -left-[10%] top-[10%] h-[50%] w-[50%] rounded-full blur-[120px] opacity-20", blur.circle1)} />
+        <div className={cn("absolute -right-[5%] top-[5%] h-[40%] w-[40%] rounded-full blur-[100px] opacity-15", blur.circle2)} />
+        <div className={cn("absolute -bottom-[10%] left-[30%] h-[35%] w-[35%] rounded-full blur-[90px] opacity-10", blur.circle3)} />
       </div>
 
       {/* Main signin card with Neon Arena glassmorphism */}
@@ -67,7 +58,7 @@ export default function SignInPage() {
           <div className="space-y-4 text-center mb-10">
             <h1 className={cn(
               "text-4xl font-black tracking-tighter sm:text-5xl leading-none",
-              getGradientText("neon")
+              getGradientText("editorial")
             )}>
               ENTER THE <br /> ARENA
             </h1>
@@ -81,7 +72,7 @@ export default function SignInPage() {
             <input type="hidden" name="callbackUrl" value={callbackUrl} />
             <Button
               type="submit"
-              variant="neon"
+              variant="accent"
               size="xl"
               className="w-full gap-3 font-black uppercase tracking-widest text-lg"
             >
