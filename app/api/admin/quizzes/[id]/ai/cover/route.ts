@@ -3,7 +3,7 @@ import { requireAdmin } from "@/lib/auth-helpers";
 import { handleError, successResponse, BadRequestError, NotFoundError } from "@/lib/errors";
 import { prisma } from "@/lib/db";
 import { getSupabaseClient, isSupabaseConfigured, QUIZ_IMAGES_BUCKET } from "@/lib/supabase";
-import sharp from "sharp";
+import { optimizeImage } from "@/lib/image-optimization";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
 // Use Node.js runtime for long-running AI operations
@@ -159,23 +159,12 @@ Mention relevant colors, action, and setting. Reply with description only.`;
       throw new BadRequestError("Failed to generate image buffer");
     }
 
-    let quality = 75;
-    let optimized = await sharp(imageBuffer)
-      .resize(TARGET_WIDTH, TARGET_HEIGHT, { fit: "cover" })
-      .webp({ quality })
-      .toBuffer();
-
-    while (optimized.length > MAX_SIZE_BYTES && quality > 35) {
-      quality -= 10;
-      optimized = await sharp(imageBuffer)
-        .resize(TARGET_WIDTH, TARGET_HEIGHT, { fit: "cover" })
-        .webp({ quality })
-        .toBuffer();
-    }
-
-    if (optimized.length > MAX_SIZE_BYTES) {
-      throw new BadRequestError("Unable to compress image under 400KB. Please try again.");
-    }
+    const optimized = await optimizeImage(imageBuffer, {
+      width: TARGET_WIDTH,
+      height: TARGET_HEIGHT,
+      fit: 'cover',
+      maxSizeBytes: MAX_SIZE_BYTES
+    });
 
     const supabase = getSupabaseClient();
     const filePath = `quizzes/${id}/ai-cover-${Date.now()}.webp`;

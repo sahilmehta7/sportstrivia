@@ -18,6 +18,7 @@ import {
   extractUsageStats,
 } from "@/lib/services/ai-openai-client.service";
 import { extractJSON } from "@/lib/services/ai-quiz-processor.service";
+import { inngest } from "@/lib/inngest/client";
 
 // Use Node.js runtime for long-running AI operations
 export const runtime = 'nodejs';
@@ -74,126 +75,23 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       },
     });
     taskId = backgroundTask.id;
-    await markBackgroundTaskInProgress(taskId);
 
-    const slugifiedTopic = topic.name
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-|-$/g, "");
-
-    // Build a question-only prompt, preserving admin-editable template context
-    const prompt = buildQuestionsOnlyPrompt(
-      baseTemplate,
-      topic.name,
-      topic.level === 0 ? topic.name : (topic.name),
-      total,
-      slugifiedTopic,
-      { easyCount, mediumCount, hardCount }
-    );
-
-    // Build system message based on model type
-    const isO1 = aiModel.startsWith("o1");
-    let systemMessage = "You are an expert sports quiz creator. You create engaging, accurate questions in strict JSON format.";
-    if (isO1) {
-      systemMessage = "You are an expert sports quiz creator. CRITICAL: Output ONLY valid JSON. No markdown or extra text.";
-    }
-
-    // Call OpenAI API with hybrid support (Responses API for GPT-5, Chat Completions for others)
-    const completion = await callOpenAIWithRetry(
-      aiModel,
-      prompt,
-      systemMessage,
-      {
-        temperature: 0.8,
-        maxTokens: isO1 ? 16000 : 4000,
-        responseFormat: isO1 ? null : { type: "json_object" },
+    // Offload to Inngest for durable execution
+    await inngest.send({
+      name: "ai/questions.generate",
+      data: {
+        taskId,
+        topicId: id,
+        easyCount,
+        mediumCount,
+        hardCount
       }
-    );
-
-    // Extract content from response (handles both API formats)
-    const generatedContent = extractContentFromCompletion(completion, aiModel);
-
-    // Store raw OpenAI response permanently (expensive API call - don't lose it!)
-    // This allows us to retry parsing without another API call
-    const rawResponseData = {
-      rawCompletion: completion,
-      rawGeneratedContent: generatedContent,
-      prompt: prompt.substring(0, 5000), // Store prompt preview (truncated if very long)
-    };
-
-    const cleanedContent = extractJSON(generatedContent);
-    let parsed: any;
-    let parseError: string | null = null;
-    try {
-      parsed = JSON.parse(cleanedContent);
-    } catch (error: any) {
-      parseError = error.message;
-      
-      // Store raw response even on parse failure so we can retry parsing later
-      await updateBackgroundTask(taskId, {
-        result: {
-          rawResponse: rawResponseData,
-          parseError: {
-            message: parseError,
-            cleanedContent: cleanedContent.substring(0, 2000), // Store first 2000 chars for debugging
-            fullCleanedContent: cleanedContent, // Store full content for retry
-          },
-          canRetryParsing: true,
-        },
-      });
-      
-      throw new BadRequestError(`Failed to parse generated JSON. ${error.message}. You can retry parsing from the admin portal.`);
-    }
-
-    // Accept either { questions: [...] } or a raw array [...] for flexibility
-    const questionsRaw: any[] = Array.isArray(parsed) ? parsed : Array.isArray(parsed?.questions) ? parsed.questions : [];
-    if (!Array.isArray(questionsRaw) || questionsRaw.length === 0) {
-      throw new BadRequestError("No questions found in AI output");
-    }
-
-    // Normalize to expected shape
-    const normalized = questionsRaw.map((q: any) => ({
-      questionText: q.questionText || q.text || "",
-      difficulty: String(q.difficulty || "MEDIUM").toUpperCase(),
-      hint: q.hint || undefined,
-      explanation: q.explanation || undefined,
-      answers: (Array.isArray(q.answers) ? q.answers : []).map((a: any, i: number) => ({
-        answerText: a.answerText || a.text || "",
-        isCorrect: Boolean(a.isCorrect),
-        displayOrder: i,
-        answerImageUrl: "",
-        answerVideoUrl: "",
-        answerAudioUrl: "",
-      })),
-    }));
-
-    // Extract usage stats - different APIs have different structures
-    const usageStats = extractUsageStats(completion);
-
-    const resultPayload = {
-      topicId: id,
-      topicName: topic.name,
-      model: aiModel,
-      api: usageStats.api,
-      requested: { easyCount, mediumCount, hardCount, total },
-      questions: normalized,
-      tokensUsed: usageStats.tokensUsed,
-      promptPreview: `${prompt.substring(0, 200)}...`,
-      rawResponse: rawResponseData, // Store permanently for retry capability
-      canRetryParsing: true, // Flag indicating this task can have parsing retried
-    };
-
-    if (taskId) {
-      try {
-        await markBackgroundTaskCompleted(taskId, resultPayload);
-      } catch {
-        // Silently handle task completion errors
-      }
-    }
+    });
 
     return successResponse({
       taskId,
-      ...resultPayload,
+      status: "processing",
+      message: "Question generation started via Inngest.",
     });
   } catch (error) {
     if (taskId) {

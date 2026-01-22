@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { requireAdmin } from "@/lib/auth-helpers";
 import { handleError, successResponse, BadRequestError } from "@/lib/errors";
 import { getSupabaseClient, isSupabaseConfigured, QUIZ_IMAGES_BUCKET } from "@/lib/supabase";
+import { optimizeImage } from "@/lib/image-optimization";
 
 // Use Node.js runtime for long-running operations
 export const runtime = 'nodejs';
@@ -44,21 +45,28 @@ export async function POST(request: NextRequest) {
 
     const supabase = getSupabaseClient();
 
-    // Generate unique filename
-    const timestamp = Date.now();
-    const randomStr = Math.random().toString(36).substring(2, 8);
-    const fileExt = file.name.split(".").pop();
-    const fileName = `${folder}/${timestamp}-${randomStr}.${fileExt}`;
-
     // Convert File to ArrayBuffer then to Buffer
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
+    // Optimize image
+    const optimizedBuffer = await optimizeImage(buffer, {
+      width: 1920, // Reasonable max width for general uploads
+      height: 1080,
+      fit: 'inside', // Maintain aspect ratio
+      maxSizeBytes: 500 * 1024, // 500KB
+    });
+
+    // Generate unique filename with .webp extension
+    const timestamp = Date.now();
+    const randomStr = Math.random().toString(36).substring(2, 8);
+    const fileName = `${folder}/${timestamp}-${randomStr}.webp`;
+
     // Upload to Supabase
     const { data, error } = await supabase.storage
       .from(QUIZ_IMAGES_BUCKET)
-      .upload(fileName, buffer, {
-        contentType: file.type,
+      .upload(fileName, optimizedBuffer, {
+        contentType: "image/webp",
         cacheControl: "3600",
         upsert: false,
       });
@@ -76,9 +84,9 @@ export async function POST(request: NextRequest) {
     return successResponse({
       url: urlData.publicUrl,
       path: data.path,
-      fileName: file.name,
-      size: file.size,
-      type: file.type,
+      fileName: fileName,
+      size: optimizedBuffer.length,
+      type: "image/webp",
     });
   } catch (error) {
     return handleError(error);
