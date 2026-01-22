@@ -2,8 +2,8 @@
 
 import { requireAdmin } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/db";
-import { inngest } from "@/lib/inngest/client";
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
 import { BackgroundTaskStatus, BackgroundTaskType } from "@prisma/client";
 
 export async function retryTask(taskId: string) {
@@ -28,27 +28,18 @@ export async function retryTask(taskId: string) {
         },
     });
 
-    // Re-trigger Inngest Event based on type
+    // Re-trigger/Retry Background Task directly
+    const finalTaskId = taskId; // Capture for closure
+
     if (task.type === BackgroundTaskType.AI_QUIZ_GENERATION) {
-        const input = task.input as any;
-        await inngest.send({
-            name: "ai/quiz.generate",
-            data: {
-                taskId: task.id,
-                input: input // Pass original input back
-            }
+        after(async () => {
+            const { processAIQuizTask } = await import("@/lib/services/ai-quiz-processor.service");
+            await processAIQuizTask(finalTaskId);
         });
     } else if (task.type === BackgroundTaskType.AI_TOPIC_QUESTION_GENERATION) {
-        const input = task.input as any;
-        await inngest.send({
-            name: "ai/questions.generate",
-            data: {
-                taskId: task.id,
-                topicId: input.topicId,
-                easyCount: input.easyCount,
-                mediumCount: input.mediumCount,
-                hardCount: input.hardCount
-            }
+        after(async () => {
+            const { processAIQuestionsTask } = await import("@/lib/services/ai-questions-processor.service");
+            await processAIQuestionsTask(finalTaskId);
         });
     } else {
         throw new Error("Retry not implemented for this task type");

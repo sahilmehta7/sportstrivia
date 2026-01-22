@@ -10,7 +10,7 @@ import {
 import { processAIQuizTask } from "@/lib/services/ai-quiz-processor.service";
 import { determineSportFromTopic, fetchSourceMaterial } from "@/lib/services/ai-quiz-processor.service";
 import { BackgroundTaskType } from "@prisma/client";
-import { inngest } from "@/lib/inngest/client";
+
 
 // Use Node.js runtime for long-running AI operations
 export const runtime = 'nodejs';
@@ -101,22 +101,10 @@ export async function POST(request: NextRequest) {
     // This ensures the main endpoint returns quickly while processing happens reliably
     // Capture taskId in a const to ensure type narrowing works inside the callback
     const finalTaskId = taskId;
-    // Schedule background processing using Inngest
-    // This ensures durable execution, retries, and better monitoring
-    await inngest.send({
-      name: "ai/quiz.generate",
-      data: {
-        taskId,
-        input: {
-          topic,
-          customTitle,
-          sport: normalizedSport,
-          difficulty,
-          numQuestions,
-          sourceUrl
-        }
-      }
-    });
+    // Schedule background processing using Next.js after() function
+    // This allows the response to be sent immediately while the task runs in the background
+    // Start processing in background without Inngest
+    after(() => processAIQuizTask(finalTaskId));
 
     // Return immediately with task ID
     return successResponse({

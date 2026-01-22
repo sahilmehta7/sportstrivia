@@ -17,8 +17,8 @@ import {
   extractContentFromCompletion,
   extractUsageStats,
 } from "@/lib/services/ai-openai-client.service";
-import { extractJSON } from "@/lib/services/ai-quiz-processor.service";
-import { inngest } from "@/lib/inngest/client";
+import { processAIQuestionsTask } from "@/lib/services/ai-questions-processor.service";
+import { after } from "next/server";
 
 // Use Node.js runtime for long-running AI operations
 export const runtime = 'nodejs';
@@ -76,17 +76,9 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     });
     taskId = backgroundTask.id;
 
-    // Offload to Inngest for durable execution
-    await inngest.send({
-      name: "ai/questions.generate",
-      data: {
-        taskId,
-        topicId: id,
-        easyCount,
-        mediumCount,
-        hardCount
-      }
-    });
+    // Start processing in background without Inngest
+    const finalTaskId = taskId;
+    after(() => processAIQuestionsTask(finalTaskId));
 
     return successResponse({
       taskId,
@@ -106,50 +98,4 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   }
 }
 
-function buildQuestionsOnlyPrompt(
-  baseTemplate: string,
-  topicName: string,
-  sport: string,
-  total: number,
-  slug: string,
-  counts: { easyCount: number; mediumCount: number; hardCount: number }
-): string {
-  // Start from the editable template to keep admin control, but pivot to questions-only output
-  const scaffold = baseTemplate
-    .replace(/\{\{TOPIC\}\}/g, topicName)
-    .replace(/\{\{TOPIC_LOWER\}\}/g, topicName.toLowerCase())
-    .replace(/\{\{SLUGIFIED_TOPIC\}\}/g, slug)
-    .replace(/\{\{SPORT\}\}/g, sport)
-    .replace(/\{\{DIFFICULTY\}\}/g, "MEDIUM")
-    .replace(/\{\{NUM_QUESTIONS\}\}/g, String(total))
-    .replace(/\{\{DURATION\}\}/g, String(total * 60));
 
-  const mixNote = `Generate exactly ${counts.easyCount} EASY, ${counts.mediumCount} MEDIUM, and ${counts.hardCount} HARD questions.`;
-
-  // Override structure to ONLY output an object with a questions array in the expected format
-  return `You are generating questions only. Ignore any quiz-level fields in previous instructions.
-
-Return strictly valid JSON matching this shape and nothing else:
-{
-  "questions": [
-    {
-      "questionText": "",
-      "difficulty": "EASY|MEDIUM|HARD",
-      "hint": "",
-      "explanation": "",
-      "answers": [
-        { "answerText": "", "isCorrect": true },
-        { "answerText": "", "isCorrect": false },
-        { "answerText": "", "isCorrect": false },
-        { "answerText": "", "isCorrect": false }
-      ]
-    }
-  ]
-}
-
-Topic: ${topicName}
-${mixNote}
-All questions must be unique, unambiguous, and about the topic. Ensure factual accuracy. Keep hints short and helpful. Explanations should be 1–2 concise sentences. Only one answer can be correct. Output JSON only.
-
-Context (for your reference):\n\n"""\n${scaffold.substring(0, 1200)}\n"""`;
-}

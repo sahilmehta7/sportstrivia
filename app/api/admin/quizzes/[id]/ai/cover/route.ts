@@ -13,8 +13,7 @@ export const runtime = 'nodejs';
 export const maxDuration = 60; // seconds
 
 const INSTRUCTION_MODEL = "gemini-2.5-flash";
-const IMAGE_MODEL = "imagen-4.0-generate-001"; // Upgraded to Imagen 4
-const IMAGE_MODEL_FAST = "imagen-4.0-fast-generate-001"; // Fallback model
+const IMAGE_MODEL = "gemini-2.5-flash-image"; // Nano Banana
 const MAX_SIZE_BYTES = 400 * 1024; // 400 KB
 const TARGET_WIDTH = 1280;
 const TARGET_HEIGHT = 720;
@@ -99,60 +98,47 @@ Mention relevant colors, action, and setting. Reply with description only.`;
       throw new BadRequestError("Prompt generation did not return any content");
     }
 
-    // Generate Image using Imagen 3/4 model via Gemini API
-    // Fallback logic: Try Standard -> Fallback to Fast
-
+    // Generate Image using Gemini 2.5 Flash Image (Nano Banana)
     let imageBuffer: Buffer | null = null;
     let lastError: any = null;
 
-    const generateImage = async (modelName: string) => {
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modelName}:predict?key=${process.env.GEMINI_API_KEY}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          instances: [
-            {
-              prompt: generatedInstruction,
-            }
-          ],
-          parameters: {
-            sampleCount: 1,
-            aspectRatio: "16:9",
-          }
-        })
-      });
-
-      if (!response.ok) {
-        const error = await response.json().catch(() => ({}));
-        throw new Error(error.error?.message || response.statusText);
-      }
-
-      const result = await response.json();
-      const base64Image = result.predictions?.[0]?.bytesBase64Encoded;
-
-      if (!base64Image) {
-        throw new Error("Gemini/Imagen did not return image data");
-      }
-      return Buffer.from(base64Image, "base64");
-    };
-
     try {
-      console.log(`Attempting image generation with ${IMAGE_MODEL}...`);
-      imageBuffer = await generateImage(IMAGE_MODEL);
-    } catch (error) {
-      console.warn(`${IMAGE_MODEL} failed, retrying with ${IMAGE_MODEL_FAST}:`, error);
-      lastError = error;
-      try {
-        console.log(`Attempting image generation with ${IMAGE_MODEL_FAST}...`);
-        imageBuffer = await generateImage(IMAGE_MODEL_FAST);
-      } catch (fastError) {
-        console.error(`${IMAGE_MODEL_FAST} also failed:`, fastError);
-        throw new BadRequestError(
-          `Gemini Image API error (Standard & Fast models failed). Last error: ${fastError instanceof Error ? fastError.message : String(fastError)}`
-        );
+      console.log(`Attempting image generation with ${IMAGE_MODEL} for prompt: ${generatedInstruction}...`);
+      const imageModel = genAI.getGenerativeModel({ model: IMAGE_MODEL });
+
+      const result = await imageModel.generateContent(generatedInstruction);
+      const response = await result.response;
+
+      // @ts-ignore - The SDK types might not strictly guarantee inlineData presence in all versions yet
+      const parts = response.candidates?.[0]?.content?.parts;
+
+      if (parts) {
+        for (const part of parts) {
+          if (part.inlineData && part.inlineData.data) {
+            imageBuffer = Buffer.from(part.inlineData.data, 'base64');
+            break;
+          }
+        }
       }
+
+      if (!imageBuffer) {
+        // Fallback/Check for refusal or other issues
+        console.warn("No inline data found in response:", JSON.stringify(response, null, 2));
+        throw new Error("Model generated a response but no image data was found.");
+      }
+
+    } catch (error: any) {
+      console.error(`${IMAGE_MODEL} failed:`, error);
+      lastError = error;
+
+      // Improve error message for known issues
+      if (error.message?.includes("429") || error.message?.includes("quota")) {
+        throw new BadRequestError(`Gemini Image API Quota Exceeded: ${error.message} (Please check your Google AI Studio billing/quota settings for ${IMAGE_MODEL})`);
+      }
+
+      throw new BadRequestError(
+        `Gemini Image API error: ${error.message}`
+      );
     }
 
     if (!imageBuffer) {
