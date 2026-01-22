@@ -35,12 +35,12 @@ export function QuizPagination({ page, pages, total, pageSize, onPageChange, cla
   const endResult = Math.min(total, page * pageSize);
 
   return (
-    <div className={cn("flex flex-col gap-8 sm:flex-row sm:items-center sm:justify-between", className)}>
-      <div className="flex items-center gap-3">
-        <div className="h-1 w-8 rounded-full bg-primary" />
-        <div className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
-          Showing <span className="text-foreground">{startResult.toLocaleString()} – {endResult.toLocaleString()}</span> of {" "}
-          <span className="text-foreground">{total.toLocaleString()}</span> Arenas
+    <div className={cn("flex flex-col gap-10 sm:flex-row sm:items-center sm:justify-between", className)}>
+      <div className="flex items-center gap-4">
+        <div className="h-4 w-1 bg-accent" />
+        <div className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">
+          RESULTS: <span className="text-foreground">{startResult.toLocaleString()}—{endResult.toLocaleString()}</span> / {" "}
+          <span className="text-foreground">{total.toLocaleString()}</span> ARENAS
         </div>
       </div>
 

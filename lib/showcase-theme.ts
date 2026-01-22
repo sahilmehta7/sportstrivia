@@ -1,14 +1,13 @@
 /**
- * Neon Arena Theme Utilities
+ * Minimalist Athletic Theme Utilities
  * 
  * A unified theme system using CSS variables from globals.css.
  * All utilities work with both light and dark modes via CSS variables.
  */
 
-export type BackgroundVariant = "default" | "dark" | "vibrant" | "cool" | "neon";
+export type BackgroundVariant = "default" | "dark" | "vibrant" | "cool" | "editorial";
 export type SurfaceVariant = "base" | "raised" | "sunken" | "glass";
-export type ChipEmphasis = "solid" | "outline" | "ghost" | "neon";
-export type NeonColor = "cyan" | "magenta" | "lime";
+export type ChipEmphasis = "solid" | "outline" | "ghost" | "accent";
 
 /* ===================
    GLASS CARD STYLES
@@ -18,21 +17,21 @@ export type NeonColor = "cyan" | "magenta" | "lime";
  * Standard glass card with backdrop blur
  */
 export function getGlassCard(): string {
-  return "glass rounded-lg";
+  return "glass rounded-md";
 }
 
 /**
  * Elevated glass card with stronger glow
  */
 export function getGlassCardElevated(): string {
-  return "glass-elevated rounded-lg";
+  return "glass-elevated rounded-md";
 }
 
 /**
- * Glass card with hover glow effect
+ * Glass card with hover effect
  */
 export function getGlassCardInteractive(): string {
-  return "glass rounded-lg transition-all duration-base hover:shadow-glass-lg hover:border-primary/20";
+  return "glass rounded-md transition-all duration-base hover:shadow-athletic hover:border-primary/20";
 }
 
 /* ===================
@@ -46,11 +45,11 @@ export function getBackgroundVariant(variant: BackgroundVariant): string {
     case "dark":
       return "bg-card";
     case "vibrant":
-      return "bg-gradient-to-br from-secondary/10 via-background to-primary/10";
+      return "bg-gradient-to-br from-accent/10 via-background to-primary/10";
     case "cool":
-      return "bg-gradient-to-br from-primary/10 via-background to-accent/10";
-    case "neon":
-      return "bg-gradient-to-br from-neon-cyan/5 via-background to-neon-magenta/5";
+      return "bg-gradient-to-br from-primary/10 via-background to-secondary/10";
+    case "editorial":
+      return "bg-gradient-to-br from-primary/5 via-background to-accent/5";
     default:
       return "bg-background";
   }
@@ -74,13 +73,13 @@ export type BlurCircles = {
 };
 
 /**
- * Get blur circle classes for animated backgrounds
+ * Get blur circle classes for animated backgrounds (more subtle for editorial)
  */
 export function getBlurCircles(): BlurCircles {
   return {
-    circle1: "blur-circle blur-circle-cyan",
-    circle2: "blur-circle blur-circle-magenta",
-    circle3: "blur-circle blur-circle-lime",
+    circle1: "blur-circle bg-primary/10",
+    circle2: "blur-circle bg-accent/10",
+    circle3: "blur-circle bg-secondary/10",
   };
 }
 
@@ -100,8 +99,8 @@ export function getTextColor(variant: "primary" | "secondary" | "muted" = "prima
 /**
  * Gradient text effect
  */
-export function getGradientText(variant: "neon" | "accent" = "neon"): string {
-  return variant === "neon" ? "text-gradient-neon" : "text-gradient-accent";
+export function getGradientText(variant: "editorial" | "accent" = "editorial"): string {
+  return variant === "editorial" ? "text-gradient-editorial" : "text-gradient-accent";
 }
 
 /* ===================
@@ -122,50 +121,15 @@ export function getAccentColor(
 }
 
 /* ===================
-   NEON GLOW EFFECTS
-   =================== */
-
-/**
- * Get neon glow box-shadow class
- */
-export function getNeonGlow(color: NeonColor = "cyan"): string {
-  const glows: Record<NeonColor, string> = {
-    cyan: "shadow-neon-cyan",
-    magenta: "shadow-neon-magenta",
-    lime: "shadow-neon-lime",
-  };
-  return glows[color];
-}
-
-/**
- * Get neon glow utility class
- */
-export function getNeonGlowClass(color: NeonColor = "cyan"): string {
-  const classes: Record<NeonColor, string> = {
-    cyan: "neon-glow-cyan",
-    magenta: "neon-glow-magenta",
-    lime: "neon-glow-lime",
-  };
-  return classes[color];
-}
-
-/**
- * Animated neon glow
- */
-export function getAnimatedNeonGlow(): string {
-  return "animate-glow-pulse";
-}
-
-/* ===================
    SURFACE STYLES
    =================== */
 
 export function getSurfaceStyles(variant: SurfaceVariant = "base"): string {
   switch (variant) {
     case "raised":
-      return "bg-card-elevated border border-border shadow-glass";
+      return "bg-card-elevated border border-border shadow-athletic";
     case "sunken":
-      return "bg-muted border border-border/50 shadow-inner";
+      return "bg-muted border border-border/50";
     case "glass":
       return "glass";
     default:
@@ -179,20 +143,20 @@ export function getSurfaceStyles(variant: SurfaceVariant = "base"): string {
 
 export function getInputStyles(): string {
   return [
-    "h-input w-full rounded-md",
+    "h-input w-full rounded-sm",
     "bg-input border border-border",
     "text-foreground placeholder:text-muted-foreground",
-    "focus:border-primary focus:ring-2 focus:ring-primary/20",
+    "focus:border-primary focus:ring-2 focus:ring-primary/10",
     "transition-colors duration-fast",
   ].join(" ");
 }
 
 export function getInputStylesCompact(): string {
   return [
-    "h-input-sm w-full rounded-md",
+    "h-input-sm w-full rounded-sm",
     "bg-input border border-border",
     "text-foreground placeholder:text-muted-foreground",
-    "focus:border-primary focus:ring-2 focus:ring-primary/20",
+    "focus:border-primary focus:ring-2 focus:ring-primary/10",
     "transition-colors duration-fast",
   ].join(" ");
 }
@@ -202,15 +166,15 @@ export function getInputStylesCompact(): string {
    =================== */
 
 export function getChipStyles(emphasis: ChipEmphasis = "solid"): string {
-  const base = "inline-flex items-center rounded-full px-3 py-1 text-sm font-medium transition-colors";
+  const base = "inline-flex items-center rounded-sm px-3 py-1 text-sm font-semibold transition-colors uppercase tracking-wider";
 
   switch (emphasis) {
     case "outline":
       return `${base} border border-border text-muted-foreground hover:bg-muted`;
     case "ghost":
       return `${base} text-muted-foreground hover:bg-muted`;
-    case "neon":
-      return `${base} bg-primary/10 text-primary border border-primary/30 shadow-neon-cyan`;
+    case "accent":
+      return `${base} bg-accent/20 text-accent border border-accent/30`;
     default:
       return `${base} bg-primary text-primary-foreground`;
   }
@@ -220,30 +184,30 @@ export function getChipStyles(emphasis: ChipEmphasis = "solid"): string {
    BUTTON STYLES
    =================== */
 
-export type ButtonVariant = "primary" | "secondary" | "ghost" | "outline" | "neon" | "destructive";
+export type ButtonVariant = "primary" | "secondary" | "ghost" | "outline" | "accent" | "destructive";
 
 export function getButtonStyles(variant: ButtonVariant = "primary"): string {
   const base = [
     "inline-flex items-center justify-center",
-    "min-h-touch rounded-md px-4",
-    "font-medium transition-all duration-base",
+    "min-h-touch rounded-sm px-6",
+    "font-bold uppercase tracking-widest transition-all duration-base",
     "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
     "disabled:pointer-events-none disabled:opacity-50",
   ].join(" ");
 
   switch (variant) {
     case "secondary":
-      return `${base} bg-secondary text-secondary-foreground hover:bg-secondary/80`;
+      return `${base} bg-secondary text-secondary-foreground hover:bg-secondary/90 shadow-athletic`;
     case "ghost":
-      return `${base} hover:bg-muted text-muted-foreground`;
+      return `${base} hover:bg-muted text-foreground`;
     case "outline":
-      return `${base} border border-border bg-transparent hover:bg-muted`;
-    case "neon":
-      return `${base} bg-primary text-primary-foreground shadow-neon-cyan hover:shadow-neon-cyan/60 hover:scale-105`;
+      return `${base} border-2 border-primary bg-transparent text-primary hover:bg-primary hover:text-primary-foreground`;
+    case "accent":
+      return `${base} bg-accent text-accent-foreground shadow-athletic hover:scale-[1.02]`;
     case "destructive":
       return `${base} bg-destructive text-destructive-foreground hover:bg-destructive/90`;
     default:
-      return `${base} bg-primary text-primary-foreground hover:bg-primary/90`;
+      return `${base} bg-primary text-primary-foreground hover:bg-primary/95 shadow-athletic`;
   }
 }
 
@@ -268,10 +232,10 @@ export function getDividerStyles(): string {
    =================== */
 
 /**
- * @deprecated Use getBackgroundVariant instead
+ * @deprecated Use getBackgroundVariant("editorial") instead
  */
 export function getGlassBackground(): string {
-  return getBackgroundVariant("neon");
+  return getBackgroundVariant("editorial");
 }
 
 /**

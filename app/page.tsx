@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import { ShowcaseThemeProvider } from "@/components/showcase/ShowcaseThemeProvider";
 import { LandingPage } from "@/components/home/LandingPage";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { auth } from "@/lib/auth";
@@ -38,16 +37,14 @@ export default async function Home() {
   }
 
   return (
-    <ShowcaseThemeProvider>
-      <Suspense
-        fallback={(
-          <div className="flex min-h-screen items-center justify-center">
-            <LoadingSpinner size="lg" />
-          </div>
-        )}
-      >
-        <LandingPage stats={stats} />
-      </Suspense>
-    </ShowcaseThemeProvider>
+    <Suspense
+      fallback={(
+        <div className="flex min-h-screen items-center justify-center">
+          <LoadingSpinner size="lg" />
+        </div>
+      )}
+    >
+      <LandingPage stats={stats} />
+    </Suspense>
   );
 }

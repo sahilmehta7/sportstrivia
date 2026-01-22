@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button"; // Assuming standard UI components exist
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { X, ChevronRight, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -16,27 +16,27 @@ interface Step {
 
 const steps: Step[] = [
     {
-        target: "body", // General welcome
+        target: "body",
         title: "Welcome to Sports Trivia!",
-        description: "Ready to prove your sports knowledge? Let's take a quick tour.",
+        description: "The arena is waiting. Are you ready to prove your mastery and climb the global ranks?",
         position: "center",
     },
     {
-        target: "a[href='/quizzes']", // Nav link
-        title: "Daily Challenges",
-        description: "Find new quizzes every day to earn XP and climb the ranks.",
+        target: "body",
+        title: "Pick Your Arena",
+        description: "Which sport do you dominate? Selecting an arena will curate your first missions.",
+        position: "center",
+    },
+    {
+        target: "a[href='/quizzes']",
+        title: "Daily Missions",
+        description: "Fresh challenges drop every 24 hours. Complete them to earn XP and unlock elite badges.",
         position: "top",
     },
     {
         target: "a[href='/leaderboard']",
-        title: "Global Leaderboard",
-        description: "See how you stack up against the best sports fans in the world.",
-        position: "top",
-    },
-    {
-        target: "a[href='/profile']", // Profile link
-        title: "Your Profile",
-        description: "Track your stats, badges, and match history here.",
+        title: "Global Standing",
+        description: "Every point counts. Outsmart your rivals to claim your spot among the legends.",
         position: "top",
     },
 ];
@@ -44,13 +44,19 @@ const steps: Step[] = [
 export function OnboardingTour() {
     const [currentStep, setCurrentStep] = useState(0);
     const [isVisible, setIsVisible] = useState(false);
+    const [selectedSport, setSelectedSport] = useState<string | null>(null);
     const [position, setPosition] = useState<{ top: number | string; left: number | string }>({ top: 0, left: 0 });
 
+    const sports = [
+        { name: "Football", icon: "⚽" },
+        { name: "Basketball", icon: "🏀" },
+        { name: "Cricket", icon: "🏏" },
+        { name: "Tennis", icon: "🎾" },
+    ];
+
     useEffect(() => {
-        // Check if user has seen onboarding
         const seen = localStorage.getItem("hasSeenOnboarding");
         if (!seen) {
-            // Small delay to allow UI to render
             setTimeout(() => setIsVisible(true), 1000);
         }
     }, []);
@@ -62,7 +68,6 @@ export function OnboardingTour() {
             const step = steps[currentStep];
             const isMobile = window.innerWidth < 768;
 
-            // Force center on mobile for better UX
             if (isMobile || step.position === "center") {
                 setPosition({ top: "50%", left: "50%" });
                 return;
@@ -73,41 +78,26 @@ export function OnboardingTour() {
                 const rect = element.getBoundingClientRect();
                 const scrollY = window.scrollY;
                 const viewportWidth = window.innerWidth;
-                const cardWidth = 350; // Approximated from CSS
-                const cardHeight = 200; // Approximated
+                const cardWidth = 400;
+                const cardHeight = 250;
                 const margin = 20;
 
-                let top = 0;
-                let left = 0;
-
-                // Horizontal positioning (default centered on target)
-                left = rect.left + (rect.width / 2);
-
-                // Clamp horizontal
-                // Left edge check: ensure strictly inside left margin
+                let left = rect.left + (rect.width / 2);
                 left = Math.max(left, (cardWidth / 2) + margin);
-                // Right edge check: ensure strictly inside right margin
                 left = Math.min(left, viewportWidth - (cardWidth / 2) - margin);
 
-                // Vertical positioning
+                let top = 0;
                 if (step.position === "top") {
-                    top = rect.top + scrollY - cardHeight + 40; // Slight overlap offset
-
-                    // Check top overflow - flip to bottom if needed
-                    if (rect.top - cardHeight < 60) { // 60px buffer for navbar
+                    top = rect.top + scrollY - cardHeight + 40;
+                    if (rect.top - cardHeight < 60) {
                         top = rect.bottom + scrollY + 20;
                     }
-                } else { // Bottom or default
+                } else {
                     top = rect.bottom + scrollY + 20;
-
-                    // Check bottom overflow (if logically possible, though page usually scrolls)
                 }
 
                 setPosition({ top, left });
-
-                // Scroll to element with padding
-                const scrollOptions: ScrollIntoViewOptions = { behavior: "smooth", block: "center" };
-                element.scrollIntoView(scrollOptions);
+                element.scrollIntoView({ behavior: "smooth", block: "center" });
             }
         };
 
@@ -121,6 +111,9 @@ export function OnboardingTour() {
             setCurrentStep(prev => prev + 1);
         } else {
             handleClose();
+            if (selectedSport) {
+                window.location.href = `/quizzes?sport=${selectedSport}`;
+            }
         }
     };
 
@@ -130,7 +123,6 @@ export function OnboardingTour() {
     };
 
     const step = steps[currentStep];
-    const isCenter = step.position === "center";
 
     return (
         <AnimatePresence>
@@ -149,19 +141,17 @@ export function OnboardingTour() {
                         initial={{ opacity: 0, scale: 0.9 }}
                         animate={{ opacity: 1, scale: 1 }}
                         exit={{ opacity: 0, scale: 0.9 }}
-                        className={cn(
-                            "fixed z-50 w-[300px] md:w-[350px]",
-                        )}
+                        className={cn("fixed z-50 w-[300px] md:w-[400px]")}
                         style={{
                             top: position.top,
                             left: position.left,
-                            transform: "translate(-50%, -50%)", // Always center the card on the calculated top/left coordinates
+                            transform: "translate(-50%, -50%)",
                         }}
                     >
-                        <Card className="shadow-2xl border-primary/20 bg-background text-foreground">
+                        <Card className="shadow-2xl border-primary/20 bg-background text-foreground overflow-hidden">
                             <CardContent className="p-6 space-y-4">
                                 <div className="flex justify-between items-start">
-                                    <h3 className="font-bold text-lg text-primary">{step.title}</h3>
+                                    <h3 className="font-bold text-lg text-primary uppercase tracking-tighter">{step.title}</h3>
                                     <button onClick={handleClose} className="text-muted-foreground hover:text-foreground">
                                         <X className="h-4 w-4" />
                                     </button>
@@ -170,6 +160,26 @@ export function OnboardingTour() {
                                 <p className="text-sm text-muted-foreground">
                                     {step.description}
                                 </p>
+
+                                {currentStep === 1 && (
+                                    <div className="grid grid-cols-2 gap-3 pt-2">
+                                        {sports.map((sport) => (
+                                            <button
+                                                key={sport.name}
+                                                onClick={() => setSelectedSport(sport.name)}
+                                                className={cn(
+                                                    "flex items-center gap-3 p-3 rounded-xl border transition-all text-left",
+                                                    selectedSport === sport.name
+                                                        ? "border-primary bg-primary/10 ring-1 ring-primary"
+                                                        : "border-white/10 bg-white/5 hover:border-white/20"
+                                                )}
+                                            >
+                                                <span className="text-xl">{sport.icon}</span>
+                                                <span className="text-xs font-black uppercase tracking-widest">{sport.name}</span>
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
 
                                 <div className="flex justify-between items-center pt-2">
                                     <div className="flex gap-1">
@@ -184,9 +194,9 @@ export function OnboardingTour() {
                                         ))}
                                     </div>
 
-                                    <Button size="sm" onClick={handleNext}>
+                                    <Button size="sm" onClick={handleNext} className="rounded-full px-6">
                                         {currentStep === steps.length - 1 ? (
-                                            <>Get Started <Check className="ml-2 h-3 w-3" /></>
+                                            <>Enter Arena <Check className="ml-2 h-3 w-3" /></>
                                         ) : (
                                             <>Next <ChevronRight className="ml-2 h-3 w-3" /></>
                                         )}

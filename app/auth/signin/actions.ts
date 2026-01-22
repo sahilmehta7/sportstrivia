@@ -2,7 +2,8 @@
 
 import { signIn } from "@/lib/auth";
 
-export async function signInWithGoogleAction() {
-  await signIn("google", { redirectTo: "/quizzes" });
+export async function signInWithGoogleAction(formData: FormData) {
+  const callbackUrl = formData.get("callbackUrl") as string || "/quizzes";
+  await signIn("google", { redirectTo: callbackUrl });
 }
 

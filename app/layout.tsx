@@ -9,6 +9,7 @@ import { OrganizationJsonLd, JsonLdScript } from "next-seo";
 import { defaultSeoConfig } from "@/lib/next-seo-config";
 import React from "react";
 import { GoogleAnalytics } from "@next/third-parties/google";
+import { ShowcaseThemeProvider } from "@/components/showcase/ShowcaseThemeProvider";
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "https://www.sportstrivia.in"),
@@ -73,12 +74,19 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className="font-sans">
+    <html lang="en" suppressHydrationWarning className="scroll-smooth">
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700&family=Barlow:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+      </head>
+      <body className="font-['Barlow',sans-serif]">
         <ThemeColorInit />
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
           <AppSessionProvider>
-            <LayoutWrapper>{children}</LayoutWrapper>
+            <ShowcaseThemeProvider>
+              <LayoutWrapper>{children}</LayoutWrapper>
+            </ShowcaseThemeProvider>
             <Toaster />
           </AppSessionProvider>
         </ThemeProvider>

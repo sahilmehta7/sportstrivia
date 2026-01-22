@@ -13,40 +13,40 @@ interface FilterBarProps {
 
 export function FilterBar({ groups, className, onChange }: FilterBarProps) {
   return (
-    <div className={cn("w-full rounded-xl border bg-card p-4", className)}>
-      <div className="flex flex-col gap-4">
+    <div className={cn("w-full border-b-2 border-foreground/5 bg-background pb-8", className)}>
+      <div className="flex flex-col gap-8">
         {groups.map((group) => (
-          <div key={group.id} className="space-y-2">
-            <span className="text-sm font-semibold text-foreground">{group.label}</span>
-            <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+          <div key={group.id} className="space-y-4">
+            <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-muted-foreground/60">{group.label}</span>
+            <div className="flex flex-wrap gap-2">
               {group.options.map((option) => {
-                const isActive = option.value === group.activeValue || 
+                const isActive = option.value === group.activeValue ||
                   (group.activeValue === undefined && option.value === "all");
-                
+
                 return (
-                  <Button
+                  <button
                     key={option.value}
-                    variant={isActive ? "default" : "outline"}
-                    size="sm"
-                    className={cn(
-                      "h-8 rounded-full px-3 py-1 text-xs font-semibold whitespace-nowrap",
-                      isActive 
-                        ? "bg-primary text-primary-foreground hover:bg-primary/90" 
-                        : "border-border text-muted-foreground hover:bg-muted"
-                    )}
                     onClick={() => onChange?.(group.id, option)}
-                  >
-                    {option.emoji && <span className="mr-1">{option.emoji}</span>}
-                    {option.label}
-                    {option.count !== undefined && (
-                      <Badge 
-                        variant="secondary" 
-                        className="ml-1 h-4 px-1 text-[10px] bg-muted text-muted-foreground"
-                      >
-                        {option.count}
-                      </Badge>
+                    className={cn(
+                      "group flex items-center gap-3 px-6 py-2.5 transition-all duration-300",
+                      "text-xs font-bold uppercase tracking-widest",
+                      "border-2",
+                      isActive
+                        ? "bg-foreground text-background border-foreground shadow-athletic"
+                        : "bg-background text-foreground/40 border-foreground/5 hover:border-foreground/20 hover:text-foreground"
                     )}
-                  </Button>
+                  >
+                    {option.emoji && <span className={cn("text-base transition-opacity", isActive ? "opacity-100" : "opacity-40 group-hover:opacity-100")}>{option.emoji}</span>}
+                    <span>{option.label}</span>
+                    {option.count !== undefined && (
+                      <span className={cn(
+                        "ml-2 text-[9px] px-1.5 py-0.5 border-l transition-colors",
+                        isActive ? "border-background/20 text-background/60" : "border-foreground/10 text-muted-foreground/40"
+                      )}>
+                        {option.count}
+                      </span>
+                    )}
+                  </button>
                 );
               })}
             </div>

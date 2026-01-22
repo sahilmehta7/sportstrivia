@@ -10,6 +10,7 @@ import {
     CarouselPrevious,
 } from "@/components/ui/carousel";
 import type { PublicQuizListItem } from "@/lib/services/public-quiz.service";
+import { cn } from "@/lib/utils";
 
 interface FeaturedTradingCardsCarouselProps {
     quizzes: PublicQuizListItem[];
@@ -21,7 +22,7 @@ export function FeaturedTradingCardsCarousel({ quizzes }: FeaturedTradingCardsCa
     }
 
     return (
-        <section className="mb-6 w-full max-w-5xl mx-auto md:px-12 md:mb-12">
+        <section className="mb-12 w-full max-w-7xl mx-auto px-4 md:px-8 lg:mb-24">
             <Carousel
                 opts={{
                     align: "start",
@@ -29,19 +30,21 @@ export function FeaturedTradingCardsCarousel({ quizzes }: FeaturedTradingCardsCa
                 }}
                 className="w-full"
             >
-                <CarouselContent className="-ml-2 md:-ml-4">
+                <CarouselContent className="-ml-8">
                     {quizzes.map((quiz) => (
-                        <CarouselItem key={quiz.id} className="pl-2 md:pl-4 md:basis-1/2 lg:basis-1/3">
-                            <div className="p-1">
-                                <Link href={`/quizzes/${quiz.slug}`}>
-                                    <FeaturedCardTrading quiz={quiz} />
-                                </Link>
-                            </div>
+                        <CarouselItem key={quiz.id} className="pl-8 md:basis-1/2 lg:basis-1/2">
+                            <Link href={`/quizzes/${quiz.slug}`} className="block">
+                                <FeaturedCardTrading quiz={quiz} />
+                            </Link>
                         </CarouselItem>
                     ))}
                 </CarouselContent>
-                <CarouselPrevious />
-                <CarouselNext />
+
+                {/* Athletic Navigation */}
+                <div className="absolute -bottom-16 right-8 flex gap-2">
+                    <CarouselPrevious className="static translate-y-0 h-12 w-12 rounded-none bg-background border-2 border-foreground/5 hover:border-foreground transition-all" />
+                    <CarouselNext className="static translate-y-0 h-12 w-12 rounded-none bg-foreground text-background hover:bg-foreground/90 transition-all shadow-athletic" />
+                </div>
             </Carousel>
         </section>
     );

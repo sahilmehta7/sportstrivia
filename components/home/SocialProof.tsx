@@ -1,8 +1,8 @@
 "use client";
 
-import { getGlassCard, getTextColor, getGradientText } from "@/lib/showcase-theme";
+import { getGradientText } from "@/lib/showcase-theme";
 import { cn } from "@/lib/utils";
-import { Trophy, Users, BookOpen, Star } from "lucide-react";
+import { Trophy, Users, BookOpen, Star, ShieldCheck } from "lucide-react";
 
 interface SocialProofProps {
   stats: {
@@ -18,72 +18,70 @@ export function SocialProof({ stats }: SocialProofProps) {
     {
       icon: BookOpen,
       value: `${stats.totalQuizzes.toLocaleString()}+`,
-      label: "Quizzes",
-      glow: "shadow-neon-cyan/20",
+      label: "PRO QUIZZES",
       iconColor: "text-primary",
     },
     {
       icon: Users,
       value: `${stats.activeUsers.toLocaleString()}+`,
-      label: "Players",
-      glow: "shadow-neon-magenta/20",
-      iconColor: "text-secondary",
+      label: "ATHLETES",
+      iconColor: "text-accent",
     },
     {
       icon: Trophy,
       value: `${stats.questionsAnswered.toLocaleString()}+`,
-      label: "Answers",
-      glow: "shadow-neon-lime/20",
-      iconColor: "text-accent",
+      label: "RESPONSES",
+      iconColor: "text-primary",
     },
     {
       icon: Star,
       value: `${stats.averageRating.toFixed(1)}/5`,
-      label: "Rating",
-      glow: "shadow-neon-cyan/20",
-      iconColor: "text-primary",
+      label: "PRO RATING",
+      iconColor: "text-accent",
     },
   ];
 
   return (
-    <section className="px-4 py-16 sm:px-6 lg:py-24">
+    <section className="px-4 py-24 sm:px-6 lg:py-32 bg-muted/30">
       <div className="mx-auto max-w-7xl">
-        <div className="mb-16 text-center">
-          <h2 className={cn("text-4xl font-black tracking-tighter sm:text-5xl mb-4", getGradientText("neon"))}>
+        <div className="mb-20 flex flex-col items-center text-center space-y-6">
+          <div className="inline-flex items-center gap-2 border border-foreground/10 px-4 py-1.5 bg-background">
+            <ShieldCheck className="h-4 w-4 text-accent" />
+            <span className="text-[10px] font-bold uppercase tracking-[0.3em]">Verified Ecosystem</span>
+          </div>
+          <h2 className={cn(
+            "text-5xl sm:text-7xl font-bold tracking-tighter uppercase font-['Barlow_Condensed',sans-serif]",
+            getGradientText("editorial")
+          )}>
             TRUSTED BY THE BEST
           </h2>
-          <p className="mx-auto max-w-2xl text-lg text-muted-foreground font-medium">
+          <p className="max-w-xl text-lg text-muted-foreground font-semibold uppercase tracking-tight">
             Join thousands of fans in the world's most competitive sports trivia arena.
           </p>
         </div>
 
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-px bg-foreground/10 border-2 border-foreground/10">
           {socialProofItems.map((item, index) => {
             const Icon = item.icon;
             return (
               <div
                 key={index}
                 className={cn(
-                  "relative group rounded-[2rem] p-8 text-center",
-                  "glass border-white/5 transition-all duration-500",
-                  "hover:border-primary/20 hover:bg-white/10 hover:-translate-y-2",
-                  item.glow
+                  "relative group bg-background p-12 text-center transition-all duration-300",
+                  "hover:bg-muted/50"
                 )}
               >
-                <div className="flex justify-center mb-6">
-                  <div className="relative">
-                    <div className={cn("absolute inset-0 rounded-full blur-xl opacity-20", item.iconColor)} />
-                    <div className="relative rounded-2xl glass-elevated border-white/10 p-4">
-                      <Icon className={cn("h-8 w-8", item.iconColor)} />
-                    </div>
+                <div className="flex justify-center mb-8">
+                  <div className="relative bg-foreground text-background p-5">
+                    <Icon className="h-8 w-8" />
                   </div>
                 </div>
 
-                <div className="text-3xl font-black tracking-tighter mb-1">
+                <div className="text-5xl font-bold tracking-tighter mb-2 font-['Barlow_Condensed',sans-serif] uppercase">
                   {item.value}
                 </div>
 
-                <div className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground">
+                <div className="text-xs font-bold uppercase tracking-[0.3em] text-muted-foreground/60">
                   {item.label}
                 </div>
               </div>

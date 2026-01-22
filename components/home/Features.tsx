@@ -1,6 +1,6 @@
 "use client";
 
-import { getGlassCard, getTextColor, getGradientText } from "@/lib/showcase-theme";
+import { getGradientText } from "@/lib/showcase-theme";
 import { cn } from "@/lib/utils";
 import {
   BookOpen,
@@ -8,7 +8,8 @@ import {
   Calendar,
   BarChart3,
   Users,
-  Award
+  Award,
+  Zap
 } from "lucide-react";
 
 export function Features() {
@@ -17,93 +18,101 @@ export function Features() {
       icon: BookOpen,
       title: "Global Playbook",
       description: "Explore 150+ quizzes across every major sport and deep-dive topics.",
-      glow: "shadow-neon-cyan/10",
       iconColor: "text-primary",
     },
     {
       icon: Trophy,
-      title: "Neon Leaderboards",
+      title: "Championship Rankings",
       description: "Climb the ranks and claim your spot among the legendary sport fanatics.",
-      glow: "shadow-neon-magenta/10",
-      iconColor: "text-secondary",
+      iconColor: "text-accent",
     },
     {
       icon: Calendar,
       title: "Match Day Drill",
       description: "Fresh challenges every single day to keep your game sharp.",
-      glow: "shadow-neon-lime/10",
-      iconColor: "text-accent",
+      iconColor: "text-primary",
     },
     {
       icon: BarChart3,
       title: "Pro Statistics",
       description: "Detailed analytics on your performance to help you level up.",
-      glow: "shadow-neon-cyan/10",
-      iconColor: "text-primary",
+      iconColor: "text-accent",
     },
     {
       icon: Award,
       title: "Hall of Fame",
       description: "Unlock premium badges and achievements as you master new topics.",
-      glow: "shadow-neon-magenta/10",
-      iconColor: "text-secondary",
+      iconColor: "text-primary",
     },
     {
       icon: Users,
       title: "Versus Mode",
       description: "Challenge friends directly and see who truly owns the arena.",
-      glow: "shadow-neon-lime/10",
       iconColor: "text-accent",
     },
   ];
 
   return (
-    <section className="px-4 py-16 sm:px-6 lg:py-24">
+    <section className="px-4 py-24 sm:px-6 lg:py-32 bg-background">
       <div className="mx-auto max-w-7xl">
-        <div className="mb-16">
-          <h2 className={cn("text-4xl font-black tracking-tighter sm:text-6xl mb-4", getGradientText("neon"))}>
-            BUILT FOR THE CHASE
-          </h2>
-          <p className="max-w-2xl text-lg text-muted-foreground font-medium">
-            Everything you need to dominate the sports trivia world.
+        <div className="mb-16 flex flex-col lg:flex-row lg:items-end justify-between gap-8 border-b-2 border-foreground/10 pb-12">
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <Zap className="h-4 w-4 text-accent fill-accent" />
+              <span className="text-xs font-bold uppercase tracking-widest text-accent">Pro Features</span>
+            </div>
+            <h2 className={cn(
+              "text-5xl sm:text-7xl font-bold tracking-tighter uppercase font-['Barlow_Condensed',sans-serif]",
+              getGradientText("editorial")
+            )}>
+              BUILT FOR THE CHASE
+            </h2>
+          </div>
+          <p className="max-w-md text-lg text-muted-foreground font-semibold uppercase tracking-tight">
+            Professional-grade tools for the serious sports enthusiast.
           </p>
         </div>
 
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {features.map((feature, index) => {
-            const Icon = feature.icon;
-            return (
-              <div
-                key={index}
-                className={cn(
-                  "group relative overflow-hidden rounded-[2.5rem] border border-white/5 bg-white/5 p-8 transition-all duration-300",
-                  "hover:border-primary/20 hover:bg-white/10 hover:-translate-y-2 hover:shadow-glass-lg",
-                  feature.glow
-                )}
-              >
-                {/* Decorative background glow */}
-                <div className={cn("absolute -right-8 -bottom-8 h-32 w-32 rounded-full blur-[60px] opacity-0 group-hover:opacity-20 transition-opacity", feature.iconColor)} />
+        <div className="grid gap-px bg-foreground/10 border-2 border-foreground/10">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 bg-background">
+            {features.map((feature, index) => {
+              const Icon = feature.icon;
+              return (
+                <div
+                  key={index}
+                  className={cn(
+                    "group relative overflow-hidden bg-background p-12 border-foreground/10 transition-all duration-300",
+                    "hover:bg-muted/50",
+                    index < 3 ? "lg:border-b" : "",
+                    index % 3 !== 2 ? "lg:border-r" : "",
+                    "sm:border-b lg:border-none"
+                  )}
+                >
+                  <div className="relative flex flex-col gap-8">
+                    <div className={cn(
+                      "flex h-16 w-16 items-center justify-center bg-foreground text-background",
+                      "group-hover:bg-accent group-hover:text-foreground transition-colors"
+                    )}>
+                      <Icon className="h-8 w-8" />
+                    </div>
 
-                <div className="relative flex flex-col gap-6">
-                  <div className={cn(
-                    "flex h-14 w-14 items-center justify-center rounded-2xl glass-elevated border-white/10 p-3",
-                    feature.iconColor
-                  )}>
-                    <Icon className="h-full w-full" />
-                  </div>
+                    <div className="space-y-4">
+                      <h3 className="text-3xl font-bold tracking-tighter font-['Barlow_Condensed',sans-serif] uppercase leading-none">
+                        {feature.title}
+                      </h3>
+                      <p className="text-base text-muted-foreground leading-relaxed font-medium">
+                        {feature.description}
+                      </p>
+                    </div>
 
-                  <div className="space-y-2">
-                    <h3 className="text-2xl font-black tracking-tight group-hover:text-primary transition-colors">
-                      {feature.title}
-                    </h3>
-                    <p className="text-sm text-muted-foreground leading-relaxed font-medium">
-                      {feature.description}
-                    </p>
+                    <div className="pt-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="h-1 w-12 bg-accent" />
+                    </div>
                   </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
       </div>
     </section>

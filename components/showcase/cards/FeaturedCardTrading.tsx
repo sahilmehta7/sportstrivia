@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { Star, ShieldCheck, Zap, Trophy, TrendingUp } from "lucide-react";
+import { ShieldCheck, Zap, Trophy, TrendingUp, ShieldAlert, Play } from "lucide-react";
 import type { PublicQuizListItem } from "@/lib/services/public-quiz.service";
 import { cn } from "@/lib/utils";
 import { getGradientText } from "@/lib/showcase-theme";
@@ -11,114 +11,116 @@ interface FeaturedCardTradingProps {
 export function FeaturedCardTrading({ quiz }: FeaturedCardTradingProps) {
     const year = new Date(quiz.createdAt).getFullYear();
 
-    const rarityMap = {
+    const difficultyMap = {
         EASY: {
-            label: "COMMON",
-            color: "text-emerald-400",
-            glow: "shadow-neon-lime/20",
-            border: "border-emerald-500/30",
-            bg: "bg-emerald-500/5"
+            label: "LEVEL 01 / AMATEUR",
+            color: "text-blue-500",
+            bg: "bg-blue-500/5",
+            border: "border-blue-500/20"
         },
         MEDIUM: {
-            label: "RARE",
-            color: "text-cyan-400",
-            glow: "shadow-neon-cyan/20",
-            border: "border-cyan-500/30",
-            bg: "bg-cyan-500/5"
+            label: "LEVEL 02 / PROFESSIONAL",
+            color: "text-accent",
+            bg: "bg-accent/5",
+            border: "border-accent/20"
         },
         HARD: {
-            label: "LEGENDARY",
-            color: "text-magenta-400",
-            glow: "shadow-neon-magenta/20",
-            border: "border-magenta-500/30",
-            bg: "bg-magenta-500/5"
+            label: "LEVEL 03 / ELITE",
+            color: "text-primary",
+            bg: "bg-primary/5",
+            border: "border-primary/20"
         },
     };
 
-    const rarity = rarityMap[quiz.difficulty] || rarityMap.MEDIUM;
+    const level = difficultyMap[quiz.difficulty] || difficultyMap.MEDIUM;
 
     const baseXP = quiz._count.questionPool * 10;
     const multiplier = quiz.difficulty === "HARD" ? 2 : quiz.difficulty === "MEDIUM" ? 1.5 : 1;
     const xp = Math.round(baseXP * multiplier);
-    const manualDifficultyStat = quiz.difficulty === "HARD" ? 94 : quiz.difficulty === "MEDIUM" ? 75 : 45;
+    const scoreRank = quiz.difficulty === "HARD" ? "9.8" : quiz.difficulty === "MEDIUM" ? "8.5" : "6.2";
 
     return (
-        <div className={cn(
-            "relative w-full max-w-sm mx-auto aspect-[3/4] rounded-[2.5rem] p-[2px] transition-all duration-500 shadow-glass-lg",
-            "bg-gradient-to-br from-white/20 via-white/5 to-transparent hover:scale-[1.03] group",
-            rarity.glow
-        )}>
-            <div className="h-full w-full rounded-[2.4rem] glass-elevated overflow-hidden flex flex-col">
-                {/* Header Overlay */}
-                <div className="absolute top-6 left-6 right-6 z-20 flex justify-between items-start pointer-events-none">
-                    <div className={cn(
-                        "flex items-center gap-2 px-3 py-1 rounded-full glass border border-white/10 shadow-sm",
-                        rarity.color
-                    )}>
-                        <Star className="w-3 h-3 fill-current" />
-                        <span className="text-[10px] font-black uppercase tracking-[0.2em]">{rarity.label}</span>
+        <div className="relative w-full group overflow-hidden">
+            <div className={cn(
+                "relative flex flex-col bg-background border-2 border-foreground/5",
+                "transition-all duration-300 group-hover:border-foreground group-hover:shadow-athletic"
+            )}>
+                {/* Header Information */}
+                <div className="absolute top-0 left-0 right-0 z-20 flex justify-between items-start pointer-events-none p-6">
+                    <div className="flex items-center gap-2 bg-foreground px-4 py-2 text-background text-[10px] font-bold uppercase tracking-[0.2em]">
+                        <ShieldAlert className="h-3 w-3 text-accent" />
+                        {level.label}
                     </div>
-                    <div className="text-[10px] font-black tracking-widest text-white/40 uppercase">
-                        {year} EDITION
+                    <div className="text-[10px] font-bold tracking-widest text-foreground/40 uppercase bg-background px-3 py-1">
+                        EST. {year}
                     </div>
                 </div>
 
                 {/* Media Section */}
-                <div className="relative flex-1 min-h-[50%] overflow-hidden">
+                <div className="relative aspect-[4/3] w-full overflow-hidden border-b-2 border-foreground/5">
                     <Image
                         src={quiz.descriptionImageUrl || "https://images.unsplash.com/photo-1517649763962-0c623066013b?q=80&w=1000&auto=format&fit=crop"}
                         alt={quiz.title}
                         fill
-                        className="object-cover transition-transform duration-700 group-hover:scale-110"
+                        className="object-cover grayscale transition-all duration-700 group-hover:grayscale-0 group-hover:scale-105"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-background via-background/20 to-transparent" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent opacity-60" />
 
-                    {/* Decorative Sport Badge */}
-                    <div className="absolute bottom-4 left-6">
-                        <span className="px-3 py-1 rounded-lg glass-elevated border-white/10 text-[10px] font-black uppercase tracking-widest text-primary shadow-neon-cyan/20">
+                    {/* Play Button Appearance on Hover */}
+                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300">
+                        <div className="bg-accent p-6 text-white shadow-athletic translate-y-4 group-hover:translate-y-0">
+                            <Play className="h-8 w-8 fill-current" />
+                        </div>
+                    </div>
+
+                    {/* Category Overlay */}
+                    <div className="absolute bottom-6 left-8 flex items-center gap-3">
+                        <div className="h-px w-8 bg-accent" />
+                        <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-foreground">
                             {quiz.sport || "Arena"}
                         </span>
                     </div>
                 </div>
 
                 {/* Content Section */}
-                <div className="relative z-10 p-6 sm:p-8 flex flex-col gap-6">
-                    <div className="space-y-2">
+                <div className="p-10 flex flex-col gap-8">
+                    <div className="space-y-4">
                         <h2 className={cn(
-                            "text-2xl font-black uppercase tracking-tighter leading-tight line-clamp-2",
-                            getGradientText("neon")
+                            "text-4xl font-bold uppercase tracking-tighter leading-[0.85] font-['Barlow_Condensed',sans-serif] line-clamp-2",
+                            "group-hover:text-accent transition-colors"
                         )}>
                             {quiz.title}
                         </h2>
+                        <div className="h-1 w-12 bg-foreground/10" />
                     </div>
 
-                    <div className="grid grid-cols-3 gap-3">
-                        <div className="space-y-1 text-center">
-                            <div className="h-10 w-10 mx-auto rounded-xl glass border border-white/10 flex items-center justify-center">
-                                <ShieldCheck className="h-5 w-5 text-primary" />
+                    {/* Performance Stats Overlay */}
+                    <div className="grid grid-cols-2 gap-px bg-foreground/5 border border-foreground/5">
+                        <div className="bg-background p-6 space-y-2">
+                            <div className="flex items-center gap-2">
+                                <ShieldCheck className="h-4 w-4 text-accent" />
+                                <span className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground/60">IQ Rank</span>
                             </div>
-                            <p className="text-[8px] font-black uppercase tracking-widest text-muted-foreground">POW</p>
-                            <p className="text-sm font-black tracking-widest">{manualDifficultyStat}</p>
+                            <p className="text-3xl font-bold tracking-tighter font-['Barlow_Condensed',sans-serif]">{scoreRank}</p>
                         </div>
-                        <div className="space-y-1 text-center">
-                            <div className="h-10 w-10 mx-auto rounded-xl glass border border-white/10 flex items-center justify-center">
-                                <Zap className="h-5 w-5 text-secondary" />
+                        <div className="bg-background p-6 space-y-2">
+                            <div className="flex items-center gap-2">
+                                <TrendingUp className="h-4 w-4 text-accent" />
+                                <span className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground/60">XP Yield</span>
                             </div>
-                            <p className="text-[8px] font-black uppercase tracking-widest text-muted-foreground">OPS</p>
-                            <p className="text-sm font-black tracking-widest">{quiz._count.questionPool}</p>
-                        </div>
-                        <div className="space-y-1 text-center">
-                            <div className="h-10 w-10 mx-auto rounded-xl glass border border-white/10 flex items-center justify-center">
-                                <TrendingUp className="h-5 w-5 text-accent" />
-                            </div>
-                            <p className="text-[8px] font-black uppercase tracking-widest text-muted-foreground">XP</p>
-                            <p className="text-sm font-black tracking-widest">{xp}</p>
+                            <p className="text-3xl font-bold tracking-tighter font-['Barlow_Condensed',sans-serif]">{xp}</p>
                         </div>
                     </div>
                 </div>
 
-                {/* Animated progress bar at bottom */}
-                <div className={cn("h-1 w-0 group-hover:w-full transition-all duration-700", rarity.color.replace('text-', 'bg-'))} />
+                {/* Athletic Border Stripe */}
+                <div className="h-2 w-full flex">
+                    <div className="h-full flex-1 bg-accent/20" />
+                    <div className="h-full flex-1 bg-accent/40" />
+                    <div className="h-full flex-1 bg-accent/60" />
+                    <div className="h-full flex-1 bg-accent/80" />
+                    <div className="h-full flex-1 bg-accent" />
+                </div>
             </div>
         </div>
     );

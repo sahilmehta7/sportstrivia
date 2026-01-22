@@ -72,16 +72,16 @@ export function ShowcasePagination({
   }
 
   return (
-    <div className={cn("flex items-center justify-center gap-2 sm:gap-3", className)}>
+    <div className={cn("flex items-center justify-center gap-1 sm:gap-2", className)}>
       {/* First page button */}
       {showFirstLast && (
         <Button
-          variant="glass"
+          variant="athletic"
           size="icon"
           onClick={() => handlePageChange(1)}
           disabled={currentPage === 1}
           aria-label="Go to first page"
-          className="h-10 w-10 rounded-2xl transition-all duration-300 disabled:opacity-20 hidden sm:flex"
+          className="h-12 w-12 rounded-none transition-all duration-300 disabled:opacity-20 hidden sm:flex border-2 border-foreground/5 font-bold"
         >
           <ChevronsLeft className="h-4 w-4" />
         </Button>
@@ -89,25 +89,25 @@ export function ShowcasePagination({
 
       {/* Previous page button */}
       <Button
-        variant="glass"
+        variant="athletic"
         size="icon"
         onClick={() => handlePageChange(currentPage - 1)}
         disabled={currentPage === 1}
         aria-label="Go to previous page"
-        className="h-10 w-10 rounded-2xl transition-all duration-300 shadow-sm border-white/5 disabled:opacity-20"
+        className="h-12 w-12 rounded-none transition-all duration-300 border-2 border-foreground/5 disabled:opacity-20 font-bold"
       >
         <ChevronLeft className="h-4 w-4" />
       </Button>
 
       {/* Page numbers */}
       {showPageNumbers && (
-        <div className="flex items-center gap-1.5 sm:gap-2">
+        <div className="flex items-center gap-1 sm:gap-2">
           {pageNumbers.map((page, index) => {
             if (page === "...") {
               return (
                 <span
                   key={`ellipsis-${index}`}
-                  className="flex h-10 w-8 items-center justify-center text-[10px] font-black tracking-widest text-muted-foreground/40"
+                  className="flex h-12 w-8 items-center justify-center text-[10px] font-bold tracking-widest text-muted-foreground/40"
                 >
                   •••
                 </span>
@@ -120,15 +120,17 @@ export function ShowcasePagination({
             return (
               <Button
                 key={pageNum}
-                variant={isActive ? "neon" : "glass"}
+                variant={isActive ? "accent" : "athletic"}
                 size="icon"
                 onClick={() => handlePageChange(pageNum)}
                 disabled={isActive}
                 aria-label={isActive ? `Current page, page ${pageNum}` : `Go to page ${pageNum}`}
                 aria-current={isActive ? "page" : undefined}
                 className={cn(
-                  "h-10 w-10 rounded-2xl text-[10px] font-black transition-all duration-300",
-                  isActive ? "shadow-neon-cyan/20 scale-105" : "border-white/5 opacity-80 hover:opacity-100"
+                  "h-12 w-12 rounded-none text-xs font-bold transition-all duration-300 border-2",
+                  isActive
+                    ? "border-foreground bg-foreground text-background shadow-athletic"
+                    : "border-foreground/5 opacity-80 hover:opacity-100"
                 )}
               >
                 {pageNum}
@@ -140,12 +142,12 @@ export function ShowcasePagination({
 
       {/* Next page button */}
       <Button
-        variant="glass"
+        variant="athletic"
         size="icon"
         onClick={() => handlePageChange(currentPage + 1)}
         disabled={currentPage === totalPages}
         aria-label="Go to next page"
-        className="h-10 w-10 rounded-2xl transition-all duration-300 shadow-sm border-white/5 disabled:opacity-20"
+        className="h-12 w-12 rounded-none transition-all duration-300 border-2 border-foreground/5 disabled:opacity-20 font-bold"
       >
         <ChevronRight className="h-4 w-4" />
       </Button>
@@ -153,12 +155,12 @@ export function ShowcasePagination({
       {/* Last page button */}
       {showFirstLast && (
         <Button
-          variant="glass"
+          variant="athletic"
           size="icon"
           onClick={() => handlePageChange(totalPages)}
           disabled={currentPage === totalPages}
           aria-label="Go to last page"
-          className="h-10 w-10 rounded-2xl transition-all duration-300 disabled:opacity-20 hidden sm:flex"
+          className="h-12 w-12 rounded-none transition-all duration-300 disabled:opacity-20 hidden sm:flex border-2 border-foreground/5 font-bold"
         >
           <ChevronsRight className="h-4 w-4" />
         </Button>

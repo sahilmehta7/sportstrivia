@@ -7,11 +7,14 @@ import { cn } from "@/lib/utils";
 import { useTheme } from "next-themes";
 import { getBlurCircles, getGradientText } from "@/lib/showcase-theme";
 import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
 export default function SignInPage() {
   const { theme } = useTheme();
+  const searchParams = useSearchParams();
+  const callbackUrl = searchParams.get("callbackUrl") || "/quizzes";
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -20,7 +23,7 @@ export default function SignInPage() {
 
   // Use theme if mounted, otherwise default to dark to prevent hydration mismatch
   const effectiveTheme = mounted && theme ? theme : "dark";
-  const blur = getBlurCircles(effectiveTheme);
+  const blur = getBlurCircles();
 
   return (
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-background p-4 sm:p-6 lg:p-8">
@@ -75,6 +78,7 @@ export default function SignInPage() {
 
           {/* Sign in button */}
           <form action={signInWithGoogleAction} className="space-y-6">
+            <input type="hidden" name="callbackUrl" value={callbackUrl} />
             <Button
               type="submit"
               variant="neon"

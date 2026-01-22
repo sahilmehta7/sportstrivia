@@ -76,12 +76,14 @@ const config: Config = {
           "4": "hsl(var(--chart-4))",
           "5": "hsl(var(--chart-5))",
         },
-        /* Neon accent colors */
-        neon: {
-          cyan: "hsl(var(--neon-cyan))",
-          magenta: "hsl(var(--neon-magenta))",
-          lime: "hsl(var(--neon-lime))",
+        /* Refined athletic accents */
+        accent: {
+          DEFAULT: "hsl(var(--accent))",
+          foreground: "hsl(var(--accent-foreground))",
         },
+        navy: "hsl(222 47% 11%)",
+        gold: "hsl(45 93% 47%)",
+        steel: "hsl(215 25% 27%)",
       },
 
       /* ===================
@@ -119,6 +121,7 @@ const config: Config = {
         'lg': 'var(--radius-lg)',
         'md': 'var(--radius)',
         'sm': 'var(--radius-sm)',
+        'none': '0',
       },
 
       /* ===================
@@ -159,9 +162,7 @@ const config: Config = {
         'slow': 'var(--transition-slow)',
       },
       transitionTimingFunction: {
-        'bounce': 'var(--ease-bounce)',
         'smooth': 'var(--ease-smooth)',
-        'spring': 'var(--ease-spring)',
       },
 
       /* ===================
@@ -230,11 +231,9 @@ const config: Config = {
          BOX SHADOWS
          =================== */
       boxShadow: {
-        'glass': '0 8px 32px hsl(var(--glass-glow) / var(--glass-glow-opacity))',
-        'glass-lg': '0 16px 48px hsl(var(--glass-glow) / calc(var(--glass-glow-opacity) * 1.5))',
-        'neon-cyan': '0 0 20px hsl(var(--neon-cyan) / 0.4), 0 0 40px hsl(var(--neon-cyan) / 0.2)',
-        'neon-magenta': '0 0 20px hsl(var(--neon-magenta) / 0.4), 0 0 40px hsl(var(--neon-magenta) / 0.2)',
-        'neon-lime': '0 0 20px hsl(var(--neon-lime) / 0.4), 0 0 40px hsl(var(--neon-lime) / 0.2)',
+        'glass': '0 8px 32px rgba(0, 0, 0, 0.05)',
+        'glass-lg': '0 16px 48px rgba(0, 0, 0, 0.08)',
+        'athletic': '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
       },
     },
   },

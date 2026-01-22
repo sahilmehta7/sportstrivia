@@ -9,7 +9,7 @@ const buttonVariants = cva(
   [
     // Base styles - mobile-first with touch targets
     "inline-flex items-center justify-center gap-2",
-    "whitespace-nowrap rounded-md text-sm font-medium",
+    "whitespace-nowrap rounded-sm text-sm font-medium",
     "min-h-touch touch-target",
     // Transitions
     "transition-all duration-base ease-smooth",
@@ -36,25 +36,21 @@ const buttonVariants = cva(
           "hover:bg-muted text-muted-foreground hover:text-foreground active:scale-[0.98]",
         link:
           "text-primary underline-offset-4 hover:underline",
-        // New Neon Arena variants
+        // Minimalist Athletic variants
+        accent:
+          "bg-accent text-accent-foreground shadow-athletic hover:scale-[1.02] active:scale-[0.98]",
+        athletic:
+          "bg-primary text-primary-foreground shadow-athletic hover:bg-primary/95 active:scale-[0.98]",
         glass:
-          "glass border-border hover:border-primary/30 text-foreground hover:shadow-glass active:scale-[0.98]",
-        neon:
-          "bg-primary text-primary-foreground shadow-neon-cyan hover:shadow-[0_0_30px_hsl(var(--neon-cyan)/0.6)] hover:scale-[1.02] active:scale-[0.98]",
-        "neon-outline":
-          "border border-primary/50 bg-transparent text-primary shadow-neon-cyan hover:bg-primary/10 hover:border-primary active:scale-[0.98]",
-        "neon-magenta":
-          "bg-secondary text-secondary-foreground shadow-neon-magenta hover:shadow-[0_0_30px_hsl(var(--neon-magenta)/0.6)] hover:scale-[1.02] active:scale-[0.98]",
-        "neon-lime":
-          "bg-accent text-accent-foreground shadow-neon-lime hover:shadow-[0_0_30px_hsl(var(--neon-lime)/0.6)] hover:scale-[1.02] active:scale-[0.98]",
+          "glass border-border hover:border-primary/20 text-foreground active:scale-[0.98]",
         success:
           "bg-success text-success-foreground hover:bg-success/90 active:scale-[0.98]",
       },
       size: {
-        default: "h-11 px-4 py-2",
-        sm: "h-9 min-h-9 rounded-md px-3 text-xs",
-        lg: "h-12 rounded-md px-8 text-base",
-        xl: "h-14 rounded-lg px-10 text-lg",
+        default: "h-11 px-6 py-2",
+        sm: "h-9 min-h-9 rounded-sm px-4 text-xs font-bold",
+        lg: "h-12 rounded-sm px-8 text-base font-bold",
+        xl: "h-14 rounded-sm px-10 text-lg font-bold tracking-widest uppercase",
         icon: "h-11 w-11",
         "icon-sm": "h-9 w-9 min-h-9 min-w-9",
         "icon-lg": "h-12 w-12",

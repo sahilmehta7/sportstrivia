@@ -3,8 +3,8 @@
 @tailwind utilities;
 
 /* ============================================
-   NEON ARENA DESIGN SYSTEM
-   Mobile-first, dark-first design tokens
+   MINIMALIST ATHLETIC DESIGN SYSTEM
+   Editorial, high-contrast, refined sports aesthetic
    ============================================ */
 
 @layer base {
@@ -12,166 +12,139 @@
     /* ===================
        LAYOUT & SIZING
        =================== */
-    --radius: 0.75rem;
-    --radius-sm: 0.5rem;
-    --radius-lg: 1rem;
-    --radius-xl: 1.5rem;
-    
+    --radius: 0.25rem;
+    /* Sharper corners for editorial feel */
+    --radius-sm: 0.125rem;
+    --radius-lg: 0.5rem;
+    --radius-xl: 1rem;
+
     /* Touch-friendly minimum sizes */
     --touch-target: 44px;
     --input-height: 48px;
     --input-height-sm: 40px;
-    
+
     /* ===================
-       NEON ARENA PALETTE
-       Dark-first theme
+       MINIMALIST ATHLETIC PALETTE
+       Light-first, high-contrast theme
        =================== */
-    
-    /* Base surfaces - Deep dark blues */
-    --background: 222 47% 4%;
-    --foreground: 210 40% 98%;
-    
+
+    /* Base surfaces - Clean whites and off-whites */
+    --background: 210 20% 98%;
+    --foreground: 222 47% 11%;
+
     /* Card hierarchy */
-    --card: 224 47% 7%;
-    --card-foreground: 210 40% 98%;
-    --card-elevated: 226 50% 9%;
-    
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+    --card-elevated: 0 0% 100%;
+
     /* Popover/dropdown surfaces */
-    --popover: 224 47% 8%;
-    --popover-foreground: 210 40% 98%;
-    
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+
     /* ===================
-       ACCENT COLORS
+       ACCENT COLORS (Minimalist Athletic)
        =================== */
-    
-    /* Primary: Electric Cyan */
-    --primary: 185 100% 50%;
-    --primary-foreground: 222 47% 4%;
-    
-    /* Secondary: Vivid Magenta */
-    --secondary: 312 100% 60%;
+
+    /* Primary: Deep Navy (The Athletic style) */
+    --primary: 222 47% 11%;
+    --primary-foreground: 210 40% 98%;
+
+    /* Secondary: Professional Steel */
+    --secondary: 215 25% 27%;
     --secondary-foreground: 210 40% 98%;
-    
-    /* Accent: Energetic Lime */
-    --accent: 83 100% 50%;
-    --accent-foreground: 222 47% 4%;
-    
+
+    /* Accent: Winner's Gold */
+    --accent: 45 93% 47%;
+    --accent-foreground: 222 47% 11%;
+
     /* ===================
        FUNCTIONAL COLORS
        =================== */
-    
+
     /* Muted/subtle elements */
-    --muted: 224 35% 15%;
-    --muted-foreground: 215 20% 65%;
-    
+    --muted: 210 20% 94%;
+    --muted-foreground: 215 16% 47%;
+
     /* Destructive/error */
-    --destructive: 0 72% 51%;
+    --destructive: 0 84% 60%;
     --destructive-foreground: 210 40% 98%;
-    
+
     /* Success state */
-    --success: 142 76% 45%;
+    --success: 142 71% 45%;
     --success-foreground: 210 40% 98%;
-    
+
     /* Warning state */
     --warning: 38 92% 50%;
-    --warning-foreground: 222 47% 4%;
-    
+    --warning-foreground: 222 47% 11%;
+
     /* ===================
        INTERACTIVE ELEMENTS
        =================== */
-    --border: 224 35% 18%;
-    --input: 224 35% 12%;
-    --ring: 185 100% 50%;
-    
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 222 47% 11%;
+
     /* ===================
-       GLASS EFFECTS
+       REFINED EFFECTS (Instead of Neon)
        =================== */
-    --glass-bg: 224 47% 8%;
-    --glass-opacity: 0.85;
-    --glass-border: 210 40% 98%;
-    --glass-border-opacity: 0.1;
-    --glass-blur: 20px;
-    --glass-glow: 185 100% 50%;
-    --glass-glow-opacity: 0.15;
-    
-    /* ===================
-       NEON GLOW EFFECTS
-       =================== */
-    --neon-cyan: 185 100% 50%;
-    --neon-magenta: 312 100% 60%;
-    --neon-lime: 83 100% 50%;
-    --neon-glow-spread: 20px;
-    --neon-glow-intensity: 0.4;
-    
+    --glass-bg: 0 0% 100%;
+    --glass-opacity: 0.8;
+    --glass-border: 222 47% 11%;
+    --glass-border-opacity: 0.08;
+    --glass-blur: 12px;
+    --glass-glow: 45 93% 47%;
+    --glass-glow-opacity: 0.05;
+
     /* ===================
        ANIMATION TOKENS
        =================== */
     --transition-fast: 150ms;
     --transition-base: 250ms;
     --transition-slow: 400ms;
-    --ease-bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55);
     --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
-    --ease-spring: cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    
+
     /* ===================
-       CHART COLORS
+       CHART COLORS (Refined)
        =================== */
-    --chart-1: 185 100% 50%;
-    --chart-2: 312 100% 60%;
-    --chart-3: 83 100% 50%;
-    --chart-4: 38 92% 50%;
-    --chart-5: 142 76% 45%;
+    --chart-1: 222 47% 11%;
+    --chart-2: 45 93% 47%;
+    --chart-3: 215 25% 27%;
+    --chart-4: 0 84% 60%;
+    --chart-5: 142 71% 45%;
   }
 
   /* ===================
-     LIGHT MODE (Optional)
+     DARK MODE (Obsidian)
      =================== */
-  .light {
-    --background: 0 0% 98%;
-    --foreground: 222 47% 11%;
-    
-    --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
-    --card-elevated: 0 0% 100%;
-    
-    --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
-    
-    /* Toned down accents for light mode */
-    --primary: 185 85% 35%;
-    --primary-foreground: 0 0% 100%;
-    
-    --secondary: 312 70% 50%;
-    --secondary-foreground: 0 0% 100%;
-    
-    --accent: 83 75% 40%;
-    --accent-foreground: 0 0% 100%;
-    
-    --muted: 220 14% 96%;
-    --muted-foreground: 220 9% 46%;
-    
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 100%;
-    
-    --success: 142 71% 40%;
-    --success-foreground: 0 0% 100%;
-    
-    --warning: 38 92% 45%;
-    --warning-foreground: 222 47% 11%;
-    
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
-    --ring: 185 85% 35%;
-    
-    /* Glass effects for light mode */
-    --glass-bg: 0 0% 100%;
-    --glass-opacity: 0.7;
-    --glass-border: 222 47% 11%;
-    --glass-border-opacity: 0.1;
-    --glass-glow-opacity: 0.1;
-    
-    /* Subdued neon for light */
-    --neon-glow-intensity: 0.2;
+  .dark {
+    --background: 222 47% 4%;
+    --foreground: 210 40% 98%;
+
+    --card: 224 47% 7%;
+    --card-foreground: 210 40% 98%;
+    --card-elevated: 226 50% 9%;
+
+    --popover: 224 47% 8%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 210 40% 98%;
+    --primary-foreground: 222 47% 4%;
+
+    --secondary: 215 20% 65%;
+    --secondary-foreground: 222 47% 4%;
+
+    --accent: 45 93% 47%;
+    --accent-foreground: 222 47% 4%;
+
+    --muted: 224 35% 15%;
+    --muted-foreground: 215 20% 65%;
+
+    --border: 224 35% 18%;
+    --input: 224 35% 18%;
+    --ring: 210 40% 98%;
+
+    --glass-bg: 224 47% 8%;
+    --glass-border: 210 40% 98%;
   }
 }
 
@@ -182,31 +155,22 @@
   * {
     @apply border-border;
   }
-  
+
   html {
-    /* Enable smooth scrolling */
     scroll-behavior: smooth;
-    /* Prevent horizontal overflow on mobile */
     overflow-x: hidden;
   }
-  
+
   body {
     @apply bg-background text-foreground;
-    /* Improve text rendering */
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    /* Prevent text size adjustment on orientation change */
     -webkit-text-size-adjust: 100%;
+    /* Default to high-end serif or condensed sans if available via config */
   }
-  
-  /* Focus indicators for accessibility */
+
   *:focus-visible {
     @apply outline-2 outline-offset-2 outline-ring;
-  }
-  
-  /* Remove focus outline for mouse users */
-  :focus:not(:focus-visible) {
-    outline: none;
   }
 }
 
@@ -214,78 +178,68 @@
    UTILITY CLASSES
    =================== */
 @layer utilities {
-  /* Glass morphism effect */
+
+  /* Minimal Editorial Glass */
   .glass {
     background: hsl(var(--glass-bg) / var(--glass-opacity));
     backdrop-filter: blur(var(--glass-blur));
     -webkit-backdrop-filter: blur(var(--glass-blur));
     border: 1px solid hsl(var(--glass-border) / var(--glass-border-opacity));
   }
-  
+
   .glass-elevated {
     background: hsl(var(--glass-bg) / calc(var(--glass-opacity) + 0.1));
     backdrop-filter: blur(calc(var(--glass-blur) * 1.5));
     -webkit-backdrop-filter: blur(calc(var(--glass-blur) * 1.5));
-    border: 1px solid hsl(var(--glass-border) / calc(var(--glass-border-opacity) * 1.5));
-    box-shadow: 0 8px 32px hsl(var(--glass-glow) / var(--glass-glow-opacity));
+    border: 1px solid hsl(var(--glass-border) / calc(var(--glass-border-opacity) * 2));
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.05);
   }
-  
-  /* Neon glow effects */
-  .neon-glow-cyan {
-    box-shadow: 0 0 var(--neon-glow-spread) hsl(var(--neon-cyan) / var(--neon-glow-intensity)),
-                0 0 calc(var(--neon-glow-spread) * 2) hsl(var(--neon-cyan) / calc(var(--neon-glow-intensity) * 0.5));
+
+  /* Refined Focus Glow (Instead of Neon) */
+  .focus-glow {
+    box-shadow: 0 0 0 2px hsl(var(--background)), 0 0 0 4px hsl(var(--primary) / 0.3);
   }
-  
-  .neon-glow-magenta {
-    box-shadow: 0 0 var(--neon-glow-spread) hsl(var(--neon-magenta) / var(--neon-glow-intensity)),
-                0 0 calc(var(--neon-glow-spread) * 2) hsl(var(--neon-magenta) / calc(var(--neon-glow-intensity) * 0.5));
-  }
-  
-  .neon-glow-lime {
-    box-shadow: 0 0 var(--neon-glow-spread) hsl(var(--neon-lime) / var(--neon-glow-intensity)),
-                0 0 calc(var(--neon-glow-spread) * 2) hsl(var(--neon-lime) / calc(var(--neon-glow-intensity) * 0.5));
-  }
-  
-  /* Gradient text */
-  .text-gradient-neon {
-    background: linear-gradient(135deg, hsl(var(--neon-cyan)), hsl(var(--neon-magenta)));
+
+  /* Editorial Gradients */
+  .text-gradient-editorial {
+    background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--secondary)));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
-  
+
   .text-gradient-accent {
     background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
-  
+
   /* Touch-friendly tap target */
   .touch-target {
     min-height: var(--touch-target);
     min-width: var(--touch-target);
   }
-  
+
   /* Safe area padding for mobile */
   .safe-area-bottom {
     padding-bottom: env(safe-area-inset-bottom);
   }
-  
+
   .safe-area-top {
     padding-top: env(safe-area-inset-top);
   }
-  
+
   /* Hide scrollbar but keep scrolling */
   .scrollbar-hide {
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
-  
+
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
   }
-  
+
   /* Animated background blur circles */
   .blur-circle {
     position: absolute;
@@ -294,15 +248,15 @@
     opacity: 0.5;
     animation: blur-float 20s ease-in-out infinite;
   }
-  
+
   .blur-circle-cyan {
     background: hsl(var(--neon-cyan) / 0.3);
   }
-  
+
   .blur-circle-magenta {
     background: hsl(var(--neon-magenta) / 0.3);
   }
-  
+
   .blur-circle-lime {
     background: hsl(var(--neon-lime) / 0.3);
   }
@@ -313,71 +267,81 @@
    =================== */
 @layer utilities {
   @keyframes blur-float {
-    0%, 100% {
+
+    0%,
+    100% {
       transform: translate(0, 0) scale(1);
     }
+
     33% {
       transform: translate(30px, -30px) scale(1.1);
     }
+
     66% {
       transform: translate(-20px, 20px) scale(0.9);
     }
   }
-  
+
   @keyframes shimmer {
     0% {
       transform: translateX(-100%);
     }
+
     100% {
       transform: translateX(100%);
     }
   }
-  
+
   @keyframes pulse-glow {
-    0%, 100% {
+
+    0%,
+    100% {
       opacity: 1;
       filter: brightness(1);
     }
+
     50% {
       opacity: 0.8;
       filter: brightness(1.2);
     }
   }
-  
+
   @keyframes slide-up {
     0% {
       opacity: 0;
       transform: translateY(20px);
     }
+
     100% {
       opacity: 1;
       transform: translateY(0);
     }
   }
-  
+
   @keyframes scale-in {
     0% {
       opacity: 0;
       transform: scale(0.95);
     }
+
     100% {
       opacity: 1;
       transform: scale(1);
     }
   }
-  
+
   .animate-shimmer {
     animation: shimmer 2s infinite;
   }
-  
+
   .animate-pulse-glow {
     animation: pulse-glow 2s ease-in-out infinite;
   }
-  
+
   .animate-slide-up {
     animation: slide-up 0.4s var(--ease-smooth) forwards;
   }
-  
+
   .animate-scale-in {
     animation: scale-in 0.3s var(--ease-smooth) forwards;
   }

@@ -1,15 +1,15 @@
 import { Suspense } from "react";
-import { ShowcaseHeroSpotlight } from "@/components/showcase/ui/HeroVariants";
+import { HeroSection } from "./HeroSection";
 import { SocialProof } from "./SocialProof";
 import { HowItWorks } from "./HowItWorks";
 import { Features } from "./Features";
 import { Testimonials } from "./Testimonials";
 import { FinalCTA } from "./FinalCTA";
-import { ThemedSection } from "./ThemedSection";
 import { FeaturedQuizzes } from "./FeaturedQuizzes";
 import { PopularTopics } from "./PopularTopics";
 import { FeaturedQuizzesSkeleton } from "./FeaturedQuizzesSkeleton";
 import { PopularTopicsSkeleton } from "./PopularTopicsSkeleton";
+import { QuickStartArena } from "./QuickStartArena";
 
 interface LandingPageProps {
   stats: {
@@ -22,66 +22,46 @@ interface LandingPageProps {
 
 export function LandingPage({ stats }: LandingPageProps) {
   return (
-    <div className="relative flex min-h-screen flex-col overflow-hidden">
-      <ThemedSection variant="default">
-        <div className="px-4 py-12 sm:px-6 sm:py-16 lg:py-24">
-          <div className="mx-auto max-w-6xl">
-            <ShowcaseHeroSpotlight
-              eyebrow="Sports Trivia"
-              title="Test Your"
-              highlightedText="Sports Knowledge"
-              subtitle="Compete with friends, climb the leaderboards, and become a sports trivia champion. Challenge yourself with thousands of questions across all major sports."
-              primaryAction={{
-                label: "Get Started",
-                href: "/auth/signin",
-              }}
-              secondaryAction={{
-                label: "Browse Quizzes",
-                href: "/quizzes",
-                variant: "secondary",
-              }}
-              stats={[
-                { label: "Quizzes Available", value: stats.totalQuizzes },
-                { label: "Active Players", value: stats.activeUsers },
-                { label: "Questions Answered", value: stats.questionsAnswered },
-                { label: "Average Rating", value: stats.averageRating.toFixed(1) },
-              ]}
-            />
-          </div>
+    <div className="relative flex min-h-screen flex-col overflow-hidden bg-background">
+      {/* Hero Section */}
+      <HeroSection stats={stats} />
+
+      {/* Quick Start Arena - High Engagement */}
+      <QuickStartArena />
+
+      {/* Featured Content Sections */}
+      <section className="py-24 bg-muted/30">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6">
+          <Suspense fallback={<FeaturedQuizzesSkeleton />}>
+            <FeaturedQuizzes />
+          </Suspense>
         </div>
-      </ThemedSection>
+      </section>
 
-      <ThemedSection variant="vibrant">
-        <Suspense fallback={<FeaturedQuizzesSkeleton />}>
-          <FeaturedQuizzes />
-        </Suspense>
-      </ThemedSection>
+      <section className="py-24">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6">
+          <Suspense fallback={<PopularTopicsSkeleton />}>
+            <PopularTopics />
+          </Suspense>
+        </div>
+      </section>
 
-      <ThemedSection variant="cool">
-        <Suspense fallback={<PopularTopicsSkeleton />}>
-          <PopularTopics />
-        </Suspense>
-      </ThemedSection>
+      {/* Social Proof & Trust */}
+      <SocialProof stats={stats} />
 
-      <ThemedSection variant="default">
-        <SocialProof stats={stats} />
-      </ThemedSection>
+      {/* Process & Methodology */}
+      <HowItWorks />
 
-      <ThemedSection variant="dark">
-        <HowItWorks />
-      </ThemedSection>
+      {/* Secondary Features */}
+      <Features />
 
-      <ThemedSection variant="vibrant">
-        <Features />
-      </ThemedSection>
-
-      <ThemedSection variant="cool">
+      {/* Testimonials */}
+      <section className="py-24 bg-muted/30">
         <Testimonials />
-      </ThemedSection>
+      </section>
 
-      <ThemedSection variant="default">
-        <FinalCTA />
-      </ThemedSection>
+      {/* Final Conversion */}
+      <FinalCTA />
     </div>
   );
 }

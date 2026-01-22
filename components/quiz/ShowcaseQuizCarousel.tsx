@@ -37,7 +37,7 @@ export function ShowcaseQuizCarousel({ items, className }: ShowcaseQuizCarouselP
 
   const scroll = (direction: "left" | "right") => {
     if (scrollRef.current) {
-      const scrollAmount = 340; // Card width + gap
+      const scrollAmount = 360; // Card width + gap
       scrollRef.current.scrollBy({
         left: direction === "left" ? -scrollAmount : scrollAmount,
         behavior: "smooth",
@@ -51,7 +51,7 @@ export function ShowcaseQuizCarousel({ items, className }: ShowcaseQuizCarouselP
       <div
         ref={scrollRef}
         onScroll={handleScroll}
-        className="flex gap-6 overflow-x-auto pb-8 pt-2 scrollbar-hide no-scrollbar -mx-4 px-4 sm:mx-0 sm:px-0"
+        className="flex gap-8 overflow-x-auto pb-8 pt-4 scrollbar-hide no-scrollbar -mx-4 px-4 sm:mx-0 sm:px-0"
         style={{ scrollSnapType: "x mandatory", WebkitOverflowScrolling: "touch" }}
       >
         {items.map((item) => (
@@ -61,38 +61,44 @@ export function ShowcaseQuizCarousel({ items, className }: ShowcaseQuizCarouselP
             style={{ scrollSnapAlign: "start" }}
           >
             <ShowcaseQuizCard
+              id={item.id}
               title={item.title}
               badgeLabel={item.badgeLabel}
               durationLabel={item.durationLabel}
               playersLabel={item.playersLabel}
               accent={item.accent}
               coverImageUrl={item.coverImageUrl}
+              href={item.href}
             />
           </div>
         ))}
       </div>
 
       {/* Navigation Arrows (Desktop Only) */}
-      {showLeftArrow && (
+      <div className="absolute top-1/2 -translate-y-1/2 left-0 right-0 pointer-events-none hidden lg:flex justify-between px-4 z-20">
         <Button
-          variant="glass"
+          variant="athletic"
           size="icon"
-          className="absolute left-4 top-1/2 -translate-y-1/2 rounded-full shadow-lg hidden lg:flex border-white/20 bg-black/40 backdrop-blur-md"
+          className={cn(
+            "pointer-events-auto rounded-none shadow-athletic transition-all duration-300",
+            showLeftArrow ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-4"
+          )}
           onClick={() => scroll("left")}
         >
           <ChevronLeft className="h-6 w-6" />
         </Button>
-      )}
-      {showRightArrow && (
         <Button
-          variant="glass"
+          variant="athletic"
           size="icon"
-          className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full shadow-lg hidden lg:flex border-white/20 bg-black/40 backdrop-blur-md"
+          className={cn(
+            "pointer-events-auto rounded-none shadow-athletic transition-all duration-300",
+            showRightArrow ? "opacity-100 translate-x-0" : "opacity-0 translate-x-4"
+          )}
           onClick={() => scroll("right")}
         >
           <ChevronRight className="h-6 w-6" />
         </Button>
-      )}
+      </div>
     </div>
   );
 }

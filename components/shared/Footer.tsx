@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Twitter, Facebook, Youtube, Sparkles } from "lucide-react";
+import { Twitter, Facebook, Youtube, ShieldCheck, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getGradientText } from "@/lib/showcase-theme";
 
@@ -7,33 +7,22 @@ export function Footer() {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
-      <div
-        className={cn(
-          "relative mx-auto w-full max-w-7xl overflow-hidden rounded-3xl border",
-          "glass-elevated border-primary/10 shadow-glass-lg",
-          "px-6 py-10 sm:p-12"
-        )}
-      >
-        {/* Background neon glow accents */}
-        <div className="pointer-events-none absolute -top-32 -right-32 h-96 w-96 rounded-full bg-primary/5 blur-[120px]" />
-        <div className="pointer-events-none absolute -bottom-32 -left-32 h-96 w-96 rounded-full bg-secondary/5 blur-[120px]" />
-
-        <div className="relative grid gap-12 lg:grid-cols-[1fr_auto]">
+    <footer className="bg-foreground text-background">
+      <div className="mx-auto max-w-7xl px-4 py-24 sm:px-6 lg:px-8">
+        <div className="grid gap-16 lg:grid-cols-2">
           {/* Brand Section */}
-          <div className="flex flex-col gap-6">
-            <div className="flex flex-col gap-2">
-              <Link href="/" className={cn("text-3xl font-black tracking-tighter", getGradientText("neon"))}>
-                SPORTS TRIVIA
+          <div className="space-y-12">
+            <div className="space-y-6">
+              <Link href="/" className="flex items-center gap-3 group">
+                <ShieldCheck className="h-8 w-8 text-accent" />
+                <span className="text-4xl font-bold tracking-tighter uppercase font-['Barlow_Condensed',sans-serif]">
+                  TRIVIA<span className="text-accent">PRO</span>
+                </span>
               </Link>
-              <div className="inline-flex w-fit items-center gap-2 rounded-full bg-white/5 border border-white/10 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-primary/80">
-                <Sparkles className="h-3 w-3" /> Ignite Knowledge
-              </div>
+              <p className="max-w-md text-xl font-medium text-background/60 leading-tight uppercase tracking-tight">
+                THE ULTIMATE ARENA FOR SPORT FANATICS. PROVEN PERFORMANCE. MAXIMUM IQ.
+              </p>
             </div>
-
-            <p className="max-w-md text-sm leading-relaxed text-muted-foreground font-medium">
-              The ultimate arena for sport fanatics. Build your legacy, climb the leaderboards, and prove you're the champion of sports trivia.
-            </p>
 
             <div className="flex gap-4">
               {[
@@ -45,7 +34,7 @@ export function Footer() {
                   key={href}
                   href={href}
                   aria-label={label}
-                  className="flex h-10 w-10 items-center justify-center rounded-xl glass border-border hover:border-primary/50 text-foreground transition-all duration-300 hover:scale-110 active:scale-95 shadow-sm"
+                  className="flex h-12 w-12 items-center justify-center border-2 border-background/10 hover:border-accent hover:text-accent transition-all duration-300"
                 >
                   <Icon className="h-5 w-5" />
                 </Link>
@@ -54,41 +43,42 @@ export function Footer() {
           </div>
 
           {/* Links Section */}
-          <div className="grid grid-cols-2 gap-x-8 gap-y-10 sm:grid-cols-3 md:gap-x-16">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-12">
             {[
               {
-                heading: "Play",
+                heading: "Playbook",
                 links: [
-                  { label: "Quizzes", href: "/quizzes" },
-                  { label: "Rankings", href: "/leaderboard" },
-                  { label: "Challenges", href: "/challenges" },
+                  { label: "All Quizzes", href: "/quizzes" },
+                  { label: "Live Rankings", href: "/leaderboard" },
+                  { label: "Pro Challenges", href: "/challenges" },
                 ],
               },
               {
-                heading: "Discover",
+                heading: "Intelligence",
                 links: [
-                  { label: "Topics", href: "/topics" },
-                  { label: "Search", href: "/search" },
-                  { label: "Categories", href: "/topics" },
+                  { label: "Topic Index", href: "/topics" },
+                  { label: "Global Search", href: "/search" },
+                  { label: "Arena Stats", href: "/profile/me" },
                 ],
               },
               {
-                heading: "Connect",
+                heading: "Corporate",
                 links: [
-                  { label: "Friends", href: "/friends" },
-                  { label: "Profile", href: "/profile/me" },
-                  { label: "Settings", href: "/profile/me" },
+                  { label: "Privacy Policy", href: "/" },
+                  { label: "Terms of Usage", href: "/" },
+                  { label: "Contact Support", href: "/" },
                 ],
               },
             ].map((column) => (
-              <div key={column.heading} className="space-y-4">
-                <h4 className="text-[10px] font-black uppercase tracking-[0.25em] text-foreground/80">
+              <div key={column.heading} className="space-y-6">
+                <h4 className="text-xs font-bold uppercase tracking-[0.25em] text-accent">
                   {column.heading}
                 </h4>
-                <ul className="space-y-3 text-sm">
+                <ul className="space-y-4">
                   {column.links.map((link) => (
                     <li key={`${column.heading}-${link.label}`}>
-                      <Link href={link.href} className="transition-colors duration-200 hover:text-primary text-muted-foreground font-medium">
+                      <Link href={link.href} className="flex items-center gap-2 group text-sm font-bold uppercase tracking-widest text-background/40 transition-colors hover:text-background">
+                        <ArrowRight className="h-3 w-3 opacity-0 -ml-5 group-hover:opacity-100 group-hover:ml-0 transition-all" />
                         {link.label}
                       </Link>
                     </li>
@@ -99,20 +89,13 @@ export function Footer() {
           </div>
         </div>
 
-        <div className="relative mt-12 mb-8 h-px bg-white/5" />
-
-        <div className="relative flex flex-col gap-6 text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 md:flex-row md:items-center md:justify-between">
-          <p>© {currentYear} SPORTS TRIVIA. FOR THE FANS.</p>
-          <div className="flex flex-wrap gap-x-8 gap-y-2">
-            <Link href="/" className="transition-colors hover:text-primary">
-              Privacy Policy
-            </Link>
-            <Link href="/" className="transition-colors hover:text-primary">
-              Terms of Use
-            </Link>
-            <Link href="/" className="transition-colors hover:text-primary">
-              Support
-            </Link>
+        <div className="mt-24 pt-12 border-t border-background/10 flex flex-col md:flex-row justify-between items-center gap-6">
+          <div className="text-[10px] font-bold uppercase tracking-[0.3em] text-background/30">
+            © {currentYear} SPORTS TRIVIA COLLECTIVE. ALL RIGHTS RESERVED.
+          </div>
+          <div className="flex items-center gap-4">
+            <div className="h-1.5 w-1.5 rounded-full bg-accent animate-pulse" />
+            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-accent">Arena Servers Operational</span>
           </div>
         </div>
       </div>

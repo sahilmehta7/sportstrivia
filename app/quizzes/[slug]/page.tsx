@@ -9,7 +9,6 @@ import { formatPlayerCount, formatQuizDuration, getSportGradient } from "@/lib/q
 import { ShowcaseButton } from "@/components/showcase/ui/buttons/Button";
 import { ShowcaseReviewsPanel } from "@/components/showcase/ui";
 import { Star, Clock, Trophy, Users, ShieldCheck, Zap, ArrowRight, Calendar, Info, Share2, MessageSquare } from "lucide-react";
-import { ShowcaseThemeProvider } from "@/components/showcase/ShowcaseThemeProvider";
 import { getCurrentUser } from "@/lib/auth-helpers";
 import { getAttemptLimitStatus } from "@/lib/services/attempt-limit.service";
 import { ArticleJsonLd, AggregateRatingJsonLd } from "next-seo";
@@ -281,11 +280,11 @@ export default async function QuizDetailPage({ params }: QuizDetailPageProps) {
   const { circle1, circle2, circle3 } = getBlurCircles();
 
   return (
-    <ShowcaseThemeProvider>
+    <>
       <ArticleJsonLd
         url={quizUrl}
         headline={quiz.title}
-        images={articleImages}
+        image={articleImages}
         datePublished={quiz.createdAt?.toISOString() || ""}
         dateModified={quiz.updatedAt?.toISOString() || ""}
         authorName="Sports Trivia Team"
@@ -495,6 +494,6 @@ export default async function QuizDetailPage({ params }: QuizDetailPageProps) {
           </div>
         </PageContainer>
       </main>
-    </ShowcaseThemeProvider>
+    </>
   );
 }

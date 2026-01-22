@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
 import { startTransition } from "react";
 import { ShowcaseQuizCard } from "@/components/quiz/ShowcaseQuizCard";
-import { glassText } from "@/components/showcase/ui/typography";
 import { QuizPagination } from "@/components/quizzes/quiz-pagination";
 import { FilterBar } from "@/components/quizzes/filter-bar";
 import type { ShowcaseFilterGroup } from "@/components/showcase/ui/FilterBar";
@@ -12,6 +11,7 @@ import type { PublicQuizListItem } from "@/lib/services/public-quiz.service";
 import { getSportGradient } from "@/lib/quiz-formatters";
 import { cn } from "@/lib/utils";
 import { getGradientText } from "@/lib/showcase-theme";
+import { Search, Info } from "lucide-react";
 
 interface QuizzesContentProps {
   quizzes: PublicQuizListItem[];
@@ -66,16 +66,20 @@ export function QuizzesContent({ quizzes, filterGroups, pagination }: QuizzesCon
   };
 
   return (
-    <section className="space-y-10">
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-        <div className="space-y-2">
-          <div className="flex items-center gap-4">
-            <div className="h-6 w-1 rounded-full bg-secondary shadow-neon-magenta" />
-            <h2 className="text-2xl font-black tracking-tight uppercase">The Library</h2>
+    <section className="space-y-16">
+      <div className="flex flex-col gap-12">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 border-b-2 border-foreground/5 pb-8">
+          <div className="space-y-4">
+            <h2 className={cn(
+              "text-5xl font-bold tracking-tighter uppercase font-['Barlow_Condensed',sans-serif]",
+              getGradientText("editorial")
+            )}>
+              THE LIBRARY
+            </h2>
+            <p className="max-w-xl text-lg text-muted-foreground font-semibold uppercase tracking-tight leading-tight">
+              Browse every contested arena in the trivia universe.
+            </p>
           </div>
-          <p className="text-sm text-muted-foreground font-medium">
-            Browse every contested arena in the trivia universe.
-          </p>
         </div>
 
         <FilterBar
@@ -86,45 +90,48 @@ export function QuizzesContent({ quizzes, filterGroups, pagination }: QuizzesCon
       </div>
 
       {quizzes.length > 0 ? (
-        <div className="grid gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-x-8 gap-y-12 sm:grid-cols-2 lg:grid-cols-3">
           {quizzes.map((quiz) => {
             const gradient = getSportGradient(quiz.sport, hashString(`${quiz.title}`));
-            const durationLabel = quiz.duration ? `${Math.round(quiz.duration / 60)} min` : "Flexible";
-            const playersLabel = `${quiz._count?.attempts || 0} players`;
+            const durationLabel = quiz.duration ? `${Math.round(quiz.duration / 60)} MIN` : "FLEX";
+            const playersLabel = `${(quiz._count?.attempts || 0).toLocaleString()} PLAYERS`;
 
             return (
-              <Link key={quiz.id} href={`/quizzes/${quiz.slug}`} className="block h-full">
-                <ShowcaseQuizCard
-                  title={quiz.title}
-                  badgeLabel={quiz.sport || quiz.difficulty || "Quiz"}
-                  durationLabel={durationLabel}
-                  playersLabel={playersLabel}
-                  accent={gradient}
-                  coverImageUrl={quiz.descriptionImageUrl}
-                  className="w-full"
-                />
-              </Link>
+              <ShowcaseQuizCard
+                key={quiz.id}
+                id={quiz.id}
+                title={quiz.title}
+                badgeLabel={quiz.sport || quiz.difficulty || "Quiz"}
+                durationLabel={durationLabel}
+                playersLabel={playersLabel}
+                accent={gradient}
+                coverImageUrl={quiz.descriptionImageUrl}
+                href={`/quizzes/${quiz.slug}`}
+                className="w-full"
+              />
             );
           })}
         </div>
       ) : (
-        <div className="flex min-h-[400px] flex-col items-center justify-center rounded-[3rem] border border-dashed border-white/10 glass bg-white/5 p-12 text-center">
-          <div className="relative mb-6">
-            <div className="absolute inset-0 bg-primary/20 blur-3xl rounded-full" />
-            <div className="relative h-20 w-20 rounded-full glass border border-white/10 flex items-center justify-center text-4xl">
-              🔎
+        <div className="flex min-h-[500px] flex-col items-center justify-center border-2 border-dashed border-foreground/10 bg-muted/5 p-16 text-center">
+          <div className="relative mb-10">
+            <div className="absolute inset-0 bg-accent/20 blur-2xl rounded-full" />
+            <div className="relative h-24 w-24 border-2 border-foreground bg-background flex items-center justify-center shadow-athletic">
+              <Search className="h-10 w-10 text-foreground" />
             </div>
           </div>
-          <h2 className="text-2xl font-black tracking-tight uppercase mb-2">No Arenas Found</h2>
-          <p className="max-w-md text-muted-foreground font-medium">
-            Try adjusting your filters or check back soon for new challenges.
-          </p>
+          <div className="space-y-4 max-w-sm">
+            <h2 className="text-3xl font-bold tracking-tighter uppercase font-['Barlow_Condensed',sans-serif]">No Arenas Found</h2>
+            <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-muted-foreground/60 leading-relaxed">
+              Target parameters returned null. Adjust filters or check back for new deployments.
+            </p>
+          </div>
         </div>
       )}
 
       {/* Pagination */}
       {pagination.pages > 1 && (
-        <div className="pt-12">
+        <div className="pt-16 border-t-2 border-foreground/5">
           <QuizPagination
             page={pagination.page}
             pages={pagination.pages}
