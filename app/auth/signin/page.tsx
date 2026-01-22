@@ -6,12 +6,12 @@ import { Trophy, Sparkles, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTheme } from "next-themes";
 import { getBlurCircles, getGradientText } from "@/lib/showcase-theme";
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
-export default function SignInPage() {
+const SignInContent = () => {
   const { theme } = useTheme();
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl") || "/quizzes";
@@ -135,5 +135,13 @@ export default function SignInPage() {
         </div>
       </div>
     </div>
+  );
+};
+
+export default function SignInPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-background"><div className="animate-spin h-8 w-8 border-t-2 border-primary rounded-full"></div></div>}>
+      <SignInContent />
+    </Suspense>
   );
 }
