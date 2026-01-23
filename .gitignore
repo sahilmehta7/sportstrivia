@@ -48,6 +48,9 @@ next-env.d.ts
 .agent/
 .playwright-mcp/
 .swc/
-lighthouse-reports/
+# lighthouse
+/lighthouse-reports/
+/lighthouse-*.json
+/lighthouse-*.html
 .cursor/
 .specstory/
