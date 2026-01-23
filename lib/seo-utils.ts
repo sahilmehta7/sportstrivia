@@ -8,10 +8,10 @@ const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || "https://www.sportstrivia.in
 export function getCanonicalUrl(path: string): string {
   // Remove trailing slashes from BASE_URL
   const baseUrl = BASE_URL.replace(/\/$/, "");
-  
+
   // Ensure path starts with /
   const cleanPath = path.startsWith("/") ? path : `/${path}`;
-  
+
   return `${baseUrl}${cleanPath}`;
 }
 
@@ -34,7 +34,7 @@ export function generateOpenGraphTags({
   siteName?: string;
 }) {
   const image = imageUrl || `${BASE_URL}/og-image.jpg`;
-  
+
   return {
     "og:title": title,
     "og:description": description,
@@ -63,7 +63,7 @@ export function generateTwitterCardTags({
   cardType?: "summary" | "summary_large_image";
 }) {
   const image = imageUrl || `${BASE_URL}/og-image.jpg`;
-  
+
   return {
     "twitter:card": cardType,
     "twitter:title": title,
@@ -93,7 +93,7 @@ export async function generateUniqueSlug(
   existingSlug?: string
 ): Promise<string> {
   const baseSlug = generateSlug(title);
-  
+
   // If this is an update and slug hasn't changed, return it
   if (existingSlug === baseSlug) {
     return baseSlug;
@@ -144,21 +144,29 @@ export function generateQuizMetaTags(quiz: {
   difficulty: string;
   descriptionImageUrl?: string | null;
 }): MetaTags {
-  const title = quiz.seoTitle || `${quiz.title} - Sports Trivia Quiz`;
+  // Prioritize AI-generated SEO fields if present
+  const title = quiz.seoTitle || `${quiz.title} Trivia Quiz - Test Your Knowledge`;
   const description =
     quiz.seoDescription ||
     quiz.description ||
-    `Test your knowledge with our ${quiz.difficulty.toLowerCase()} ${quiz.sport || "sports"} trivia quiz. Challenge friends and climb the leaderboard!`;
-  
-  const keywords = quiz.seoKeywords || [
-    quiz.sport || "sports",
-    "trivia",
-    "quiz",
-    quiz.difficulty.toLowerCase(),
-    "test your knowledge",
-  ];
+    `Challenge your knowledge with this ${quiz.difficulty.toLowerCase()} ${quiz.sport || "sports"} trivia. Battle fans and climb the leaderboard!`;
 
-  const trimmedDescription = description.substring(0, 160);
+  const keywords = quiz.seoKeywords && quiz.seoKeywords.length > 0
+    ? quiz.seoKeywords
+    : [
+      quiz.sport || "sports",
+      "trivia",
+      "quiz",
+      quiz.difficulty.toLowerCase(),
+      "stats",
+      "history",
+      "test your knowledge",
+    ];
+
+  const trimmedDescription = description.length > 160
+    ? `${description.substring(0, 157)}...`
+    : description;
+
   const canonicalUrl = getCanonicalUrl(`/quizzes/${quiz.slug}`);
 
   return {

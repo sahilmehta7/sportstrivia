@@ -22,42 +22,42 @@ function buildQuestionsOnlyPrompt(
     slug: string,
     counts: { easyCount: number; mediumCount: number; hardCount: number }
 ): string {
-    const scaffold = baseTemplate
-        .replace(/\{\{TOPIC\}\}/g, topicName)
-        .replace(/\{\{TOPIC_LOWER\}\}/g, topicName.toLowerCase())
-        .replace(/\{\{SLUGIFIED_TOPIC\}\}/g, slug)
-        .replace(/\{\{SPORT\}\}/g, sport)
-        .replace(/\{\{DIFFICULTY\}\}/g, "MEDIUM")
-        .replace(/\{\{NUM_QUESTIONS\}\}/g, String(total))
-        .replace(/\{\{DURATION\}\}/g, String(total * 60));
-
     const mixNote = `Generate exactly ${counts.easyCount} EASY, ${counts.mediumCount} MEDIUM, and ${counts.hardCount} HARD questions.`;
 
-    return `You are generating questions only. Ignore any quiz-level fields in previous instructions.
+    return `You are an elite sports trivia architect focusing on "${topicName}" (${sport}).
 
-Return strictly valid JSON matching this shape and nothing else:
+Goal: Generate a batch of high-quality, standalone trivia questions.
+
+🧾 Required JSON Shape:
 {
   "questions": [
     {
-      "questionText": "",
+      "questionText": "The specific question text. Must be factually accurate and unambiguous.",
       "difficulty": "EASY|MEDIUM|HARD",
-      "hint": "",
-      "explanation": "",
+      "hint": "A helpful but non-obvious clue.",
+      "explanation": "A fascinating 'Did you know?' style fact related to the answer (1-2 sentences).",
       "answers": [
-        { "answerText": "", "isCorrect": true },
-        { "answerText": "", "isCorrect": false },
-        { "answerText": "", "isCorrect": false },
-        { "answerText": "", "isCorrect": false }
+        { "answerText": "Correct Answer", "isCorrect": true },
+        { "answerText": "Plausible Distractor 1", "isCorrect": false },
+        { "answerText": "Plausible Distractor 2", "isCorrect": false },
+        { "answerText": "Plausible Distractor 3", "isCorrect": false }
       ]
     }
   ]
 }
 
-Topic: ${topicName}
-${mixNote}
-All questions must be unique, unambiguous, and about the topic. Ensure factual accuracy. Keep hints short and helpful. Explanations should be 1–2 concise sentences. Only one answer can be correct. Output JSON only.
+📝 Quality Benchmarks:
+1. Topic Focus: All questions must be strictly about ${topicName}.
+2. Distribution: ${mixNote}
+3. Diversity: Include a mix of career milestones, historical records, and unique trivia nuggets.
+4. Distractors: Ensure wrong answers are plausible and professionally formatted.
+5. Accuracy: All data must be verified.
+6. Format: Output strictly valid JSON. No conversational filler or markdown wrappers.
 
-Context (for your reference):\n\n"""\n${scaffold.substring(0, 1200)}\n"""`;
+Context (for tone and style reference):
+"""
+${baseTemplate.substring(0, 1000)}
+"""`;
 }
 
 export async function processAIQuestionsTask(taskId: string): Promise<void> {

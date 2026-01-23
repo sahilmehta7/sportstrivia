@@ -1,55 +1,72 @@
 import { prisma } from "@/lib/db";
 
 // Default AI Quiz Generator Prompt Template
-export const DEFAULT_AI_QUIZ_PROMPT = `You are an expert sports quiz creator. Create a quiz in strict JSON format with the following structure.
+export const DEFAULT_AI_QUIZ_PROMPT = `You are an elite sports trivia architect targeting "Hardcore Sports Fans" who value accuracy, depth, and fascinating storylines.
 
-Use the topic "{{TOPIC}}" for all questions.
-The quiz should have {{NUM_QUESTIONS}} questions.
-The overall difficulty of the quiz should be {{DIFFICULTY}}.
-Each question should still include a variety of easy, medium, and hard difficulties unless stated otherwise.
-Provide a hint and an explanation for every question.
-Do not include IDs in the output.
-Output strictly valid JSON — no extra text or markdown.
+Context: 
+- Topic: "{{TOPIC}}"
+- Sport: "{{SPORT}}"
+- Target Questions: {{NUM_QUESTIONS}}
+- Difficulty Tier: {{DIFFICULTY}}
 
-🧾 Required JSON Structure:
+Goal: Create a world-class trivia experience in strict JSON format.
+
+🧾 JSON Schema Requirements:
 {
-  "title": "{{TOPIC}} Quiz",
-  "description": "Test your knowledge about {{TOPIC}}",
+  "title": "A punchy, SEO-optimized title (e.g., 'The Ultimate {{TOPIC}} Challenge')",
+  "description": "A compelling 2-sentence hook that makes fans want to play.",
   "slug": "{{SLUGIFIED_TOPIC}}-quiz",
   "sport": "{{SPORT}}",
   "difficulty": "{{DIFFICULTY}}",
   "duration": {{DURATION}},
   "passingScore": 70,
   "seo": {
-    "title": "{{TOPIC}} Quiz - Test Your Knowledge",
-    "description": "Challenge yourself with questions about {{TOPIC}}.",
-    "keywords": ["{{TOPIC_LOWER}}", "quiz", "sports", "trivia"]
+    "title": "Max 60 chars. Optimized for search: '{{TOPIC}} Trivia Quiz - Test Your Knowledge'",
+    "description": "Max 160 chars. Engaging meta description including keywords.",
+    "keywords": ["{{TOPIC_LOWER}}", "trivia", "quiz", "sports", "{{SPORT}}", "stats", "history"]
   },
   "questions": [
     {
-      "text": "Question text goes here",
-      "difficulty": "easy",
+      "text": "The main question. Be specific. Avoid 'Who is the best?' (too subjective).",
+      "difficulty": "easy | medium | hard",
       "topic": "{{TOPIC}}",
-      "hint": "Hint goes here",
-      "explanation": "Explanation or fact goes here",
+      "hint": "A subtle nudge that adds a layer of trivia without giving it away.",
+      "explanation": "A fascinating 'Did you know?' style fact related to the answer. 1-2 sentences max.",
       "answers": [
         { "text": "Correct Answer", "isCorrect": true },
-        { "text": "Wrong Answer 1", "isCorrect": false },
-        { "text": "Wrong Answer 2", "isCorrect": false },
-        { "text": "Wrong Answer 3", "isCorrect": false }
+        { "text": "Plausible Distractor 1", "isCorrect": false },
+        { "text": "Plausible Distractor 2", "isCorrect": false },
+        { "text": "Plausible Distractor 3", "isCorrect": false }
       ]
     }
   ]
 }
 
-📝 Instructions:
-- All questions must have the topic name "{{TOPIC}}"
-- Use a mix of factual, record-based, and contextual questions
-- Keep explanations short (1–2 sentences)
-- Ensure all answers are plausible but only one is correct
-- Make hints helpful but not obvious
-- Vary question difficulty (easy, medium, hard) within the quiz
-- Output only the JSON, no prose or markdown`;
+📝 Quality Benchmarks:
+1. Difficulty Varation: Even if the quiz is {{DIFFICULTY}}, include 20% Easy (confidence builders), 60% Medium (the core), and 20% Hard (true expert testers).
+2. Question Diversity: Mix these types:
+   - Career Stats: (e.g., "In which year did [Player] reach 500 goals?")
+   - Historical Context: (e.g., "This team won the championship despite [Event]...")
+   - Career Milestones: (e.g., "Before joining [Team], where did [Player] play?")
+   - Records & Awards: (e.g., "Who held the record before [Player] broke it?")
+3. Fact-Checking: Ensure all facts are accurate as of early 2025.
+4. Tone: Energetic, professional, and respectful of the sport's history.
+5. JSON Integrity: Output strictly valid JSON. No prose, no markdown wrappers, no conversational filler.
+
+Example of a High-Quality Question:
+{
+  "text": "Which legendary stadium is often referred to as 'The Cathedral of Baseball'?",
+  "difficulty": "medium",
+  "topic": "Stadiums",
+  "hint": "It was the home of the New York Yankees for 85 years.",
+  "explanation": "The original Yankee Stadium earned this nickname from its majestic architecture and the legendary status of the players who graced its field.",
+  "answers": [
+    { "text": "Yankee Stadium", "isCorrect": true },
+    { "text": "Fenway Park", "isCorrect": false },
+    { "text": "Dodger Stadium", "isCorrect": false },
+    { "text": "Wrigley Field", "isCorrect": false }
+  ]
+}`;
 
 // Default AI Model
 export const DEFAULT_AI_MODEL = "gpt-4o";

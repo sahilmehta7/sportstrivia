@@ -108,6 +108,8 @@ async function fetchFeaturedQuizzesForTopic(topicIds: string[]): Promise<PublicQ
   });
 }
 
+import { generateTopicMetadataAI } from "@/lib/services/ai-seo.service";
+
 export async function generateMetadata({
   params,
 }: {
@@ -120,18 +122,23 @@ export async function generateMetadata({
     return {};
   }
 
-  const title = `${topic.name} Trivia Quizzes | Sports Trivia`;
-  const description = topic.description
+  // Try AI-generated metadata first
+  const aiMetadata = await generateTopicMetadataAI(topic.name, topic.description);
+
+  const title = aiMetadata?.title || `${topic.name} Trivia Quizzes | Sports Trivia`;
+  const description = aiMetadata?.description || (topic.description
     ? topic.description.length > 160
       ? `${topic.description.slice(0, 157)}...`
       : topic.description
-    : `Explore trivia quizzes, key facts, and highlights for ${topic.name} on Sports Trivia.`;
+    : `Explore trivia quizzes, key facts, and highlights for ${topic.name} on Sports Trivia.`);
+  const keywords = aiMetadata?.keywords || [topic.name.toLowerCase(), "trivia", "quiz", "sports"];
 
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://www.sportstrivia.in";
-  
+
   return {
     title,
     description,
+    keywords,
     openGraph: {
       title,
       description,
@@ -164,9 +171,9 @@ export default async function TopicDetailPage({
   const user = await getCurrentUser();
   const userStreak = user
     ? await prisma.user.findUnique({
-        where: { id: user.id },
-        select: { currentStreak: true, longestStreak: true },
-      })
+      where: { id: user.id },
+      select: { currentStreak: true, longestStreak: true },
+    })
     : null;
 
   const topicIds = await getTopicIdsWithDescendants(topic.id);
@@ -312,26 +319,26 @@ export default async function TopicDetailPage({
     { position: 1, name: "Home", item: getCanonicalUrl("/") },
   ];
   if (topic.parent) {
-    breadcrumbItems.push({ 
-      position: breadcrumbItems.length + 1, 
-      name: topic.parent.name, 
-      item: getCanonicalUrl(`/topics/${topic.parent.slug}`) 
+    breadcrumbItems.push({
+      position: breadcrumbItems.length + 1,
+      name: topic.parent.name,
+      item: getCanonicalUrl(`/topics/${topic.parent.slug}`)
     });
   }
-  breadcrumbItems.push({ 
-    position: breadcrumbItems.length + 1, 
-    name: topic.name, 
-    item: getCanonicalUrl(`/topics/${topic.slug}`) 
+  breadcrumbItems.push({
+    position: breadcrumbItems.length + 1,
+    name: topic.name,
+    item: getCanonicalUrl(`/topics/${topic.slug}`)
   });
-  
+
   const itemListElements = listing.quizzes.length > 0
     ? listing.quizzes.map((q, index) => ({
-        position: index + 1,
-        name: q.title,
-        item: getCanonicalUrl(`/quizzes/${q.slug}`),
-        ...(q.descriptionImageUrl ? { image: q.descriptionImageUrl } : {}),
-        ...(q.description ? { description: q.description } : {}),
-      }))
+      position: index + 1,
+      name: q.title,
+      item: getCanonicalUrl(`/quizzes/${q.slug}`),
+      ...(q.descriptionImageUrl ? { image: q.descriptionImageUrl } : {}),
+      ...(q.description ? { description: q.description } : {}),
+    }))
     : [];
 
   return (
@@ -370,10 +377,10 @@ export default async function TopicDetailPage({
         />
 
         <ShowcaseThemeProvider>
-        <TopicQuizSearchBar
-          initialQuery={searchTerm ?? ""}
-          suggestions={quizSearchSuggestions}
-        />
+          <TopicQuizSearchBar
+            initialQuery={searchTerm ?? ""}
+            suggestions={quizSearchSuggestions}
+          />
         </ShowcaseThemeProvider>
 
         {heroFeaturedQuizzes.length > 0 && (
@@ -448,80 +455,80 @@ export default async function TopicDetailPage({
 
             <aside className="space-y-4 lg:sticky lg:top-24">
               <Card className="rounded-2xl border border-border/40 bg-gradient-to-br from-primary/10 via-background to-background shadow-sm">
-                  <CardHeader>
-                    <CardTitle className="text-lg">Top fans (all-time)</CardTitle>
-                    <CardDescription>Correct answers in this topic</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    {leaderboards.allTime.length > 0 ? (
-                      leaderboards.allTime.map((entry) => (
-                        <div
-                          key={entry.userId}
-                          className="flex items-center justify-between rounded-lg border border-border/40 bg-background/60 px-3 py-2 text-sm"
-                        >
-                          <div className="flex items-center gap-2">
-                            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/15 text-xs font-semibold text-primary">
-                              {entry.rank}
-                            </span>
-                            <span className="font-medium text-foreground">{entry.name}</span>
-                          </div>
-                          <span className="text-xs text-muted-foreground">{entry.score} correct</span>
+                <CardHeader>
+                  <CardTitle className="text-lg">Top fans (all-time)</CardTitle>
+                  <CardDescription>Correct answers in this topic</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {leaderboards.allTime.length > 0 ? (
+                    leaderboards.allTime.map((entry) => (
+                      <div
+                        key={entry.userId}
+                        className="flex items-center justify-between rounded-lg border border-border/40 bg-background/60 px-3 py-2 text-sm"
+                      >
+                        <div className="flex items-center gap-2">
+                          <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/15 text-xs font-semibold text-primary">
+                            {entry.rank}
+                          </span>
+                          <span className="font-medium text-foreground">{entry.name}</span>
                         </div>
-                      ))
-                    ) : (
-                      <p className="text-sm text-muted-foreground">Be the first to climb this leaderboard.</p>
-                    )}
-                    <Link
-                      href={`/leaderboard?topic=${topic.slug}`}
-                      className="text-sm font-medium text-primary transition hover:text-primary/80"
-                    >
-                      View full leaderboards
-                    </Link>
-                  </CardContent>
-                </Card>
+                        <span className="text-xs text-muted-foreground">{entry.score} correct</span>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-sm text-muted-foreground">Be the first to climb this leaderboard.</p>
+                  )}
+                  <Link
+                    href={`/leaderboard?topic=${topic.slug}`}
+                    className="text-sm font-medium text-primary transition hover:text-primary/80"
+                  >
+                    View full leaderboards
+                  </Link>
+                </CardContent>
+              </Card>
 
-                {userStreak && (
-                  <Card className="rounded-2xl border border-border/40 bg-gradient-to-br from-amber-500/10 via-background to-background shadow-sm">
-                    <CardHeader>
-                      <CardTitle className="text-lg">Your streak</CardTitle>
-                      <CardDescription>Keep the momentum going</CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-3 text-sm">
-                      <StreakIndicator
-                        currentStreak={userStreak.currentStreak}
-                        longestStreak={userStreak.longestStreak}
-                        showLabel
-                      />
-                      <p className="text-muted-foreground">
-                        Answer a quiz today to extend your streak and climb the rankings.
-                      </p>
-                    </CardContent>
-                  </Card>
-                )}
-
-                <Card className="rounded-2xl border border-border/40 bg-gradient-to-br from-purple-500/10 via-background to-background shadow-sm">
+              {userStreak && (
+                <Card className="rounded-2xl border border-border/40 bg-gradient-to-br from-amber-500/10 via-background to-background shadow-sm">
                   <CardHeader>
-                    <CardTitle className="text-lg">Need inspiration?</CardTitle>
-                    <CardDescription>Let AI whip up a fresh quiz idea</CardDescription>
+                    <CardTitle className="text-lg">Your streak</CardTitle>
+                    <CardDescription>Keep the momentum going</CardDescription>
                   </CardHeader>
-                  <CardContent>
-                    <AISuggestionModal
-                      topicName={topic.name}
-                      trigger={
-                        <button className="w-full rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition hover:bg-primary/90">
-                          Generate with AI
-                        </button>
-                      }
+                  <CardContent className="space-y-3 text-sm">
+                    <StreakIndicator
+                      currentStreak={userStreak.currentStreak}
+                      longestStreak={userStreak.longestStreak}
+                      showLabel
                     />
+                    <p className="text-muted-foreground">
+                      Answer a quiz today to extend your streak and climb the rankings.
+                    </p>
                   </CardContent>
                 </Card>
-              </aside>
-            </div>
+              )}
+
+              <Card className="rounded-2xl border border-border/40 bg-gradient-to-br from-purple-500/10 via-background to-background shadow-sm">
+                <CardHeader>
+                  <CardTitle className="text-lg">Need inspiration?</CardTitle>
+                  <CardDescription>Let AI whip up a fresh quiz idea</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <AISuggestionModal
+                    topicName={topic.name}
+                    trigger={
+                      <button className="w-full rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition hover:bg-primary/90">
+                        Generate with AI
+                      </button>
+                    }
+                  />
+                </CardContent>
+              </Card>
+            </aside>
+          </div>
         </section>
       </PageContainer>
 
       {/* Structured Data */}
-      <BreadcrumbJsonLd itemListElements={breadcrumbItems} />
+      <BreadcrumbJsonLd items={breadcrumbItems} />
       <ItemListStructuredData itemListElements={itemListElements} name={`${topic.name} Quizzes`} />
     </main>
   );
