@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Barlow, Barlow_Condensed } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 import { LayoutWrapper } from "@/components/LayoutWrapper";
@@ -10,6 +11,22 @@ import { defaultSeoConfig } from "@/lib/next-seo-config";
 import React from "react";
 import { GoogleAnalytics } from "@next/third-parties/google";
 import { ShowcaseThemeProvider } from "@/components/showcase/ShowcaseThemeProvider";
+import { cn } from "@/lib/utils";
+import { auth } from "@/lib/auth";
+
+const barlow = Barlow({
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700"],
+  variable: "--font-barlow",
+  display: "swap",
+});
+
+const barlowCondensed = Barlow_Condensed({
+  subsets: ["latin"],
+  weight: ["400", "600", "700"],
+  variable: "--font-barlow-condensed",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "https://www.sportstrivia.in"),
@@ -68,22 +85,20 @@ export const metadata: Metadata = {
   category: "Sports & Recreation",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const session = await auth();
+
   return (
     <html lang="en" suppressHydrationWarning className="scroll-smooth">
-      <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700&family=Barlow:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
-      </head>
-      <body className="font-['Barlow',sans-serif]">
+      <head />
+      <body className={cn(barlow.className, barlowCondensed.variable, "antialiased")}>
         <ThemeColorInit />
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
-          <AppSessionProvider>
+          <AppSessionProvider session={session}>
             <ShowcaseThemeProvider>
               <LayoutWrapper>{children}</LayoutWrapper>
             </ShowcaseThemeProvider>
