@@ -10,7 +10,7 @@ export async function PopularTopics() {
     <section className="px-4 py-16 sm:px-6 lg:py-24">
       <div className="mx-auto max-w-7xl">
         <div className="mb-12">
-          <h2 className={cn("text-4xl font-black tracking-tighter sm:text-6xl mb-4", getGradientText("neon"))}>
+          <h2 className={cn("text-4xl font-black tracking-tighter sm:text-6xl mb-4", getGradientText("accent"))}>
             POPULAR REGIONS
           </h2>
           <p className="max-w-2xl text-lg text-muted-foreground font-medium">

@@ -77,11 +77,6 @@ const config: Config = {
           "5": "hsl(var(--chart-5))",
         },
         /* Refined athletic accents */
-        accent: {
-          DEFAULT: "hsl(var(--accent))",
-          foreground: "hsl(var(--accent-foreground))",
-        },
-        navy: "hsl(222 47% 11%)",
         gold: "hsl(45 93% 47%)",
         steel: "hsl(215 25% 27%)",
       },
@@ -238,6 +233,7 @@ const config: Config = {
     },
   },
   plugins: [tailwindcssAnimate, lineClamp],
+  blocklist: [".agent/"]
 };
 
 export default config;

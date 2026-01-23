@@ -44,4 +44,10 @@ next-env.d.ts
 /playwright-report/
 /playwright/.cache/
 
-.specstory/history/
+# tools
+.agent/
+.playwright-mcp/
+.swc/
+lighthouse-reports/
+.cursor/
+.specstory/

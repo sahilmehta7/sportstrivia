@@ -51,7 +51,7 @@ export function QuickStartArena() {
             <div className="mx-auto max-w-7xl">
                 <div className="mb-16 flex flex-col md:flex-row md:items-end justify-between gap-8">
                     <div className="max-w-2xl">
-                        <h2 className={cn("text-4xl font-black tracking-tighter sm:text-6xl mb-4 uppercase", getGradientText("neon"))}>
+                        <h2 className={cn("text-4xl font-black tracking-tighter sm:text-6xl mb-4 uppercase", getGradientText("accent"))}>
                             CHOOSE YOUR <br /> INITIAL ARENA
                         </h2>
                         <p className="text-lg text-muted-foreground font-medium">

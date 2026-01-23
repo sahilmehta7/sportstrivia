@@ -16,7 +16,7 @@ export function Footer() {
               <Link href="/" className="flex items-center gap-3 group">
                 <ShieldCheck className="h-8 w-8 text-accent" />
                 <span className="text-4xl font-bold tracking-tighter uppercase font-['Barlow_Condensed',sans-serif]">
-                  TRIVIA<span className="text-accent">PRO</span>
+                  SPORTS<span className="text-accent">TRIVIA</span>
                 </span>
               </Link>
               <p className="max-w-md text-xl font-medium text-background/60 leading-tight uppercase tracking-tight">

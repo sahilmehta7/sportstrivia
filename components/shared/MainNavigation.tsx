@@ -101,7 +101,7 @@ export function MainNavigation() {
           <Link href="/" className="flex items-center gap-2 group shrink-0">
             <ShieldCheck className="h-6 w-6 text-accent" />
             <span className="text-xl font-bold tracking-tighter uppercase font-['Barlow_Condensed',sans-serif] hidden sm:block">
-              TRIVIA<span className="text-accent">PRO</span>
+              SPORTS<span className="text-accent">TRIVIA</span>
             </span>
           </Link>
 
