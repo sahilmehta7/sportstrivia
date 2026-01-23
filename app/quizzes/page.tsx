@@ -1,4 +1,5 @@
 import { cache, Suspense } from "react";
+import { unstable_cache } from "next/cache";
 import type { Metadata } from "next";
 import { QuizzesPageHeader } from "@/components/quizzes/quizzes-page-header";
 import { QuizzesPageContent } from "./QuizzesPageContent";
@@ -110,46 +111,48 @@ function parsePublicFilters(searchParams: SearchParams): PublicQuizFilters {
   };
 }
 
-const loadTopicsWithQuizCounts = cache(async () => {
-  const level0Topics = await prisma.topic.findMany({
-    where: {
-      parentId: null,
-    },
-    include: {
-      quizTopicConfigs: {
-        select: {
-          quizId: true,
-        },
-        where: {
-          quiz: {
-            isPublished: true,
-            status: "PUBLISHED",
+const loadTopicsWithQuizCounts = unstable_cache(
+  async () => {
+    const level0Topics = await prisma.topic.findMany({
+      where: {
+        parentId: null,
+      },
+      include: {
+        quizTopicConfigs: {
+          select: {
+            quizId: true,
+          },
+          where: {
+            quiz: {
+              isPublished: true,
+              status: "PUBLISHED",
+            },
           },
         },
-      },
-      children: {
-        include: {
-          quizTopicConfigs: {
-            select: {
-              quizId: true,
-            },
-            where: {
-              quiz: {
-                isPublished: true,
-                status: "PUBLISHED",
+        children: {
+          include: {
+            quizTopicConfigs: {
+              select: {
+                quizId: true,
+              },
+              where: {
+                quiz: {
+                  isPublished: true,
+                  status: "PUBLISHED",
+                },
               },
             },
-          },
-          children: {
-            include: {
-              quizTopicConfigs: {
-                select: {
-                  quizId: true,
-                },
-                where: {
-                  quiz: {
-                    isPublished: true,
-                    status: "PUBLISHED",
+            children: {
+              include: {
+                quizTopicConfigs: {
+                  select: {
+                    quizId: true,
+                  },
+                  where: {
+                    quiz: {
+                      isPublished: true,
+                      status: "PUBLISHED",
+                    },
                   },
                 },
               },
@@ -157,30 +160,35 @@ const loadTopicsWithQuizCounts = cache(async () => {
           },
         },
       },
-    },
-  });
+    });
 
-  return level0Topics
-    .filter((topic) => topic.parentId === null)
-    .map((topic) => {
-      const quizIds = new Set<string>();
+    return level0Topics
+      .filter((topic) => topic.parentId === null)
+      .map((topic) => {
+        const quizIds = new Set<string>();
 
-      topic.quizTopicConfigs.forEach((config) => quizIds.add(config.quizId));
+        topic.quizTopicConfigs.forEach((config) => quizIds.add(config.quizId));
 
-      topic.children.forEach((child) => {
-        child.quizTopicConfigs.forEach((config) => quizIds.add(config.quizId));
+        topic.children.forEach((child) => {
+          child.quizTopicConfigs.forEach((config) => quizIds.add(config.quizId));
 
-        child.children.forEach((grandchild) => {
-          grandchild.quizTopicConfigs.forEach((config) => quizIds.add(config.quizId));
+          child.children.forEach((grandchild) => {
+            grandchild.quizTopicConfigs.forEach((config) => quizIds.add(config.quizId));
+          });
         });
-      });
 
-      const quizCount = quizIds.size;
-      return { ...topic, quizCount };
-    })
-    .filter((topic) => topic.quizCount > 0)
-    .sort((a, b) => b.quizCount - a.quizCount);
-});
+        const quizCount = quizIds.size;
+        return { ...topic, quizCount };
+      })
+      .filter((topic) => topic.quizCount > 0)
+      .sort((a, b) => b.quizCount - a.quizCount);
+  },
+  ["quizzes-page-topics-with-counts"],
+  {
+    revalidate: 3600, // Cache for 1 hour
+    tags: ["topics", "quizzes"],
+  }
+);
 
 async function getFilterGroups(searchParams: SearchParams): Promise<ShowcaseFilterGroup[]> {
   const topicsWithCounts = await loadTopicsWithQuizCounts();

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
-import { startTransition } from "react";
+import { useTransition, useRef, useEffect } from "react";
 import { ShowcaseQuizCard } from "@/components/quiz/ShowcaseQuizCard";
 import { QuizPagination } from "@/components/quizzes/quiz-pagination";
 import { FilterBar } from "@/components/quizzes/filter-bar";
@@ -36,6 +36,16 @@ function hashString(value: string): number {
 export function QuizzesContent({ quizzes, filterGroups, pagination }: QuizzesContentProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const [isPending, startTransition] = useTransition();
+  const contentRef = useRef<HTMLDivElement>(null);
+
+  // Scroll to top of the library section when filters/page changes
+  // but only if we're not at the top already, to avoid jarring jumps
+  useEffect(() => {
+    if (!isPending && contentRef.current) {
+      // Optional: scroll into view if needed
+    }
+  }, [isPending]);
 
   const handleFilterChange = (groupId: string, option: any) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -52,7 +62,7 @@ export function QuizzesContent({ quizzes, filterGroups, pagination }: QuizzesCon
     params.delete("page");
 
     startTransition(() => {
-      router.push(`/quizzes?${params.toString()}`);
+      router.push(`/quizzes?${params.toString()}`, { scroll: false });
     });
   };
 
@@ -61,13 +71,20 @@ export function QuizzesContent({ quizzes, filterGroups, pagination }: QuizzesCon
     params.set("page", page.toString());
 
     startTransition(() => {
-      router.push(`/quizzes?${params.toString()}`);
+      router.push(`/quizzes?${params.toString()}`, { scroll: false });
     });
   };
 
   return (
-    <section className="space-y-16">
-      <div className="flex flex-col gap-12">
+    <section ref={contentRef} className="space-y-16 relative">
+      {/* Subtle Loading Indicator */}
+      {isPending && (
+        <div className="absolute top-0 left-0 right-0 h-1 z-50 overflow-hidden bg-foreground/5">
+          <div className="h-full bg-primary animate-progress shadow-neon-cyan" style={{ width: '40%' }} />
+        </div>
+      )}
+
+      <div className={cn("flex flex-col gap-12 transition-opacity duration-300", isPending && "opacity-60")}>
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 border-b-2 border-foreground/5 pb-8">
           <div className="space-y-4">
             <h2 className={cn(
@@ -85,12 +102,16 @@ export function QuizzesContent({ quizzes, filterGroups, pagination }: QuizzesCon
         <FilterBar
           groups={filterGroups}
           onChange={handleFilterChange}
+          isPending={isPending}
           className="border-0 bg-transparent p-0"
         />
       </div>
 
       {quizzes.length > 0 ? (
-        <div className="grid gap-x-8 gap-y-12 sm:grid-cols-2 lg:grid-cols-3">
+        <div className={cn(
+          "grid gap-x-8 gap-y-12 sm:grid-cols-2 lg:grid-cols-3 transition-all duration-500",
+          isPending ? "opacity-40 grayscale-[0.5] scale-[0.99] pointer-events-none" : "opacity-100"
+        )}>
           {quizzes.map((quiz) => {
             const gradient = getSportGradient(quiz.sport, hashString(`${quiz.title}`));
             const durationLabel = quiz.duration ? `${Math.round(quiz.duration / 60)} MIN` : "FLEX";

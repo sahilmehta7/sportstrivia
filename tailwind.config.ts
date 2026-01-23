@@ -209,6 +209,11 @@ const config: Config = {
             borderColor: "hsl(var(--neon-magenta) / 0.5)"
           },
         },
+        "progress": {
+          "0%": { transform: "translateX(-100%)" },
+          "50%": { transform: "translateX(-20%)" },
+          "100%": { transform: "translateX(100%)" },
+        },
       },
       animation: {
         "points-pop": "points-pop 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55)",
@@ -220,6 +225,7 @@ const config: Config = {
         "scale-in": "scale-in 0.3s var(--ease-smooth) forwards",
         "glow-pulse": "glow-pulse 3s ease-in-out infinite",
         "border-glow": "border-glow 4s ease-in-out infinite",
+        "progress": "progress 2s ease-in-out infinite",
       },
 
       /* ===================
