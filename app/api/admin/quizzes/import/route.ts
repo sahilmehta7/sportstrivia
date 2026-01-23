@@ -36,6 +36,11 @@ interface QuizImportInput {
   sport?: string;
   difficulty: Difficulty;
   duration?: number;
+  timePerQuestion?: number;
+  maxAttemptsPerUser?: number;
+  showHints?: boolean;
+  randomizeQuestionOrder?: boolean;
+  completionBonus?: number;
   passingScore: number;
   seo?: {
     title?: string;
@@ -64,7 +69,7 @@ export async function POST(request: NextRequest) {
     await requireAdmin();
 
     const body = await request.json();
-    
+
     // Normalize difficulty values to uppercase (case-insensitive input)
     if (body.difficulty) {
       body.difficulty = normalizeDifficulty(body.difficulty);
@@ -75,7 +80,7 @@ export async function POST(request: NextRequest) {
         difficulty: normalizeDifficulty(q.difficulty)
       }));
     }
-    
+
     // Validate the input
     const parseResult = quizImportSchema.safeParse(body);
     if (!parseResult.success) {
@@ -84,7 +89,7 @@ export async function POST(request: NextRequest) {
         { status: 400, headers: { "Content-Type": "application/json" } }
       );
     }
-    
+
     // Extract validated data with type assertion
     const validatedData = parseResult.data as QuizImportInput;
     const {
@@ -94,10 +99,18 @@ export async function POST(request: NextRequest) {
       sport,
       difficulty,
       duration,
+      timePerQuestion,
+      maxAttemptsPerUser,
+      showHints,
+      randomizeQuestionOrder,
+      completionBonus,
       passingScore,
       seo,
       questions
     } = validatedData;
+
+    // Calculate completion bonus if not provided
+    const finalCompletionBonus = completionBonus ?? (questions.length * 100);
 
     // Generate unique slug
     const slug = providedSlug
@@ -158,6 +171,11 @@ export async function POST(request: NextRequest) {
           sport: canonicalSportName,
           difficulty,
           duration,
+          timePerQuestion,
+          maxAttemptsPerUser,
+          showHints,
+          randomizeQuestionOrder,
+          completionBonus: finalCompletionBonus,
           passingScore,
           seoTitle: seo?.title,
           seoDescription: seo?.description,
@@ -217,14 +235,14 @@ export async function POST(request: NextRequest) {
             });
 
             topicNameMap.set(normalizedName, { id: newTopic.id });
-          } catch (error) {
+          } catch (error: any) {
             // If topic creation fails due to unique constraint, try to find the existing topic
             if (error.code === 'P2002' && error.meta?.target?.includes('name')) {
               const existingTopic = await tx.topic.findUnique({
                 where: { name: topicName },
                 select: { id: true, name: true },
               });
-              
+
               if (existingTopic) {
                 topicNameMap.set(normalizedName, { id: existingTopic.id });
               } else {
@@ -238,7 +256,7 @@ export async function POST(request: NextRequest) {
                   },
                   select: { id: true, name: true },
                 });
-                
+
                 if (caseInsensitiveTopic) {
                   topicNameMap.set(normalizedName, { id: caseInsensitiveTopic.id });
                 } else {
@@ -256,7 +274,7 @@ export async function POST(request: NextRequest) {
       // Process in chunks of 20 questions at a time
       const BATCH_SIZE = 20;
       const createdQuestions = [];
-      
+
       for (let i = 0; i < questions.length; i += BATCH_SIZE) {
         const batch = questions.slice(i, i + BATCH_SIZE);
         const batchResults = await Promise.all(

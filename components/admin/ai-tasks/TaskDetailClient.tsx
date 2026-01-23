@@ -41,6 +41,11 @@ interface NormalizedQuiz {
   sport?: string;
   difficulty: string;
   duration?: number;
+  timePerQuestion?: number;
+  maxAttemptsPerUser?: number;
+  showHints?: boolean;
+  randomizeQuestionOrder?: boolean;
+  completionBonus?: number;
   passingScore: number;
   seo?: {
     title?: string;
@@ -101,7 +106,7 @@ function formatType(type: BackgroundTaskType): string {
     case "AI_TOPIC_QUESTION_IMPORT":
       return "AI Question Import";
     default:
-      return type.replace(/_/g, " ");
+      return (type as string).replace(/_/g, " ");
   }
 }
 
@@ -160,10 +165,10 @@ function mapQuestionsToPreview(
 
           const isCorrect = Boolean(
             answer.isCorrect ??
-              answer.correct ??
-              answer.is_correct ??
-              (typeof answer.score === "number" ? answer.score > 0 : false) ??
-              (typeof answer.weight === "number" ? answer.weight > 0 : false)
+            answer.correct ??
+            answer.is_correct ??
+            (typeof answer.score === "number" ? answer.score > 0 : false) ??
+            (typeof answer.weight === "number" ? answer.weight > 0 : false)
           );
 
           return {
@@ -172,7 +177,7 @@ function mapQuestionsToPreview(
             imageUrl,
           };
         })
-        .filter((answer): answer is PreviewAnswer => Boolean(answer));
+        .filter((answer): answer is PreviewAnswer => answer !== null);
 
       if (!answers.length) {
         return null;
@@ -209,7 +214,7 @@ function mapQuestionsToPreview(
         answers,
       };
     })
-    .filter((question): question is PreviewQuestion => Boolean(question));
+    .filter((question): question is PreviewQuestion => question !== null);
 }
 
 function normalizeQuizForImport(rawQuiz: any): NormalizedQuiz | null {
@@ -257,7 +262,7 @@ function normalizeQuizForImport(rawQuiz: any): NormalizedQuiz | null {
       : typeof rawSeo.title === "string" && (rawSeo.title as string).trim()
         ? (rawSeo.title as string).trim()
         : undefined;
-  
+
   // Truncate to max 60 characters for SEO title
   const seoTitle = seoTitleRaw ? seoTitleRaw.substring(0, 60) : undefined;
 
@@ -267,17 +272,17 @@ function normalizeQuizForImport(rawQuiz: any): NormalizedQuiz | null {
       : typeof rawSeo.description === "string" && (rawSeo.description as string).trim()
         ? (rawSeo.description as string).trim()
         : undefined;
-  
+
   // Truncate to max 160 characters for SEO description
   const seoDescription = seoDescriptionRaw ? seoDescriptionRaw.substring(0, 160) : undefined;
 
   const seo =
     seoTitle || seoDescription || seoKeywords
       ? {
-          title: seoTitle,
-          description: seoDescription,
-          keywords: seoKeywords,
-        }
+        title: seoTitle,
+        description: seoDescription,
+        keywords: seoKeywords,
+      }
       : undefined;
 
   const sportCandidate =
@@ -297,6 +302,11 @@ function normalizeQuizForImport(rawQuiz: any): NormalizedQuiz | null {
     sport: sportCandidate,
     difficulty,
     duration,
+    timePerQuestion: typeof rawQuiz.timePerQuestion === "number" ? rawQuiz.timePerQuestion : 60,
+    maxAttemptsPerUser: typeof rawQuiz.maxAttemptsPerUser === "number" ? rawQuiz.maxAttemptsPerUser : 1,
+    showHints: typeof rawQuiz.showHints === "boolean" ? rawQuiz.showHints : false,
+    randomizeQuestionOrder: typeof rawQuiz.randomizeQuestionOrder === "boolean" ? rawQuiz.randomizeQuestionOrder : true,
+    completionBonus: typeof rawQuiz.completionBonus === "number" ? rawQuiz.completionBonus : normalizedQuestions.length * 100,
     passingScore,
     seo,
     questions: normalizedQuestions,
@@ -409,17 +419,17 @@ export function TaskDetailClient({ task }: { task: SerializedBackgroundTask }) {
     // Handle both direct quiz object and nested structure
     const result = task.result;
     if (!result) return null;
-    
+
     // Check if quiz exists directly
     if (result.quiz) {
       return result.quiz;
     }
-    
+
     // If result itself is the quiz object (fallback for edge cases)
     if (result.title || result.questions) {
       return result;
     }
-    
+
     return null;
   }, [task]);
 
@@ -468,6 +478,11 @@ export function TaskDetailClient({ task }: { task: SerializedBackgroundTask }) {
         title: payload.title,
         difficulty: payload.difficulty,
         passingScore: payload.passingScore,
+        maxAttemptsPerUser: payload.maxAttemptsPerUser ?? 1,
+        timePerQuestion: payload.timePerQuestion ?? 60,
+        showHints: !!payload.showHints,
+        randomizeQuestionOrder: !!payload.randomizeQuestionOrder,
+        completionBonus: payload.completionBonus ?? (payload.questions.length * 100),
         questions: payload.questions.map((question) => {
           const answers = question.answers.map((answer) => {
             const answerPayload: Record<string, any> = {
@@ -547,8 +562,7 @@ export function TaskDetailClient({ task }: { task: SerializedBackgroundTask }) {
       const newQuizId: string | undefined = data?.data?.quiz?.id;
       setImportedQuizId(newQuizId ?? null);
       setImportSummary(
-        `Quiz "${payload.title}" imported with ${payloadForImport.questions.length} question${
-          payloadForImport.questions.length === 1 ? "" : "s"
+        `Quiz "${payload.title}" imported with ${payloadForImport.questions.length} question${payloadForImport.questions.length === 1 ? "" : "s"
         }.`
       );
 
@@ -730,7 +744,7 @@ export function TaskDetailClient({ task }: { task: SerializedBackgroundTask }) {
                 <div className="mb-3">
                   <h4 className="font-medium text-destructive mb-1">Parsing Failed</h4>
                   <p className="text-sm text-muted-foreground">
-                    The OpenAI API response was stored successfully, but JSON parsing failed. 
+                    The OpenAI API response was stored successfully, but JSON parsing failed.
                     You can retry parsing without making a new API call.
                   </p>
                   {task.result?.parseError?.cleanedContent && (

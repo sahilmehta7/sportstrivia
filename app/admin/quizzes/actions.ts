@@ -68,9 +68,9 @@ export async function getAvailableQuestions({
     difficulty: question.difficulty,
     topic: question.topic
       ? {
-          id: question.topic.id,
-          name: question.topic.name,
-        }
+        id: question.topic.id,
+        name: question.topic.name,
+      }
       : null,
     answers: question.answers.map((answer) => ({
       id: answer.id,
@@ -78,3 +78,38 @@ export async function getAvailableQuestions({
   }));
 }
 
+import { generateQuizMetadataAI } from "@/lib/services/ai-seo.service";
+import { revalidatePath } from "next/cache";
+
+export async function regenerateQuizSEOAction(quizId: string) {
+  await requireAdmin();
+
+  const quiz = await prisma.quiz.findUnique({
+    where: { id: quizId },
+    select: { title: true, description: true },
+  });
+
+  if (!quiz) {
+    throw new Error("Quiz not found");
+  }
+
+  const aiMetadata = await generateQuizMetadataAI(quiz.title, quiz.description);
+
+  if (!aiMetadata) {
+    throw new Error("Failed to generate AI metadata");
+  }
+
+  await prisma.quiz.update({
+    where: { id: quizId },
+    data: {
+      seoTitle: aiMetadata.title,
+      seoDescription: aiMetadata.description,
+      seoKeywords: aiMetadata.keywords,
+    },
+  });
+
+  revalidatePath(`/admin/quizzes/${quizId}/edit`);
+  revalidatePath(`/quizzes/${quizId}`); // Also revalidate public page if possible (need slug for that usually)
+
+  return aiMetadata;
+}

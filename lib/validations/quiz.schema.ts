@@ -20,7 +20,7 @@ export const quizSchema = z.object({
   sport: z.string().optional(),
   difficulty: z.nativeEnum(Difficulty).optional().default(Difficulty.MEDIUM),
   status: z.nativeEnum(QuizStatus).optional().default(QuizStatus.DRAFT),
-  
+
   // Quiz configuration
   duration: z.number().int().min(1).nullish(),
   timePerQuestion: z.number().int().min(1).nullish(),
@@ -36,19 +36,19 @@ export const quizSchema = z.object({
     .enum(ATTEMPT_RESET_PERIODS)
     .optional()
     .default(AttemptResetPeriod.NEVER),
-  
+
   // Question selection
   questionSelectionMode: z.nativeEnum(QuestionSelectionMode).optional().default(QuestionSelectionMode.FIXED),
   questionCount: z.number().int().min(1).nullish(),
   randomizeQuestionOrder: z.boolean().optional().default(false),
   showHints: z.boolean().optional().default(true),
-  
+
   // Scoring
   negativeMarkingEnabled: z.boolean().optional().default(false),
   penaltyPercentage: z.number().int().min(0).max(100).optional().default(25),
   timeBonusEnabled: z.boolean().optional().default(false),
   bonusPointsPerSecond: z.number().min(0).optional().default(0),
-  
+
   // Scheduling - accept datetime-local format (YYYY-MM-DDTHH:mm) or ISO 8601
   startTime: z.preprocess(
     (val) => {
@@ -77,15 +77,15 @@ export const quizSchema = z.object({
     },
     z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?(\.\d{3})?([+-]\d{2}:\d{2}|Z)?$/).optional()
   ),
-  
+
   // Recurring
   recurringType: z.nativeEnum(RecurringType).optional().default(RecurringType.NONE),
-  
+
   // SEO
   seoTitle: z.string().max(60).optional(),
   seoDescription: z.string().max(160).optional(),
   seoKeywords: z.array(z.string()).optional(),
-  
+
   // Visibility
   isFeatured: z.boolean().optional().default(false),
   isPublished: z.boolean().optional().default(false),
@@ -106,6 +106,11 @@ export const quizImportSchema = z.object({
   sport: z.string().optional(),
   difficulty: z.nativeEnum(Difficulty).default(Difficulty.MEDIUM),
   duration: z.number().int().min(1).optional(),
+  timePerQuestion: z.number().int().min(1).optional().default(60),
+  maxAttemptsPerUser: z.number().int().min(1).optional().default(1),
+  showHints: z.boolean().optional().default(false),
+  randomizeQuestionOrder: z.boolean().optional().default(true),
+  completionBonus: z.number().int().min(0).optional(),
   passingScore: z.number().int().min(0).max(100).default(70),
   seo: z.object({
     title: z.string().max(60).optional(),

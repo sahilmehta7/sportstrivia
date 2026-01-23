@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { Sparkles, Wand2, Upload, CheckCircle, AlertCircle, Loader2, Settings } from "lucide-react";
+import { Sparkles, Wand2, Upload, CheckCircle, AlertCircle, Loader2, Settings, Copy } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -21,8 +21,9 @@ export default function AIQuizGeneratorPage() {
   const [topics, setTopics] = useState<any[]>([]);
   const [loadingTopics, setLoadingTopics] = useState(true);
   const [generating, setGenerating] = useState(false);
+  const [copying, setCopying] = useState(false);
   const [importing, setImporting] = useState(false);
-  
+
   // Form state
   const [selectedTopic, setSelectedTopic] = useState("");
   const [selectedTopicName, setSelectedTopicName] = useState("");
@@ -31,7 +32,7 @@ export default function AIQuizGeneratorPage() {
   const [sport, setSport] = useState("");
   const [difficulty, setDifficulty] = useState("MEDIUM");
   const [numQuestions, setNumQuestions] = useState("10");
-  
+
   // Generated quiz state
   const [generatedQuiz, setGeneratedQuiz] = useState<any>(null);
   const [generatedJSON, setGeneratedJSON] = useState("");
@@ -59,6 +60,65 @@ export default function AIQuizGeneratorPage() {
 
     loadTopics();
   }, []);
+
+  const handleCopyPrompt = async () => {
+    const trimmedTheme = customTheme.trim();
+    const trimmedSourceUrl = sourceUrl.trim();
+    const resolvedTopic = trimmedTheme || selectedTopicName.trim();
+    const questionCount = parseInt(numQuestions, 10);
+
+    if (!resolvedTopic && !trimmedSourceUrl) {
+      toast({
+        title: "Missing fields",
+        description: "Provide a topic/theme or a source URL to preview the prompt.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setCopying(true);
+
+    try {
+      const payload: Record<string, unknown> = {
+        difficulty,
+        numQuestions: questionCount,
+      };
+
+      if (resolvedTopic) payload.topic = resolvedTopic;
+      if (sport.trim()) payload.sport = sport.trim();
+      if (trimmedTheme) payload.customTitle = trimmedTheme;
+      if (trimmedSourceUrl) payload.sourceUrl = trimmedSourceUrl;
+
+      const response = await fetch("/api/admin/ai/preview-prompt", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || "Failed to preview prompt");
+      }
+
+      const prompt = result.data?.prompt;
+      if (prompt) {
+        await navigator.clipboard.writeText(prompt);
+        toast({
+          title: "Prompt copied!",
+          description: "The AI generation prompt has been copied to your clipboard.",
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: "Action failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setCopying(false);
+    }
+  };
 
   const handleGenerate = async () => {
     const trimmedTheme = customTheme.trim();
@@ -154,9 +214,9 @@ export default function AIQuizGeneratorPage() {
         quiz
           ? `Generated ${generatedQuestionCount} ${generatedQuestionCount === 1 ? "question" : "questions"} using AI. Saved to Background Tasks.`
           : statusMessage ||
-            (status === "processing"
-              ? "AI generation is running in the background. Track progress from AI Background Tasks."
-              : "Quiz generation queued. Check AI Background Tasks for updates.");
+          (status === "processing"
+            ? "AI generation is running in the background. Track progress from AI Background Tasks."
+            : "Quiz generation queued. Check AI Background Tasks for updates.");
 
       toast({
         title: quiz ? "Quiz generated!" : "Generation queued",
@@ -229,7 +289,6 @@ export default function AIQuizGeneratorPage() {
       <PageHeader
         title="AI Quiz Generator"
         description="Generate quiz questions automatically using AI"
-        icon={<Sparkles className="h-8 w-8" />}
         action={
           <Link href="/admin/settings">
             <Button variant="outline" size="sm">
@@ -378,28 +437,56 @@ export default function AIQuizGeneratorPage() {
               </p>
             </div>
 
-            <Button
-              onClick={handleGenerate}
-              disabled={
-                generating ||
-                !numQuestions ||
-                (!customTheme.trim() && !selectedTopicName.trim() && !sourceUrl.trim())
-              }
-              className="w-full"
-              size="lg"
-            >
-              {generating ? (
-                <>
-                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                  Generating with AI...
-                </>
-              ) : (
-                <>
-                  <Wand2 className="mr-2 h-5 w-5" />
-                  Generate Quiz with AI
-                </>
-              )}
-            </Button>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <Button
+                onClick={handleGenerate}
+                disabled={
+                  generating ||
+                  copying ||
+                  !numQuestions ||
+                  (!customTheme.trim() && !selectedTopicName.trim() && !sourceUrl.trim())
+                }
+                className="w-full"
+                size="lg"
+              >
+                {generating ? (
+                  <>
+                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                    Generating...
+                  </>
+                ) : (
+                  <>
+                    <Wand2 className="mr-2 h-5 w-5" />
+                    Generate with AI
+                  </>
+                )}
+              </Button>
+
+              <Button
+                onClick={handleCopyPrompt}
+                variant="outline"
+                disabled={
+                  generating ||
+                  copying ||
+                  !numQuestions ||
+                  (!customTheme.trim() && !selectedTopicName.trim() && !sourceUrl.trim())
+                }
+                className="w-full"
+                size="lg"
+              >
+                {copying ? (
+                  <>
+                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                    Preparing...
+                  </>
+                ) : (
+                  <>
+                    <Copy className="mr-2 h-5 w-5" />
+                    Copy Prompt
+                  </>
+                )}
+              </Button>
+            </div>
 
             {metadata && (
               <div className="text-xs text-muted-foreground p-3 bg-muted rounded space-y-2">
@@ -490,24 +577,24 @@ export default function AIQuizGeneratorPage() {
                       <span className="text-muted-foreground">Duration:</span>{" "}
                       <span className="font-medium">{generatedQuiz.duration ? `${generatedQuiz.duration}s` : "Not set"}</span>
                     </div>
-                  <div>
-                    <span className="text-muted-foreground">Questions:</span>{" "}
-                    <span className="font-medium">{generatedQuiz.questions?.length || 0}</span>
-                  </div>
-                  {metadata?.sourceUrl && (
-                    <div className="col-span-2">
-                      <span className="text-muted-foreground">Source:</span>{" "}
-                      <a
-                        href={metadata.sourceUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="font-medium text-primary underline break-all"
-                      >
-                        {metadata.sourceTitle || metadata.sourceUrl}
-                      </a>
+                    <div>
+                      <span className="text-muted-foreground">Questions:</span>{" "}
+                      <span className="font-medium">{generatedQuiz.questions?.length || 0}</span>
                     </div>
-                  )}
-                </div>
+                    {metadata?.sourceUrl && (
+                      <div className="col-span-2">
+                        <span className="text-muted-foreground">Source:</span>{" "}
+                        <a
+                          href={metadata.sourceUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="font-medium text-primary underline break-all"
+                        >
+                          {metadata.sourceTitle || metadata.sourceUrl}
+                        </a>
+                      </div>
+                    )}
+                  </div>
 
                   <Separator />
 
