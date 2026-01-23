@@ -135,14 +135,95 @@ export async function POST(request: NextRequest) {
         });
       }
 
+      // Collect topic usage and determine primary sport
+      const topicUsageMap = new Map<string, { count: number; configs: Set<string> }>();
+
+      const normalizeTopicName = (name: string) => name.trim().toLowerCase();
+      const topicOriginalNameMap = new Map<string, string>();
+
+      for (const q of questions) {
+        const topicName = q.topic?.trim() || "General";
+        const normalized = normalizeTopicName(topicName);
+        if (!topicOriginalNameMap.has(normalized)) {
+          topicOriginalNameMap.set(normalized, topicName);
+        }
+
+        const usage = topicUsageMap.get(normalized) || { count: 0, configs: new Set<string>() };
+        usage.count++;
+        usage.configs.add(q.difficulty);
+        topicUsageMap.set(normalized, usage);
+      }
+
+      // Resolve all topics at once
+      const topicNameMap = new Map<string, { id: string; name: string }>();
+      const normalizedNames = Array.from(topicOriginalNameMap.keys());
+
+      if (normalizedNames.length > 0) {
+        const existingTopics = await tx.topic.findMany({
+          where: {
+            OR: normalizedNames.map((normalized) => ({
+              name: {
+                equals: topicOriginalNameMap.get(normalized)!,
+                mode: "insensitive" as const,
+              },
+            })),
+          },
+          select: { id: true, name: true },
+        });
+
+        for (const topic of existingTopics) {
+          topicNameMap.set(normalizeTopicName(topic.name), { id: topic.id, name: topic.name });
+        }
+
+        for (const normalizedName of normalizedNames) {
+          if (topicNameMap.has(normalizedName)) continue;
+
+          const topicName = topicOriginalNameMap.get(normalizedName)!;
+          try {
+            const newTopic = await tx.topic.create({
+              data: {
+                name: topicName,
+                slug: await generateUniqueSlug(topicName, "topic"),
+                level: 0,
+              },
+            });
+            topicNameMap.set(normalizedName, { id: newTopic.id, name: newTopic.name });
+          } catch (error: any) {
+            if (error.code === 'P2002') {
+              const existing = await tx.topic.findFirst({
+                where: { name: { equals: topicName, mode: "insensitive" } }
+              });
+              if (existing) {
+                topicNameMap.set(normalizedName, { id: existing.id, name: existing.name });
+              } else {
+                throw error;
+              }
+            } else {
+              throw error;
+            }
+          }
+        }
+      }
+
+      // Determine the most frequent topic to use for Sport auto-detection (if Sport not provided)
+      let primaryTopicName = "General";
+      let maxCount = -1;
+      for (const [name, usage] of topicUsageMap.entries()) {
+        if (usage.count > maxCount) {
+          maxCount = usage.count;
+          primaryTopicName = topicOriginalNameMap.get(name) || "General";
+        }
+      }
+
       // Resolve sport to a canonical Level 0 Topic (root topic)
       let canonicalSportName: string | undefined = undefined;
-      if (sport && sport.trim().length > 0) {
-        const sportName = sport.trim();
+      const sportToResolve = (sport && sport.trim().length > 0) ? sport.trim() : primaryTopicName;
+
+      if (sportToResolve) {
         const existingRoot = await tx.topic.findFirst({
           where: {
             parentId: null,
-            name: { equals: sportName, mode: "insensitive" },
+            name: { equals: sportToResolve, mode: "insensitive" },
           },
           select: { id: true, name: true },
         });
@@ -150,15 +231,26 @@ export async function POST(request: NextRequest) {
         if (existingRoot) {
           canonicalSportName = existingRoot.name; // preserve canonical casing
         } else {
-          const createdRoot = await tx.topic.create({
-            data: {
-              name: sportName,
-              slug: await generateUniqueSlug(sportName, "topic"),
-              level: 0,
-            },
-            select: { name: true },
-          });
-          canonicalSportName = createdRoot.name;
+          try {
+            const createdRoot = await tx.topic.create({
+              data: {
+                name: sportToResolve,
+                slug: await generateUniqueSlug(sportToResolve, "topic"),
+                level: 0,
+              },
+              select: { name: true },
+            });
+            canonicalSportName = createdRoot.name;
+          } catch (error: any) {
+            if (error.code === 'P2002') {
+              const retryRoot = await tx.topic.findFirst({
+                where: { name: { equals: sportToResolve, mode: "insensitive" } }
+              });
+              canonicalSportName = retryRoot?.name;
+            } else {
+              throw error;
+            }
+          }
         }
       }
 
@@ -185,93 +277,39 @@ export async function POST(request: NextRequest) {
         },
       });
 
-      // Validate all topics at once (batch validation)
-      const normalizeTopicName = (name: string) => name.trim().toLowerCase();
-      const topicOriginalNameMap = new Map<string, string>();
+      // Create Topic Configurations automatically
+      const topicConfigsToCreate = [];
+      for (const [normalizedName, usage] of topicUsageMap.entries()) {
+        const topicId = topicNameMap.get(normalizedName)?.id;
+        if (!topicId) continue;
 
-      for (const name of questions
-        .map((q) => q.topic?.trim())
-        .filter((name): name is string => Boolean(name))) {
-        const normalized = normalizeTopicName(name);
-        if (!topicOriginalNameMap.has(normalized)) {
-          topicOriginalNameMap.set(normalized, name);
+        // Count questions per difficulty for this topic
+        const difficultyCounts = new Map<string, number>();
+        for (const q of questions) {
+          const qTopic = normalizeTopicName(q.topic || "General");
+          if (qTopic === normalizedName) {
+            const d = q.difficulty;
+            difficultyCounts.set(d, (difficultyCounts.get(d) || 0) + 1);
+          }
+        }
+
+        for (const [diff, count] of difficultyCounts.entries()) {
+          topicConfigsToCreate.push({
+            quizId: newQuiz.id,
+            topicId,
+            difficulty: diff as Difficulty,
+            questionCount: count,
+          });
         }
       }
 
-      const topicNameMap = new Map<string, { id: string }>();
-
-      if (topicOriginalNameMap.size > 0) {
-        const normalizedNames = Array.from(topicOriginalNameMap.keys());
-        const existingTopics = await tx.topic.findMany({
-          where: {
-            OR: normalizedNames.map((normalized) => ({
-              name: {
-                equals: topicOriginalNameMap.get(normalized)!,
-                mode: "insensitive" as const,
-              },
-            })),
-          },
-          select: { id: true, name: true },
+      if (topicConfigsToCreate.length > 0) {
+        await tx.quizTopicConfig.createMany({
+          data: topicConfigsToCreate,
         });
-
-        for (const topic of existingTopics) {
-          topicNameMap.set(normalizeTopicName(topic.name), { id: topic.id });
-        }
-
-        for (const normalizedName of normalizedNames) {
-          if (topicNameMap.has(normalizedName)) {
-            continue;
-          }
-
-          const topicName = topicOriginalNameMap.get(normalizedName)!;
-
-          try {
-            const newTopic = await tx.topic.create({
-              data: {
-                name: topicName,
-                slug: await generateUniqueSlug(topicName, "topic"),
-                level: 0,
-              },
-            });
-
-            topicNameMap.set(normalizedName, { id: newTopic.id });
-          } catch (error: any) {
-            // If topic creation fails due to unique constraint, try to find the existing topic
-            if (error.code === 'P2002' && error.meta?.target?.includes('name')) {
-              const existingTopic = await tx.topic.findUnique({
-                where: { name: topicName },
-                select: { id: true, name: true },
-              });
-
-              if (existingTopic) {
-                topicNameMap.set(normalizedName, { id: existingTopic.id });
-              } else {
-                // If still not found, try case-insensitive search
-                const caseInsensitiveTopic = await tx.topic.findFirst({
-                  where: {
-                    name: {
-                      equals: topicName,
-                      mode: "insensitive",
-                    },
-                  },
-                  select: { id: true, name: true },
-                });
-
-                if (caseInsensitiveTopic) {
-                  topicNameMap.set(normalizedName, { id: caseInsensitiveTopic.id });
-                } else {
-                  throw error; // Re-throw if we can't find the topic
-                }
-              }
-            } else {
-              throw error; // Re-throw if it's not a unique constraint error
-            }
-          }
-        }
       }
 
       // Create all questions in batches to avoid overwhelming the database
-      // Process in chunks of 20 questions at a time
       const BATCH_SIZE = 20;
       const createdQuestions = [];
 
@@ -279,18 +317,12 @@ export async function POST(request: NextRequest) {
         const batch = questions.slice(i, i + BATCH_SIZE);
         const batchResults = await Promise.all(
           batch.map((questionData) => {
-            // Determine question type - cast to enum
             const questionType = (questionData.type
               ? questionData.type.toUpperCase()
               : "MULTIPLE_CHOICE") as QuestionType;
 
-            // Use provided topic or default
-            const normalizedTopicName = questionData.topic
-              ? normalizeTopicName(questionData.topic)
-              : null;
-            const topicId = normalizedTopicName
-              ? topicNameMap.get(normalizedTopicName)?.id || defaultTopic.id
-              : defaultTopic.id;
+            const normalizedTopicName = normalizeTopicName(questionData.topic || "General");
+            const topicId = topicNameMap.get(normalizedTopicName)?.id || defaultTopic!.id;
 
             return tx.question.create({
               data: {
@@ -316,7 +348,6 @@ export async function POST(request: NextRequest) {
       }
 
       // Create quiz question pool entries in batch
-      // Ensure no duplicate order values for FIXED mode (schema constraint workaround)
       const poolEntries = createdQuestions.map((question, i) => ({
         quizId: newQuiz.id,
         questionId: question.id,
@@ -349,6 +380,11 @@ export async function POST(request: NextRequest) {
             },
             orderBy: { order: "asc" },
           },
+          topicConfigs: {
+            include: {
+              topic: true
+            }
+          },
           _count: {
             select: {
               questionPool: true,
@@ -364,7 +400,7 @@ export async function POST(request: NextRequest) {
     return successResponse(
       {
         quiz,
-        message: "Quiz imported successfully",
+        message: "Quiz imported successfully with automatically derived topic configurations",
       },
       201
     );

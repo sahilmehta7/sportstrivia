@@ -33,7 +33,7 @@ export async function syncTopicsFromQuestionPool(quizId: string) {
     await prisma.quizTopicConfig.deleteMany({
       where: { quizId },
     });
-    return { added: [], removed: [] };
+    return { added: [], updated: [], removed: [] };
   }
 
   // Count questions by topic and difficulty
@@ -100,7 +100,7 @@ export async function syncTopicsFromQuestionPool(quizId: string) {
 
   for (const config of existingConfigs) {
     const exists = Array.from(topicDifficultyCounts.keys()).includes(config.topicId) &&
-                   topicDifficultyCounts.get(config.topicId)?.has(config.difficulty);
+      topicDifficultyCounts.get(config.topicId)?.has(config.difficulty);
 
     if (!exists) {
       await prisma.quizTopicConfig.delete({

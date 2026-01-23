@@ -35,7 +35,7 @@ export async function processAIQuizTask(taskId: string): Promise<void> {
 
     // Get task from database
     const task = await getBackgroundTaskById(taskId);
-    
+
     if (!task || !task.input) {
       throw new Error("Task not found or missing input");
     }
@@ -80,12 +80,12 @@ export async function processAIQuizTask(taskId: string): Promise<void> {
     await updateTaskProgress(taskId, { percentage: 0.3, status: "Preparing AI request..." });
     const promptTemplate = await getAIQuizPrompt();
     const aiModel = await getAIModel();
-    
+
     // Log for debugging
     console.log("[AI Generator] Processing task:", taskId);
     console.log("[AI Generator] Using model:", aiModel);
     console.log("[AI Generator] Prompt source:", promptTemplate.substring(0, 100) + "...");
-    
+
     // Build the prompt with placeholders replaced
     const resolvedSport = (quizSport || sport || determineSportFromTopic(resolvedTopic)).trim() || "General";
 
@@ -123,10 +123,10 @@ export async function processAIQuizTask(taskId: string): Promise<void> {
     );
 
     await updateTaskProgress(taskId, { percentage: 0.8, status: "Parsing response..." });
-    
+
     // Extract content from response
     const generatedContent = extractContentFromCompletion(completion, aiModel);
-    
+
     console.log("[AI Generator] Generated content length:", generatedContent.length);
 
     // Store raw OpenAI response permanently (expensive API call - don't lose it!)
@@ -152,7 +152,7 @@ export async function processAIQuizTask(taskId: string): Promise<void> {
     } catch (error: any) {
       parseError = error.message;
       console.error("[AI Generator] Failed to parse:", cleanedContent.substring(0, 500));
-      
+
       // Store raw response even on parse failure so we can retry parsing later
       await updateBackgroundTask(taskId, {
         result: {
@@ -165,7 +165,7 @@ export async function processAIQuizTask(taskId: string): Promise<void> {
           canRetryParsing: true,
         },
       });
-      
+
       throw new Error(`Failed to parse generated quiz JSON. Error: ${error.message}. This may happen with o1 models - try GPT-4o or GPT-5 instead. You can retry parsing from the admin portal.`);
     }
 
@@ -234,9 +234,9 @@ export async function processAIQuizTask(taskId: string): Promise<void> {
       ...(customTitle ? { customTitle } : {}),
       ...(sourceMaterial
         ? {
-            sourceUrl: sourceMaterial.url,
-            sourceTitle: sourceMaterial.title,
-          }
+          sourceUrl: sourceMaterial.url,
+          sourceTitle: sourceMaterial.title,
+        }
         : {}),
     };
 
@@ -299,9 +299,8 @@ export function buildPrompt(
 
   if (options?.sourceMaterial) {
     const { url, title, contentSnippet } = options.sourceMaterial;
-    prompt += `\n\nIncorporate the key facts from the following source when writing questions. Focus on accuracy and do not invent details not supported by the source.\nSource URL: ${url}${
-      title ? `\nSource Title: ${title}` : ""
-    }\nSource Content:\n"""\n${contentSnippet}\n"""`;
+    prompt += `\n\nIncorporate the key facts from the following source when writing questions. Focus on accuracy and do not invent details not supported by the source.\nSource URL: ${url}${title ? `\nSource Title: ${title}` : ""
+      }\nSource Content:\n"""\n${contentSnippet}\n"""`;
   }
 
   return prompt;
@@ -315,7 +314,7 @@ export function buildPrompt(
 export function extractJSON(content: string): string {
   // Remove leading/trailing whitespace
   content = content.trim();
-  
+
   // Try to extract from markdown code block (```json ... ``` or ``` ... ```)
   const markdownMatch = content.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
   if (markdownMatch) {
@@ -326,19 +325,19 @@ export function extractJSON(content: string): string {
       return jsonInBlock;
     }
   }
-  
+
   // Try to find a valid JSON object in the content
   const jsonObject = findValidJSON(content);
   if (jsonObject) {
     return jsonObject;
   }
-  
+
   // Fallback: try the old regex method (but this might fail parsing)
   const jsonMatch = content.match(/(\{[\s\S]*\})/);
   if (jsonMatch) {
     return jsonMatch[1].trim();
   }
-  
+
   // Return original if no JSON found
   return content;
 }
@@ -353,44 +352,44 @@ function findValidJSON(text: string): string | null {
   if (firstBrace === -1) {
     return null;
   }
-  
+
   // Start from the first brace and try to find a complete JSON object
   let braceCount = 0;
   let inString = false;
   let escapeNext = false;
   let start = firstBrace;
-  
+
   for (let i = start; i < text.length; i++) {
     const char = text[i];
-    
+
     // Handle string escaping
     if (escapeNext) {
       escapeNext = false;
       continue;
     }
-    
+
     if (char === '\\') {
       escapeNext = true;
       continue;
     }
-    
+
     // Track string boundaries
     if (char === '"' && !escapeNext) {
       inString = !inString;
       continue;
     }
-    
+
     // Only count braces outside of strings
     if (!inString) {
       if (char === '{') {
         braceCount++;
       } else if (char === '}') {
         braceCount--;
-        
+
         // When we close all braces, we have a complete JSON object
         if (braceCount === 0) {
           const candidate = text.substring(start, i + 1);
-          
+
           // Try to parse it to verify it's valid JSON
           try {
             JSON.parse(candidate);
@@ -409,7 +408,7 @@ function findValidJSON(text: string): string | null {
       }
     }
   }
-  
+
   // If we reach here, try parsing the whole thing from first brace to end
   // This handles cases where the JSON is at the end
   if (braceCount !== 0 && start !== -1) {
@@ -421,7 +420,7 @@ function findValidJSON(text: string): string | null {
       // Not valid, return null
     }
   }
-  
+
   return null;
 }
 
@@ -520,16 +519,22 @@ export function decodeHtmlEntities(value: string): string {
  */
 export function determineSportFromTopic(topic: string): string {
   const topicLower = topic.toLowerCase();
-  
+
   const sportKeywords: Record<string, string[]> = {
-    Cricket: ["cricket", "ipl", "test match", "odi", "t20", "bcci"],
-    Basketball: ["basketball", "nba", "wnba", "dunk", "three-pointer"],
+    Cricket: ["cricket", "ipl", "test match", "odi", "t20", "bcci", "shane warne", "nelson", "duck"],
+    Basketball: ["basketball", "nba", "wnba", "dunk", "three-pointer", "lakers", "bulls"],
     Football: ["football", "nfl", "quarterback", "touchdown", "super bowl"],
-    Soccer: ["soccer", "fifa", "premier league", "champions league", "messi", "ronaldo"],
+    Soccer: ["soccer", "fifa", "premier league", "champions league", "messi", "ronaldo", "arsenal", "liverpool", "manchester", "bayern", "barcelona", "ac milan", "ucl"],
     Baseball: ["baseball", "mlb", "home run", "world series"],
-    Tennis: ["tennis", "wimbledon", "grand slam", "atp", "wta"],
+    Tennis: ["tennis", "wimbledon", "grand slam", "atp", "wta", "australian open", "davis cup", "sampras", "federer", "nadal", "djokovic"],
     Hockey: ["hockey", "nhl", "stanley cup"],
     Golf: ["golf", "pga", "masters"],
+    "Formula 1": ["f1", "formula 1", "grand prix", "hamilton", "verstappen", "ferrari"],
+    Boxing: ["boxing", "tyson", "ali", "knockout", "heavyweight"],
+    MMA: ["mma", "ufc", "conor", "octagon"],
+    Badminton: ["badminton", "all england", "shuttlecock", "yonex"],
+    Athletics: ["athletics", "marathon", "olympics", "usain", "track and field", "sprinter"],
+    Olympics: ["olympic", "olympics", "gold medal", "medalist"],
   };
 
   for (const [sport, keywords] of Object.entries(sportKeywords)) {

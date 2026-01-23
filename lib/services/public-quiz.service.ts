@@ -29,6 +29,7 @@ export const publicQuizCardSelect = {
   createdAt: true,
   maxAttemptsPerUser: true,
   attemptResetPeriod: true,
+  completionBonus: true,
   _count: {
     select: {
       questionPool: true,
