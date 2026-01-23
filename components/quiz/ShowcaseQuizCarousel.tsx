@@ -69,6 +69,7 @@ export function ShowcaseQuizCarousel({ items, className }: ShowcaseQuizCarouselP
               accent={item.accent}
               coverImageUrl={item.coverImageUrl}
               href={item.href}
+              priority={items.indexOf(item) < 3}
             />
           </div>
         ))}

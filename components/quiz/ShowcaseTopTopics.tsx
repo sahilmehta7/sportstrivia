@@ -130,7 +130,14 @@ export function ShowcaseTopTopics({
                       "group-hover:scale-110 transition-transform duration-300"
                     )}>
                       {topic.imageUrl ? (
-                        <Image src={topic.imageUrl} alt={topic.name} fill className="rounded-2xl object-cover p-1" />
+                        <Image
+                          src={topic.imageUrl}
+                          alt={topic.name}
+                          fill
+                          sizes="64px"
+                          className="rounded-2xl object-cover p-1"
+                          placeholder="empty"
+                        />
                       ) : (
                         <span>{topicIcons.default}</span>
                       )}

@@ -113,46 +113,35 @@ function parsePublicFilters(searchParams: SearchParams): PublicQuizFilters {
 
 const loadTopicsWithQuizCounts = unstable_cache(
   async () => {
-    const level0Topics = await prisma.topic.findMany({
-      where: {
-        parentId: null,
-      },
-      include: {
+    // Fetch level 0 topics and their descendants (just IDs to keep it light)
+    const rootTopics = await prisma.topic.findMany({
+      where: { parentId: null },
+      select: {
+        id: true,
+        name: true,
+        slug: true,
         quizTopicConfigs: {
-          select: {
-            quizId: true,
-          },
+          select: { quizId: true },
           where: {
-            quiz: {
-              isPublished: true,
-              status: "PUBLISHED",
-            },
+            quiz: { isPublished: true, status: "PUBLISHED" },
           },
         },
         children: {
-          include: {
+          select: {
+            id: true,
             quizTopicConfigs: {
-              select: {
-                quizId: true,
-              },
+              select: { quizId: true },
               where: {
-                quiz: {
-                  isPublished: true,
-                  status: "PUBLISHED",
-                },
+                quiz: { isPublished: true, status: "PUBLISHED" },
               },
             },
             children: {
-              include: {
+              select: {
+                id: true,
                 quizTopicConfigs: {
-                  select: {
-                    quizId: true,
-                  },
+                  select: { quizId: true },
                   where: {
-                    quiz: {
-                      isPublished: true,
-                      status: "PUBLISHED",
-                    },
+                    quiz: { isPublished: true, status: "PUBLISHED" },
                   },
                 },
               },
@@ -162,23 +151,29 @@ const loadTopicsWithQuizCounts = unstable_cache(
       },
     });
 
-    return level0Topics
-      .filter((topic) => topic.parentId === null)
+    return rootTopics
       .map((topic) => {
         const quizIds = new Set<string>();
 
-        topic.quizTopicConfigs.forEach((config) => quizIds.add(config.quizId));
+        // Level 0
+        topic.quizTopicConfigs.forEach((c) => quizIds.add(c.quizId));
 
+        // Level 1
         topic.children.forEach((child) => {
-          child.quizTopicConfigs.forEach((config) => quizIds.add(config.quizId));
+          child.quizTopicConfigs.forEach((c) => quizIds.add(c.quizId));
 
+          // Level 2
           child.children.forEach((grandchild) => {
-            grandchild.quizTopicConfigs.forEach((config) => quizIds.add(config.quizId));
+            grandchild.quizTopicConfigs.forEach((c) => quizIds.add(c.quizId));
           });
         });
 
-        const quizCount = quizIds.size;
-        return { ...topic, quizCount };
+        return {
+          id: topic.id,
+          name: topic.name,
+          slug: topic.slug,
+          quizCount: quizIds.size,
+        };
       })
       .filter((topic) => topic.quizCount > 0)
       .sort((a, b) => b.quizCount - a.quizCount);
@@ -308,13 +303,20 @@ async function QuizzesData({
 // Fallback for quizzes loading
 function QuizzesFallback() {
   return (
-    <PageContainer className="pt-12">
-      <div className="mb-8">
-        <div className="h-10 w-64 rounded bg-muted animate-pulse mb-4" />
-        <div className="h-4 w-96 rounded bg-muted animate-pulse" />
-      </div>
-      <QuizListSkeleton count={12} />
-    </PageContainer>
+    <>
+      <PageContainer className="pt-12">
+        <div className="mb-12">
+          <div className="h-4 w-32 rounded bg-muted animate-pulse mb-4" />
+          <div className="h-12 w-96 rounded bg-muted animate-pulse" />
+        </div>
+        <div className="flex gap-4 mb-12">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="h-10 w-32 rounded-full bg-muted animate-pulse" />
+          ))}
+        </div>
+        <QuizListSkeleton count={12} />
+      </PageContainer>
+    </>
   );
 }
 

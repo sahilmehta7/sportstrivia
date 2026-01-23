@@ -111,6 +111,7 @@ const nextConfig: NextConfig = {
       'recharts',
       'framer-motion',
       'class-variance-authority',
+      'next-seo',
     ],
   },
   env: {

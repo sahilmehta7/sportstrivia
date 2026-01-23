@@ -176,10 +176,10 @@ async function TopicsData() {
     AllTopicsData(),
     SearchSuggestionsData(),
   ]);
-  
+
   return (
-    <TopicsContent 
-      featured={featuredItems} 
+    <TopicsContent
+      featured={featuredItems}
       topics={allItems}
       l2TopicsByParent={l2ItemsByParent}
       suggestedChips={suggestedChips}
@@ -190,17 +190,47 @@ async function TopicsData() {
 // Fallback for topics loading
 function TopicsFallback() {
   return (
-    <PageContainer className="py-8">
-      <div className="mb-8">
-        <div className="h-10 w-64 rounded bg-muted animate-pulse mb-4" />
-        <div className="h-4 w-96 rounded bg-muted animate-pulse" />
-      </div>
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {Array.from({ length: 6 }).map((_, index) => (
-          <TopicCardSkeleton key={index} />
-        ))}
-      </div>
-    </PageContainer>
+    <main className="relative min-h-screen overflow-hidden pt-12 pb-24 lg:pt-20">
+      <PageContainer className="space-y-20">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-10 pt-4">
+          <div className="space-y-4">
+            <div className="flex items-center gap-4">
+              <div className="h-10 w-1 rounded-full bg-primary/20" />
+              <div className="h-12 w-48 rounded bg-muted animate-pulse" />
+            </div>
+          </div>
+          <div className="max-w-md w-full">
+            <div className="h-14 rounded-2xl bg-muted animate-pulse" />
+          </div>
+        </div>
+
+        <section className="space-y-10">
+          <div className="flex items-center gap-4">
+            <div className="h-4 w-1 rounded-full bg-secondary/20" />
+            <div className="h-8 w-64 rounded bg-muted animate-pulse" />
+          </div>
+
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {Array.from({ length: 3 }).map((_, index) => (
+              <div key={index} className="h-64 rounded-[2.5rem] bg-muted animate-pulse" />
+            ))}
+          </div>
+        </section>
+
+        <section className="space-y-10">
+          <div className="flex items-center gap-4">
+            <div className="h-4 w-1 rounded-full bg-primary/20" />
+            <div className="h-8 w-48 rounded bg-muted animate-pulse" />
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {Array.from({ length: 8 }).map((_, index) => (
+              <div key={index} className="h-24 rounded-[2rem] bg-muted animate-pulse" />
+            ))}
+          </div>
+        </section>
+      </PageContainer>
+    </main>
   );
 }
 
