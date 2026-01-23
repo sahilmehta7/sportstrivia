@@ -183,14 +183,6 @@ export function containsSqlInjection(input: string): boolean {
         return false;
     }
 
-    const sqlPatterns = [
-        /(\b(SELECT|INSERT|UPDATE|DELETE|DROP|UNION|ALTER|CREATE|TRUNCATE)\b)/i,
-        /(--)/, // SQL comment
-        /(;)/, // Statement terminator (be careful - this might be too aggressive)
-        /(\bOR\b\s*1\s*=\s*1)/i, // Common injection pattern
-        /(\bAND\b\s*1\s*=\s*1)/i, // Common injection pattern
-    ];
-
     // Only check for dangerous patterns, not all SQL keywords
     const dangerousPatterns = [
         /(\bDROP\b)/i,

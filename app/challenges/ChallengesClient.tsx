@@ -7,17 +7,12 @@ import { ChallengeResultsModal } from "@/components/challenges/ChallengeResultsM
 import { CreateChallengeModal } from "@/components/challenges/CreateChallengeModal";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
-import { EmptyState } from "@/components/shared/EmptyState";
 import { useToast } from "@/hooks/use-toast";
 import {
   Swords,
   Inbox,
   Send,
   Plus,
-  Zap,
-  LayoutDashboard,
-  ShieldCheck,
   type LucideIcon,
 } from "lucide-react";
 import { PageContainer } from "@/components/shared/PageContainer";

@@ -86,7 +86,7 @@ export function OnboardingExperience() {
                                     onClick={handleDismiss}
                                     className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground hover:text-white transition-colors"
                                 >
-                                    Maybe later, I'm just looking
+                                    Maybe later, I&apos;m just looking
                                 </button>
                             </div>
                         </div>

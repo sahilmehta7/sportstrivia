@@ -6,13 +6,6 @@ import { ProfileHeader } from "@/components/profile/ProfileHeader";
 import { StatsCard } from "@/components/profile/StatsCard";
 import { BadgeShowcase } from "@/components/profile/BadgeShowcase";
 import { ActivityFeed } from "@/components/profile/ActivityFeed";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,16 +15,13 @@ import { useToast } from "@/hooks/use-toast";
 import {
   Trophy,
   TrendingUp,
-  BarChart3,
   Save,
   Activity,
   LayoutDashboard,
   Settings,
   Award,
-  Sparkles,
   Zap,
-  Target,
-  ArrowRight
+  Target
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ShowcaseTopicWiseStats, ShowcaseContinuePlayingQueue } from "@/showcase/components";

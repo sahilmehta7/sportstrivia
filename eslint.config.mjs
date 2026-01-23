@@ -16,6 +16,7 @@ const config = [
     ignores: [
       "**/node_modules/**",
       ".next/**",
+      ".agent/**",
       "out/**",
       "dist/**",
       "coverage/**",

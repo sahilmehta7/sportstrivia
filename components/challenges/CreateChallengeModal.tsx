@@ -101,7 +101,7 @@ export function CreateChallengeModal({
         <DialogHeader>
           <DialogTitle>Send a Challenge</DialogTitle>
           <DialogDescription>
-            Search for a quiz to challenge your friend. They'll have to beat your best score!
+            Search for a quiz to challenge your friend. They&apos;ll have to beat your best score!
           </DialogDescription>
         </DialogHeader>
 

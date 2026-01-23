@@ -3,7 +3,7 @@
 import { useEffect, useState, useMemo } from "react";
 import { cn } from "@/lib/utils";
 import { getGradientText } from "@/lib/showcase-theme";
-import { Trophy, Star, Crown, ChevronRight, ChevronLeft, Zap, ShieldCheck, Activity } from "lucide-react";
+import { Trophy, Zap } from "lucide-react";
 import Image from "next/image";
 
 export type LeaderboardRangeKey = "daily" | "all-time";

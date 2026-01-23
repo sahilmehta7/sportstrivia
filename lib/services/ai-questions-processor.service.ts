@@ -1,7 +1,6 @@
 import { markBackgroundTaskFailed, markBackgroundTaskInProgress, markBackgroundTaskCompleted, updateBackgroundTask } from "@/lib/services/background-task.service";
 import { prisma } from "@/lib/db";
-import { BackgroundTaskType } from "@prisma/client";
-import { BadRequestError, NotFoundError } from "@/lib/errors";
+import { NotFoundError } from "@/lib/errors";
 import { getAIModel, getAIQuizPrompt } from "@/lib/services/settings.service";
 import { callOpenAIWithRetry, extractContentFromCompletion, extractUsageStats } from "@/lib/services/ai-openai-client.service";
 import { extractJSON } from "@/lib/services/ai-quiz-processor.service";

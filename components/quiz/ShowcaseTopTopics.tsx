@@ -3,11 +3,9 @@
 import { useState, useEffect, useRef } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { getGlassCard, getTextColor, getGradientText } from "@/lib/showcase-theme";
 import { cn } from "@/lib/utils";
-import { Users, BookOpen, TrendingUp, Loader2, ArrowRight } from "lucide-react";
+import { Users, BookOpen, Loader2, ArrowRight } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import type { TopicSummary } from "@/types/home";
@@ -52,7 +50,6 @@ export function ShowcaseTopTopics({
   const [topics, setTopics] = useState<TopicSummary[]>(initialTopics ?? []);
   const [sortBy, setSortBy] = useState<"users" | "quizzes">(defaultSortBy);
   const [loading, setLoading] = useState(!initialTopicsProvided);
-  const [error, setError] = useState<string | null>(null);
   const hydratedInitialRef = useRef(false);
 
   useEffect(() => {
@@ -60,7 +57,6 @@ export function ShowcaseTopTopics({
       hydratedInitialRef.current = true;
       if (initialTopicsProvided && sortBy === defaultSortBy) {
         setLoading(false);
-        setError(null);
         return;
       }
     }
@@ -69,13 +65,12 @@ export function ShowcaseTopTopics({
     const fetchTopTopics = async () => {
       try {
         setLoading(true);
-        setError(null);
         const response = await fetch(`/api/topics/top?sortBy=${sortBy}&limit=${limit}`);
         if (!response.ok) throw new Error(`Failed to fetch topics`);
         const data: TopTopicsResponse = await response.json();
         if (!ignore) setTopics(data.topics ?? []);
       } catch (err) {
-        if (!ignore) setError("Failed to fetch topics");
+        console.error("Failed to fetch topics", err);
       } finally {
         if (!ignore) setLoading(false);
       }

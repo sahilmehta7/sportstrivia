@@ -9,9 +9,8 @@ import { validateSearchQuery } from "@/lib/validations/search.schema";
 import { PageContainer } from "@/components/shared/PageContainer";
 import { getBlurCircles, getGradientText } from "@/lib/showcase-theme";
 import { cn } from "@/lib/utils";
-import { Search, Grid, Database, Zap, Activity, ShieldAlert, Sparkles, MoveRight, ChevronRight, Binary } from "lucide-react";
+import { Search, Activity, Binary } from "lucide-react";
 import Link from "next/link";
-import { Badge } from "@/components/ui/badge";
 
 export const metadata: Metadata = {
   title: "Discovery Matrix | Sports Trivia",

@@ -55,7 +55,7 @@ export function QuickStartArena() {
                             CHOOSE YOUR <br /> INITIAL ARENA
                         </h2>
                         <p className="text-lg text-muted-foreground font-medium">
-                            Don't wait for the tour. Jump straight into the action in your favorite category.
+                            Don&apos;t wait for the tour. Jump straight into the action in your favorite category.
                         </p>
                     </div>
                     <Link href="/quizzes">

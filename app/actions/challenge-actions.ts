@@ -3,7 +3,7 @@
 import { prisma } from "@/lib/db";
 import { auth } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
-import { ChallengeStatus, Prisma } from "@prisma/client";
+import { ChallengeStatus } from "@prisma/client";
 
 export async function searchQuizzes(query: string) {
     try {

@@ -56,7 +56,7 @@ export function SocialProof({ stats }: SocialProofProps) {
             TRUSTED BY THE BEST
           </h2>
           <p className="max-w-xl text-lg text-muted-foreground font-semibold uppercase tracking-tight">
-            Join thousands of fans in the world's most competitive sports trivia arena.
+            Join thousands of fans in the world&apos;s most competitive sports trivia arena.
           </p>
         </div>
 

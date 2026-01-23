@@ -8,6 +8,7 @@ import { useTheme } from "next-themes";
 import { getBlurCircles, getGradientText } from "@/lib/showcase-theme";
 import { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
+import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 
@@ -21,8 +22,6 @@ const SignInContent = () => {
     setMounted(true);
   }, []);
 
-  // Use theme if mounted, otherwise default to dark to prevent hydration mismatch
-  const effectiveTheme = mounted && theme ? theme : "dark";
   const blur = getBlurCircles();
 
   return (
@@ -109,10 +108,10 @@ const SignInContent = () => {
               asChild
               className="w-full gap-3 font-black uppercase tracking-widest text-lg"
             >
-              <a href="/quizzes">
+              <Link href="/quizzes">
                 Explore Guest Passes
                 <ArrowRight className="h-6 w-6" />
-              </a>
+              </Link>
             </Button>
           </form>
 
@@ -122,9 +121,9 @@ const SignInContent = () => {
               By entering, you accept our
             </p>
             <div className="flex justify-center gap-4 text-[10px] font-black tracking-widest uppercase">
-              <a href="/terms" className="text-primary hover:underline transition-all">Terms</a>
+              <Link href="/terms" className="text-primary hover:underline transition-all">Terms</Link>
               <span className="text-white/10">•</span>
-              <a href="/privacy" className="text-primary hover:underline transition-all">Privacy</a>
+              <Link href="/privacy" className="text-primary hover:underline transition-all">Privacy</Link>
             </div>
           </div>
         </div>

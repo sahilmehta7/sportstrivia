@@ -1,0 +1,185 @@
+
+> sportstrivia-2@1.0.0 build
+> next build
+
+   ▲ Next.js 16.0.10 (Turbopack)
+   - Environments: .env.local, .env
+   - Experiments (use with caution):
+     ✓ optimizeCss
+     · optimizePackageImports
+     · serverActions
+
+   Creating an optimized production build ...
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+ ✓ Compiled successfully in 5.9s
+   Skipping validation of types
+   Collecting page data using 7 workers ...
+   Generating static pages using 7 workers (0/129) ...
+   Generating static pages using 7 workers (32/129) 
+   Generating static pages using 7 workers (64/129) 
+   Generating static pages using 7 workers (96/129) 
+ ✓ Generating static pages using 7 workers (129/129) in 2.8s
+   Finalizing page optimization ...
+
+Route (app)
+┌ ƒ /
+├ ○ /_not-found
+├ ƒ /admin
+├ ƒ /admin/ai-quiz
+├ ƒ /admin/ai-tasks
+├ ƒ /admin/ai-tasks/[id]
+├ ƒ /admin/content
+├ ƒ /admin/dashboard
+├ ƒ /admin/gamification
+├ ƒ /admin/gamification/levels
+├ ƒ /admin/gamification/tiers
+├ ƒ /admin/gamification/users
+├ ƒ /admin/import
+├ ƒ /admin/questions
+├ ƒ /admin/questions/[id]/edit
+├ ƒ /admin/questions/new
+├ ƒ /admin/quizzes
+├ ƒ /admin/quizzes/[id]/edit
+├ ƒ /admin/quizzes/[id]/questions
+├ ƒ /admin/quizzes/[id]/topics
+├ ƒ /admin/quizzes/new
+├ ƒ /admin/settings
+├ ƒ /admin/topics
+├ ƒ /admin/topics/[id]/edit
+├ ƒ /admin/topics/import
+├ ƒ /admin/topics/new
+├ ƒ /admin/users
+├ ƒ /admin/users/[id]/edit
+├ ƒ /admin/utilities
+├ ƒ /api/admin/ai-tasks/[id]/retry-parsing
+├ ƒ /api/admin/ai/generate-quiz
+├ ƒ /api/admin/ai/generate-quiz/process
+├ ƒ /api/admin/ai/preview-prompt
+├ ƒ /api/admin/ai/tasks
+├ ƒ /api/admin/ai/tasks/[id]
+├ ƒ /api/admin/gamification/preview
+├ ƒ /api/admin/gamification/recompute
+├ ƒ /api/admin/levels
+├ ƒ /api/admin/levels/[level]
+├ ƒ /api/admin/questions
+├ ƒ /api/admin/questions/[id]
+├ ƒ /api/admin/questions/ai/fix
+├ ƒ /api/admin/quizzes
+├ ƒ /api/admin/quizzes/[id]
+├ ƒ /api/admin/quizzes/[id]/ai/cover
+├ ƒ /api/admin/quizzes/[id]/ai/metadata
+├ ƒ /api/admin/quizzes/[id]/featured
+├ ƒ /api/admin/quizzes/[id]/questions
+├ ƒ /api/admin/quizzes/[id]/questions/[poolId]
+├ ƒ /api/admin/quizzes/[id]/topics
+├ ƒ /api/admin/quizzes/import
+├ ƒ /api/admin/reports
+├ ƒ /api/admin/reports/[id]
+├ ƒ /api/admin/settings
+├ ƒ /api/admin/sitemap
+├ ƒ /api/admin/tiers
+├ ƒ /api/admin/tiers/[id]
+├ ƒ /api/admin/topics
+├ ƒ /api/admin/topics/[id]
+├ ƒ /api/admin/topics/[id]/ai/generate-questions
+├ ƒ /api/admin/topics/[id]/merge
+├ ƒ /api/admin/topics/import
+├ ƒ /api/admin/upload/image
+├ ƒ /api/admin/users
+├ ƒ /api/admin/users/[id]
+├ ƒ /api/ai/suggest-quiz
+├ ƒ /api/attempts
+├ ƒ /api/attempts/[id]
+├ ƒ /api/attempts/[id]/answer
+├ ƒ /api/attempts/[id]/complete
+├ ƒ /api/attempts/[id]/next
+├ ƒ /api/auth/[...nextauth]
+├ ƒ /api/badges
+├ ƒ /api/challenges
+├ ƒ /api/challenges/[id]
+├ ƒ /api/challenges/[id]/accept
+├ ƒ /api/challenges/[id]/decline
+├ ƒ /api/daily-quizzes/user-ranks
+├ ƒ /api/friends
+├ ƒ /api/friends/[id]
+├ ƒ /api/leaderboards/friends
+├ ƒ /api/leaderboards/global
+├ ƒ /api/leaderboards/quiz/[id]
+├ ƒ /api/leaderboards/topic/[id]
+├ ƒ /api/notifications
+├ ƒ /api/notifications/[id]
+├ ƒ /api/notifications/preferences
+├ ƒ /api/notifications/read-all
+├ ƒ /api/notifications/subscriptions
+├ ƒ /api/questions/[id]/report
+├ ƒ /api/quizzes
+├ ƒ /api/quizzes/[slug]
+├ ƒ /api/quizzes/[slug]/reviews
+├ ƒ /api/reviews/[id]
+├ ƒ /api/search/suggestions
+├ ƒ /api/test-auth
+├ ƒ /api/topics
+├ ƒ /api/topics/top
+├ ƒ /api/users/[id]
+├ ƒ /api/users/[id]/badges
+├ ƒ /api/users/[id]/stats
+├ ƒ /api/users/me
+├ ƒ /api/users/me/badges
+├ ƒ /api/users/me/delete
+├ ƒ /api/users/me/export
+├ ƒ /api/users/me/gamification
+├ ƒ /api/users/me/stats
+├ ƒ /api/users/me/topic-stats
+├ ƒ /api/users/search
+├ ƒ /auth/error
+├ ○ /auth/signin
+├ ○ /auth/unauthorized
+├ ƒ /challenges
+├ ƒ /design-showcase/cards
+├ ƒ /friends
+├ ƒ /leaderboard
+├ ○ /notifications
+├ ƒ /profile
+├ ƒ /profile/[id]
+├ ƒ /profile/me
+├ ƒ /profile/me/points
+├ ƒ /quizzes
+├ ƒ /quizzes/[slug]
+├ ƒ /quizzes/[slug]/play
+├ ƒ /quizzes/[slug]/results/[attemptId]
+├ ƒ /random-quiz
+├ ○ /robots.txt
+├ ƒ /search
+├ ○ /showcase
+├ ○ /showcase/background-demo
+├ ○ /showcase/buttons
+├ ƒ /showcase/daily-streak
+├ ƒ /showcase/daily-streak/card
+├ ○ /showcase/featured-quiz-card
+├ ○ /showcase/hero-variants
+├ ƒ /showcase/leaderboard
+├ ○ /showcase/points-reward
+├ ○ /showcase/quiz-card
+├ ○ /showcase/quiz-card-2
+├ ○ /showcase/quiz-carousel
+├ ○ /showcase/quiz-detail
+├ ○ /showcase/quiz-experience
+├ ○ /showcase/quiz-journey
+├ ƒ /showcase/quiz-listing
+├ ○ /showcase/quiz-ratings-reviews
+├ ○ /showcase/quiz-results
+├ ○ /showcase/top-topics
+├ ○ /showcase/topic-cards
+├ ○ /showcase/topic-wise-stats
+├ ○ /showcase/topic-wise-stats-complete
+├ ƒ /showcase/ui-playground
+├ ○ /sitemap.xml
+├ ƒ /topics
+└ ƒ /topics/[slug]
+
+
+ƒ Proxy (Middleware)
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+

@@ -15,11 +15,7 @@ import {
   Award,
   Swords,
   Trash2,
-  Activity,
-  Zap,
-  ChevronRight,
-  ShieldCheck,
-  LayoutDashboard
+  Activity
 } from "lucide-react";
 import Link from "next/link";
 import { PageContainer } from "@/components/shared/PageContainer";

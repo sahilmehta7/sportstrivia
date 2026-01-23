@@ -99,7 +99,8 @@ export function getTextColor(variant: "primary" | "secondary" | "muted" = "prima
 /**
  * Gradient text effect
  */
-export function getGradientText(variant: "editorial" | "accent" = "editorial"): string {
+export function getGradientText(variant: "editorial" | "accent" | "neon" = "editorial"): string {
+  if (variant === "neon") return "text-gradient-primary"; // Use primary for neon
   return variant === "editorial" ? "text-gradient-editorial" : "text-gradient-accent";
 }
 

@@ -1,0 +1,280 @@
+
+> sportstrivia-2@1.0.0 lint
+> eslint .
+
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+
+/Users/sahilmehta/sportstrivia-2/app/actions/challenge-actions.ts
+  6:27  warning  'Prisma' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+/Users/sahilmehta/sportstrivia-2/app/admin/dashboard/page.tsx
+  2:10  warning  'Card' is defined but never used. Allowed unused vars must match /^_/u          @typescript-eslint/no-unused-vars
+  2:16  warning  'CardContent' is defined but never used. Allowed unused vars must match /^_/u   @typescript-eslint/no-unused-vars
+  2:29  warning  'CardHeader' is defined but never used. Allowed unused vars must match /^_/u    @typescript-eslint/no-unused-vars
+  2:41  warning  'CardTitle' is defined but never used. Allowed unused vars must match /^_/u     @typescript-eslint/no-unused-vars
+  3:39  warning  'TrendingUp' is defined but never used. Allowed unused vars must match /^_/u    @typescript-eslint/no-unused-vars
+  3:89  warning  'ArrowUpRight' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+/Users/sahilmehta/sportstrivia-2/app/api/admin/quizzes/[id]/ai/cover/route.ts
+  132:7  warning  'lastError' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+/Users/sahilmehta/sportstrivia-2/app/api/admin/topics/[id]/ai/generate-questions/route.ts
+   9:3   warning  'markBackgroundTaskCompleted' is defined but never used. Allowed unused vars must match /^_/u   @typescript-eslint/no-unused-vars
+  11:3   warning  'markBackgroundTaskInProgress' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  12:3   warning  'updateBackgroundTask' is defined but never used. Allowed unused vars must match /^_/u          @typescript-eslint/no-unused-vars
+  16:3   warning  'callOpenAIWithRetry' is defined but never used. Allowed unused vars must match /^_/u           @typescript-eslint/no-unused-vars
+  17:3   warning  'extractContentFromCompletion' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  18:3   warning  'extractUsageStats' is defined but never used. Allowed unused vars must match /^_/u             @typescript-eslint/no-unused-vars
+  61:11  warning  'baseTemplate' is assigned a value but never used. Allowed unused vars must match /^_/u         @typescript-eslint/no-unused-vars
+
+/Users/sahilmehta/sportstrivia-2/app/api/users/me/delete/route.ts
+  12:30  warning  'request' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+
+/Users/sahilmehta/sportstrivia-2/app/api/users/me/export/route.ts
+  12:27  warning  'request' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+
+/Users/sahilmehta/sportstrivia-2/app/auth/signin/page.tsx
+  16:11  warning  'theme' is assigned a value but never used. Allowed unused vars must match /^_/u    @typescript-eslint/no-unused-vars
+  19:10  warning  'mounted' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+/Users/sahilmehta/sportstrivia-2/app/layout.tsx
+  81:9  warning  Custom fonts not added in `pages/_document.js` will only load for a single page. This is discouraged. See: https://nextjs.org/docs/messages/no-page-custom-font  @next/next/no-page-custom-font
+
+/Users/sahilmehta/sportstrivia-2/app/not-found.tsx
+  8:23  warning  'ArrowLeft' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+/Users/sahilmehta/sportstrivia-2/app/notifications/page.tsx
+  49:14  warning  'error' is defined but never used  @typescript-eslint/no-unused-vars
+  63:14  warning  'e' is defined but never used      @typescript-eslint/no-unused-vars
+  72:14  warning  'e' is defined but never used      @typescript-eslint/no-unused-vars
+  79:14  warning  'e' is defined but never used      @typescript-eslint/no-unused-vars
+
+/Users/sahilmehta/sportstrivia-2/app/quizzes/QuizzesContent.tsx
+   3:8   warning  'Link' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  14:18  warning  'Info' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+/Users/sahilmehta/sportstrivia-2/app/quizzes/[slug]/page.tsx
+   8:49  warning  'getSportGradient' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  11:92  warning  'MessageSquare' is defined but never used. Allowed unused vars must match /^_/u     @typescript-eslint/no-unused-vars
+
+/Users/sahilmehta/sportstrivia-2/app/random-quiz/page.tsx
+  8:42  warning  'Sparkles' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+/Users/sahilmehta/sportstrivia-2/components/admin/AdminShell.tsx
+  27:3  warning  'Zap' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+/Users/sahilmehta/sportstrivia-2/components/challenges/ChallengeCard.tsx
+   3:10  warning  'Card' is defined but never used. Allowed unused vars must match /^_/u             @typescript-eslint/no-unused-vars
+   3:16  warning  'CardContent' is defined but never used. Allowed unused vars must match /^_/u      @typescript-eslint/no-unused-vars
+   4:10  warning  'Badge' is defined but never used. Allowed unused vars must match /^_/u            @typescript-eslint/no-unused-vars
+   8:40  warning  'Zap' is defined but never used. Allowed unused vars must match /^_/u              @typescript-eslint/no-unused-vars
+  11:10  warning  'getGradientText' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+/Users/sahilmehta/sportstrivia-2/components/challenges/CreateChallengeModal.tsx
+  87:14  warning  'error' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/sahilmehta/sportstrivia-2/components/features/onboarding/OnboardingExperience.tsx
+  6:10  warning  'cn' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+/Users/sahilmehta/sportstrivia-2/components/features/social/ChallengesList.tsx
+   8:26  warning  'Check' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  12:8   warning  'Link' is defined but never used. Allowed unused vars must match /^_/u   @typescript-eslint/no-unused-vars
+  72:18  warning  'error' is defined but never used                                        @typescript-eslint/no-unused-vars
+
+/Users/sahilmehta/sportstrivia-2/components/friends/AddFriendForm.tsx
+  4:10  warning  'Card' is defined but never used. Allowed unused vars must match /^_/u             @typescript-eslint/no-unused-vars
+  4:16  warning  'CardContent' is defined but never used. Allowed unused vars must match /^_/u      @typescript-eslint/no-unused-vars
+  4:29  warning  'CardHeader' is defined but never used. Allowed unused vars must match /^_/u       @typescript-eslint/no-unused-vars
+  4:41  warning  'CardTitle' is defined but never used. Allowed unused vars must match /^_/u        @typescript-eslint/no-unused-vars
+  4:52  warning  'CardDescription' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+/Users/sahilmehta/sportstrivia-2/components/friends/FriendCard.tsx
+  4:10  warning  'Card' is defined but never used. Allowed unused vars must match /^_/u         @typescript-eslint/no-unused-vars
+  4:16  warning  'CardContent' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  9:47  warning  'Zap' is defined but never used. Allowed unused vars must match /^_/u          @typescript-eslint/no-unused-vars
+
+/Users/sahilmehta/sportstrivia-2/components/friends/FriendRequests.tsx
+   4:10  warning  'Card' is defined but never used. Allowed unused vars must match /^_/u          @typescript-eslint/no-unused-vars
+   4:16  warning  'CardContent' is defined but never used. Allowed unused vars must match /^_/u   @typescript-eslint/no-unused-vars
+   6:10  warning  'Badge' is defined but never used. Allowed unused vars must match /^_/u         @typescript-eslint/no-unused-vars
+   9:33  warning  'Activity' is defined but never used. Allowed unused vars must match /^_/u      @typescript-eslint/no-unused-vars
+   9:43  warning  'ShieldAlert' is defined but never used. Allowed unused vars must match /^_/u   @typescript-eslint/no-unused-vars
+   9:56  warning  'ChevronRight' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  10:10  warning  'cn' is defined but never used. Allowed unused vars must match /^_/u            @typescript-eslint/no-unused-vars
+
+/Users/sahilmehta/sportstrivia-2/components/friends/FriendsList.tsx
+  4:10  warning  'EmptyState' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  5:17  warning  'UserSearch' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+/Users/sahilmehta/sportstrivia-2/components/home/FinalCTA.tsx
+  5:10  warning  'getGradientText' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+/Users/sahilmehta/sportstrivia-2/components/home/HowItWorks.tsx
+  3:10  warning  'getTextColor' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+/Users/sahilmehta/sportstrivia-2/components/home/Testimonials.tsx
+  3:10  warning  'getGlassCard' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  3:24  warning  'getTextColor' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+/Users/sahilmehta/sportstrivia-2/components/leaderboard/leaderboard-tabs.tsx
+  6:10  warning  'motion' is defined but never used. Allowed unused vars must match /^_/u           @typescript-eslint/no-unused-vars
+  6:18  warning  'AnimatePresence' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+/Users/sahilmehta/sportstrivia-2/components/notifications/DigestPreferencesCard.tsx
+   3:34  warning  'useMemo' is defined but never used. Allowed unused vars must match /^_/u                 @typescript-eslint/no-unused-vars
+   4:10  warning  'Card' is defined but never used. Allowed unused vars must match /^_/u                    @typescript-eslint/no-unused-vars
+   4:16  warning  'CardContent' is defined but never used. Allowed unused vars must match /^_/u             @typescript-eslint/no-unused-vars
+  10:36  warning  'Calendar' is defined but never used. Allowed unused vars must match /^_/u                @typescript-eslint/no-unused-vars
+  10:46  warning  'Clock' is defined but never used. Allowed unused vars must match /^_/u                   @typescript-eslint/no-unused-vars
+  15:11  warning  'PreferencesResponse' is defined but never used. Allowed unused vars must match /^_/u     @typescript-eslint/no-unused-vars
+  36:22  warning  'setRefreshing' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  67:14  warning  'e' is defined but never used                                                             @typescript-eslint/no-unused-vars
+
+/Users/sahilmehta/sportstrivia-2/components/notifications/PushSubscriptionCard.tsx
+    4:10  warning  'Card' is defined but never used. Allowed unused vars must match /^_/u                      @typescript-eslint/no-unused-vars
+    4:16  warning  'CardContent' is defined but never used. Allowed unused vars must match /^_/u               @typescript-eslint/no-unused-vars
+    7:10  warning  'Alert' is defined but never used. Allowed unused vars must match /^_/u                     @typescript-eslint/no-unused-vars
+    7:17  warning  'AlertDescription' is defined but never used. Allowed unused vars must match /^_/u          @typescript-eslint/no-unused-vars
+    7:35  warning  'AlertTitle' is defined but never used. Allowed unused vars must match /^_/u                @typescript-eslint/no-unused-vars
+    8:57  warning  'ShieldCheck' is defined but never used. Allowed unused vars must match /^_/u               @typescript-eslint/no-unused-vars
+    8:70  warning  'Zap' is defined but never used. Allowed unused vars must match /^_/u                       @typescript-eslint/no-unused-vars
+   11:10  warning  'trackEvent' is defined but never used. Allowed unused vars must match /^_/u                @typescript-eslint/no-unused-vars
+   27:10  warning  'permission' is assigned a value but never used. Allowed unused vars must match /^_/u       @typescript-eslint/no-unused-vars
+   30:24  warning  'setIsRefreshing' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+   87:14  warning  'e' is defined but never used                                                               @typescript-eslint/no-unused-vars
+  104:14  warning  'e' is defined but never used                                                               @typescript-eslint/no-unused-vars
+
+/Users/sahilmehta/sportstrivia-2/components/profile/ActivityFeed.tsx
+  3:10  warning  'Badge' is defined but never used. Allowed unused vars must match /^_/u         @typescript-eslint/no-unused-vars
+  4:17  warning  'CheckCircle2' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  4:31  warning  'XCircle' is defined but never used. Allowed unused vars must match /^_/u       @typescript-eslint/no-unused-vars
+
+/Users/sahilmehta/sportstrivia-2/components/profile/BadgeShowcase.tsx
+  4:10  warning  'cn' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+/Users/sahilmehta/sportstrivia-2/components/profile/ProfileHeader.tsx
+  5:55  warning  'MapPin' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+/Users/sahilmehta/sportstrivia-2/components/profile/StatsCard.tsx
+  1:10  warning  'Card' is defined but never used. Allowed unused vars must match /^_/u         @typescript-eslint/no-unused-vars
+  1:16  warning  'CardContent' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  1:29  warning  'CardHeader' is defined but never used. Allowed unused vars must match /^_/u   @typescript-eslint/no-unused-vars
+  1:41  warning  'CardTitle' is defined but never used. Allowed unused vars must match /^_/u    @typescript-eslint/no-unused-vars
+
+/Users/sahilmehta/sportstrivia-2/components/quiz/ShowcaseFeaturedQuizCard.tsx
+   5:30  warning  'Trophy' is defined but never used. Allowed unused vars must match /^_/u           @typescript-eslint/no-unused-vars
+  34:3   warning  'accent' is assigned a value but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+
+/Users/sahilmehta/sportstrivia-2/components/quiz/ShowcaseLeaderboard.tsx
+  6:10  warning  'Trophy' is defined but never used. Allowed unused vars must match /^_/u        @typescript-eslint/no-unused-vars
+  6:18  warning  'Star' is defined but never used. Allowed unused vars must match /^_/u          @typescript-eslint/no-unused-vars
+  6:24  warning  'Crown' is defined but never used. Allowed unused vars must match /^_/u         @typescript-eslint/no-unused-vars
+  6:31  warning  'ChevronRight' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  6:45  warning  'ChevronLeft' is defined but never used. Allowed unused vars must match /^_/u   @typescript-eslint/no-unused-vars
+  6:63  warning  'ShieldCheck' is defined but never used. Allowed unused vars must match /^_/u   @typescript-eslint/no-unused-vars
+  6:76  warning  'Activity' is defined but never used. Allowed unused vars must match /^_/u      @typescript-eslint/no-unused-vars
+
+/Users/sahilmehta/sportstrivia-2/components/quiz/ShowcaseQuizCarousel.tsx
+  3:10  warning  'useMemo' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+/Users/sahilmehta/sportstrivia-2/components/quiz/ShowcaseTopTopics.tsx
+   6:10  warning  'Badge' is defined but never used. Allowed unused vars must match /^_/u            @typescript-eslint/no-unused-vars
+   8:10  warning  'getGlassCard' is defined but never used. Allowed unused vars must match /^_/u     @typescript-eslint/no-unused-vars
+   8:24  warning  'getTextColor' is defined but never used. Allowed unused vars must match /^_/u     @typescript-eslint/no-unused-vars
+   8:38  warning  'getGradientText' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  10:27  warning  'TrendingUp' is defined but never used. Allowed unused vars must match /^_/u       @typescript-eslint/no-unused-vars
+  10:48  warning  'ArrowRight' is defined but never used. Allowed unused vars must match /^_/u       @typescript-eslint/no-unused-vars
+  55:10  warning  'error' is assigned a value but never used. Allowed unused vars must match /^_/u   @typescript-eslint/no-unused-vars
+  77:16  warning  'err' is defined but never used                                                    @typescript-eslint/no-unused-vars
+
+/Users/sahilmehta/sportstrivia-2/components/quizzes/coming-soon-widget.tsx
+  3:10  warning  'Clock' is defined but never used. Allowed unused vars must match /^_/u            @typescript-eslint/no-unused-vars
+  3:27  warning  'Sparkles' is defined but never used. Allowed unused vars must match /^_/u         @typescript-eslint/no-unused-vars
+  3:37  warning  'Plus' is defined but never used. Allowed unused vars must match /^_/u             @typescript-eslint/no-unused-vars
+  3:61  warning  'Zap' is defined but never used. Allowed unused vars must match /^_/u              @typescript-eslint/no-unused-vars
+  3:66  warning  'ShieldAlert' is defined but never used. Allowed unused vars must match /^_/u      @typescript-eslint/no-unused-vars
+  6:10  warning  'getGradientText' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+/Users/sahilmehta/sportstrivia-2/components/quizzes/daily-quiz-widget.tsx
+   3:10  warning  'Card' is defined but never used. Allowed unused vars must match /^_/u             @typescript-eslint/no-unused-vars
+   3:16  warning  'CardContent' is defined but never used. Allowed unused vars must match /^_/u      @typescript-eslint/no-unused-vars
+   6:10  warning  'Calendar' is defined but never used. Allowed unused vars must match /^_/u         @typescript-eslint/no-unused-vars
+   6:77  warning  'Sparkles' is defined but never used. Allowed unused vars must match /^_/u         @typescript-eslint/no-unused-vars
+  11:10  warning  'getGradientText' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+/Users/sahilmehta/sportstrivia-2/components/quizzes/featured-card.tsx
+   5:10  warning  'Card' is defined but never used. Allowed unused vars must match /^_/u             @typescript-eslint/no-unused-vars
+   5:16  warning  'CardContent' is defined but never used. Allowed unused vars must match /^_/u      @typescript-eslint/no-unused-vars
+   5:29  warning  'CardFooter' is defined but never used. Allowed unused vars must match /^_/u       @typescript-eslint/no-unused-vars
+  10:17  warning  'Star' is defined but never used. Allowed unused vars must match /^_/u             @typescript-eslint/no-unused-vars
+  12:10  warning  'getGradientText' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+/Users/sahilmehta/sportstrivia-2/components/quizzes/featured-trading-cards-carousel.tsx
+  13:10  warning  'cn' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+/Users/sahilmehta/sportstrivia-2/components/quizzes/filter-bar.tsx
+  3:10  warning  'Button' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  4:10  warning  'Badge' is defined but never used. Allowed unused vars must match /^_/u   @typescript-eslint/no-unused-vars
+
+/Users/sahilmehta/sportstrivia-2/components/shared/ErrorState.tsx
+  3:40  warning  'ArrowLeft' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+/Users/sahilmehta/sportstrivia-2/components/shared/Footer.tsx
+  3:10  warning  'cn' is defined but never used. Allowed unused vars must match /^_/u               @typescript-eslint/no-unused-vars
+  4:10  warning  'getGradientText' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+/Users/sahilmehta/sportstrivia-2/components/shared/MainNavigation.tsx
+   9:24  warning  'Settings' is defined but never used. Allowed unused vars must match /^_/u         @typescript-eslint/no-unused-vars
+   9:40  warning  'X' is defined but never used. Allowed unused vars must match /^_/u                @typescript-eslint/no-unused-vars
+  21:10  warning  'getGradientText' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+/Users/sahilmehta/sportstrivia-2/components/showcase/ShowcaseDailyCarousel.tsx
+  3:18  warning  'useState' is defined but never used. Allowed unused vars must match /^_/u         @typescript-eslint/no-unused-vars
+  3:33  warning  'PointerEvent' is defined but never used. Allowed unused vars must match /^_/u     @typescript-eslint/no-unused-vars
+  3:47  warning  'useEffect' is defined but never used. Allowed unused vars must match /^_/u        @typescript-eslint/no-unused-vars
+  6:47  warning  'ShieldCheck' is defined but never used. Allowed unused vars must match /^_/u      @typescript-eslint/no-unused-vars
+  9:10  warning  'getGradientText' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+/Users/sahilmehta/sportstrivia-2/components/showcase/cards/FeaturedCardTrading.tsx
+  2:23  warning  'Zap' is defined but never used. Allowed unused vars must match /^_/u              @typescript-eslint/no-unused-vars
+  5:10  warning  'getGradientText' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+/Users/sahilmehta/sportstrivia-2/components/showcase/ui/FilterBar.tsx
+  6:10  warning  'getGradientText' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+/Users/sahilmehta/sportstrivia-2/components/showcase/ui/HeroVariants.tsx
+  8:3  warning  'getGlassCard' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+/Users/sahilmehta/sportstrivia-2/components/showcase/ui/buttons/buttonTheme.ts
+  43:7  warning  'textBase' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+/Users/sahilmehta/sportstrivia-2/components/topics/TopicsContent.tsx
+   5:10  warning  'Button' is defined but never used. Allowed unused vars must match /^_/u                 @typescript-eslint/no-unused-vars
+   8:10  warning  'ChallengeCard' is defined but never used. Allowed unused vars must match /^_/u          @typescript-eslint/no-unused-vars
+   9:24  warning  'List' is defined but never used. Allowed unused vars must match /^_/u                   @typescript-eslint/no-unused-vars
+   9:30  warning  'Zap' is defined but never used. Allowed unused vars must match /^_/u                    @typescript-eslint/no-unused-vars
+   9:35  warning  'ShieldCheck' is defined but never used. Allowed unused vars must match /^_/u            @typescript-eslint/no-unused-vars
+   9:48  warning  'Activity' is defined but never used. Allowed unused vars must match /^_/u               @typescript-eslint/no-unused-vars
+   9:82  warning  'Filter' is defined but never used. Allowed unused vars must match /^_/u                 @typescript-eslint/no-unused-vars
+  32:51  warning  'l2TopicsByParent' is defined but never used. Allowed unused args must match /^_/u       @typescript-eslint/no-unused-vars
+  32:69  warning  'suggestedChips' is defined but never used. Allowed unused args must match /^_/u         @typescript-eslint/no-unused-vars
+  34:10  warning  'activeTab' is assigned a value but never used. Allowed unused vars must match /^_/u     @typescript-eslint/no-unused-vars
+  34:21  warning  'setActiveTab' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+/Users/sahilmehta/sportstrivia-2/components/topics/topic-hero.tsx
+   4:15  warning  'ShieldCheck' is defined but never used. Allowed unused vars must match /^_/u                                                                                                                                                                                                            @typescript-eslint/no-unused-vars
+   4:28  warning  'Activity' is defined but never used. Allowed unused vars must match /^_/u                                                                                                                                                                                                               @typescript-eslint/no-unused-vars
+  32:13  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+  79:33  warning  'i' is defined but never used. Allowed unused args must match /^_/u                                                                                                                                                                                                                      @typescript-eslint/no-unused-vars
+
+/Users/sahilmehta/sportstrivia-2/components/topics/topic-search-bar.tsx
+  77:16  warning  'err' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/sahilmehta/sportstrivia-2/proxy.ts
+  166:22  warning  'remaining' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+/Users/sahilmehta/sportstrivia-2/scripts/list-models.ts
+  2:10  warning  'GoogleGenerativeAI' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+✖ 164 problems (0 errors, 164 warnings)
+

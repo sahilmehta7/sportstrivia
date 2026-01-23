@@ -1,6 +1,5 @@
 import { prisma } from "@/lib/db";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { FileQuestion, Users, Trophy, TrendingUp, Activity, Database, Zap, ShieldCheck, ArrowUpRight } from "lucide-react";
+import { FileQuestion, Users, Trophy, Activity, Database, Zap, ShieldCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getGradientText } from "@/lib/showcase-theme";
 import { Button } from "@/components/ui/button";

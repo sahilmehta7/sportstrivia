@@ -21,8 +21,8 @@ Goal: Create a world-class trivia experience in strict JSON format.
   "duration": {{DURATION}},
   "passingScore": 70,
   "seo": {
-    "title": "Max 60 chars. Optimized for search: '{{TOPIC}} Trivia Quiz - Test Your Knowledge'",
-    "description": "Max 160 chars. Engaging meta description including keywords.",
+    "title": "Max 100 chars (aim for 60). Optimized: '{{TOPIC}} Trivia Quiz'",
+    "description": "Max 160 chars. Compelling meta including {{TOPIC}} keywords.",
     "keywords": ["{{TOPIC_LOWER}}", "trivia", "quiz", "sports", "{{SPORT}}", "stats", "history"]
   },
   "questions": [

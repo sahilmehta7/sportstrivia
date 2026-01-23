@@ -82,7 +82,7 @@ export const quizSchema = z.object({
   recurringType: z.nativeEnum(RecurringType).optional().default(RecurringType.NONE),
 
   // SEO
-  seoTitle: z.string().max(60).optional(),
+  seoTitle: z.string().max(100).optional(),
   seoDescription: z.string().max(160).optional(),
   seoKeywords: z.array(z.string()).optional(),
 
@@ -113,7 +113,7 @@ export const quizImportSchema = z.object({
   completionBonus: z.number().int().min(0).optional(),
   passingScore: z.number().int().min(0).max(100).default(70),
   seo: z.object({
-    title: z.string().max(60).optional(),
+    title: z.string().max(100).optional(),
     description: z.string().max(160).optional(),
     keywords: z.array(z.string()).optional(),
   }).optional(),
