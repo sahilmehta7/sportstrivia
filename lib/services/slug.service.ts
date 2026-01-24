@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db";
+import { generateSlug } from "@/lib/slug-utils";
 import { ValidationError } from "@/lib/errors";
 
 /**
@@ -19,22 +20,6 @@ const slugCache: Map<string, SlugCache> = new Map();
  */
 export type SlugEntity = "quiz" | "topic" | "tag";
 
-/**
- * Generate a URL-friendly slug from a title
- */
-export function generateSlug(title: string): string {
-  if (!title || typeof title !== "string") {
-    throw new ValidationError("Title is required to generate a slug");
-  }
-
-  return title
-    .toLowerCase()
-    .trim()
-    .replace(/[^\w\s-]/g, "") // Remove special characters
-    .replace(/\s+/g, "-") // Replace spaces with hyphens
-    .replace(/-+/g, "-") // Replace multiple hyphens with single hyphen
-    .replace(/^-+|-+$/g, ""); // Remove leading/trailing hyphens
-}
 
 /**
  * Check if cache for an entity is valid

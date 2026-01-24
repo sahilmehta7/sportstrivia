@@ -30,7 +30,7 @@ import {
 } from "@/components/ui/form";
 import { QuizInput, quizSchema } from "@/lib/validations/quiz.schema";
 import { Difficulty, QuizStatus } from "@prisma/client";
-import { generateSlug } from "@/lib/seo-utils";
+import { generateSlug } from "@/lib/slug-utils";
 import { CollapsibleSection } from "@/components/admin/quiz/StreamlinedQuizForm";
 
 interface RootTopic {

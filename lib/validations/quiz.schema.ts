@@ -11,21 +11,21 @@ import {
   type AttemptResetPeriodValue,
 } from "@/constants/attempts";
 
-export const quizSchema = z.object({
+const baseQuizSchema = z.object({
   title: z.string().min(3, "Title must be at least 3 characters").max(200),
   slug: z.string().optional(),
   description: z.string().optional(),
   descriptionImageUrl: z.string().url().optional().or(z.literal("")),
   descriptionVideoUrl: z.string().url().optional().or(z.literal("")),
   sport: z.string().optional(),
-  difficulty: z.nativeEnum(Difficulty).optional().default(Difficulty.MEDIUM),
-  status: z.nativeEnum(QuizStatus).optional().default(QuizStatus.DRAFT),
+  difficulty: z.nativeEnum(Difficulty).optional(),
+  status: z.nativeEnum(QuizStatus).optional(),
 
   // Quiz configuration
   duration: z.number().int().min(1).nullish(),
   timePerQuestion: z.number().int().min(1).nullish(),
-  passingScore: z.number().int().min(0).max(100).optional().default(70),
-  completionBonus: z.number().int().min(0).optional().default(0),
+  passingScore: z.number().int().min(0).max(100).optional(),
+  completionBonus: z.number().int().min(0).optional(),
   maxAttemptsPerUser: z
     .number()
     .int()
@@ -34,20 +34,19 @@ export const quizSchema = z.object({
     .optional(),
   attemptResetPeriod: z
     .enum(ATTEMPT_RESET_PERIODS)
-    .optional()
-    .default(AttemptResetPeriod.NEVER),
+    .optional(),
 
   // Question selection
-  questionSelectionMode: z.nativeEnum(QuestionSelectionMode).optional().default(QuestionSelectionMode.FIXED),
+  questionSelectionMode: z.nativeEnum(QuestionSelectionMode).optional(),
   questionCount: z.number().int().min(1).nullish(),
-  randomizeQuestionOrder: z.boolean().optional().default(false),
-  showHints: z.boolean().optional().default(true),
+  randomizeQuestionOrder: z.boolean().optional(),
+  showHints: z.boolean().optional(),
 
   // Scoring
-  negativeMarkingEnabled: z.boolean().optional().default(false),
-  penaltyPercentage: z.number().int().min(0).max(100).optional().default(25),
-  timeBonusEnabled: z.boolean().optional().default(false),
-  bonusPointsPerSecond: z.number().min(0).optional().default(0),
+  negativeMarkingEnabled: z.boolean().optional(),
+  penaltyPercentage: z.number().int().min(0).max(100).optional(),
+  timeBonusEnabled: z.boolean().optional(),
+  bonusPointsPerSecond: z.number().min(0).optional(),
 
   // Scheduling - accept datetime-local format (YYYY-MM-DDTHH:mm) or ISO 8601
   startTime: z.preprocess(
@@ -79,7 +78,7 @@ export const quizSchema = z.object({
   ),
 
   // Recurring
-  recurringType: z.nativeEnum(RecurringType).optional().default(RecurringType.NONE),
+  recurringType: z.nativeEnum(RecurringType).optional(),
 
   // SEO
   seoTitle: z.string().max(100).optional(),
@@ -87,11 +86,32 @@ export const quizSchema = z.object({
   seoKeywords: z.array(z.string()).optional(),
 
   // Visibility
+  isFeatured: z.boolean().optional(),
+  isPublished: z.boolean().optional(),
+});
+
+export const quizSchema = baseQuizSchema.extend({
+  difficulty: z.nativeEnum(Difficulty).optional().default(Difficulty.MEDIUM),
+  status: z.nativeEnum(QuizStatus).optional().default(QuizStatus.DRAFT),
+  passingScore: z.number().int().min(0).max(100).optional().default(70),
+  completionBonus: z.number().int().min(0).optional().default(0),
+  attemptResetPeriod: z
+    .enum(ATTEMPT_RESET_PERIODS)
+    .optional()
+    .default(AttemptResetPeriod.NEVER),
+  questionSelectionMode: z.nativeEnum(QuestionSelectionMode).optional().default(QuestionSelectionMode.FIXED),
+  randomizeQuestionOrder: z.boolean().optional().default(false),
+  showHints: z.boolean().optional().default(true),
+  negativeMarkingEnabled: z.boolean().optional().default(false),
+  penaltyPercentage: z.number().int().min(0).max(100).optional().default(25),
+  timeBonusEnabled: z.boolean().optional().default(false),
+  bonusPointsPerSecond: z.number().min(0).optional().default(0),
+  recurringType: z.nativeEnum(RecurringType).optional().default(RecurringType.NONE),
   isFeatured: z.boolean().optional().default(false),
   isPublished: z.boolean().optional().default(false),
 });
 
-export const quizUpdateSchema = quizSchema.partial();
+export const quizUpdateSchema = baseQuizSchema.partial();
 
 export const quizTopicConfigSchema = z.object({
   topicId: z.string().cuid(),

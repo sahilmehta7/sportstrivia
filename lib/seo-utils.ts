@@ -1,4 +1,5 @@
 import { prisma } from "./db";
+import { generateSlug } from "./slug-utils";
 
 const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || "https://www.sportstrivia.in";
 
@@ -72,18 +73,6 @@ export function generateTwitterCardTags({
   };
 }
 
-/**
- * Generate a URL-friendly slug from a title
- */
-export function generateSlug(title: string): string {
-  return title
-    .toLowerCase()
-    .trim()
-    .replace(/[^\w\s-]/g, "") // Remove special characters
-    .replace(/\s+/g, "-") // Replace spaces with hyphens
-    .replace(/-+/g, "-") // Replace multiple hyphens with single hyphen
-    .replace(/^-+|-+$/g, ""); // Remove leading/trailing hyphens
-}
 
 /**
  * Generate a unique slug by appending a number if needed
