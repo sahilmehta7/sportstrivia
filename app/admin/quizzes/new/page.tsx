@@ -51,8 +51,8 @@ export default function NewQuizPage() {
       try {
         const response = await fetch("/api/topics");
         if (response.ok) {
-          const data = await response.json();
-          const rootTopics = data.topics?.filter((t: any) => t.parentId === null) || [];
+          const result = await response.json();
+          const rootTopics = result.data?.topics?.filter((t: any) => t.parentId === null) || [];
           setSports(rootTopics);
         }
       } catch (error) {
