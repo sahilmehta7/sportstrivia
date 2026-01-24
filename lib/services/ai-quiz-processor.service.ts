@@ -104,9 +104,9 @@ export async function processAIQuizTask(taskId: string): Promise<void> {
 
     // Build system message based on model type
     const isO1 = aiModel.startsWith("o1");
-    let systemMessage = "You are an expert sports quiz creator. You create engaging, accurate, and well-structured sports trivia quizzes in strict JSON format.";
+    let systemMessage = "You are a Senior Producer for a televised sports trivia show. You create engaging, story-driven, and historically accurate sports trivia in strict JSON format.";
     if (isO1) {
-      systemMessage = "You are an expert sports quiz creator. CRITICAL: You must output ONLY valid JSON. No markdown, no explanations, no additional text - just pure JSON matching the exact structure specified in the user prompt.";
+      systemMessage = "You are a Senior Producer for a televised sports trivia show. CRITICAL: You must output ONLY valid JSON. No markdown, no explanations, no additional text - just pure JSON matching the exact structure specified in the user prompt.";
     }
 
     // Call OpenAI API with retry logic
@@ -286,12 +286,12 @@ export function buildPrompt(
   }
 ): string {
   // Prefix instructions to help with prompt caching (static instructions first)
-  const prefix = `INSTRUCTIONS FOR GENERATION:
-- Topic should be treated as: ${topic}
-- Sport context: ${sport}
-- Generate exactly ${numQuestions} questions
-- Difficulty level: ${difficulty}
-- Target duration: ${numQuestions * 60} seconds
+  const prefix = `TV EPISODE BRIEF:
+- Topic: ${topic}
+- Sport Context: ${sport}
+- Segment Length: ${numQuestions} Questions
+- Difficulty Tier: ${difficulty}
+- Est. Duration: ${numQuestions * 60} seconds
 `;
 
   // Start with the instructions then the template

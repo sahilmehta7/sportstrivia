@@ -159,6 +159,7 @@ export async function POST(request: NextRequest) {
       const normalizedNames = Array.from(topicOriginalNameMap.keys());
 
       if (normalizedNames.length > 0) {
+
         const existingTopics = await tx.topic.findMany({
           where: {
             OR: normalizedNames.map((normalized) => ({
@@ -179,29 +180,20 @@ export async function POST(request: NextRequest) {
           if (topicNameMap.has(normalizedName)) continue;
 
           const topicName = topicOriginalNameMap.get(normalizedName)!;
-          try {
-            const newTopic = await tx.topic.create({
-              data: {
-                name: topicName,
-                slug: await generateUniqueSlug(topicName, "topic"),
-                level: 0,
-              },
-            });
-            topicNameMap.set(normalizedName, { id: newTopic.id, name: newTopic.name });
-          } catch (error: any) {
-            if (error.code === 'P2002') {
-              const existing = await tx.topic.findFirst({
-                where: { name: { equals: topicName, mode: "insensitive" } }
-              });
-              if (existing) {
-                topicNameMap.set(normalizedName, { id: existing.id, name: existing.name });
-              } else {
-                throw error;
-              }
-            } else {
-              throw error;
-            }
-          }
+          // Use upsert to handle race conditions where topic might be created by another process
+          // generateUniqueSlug might be slightly wasteful if topic exists but safe
+          const slug = await generateUniqueSlug(topicName, "topic");
+
+          const topic = await tx.topic.upsert({
+            where: { name: topicName },
+            update: {},
+            create: {
+              name: topicName,
+              slug,
+              level: 0,
+            },
+          });
+          topicNameMap.set(normalizedName, { id: topic.id, name: topic.name });
         }
       }
 
@@ -220,6 +212,7 @@ export async function POST(request: NextRequest) {
       const sportToResolve = (sport && sport.trim().length > 0) ? sport.trim() : primaryTopicName;
 
       if (sportToResolve) {
+        // Try to find existing root topic first
         const existingRoot = await tx.topic.findFirst({
           where: {
             parentId: null,
@@ -231,26 +224,19 @@ export async function POST(request: NextRequest) {
         if (existingRoot) {
           canonicalSportName = existingRoot.name; // preserve canonical casing
         } else {
-          try {
-            const createdRoot = await tx.topic.create({
-              data: {
-                name: sportToResolve,
-                slug: await generateUniqueSlug(sportToResolve, "topic"),
-                level: 0,
-              },
-              select: { name: true },
-            });
-            canonicalSportName = createdRoot.name;
-          } catch (error: any) {
-            if (error.code === 'P2002') {
-              const retryRoot = await tx.topic.findFirst({
-                where: { name: { equals: sportToResolve, mode: "insensitive" } }
-              });
-              canonicalSportName = retryRoot?.name;
-            } else {
-              throw error;
-            }
-          }
+          // Use upsert for safety against race conditions
+          const slug = await generateUniqueSlug(sportToResolve, "topic");
+          const rootTopic = await tx.topic.upsert({
+            where: { name: sportToResolve },
+            update: {}, // exists, do nothing
+            create: {
+              name: sportToResolve,
+              slug,
+              level: 0,
+            },
+            select: { name: true }
+          });
+          canonicalSportName = rootTopic.name;
         }
       }
 

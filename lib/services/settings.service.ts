@@ -254,10 +254,14 @@ export async function setSetting(
 // Get AI Quiz Prompt (with fallback to default)
 export async function getAIQuizPrompt(): Promise<string> {
   try {
-    const cached = getCachedSetting(SETTINGS_KEYS.AI_QUIZ_PROMPT);
-    if (cached) return cached;
+    // Disable cache to ensure we get the latest prompt (updated in code)
+    // const cached = getCachedSetting(SETTINGS_KEYS.AI_QUIZ_PROMPT);
+    // if (cached) return cached;
+
     const customPrompt = await getSetting(SETTINGS_KEYS.AI_QUIZ_PROMPT);
     const resolved = customPrompt || DEFAULT_AI_QUIZ_PROMPT;
+
+    // Update cache with the resolved value
     setCachedSetting(SETTINGS_KEYS.AI_QUIZ_PROMPT, resolved);
     return resolved;
   } catch {
