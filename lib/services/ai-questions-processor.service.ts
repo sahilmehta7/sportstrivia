@@ -12,7 +12,7 @@ interface GenerateQuestionsInput {
     hardCount: number;
 }
 
-// Helper to rebuild the prompt (copied from route logic)
+// Helper to rebuild the prompt
 function buildQuestionsOnlyPrompt(
     baseTemplate: string,
     topicName: string,
@@ -23,40 +23,49 @@ function buildQuestionsOnlyPrompt(
 ): string {
     const mixNote = `Generate exactly ${counts.easyCount} EASY, ${counts.mediumCount} MEDIUM, and ${counts.hardCount} HARD questions.`;
 
-    return `You are an elite sports trivia architect focusing on "${topicName}" (${sport}).
+    // Prefix instructions for caching efficiency
+    const prefix = `INSTRUCTIONS FOR GENERATION:
+- Main Topic: ${topicName}
+- Sport Context: ${sport}
+- Question Mix: ${mixNote}
+- Target Total: ${total} questions
+`;
+
+    const instructions = `You are an elite sports trivia architect focusing on "${topicName}" (${sport}).
 
 Goal: Generate a batch of high-quality, standalone trivia questions.
 
-🧾 Required JSON Shape:
+# JSON SCHEMA REQUIREMENTS
 {
   "questions": [
     {
-      "questionText": "The specific question text. Must be factually accurate and unambiguous.",
+      "questionText": "Specific, unambiguous, and factually accurate.",
       "difficulty": "EASY|MEDIUM|HARD",
-      "hint": "A helpful but non-obvious clue.",
-      "explanation": "A fascinating 'Did you know?' style fact related to the answer (1-2 sentences).",
+      "hint": "A subtle nudge.",
+      "explanation": "Fascinating 'Did you know?' related to the answer (1-2 sentences).",
       "answers": [
         { "answerText": "Correct Answer", "isCorrect": true },
-        { "answerText": "Plausible Distractor 1", "isCorrect": false },
-        { "answerText": "Plausible Distractor 2", "isCorrect": false },
-        { "answerText": "Plausible Distractor 3", "isCorrect": false }
+        { "answerText": "Distractor 1", "isCorrect": false },
+        { "answerText": "Distractor 2", "isCorrect": false },
+        { "answerText": "Distractor 3", "isCorrect": false }
       ]
     }
   ]
 }
 
-📝 Quality Benchmarks:
-1. Topic Focus: All questions must be strictly about ${topicName}.
-2. Distribution: ${mixNote}
-3. Diversity: Include a mix of career milestones, historical records, and unique trivia nuggets.
-4. Distractors: Ensure wrong answers are plausible and professionally formatted.
-5. Accuracy: All data must be verified.
-6. Format: Output strictly valid JSON. No conversational filler or markdown wrappers.
+# QUALITY BENCHMARKS
+1. TOPIC FOCUS: All questions must be strictly about ${topicName}.
+2. DISTRIBUTION: ${mixNote}
+3. DIVERSITY: Mix career milestones, records, and unique trivia.
+4. ACCURACY: All data must be verified as of 2025.
+5. INTEGRITY: Output ONLY valid JSON.
 
-Context (for tone and style reference):
+# TONE REFERENCE
 """
 ${baseTemplate.substring(0, 1000)}
 """`;
+
+    return prefix + instructions;
 }
 
 export async function processAIQuestionsTask(taskId: string): Promise<void> {
@@ -104,6 +113,8 @@ export async function processAIQuestionsTask(taskId: string): Promise<void> {
                 temperature: 0.8,
                 maxTokens: isO1 ? 16000 : 4000,
                 responseFormat: isO1 ? null : { type: "json_object" },
+                cacheable: true,
+                cacheKeyContext: { topicId, counts: { easyCount, mediumCount, hardCount } },
             }
         );
 

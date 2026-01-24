@@ -104,6 +104,7 @@ export async function generateMetadata({ params }: QuizDetailPageProps): Promise
 export default async function QuizDetailPage({ params }: QuizDetailPageProps) {
   const { slug } = await params;
   const user = await getCurrentUser();
+  const isAdmin = user?.role === "ADMIN";
   let quiz: any;
   let showcaseReviews: any[] = [];
   let uniqueUsersCount: number = 0;
@@ -112,17 +113,31 @@ export default async function QuizDetailPage({ params }: QuizDetailPageProps) {
     quiz = await prisma.quiz.findUnique({
       where: { slug },
       select: {
-        id: true, title: true, description: true, slug: true,
-        sport: true, difficulty: true, duration: true, timePerQuestion: true,
-        descriptionImageUrl: true, createdAt: true, updatedAt: true,
-        averageRating: true, totalReviews: true, maxAttemptsPerUser: true,
-        attemptResetPeriod: true, recurringType: true, isPublished: true,
+        id: true,
+        title: true,
+        description: true,
+        slug: true,
+        sport: true,
+        difficulty: true,
+        duration: true,
+        timePerQuestion: true,
+        descriptionImageUrl: true,
+        createdAt: true,
+        updatedAt: true,
+        averageRating: true,
+        totalReviews: true,
+        maxAttemptsPerUser: true,
+        attemptResetPeriod: true,
+        recurringType: true,
+        isPublished: true,
         status: true,
         _count: { select: { attempts: true, reviews: true } },
         leaderboard: {
           take: 3,
           orderBy: [{ bestScore: "desc" }, { averageResponseTime: "asc" }],
-          include: { user: { select: { name: true, email: true, image: true } } },
+          include: {
+            user: { select: { name: true, email: true, image: true } },
+          },
         },
         topicConfigs: {
           include: { topic: { select: { name: true } } },
@@ -132,23 +147,25 @@ export default async function QuizDetailPage({ params }: QuizDetailPageProps) {
       },
     });
 
-    if (!quiz || !quiz.isPublished || quiz.status !== "PUBLISHED") {
+    if (!quiz || (!isAdmin && (!quiz.isPublished || quiz.status !== "PUBLISHED"))) {
       notFound();
     }
 
-    const distinctUsers = await prisma.quizAttempt.findMany({
-      where: { quizId: quiz.id },
-      distinct: ["userId"],
-      select: { userId: true },
-    });
-    uniqueUsersCount = distinctUsers.length;
+    const [distinctUsers, rawReviews] = await Promise.all([
+      prisma.quizAttempt.findMany({
+        where: { quizId: quiz.id },
+        distinct: ["userId"],
+        select: { userId: true },
+      }),
+      prisma.quizReview.findMany({
+        where: { quizId: quiz.id },
+        include: { user: { select: { name: true, image: true } } },
+        orderBy: { createdAt: "desc" },
+        take: 10,
+      }),
+    ]);
 
-    const rawReviews = await prisma.quizReview.findMany({
-      where: { quizId: quiz.id },
-      include: { user: { select: { name: true, image: true } } },
-      orderBy: { createdAt: "desc" },
-      take: 10,
-    });
+    uniqueUsersCount = distinctUsers.length;
     showcaseReviews = (rawReviews || []).map((r) => ({
       id: r.id,
       reviewer: { name: r.user?.name || "Anonymous", avatarUrl: r.user?.image },
@@ -157,7 +174,10 @@ export default async function QuizDetailPage({ params }: QuizDetailPageProps) {
       dateLabel: r.createdAt.toLocaleDateString(),
     }));
   } catch (error) {
-    console.error("Error fetching quiz:", error);
+    if (error instanceof Error && error.message.includes("NEXT_HTTP_ERROR_FALLBACK")) {
+      throw error;
+    }
+    console.error("Error fetching quiz data:", error);
     notFound();
   }
 

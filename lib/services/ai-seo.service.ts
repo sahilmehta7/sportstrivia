@@ -23,29 +23,28 @@ export async function generateTopicMetadataAI(
         const aiModel = await getAIModel();
         const isO1 = aiModel.startsWith("o1");
 
-        const prompt = `You are an elite SEO strategist and high-conversion copywriter specializing in the sports industry.
-Your mission is to generate high-ranking, "clickable" SEO metadata for the sports topic: "${topicName}".
+        const prefix = `SEO GENERATION MISSION:
+- Target Topic: ${topicName}
+- Current Narrative: ${currentDescription || "None provided"}
+`;
 
-${currentDescription ? `Context & Narrative: "${currentDescription}"` : ""}
+        const instructions = `You are an elite SEO strategist and high-conversion copywriter.
+Goal: Dominant, curiosity-driven SEO metadata for "${topicName}".
 
-Goal: Create a Title tag and Meta Description that doesn't just rank—it dominates the SERP by triggering curiosity and authority.
-
-🧾 REQUIRED JSON FORMAT:
+# JSON SCHEMA REQUIREMENTS
 {
   "title": "Elite, curiosity-driven title (Max 60 chars)",
-  "description": "High-conversion meta description (Max 160 chars) including placeholders for value and action.",
-  "keywords": ["7-10 high-intent keywords including the topic name"]
+  "description": "High-conversion meta description (Max 160 chars).",
+  "keywords": ["7-10 high-intent keywords"]
 }
 
-📝 ELITE COPYWRITING GUIDELINES:
-1. THE HOOK (Title): Primary keyword must appear in the first 20 characters. Use "Power Words" (e.g., Masterclass, Untold, Legends, Statistics, Ultimate). Avoid generic titles like "Cricket Trivia".
-2. THE NARRATIVE (Description): Use the "Problem-Agitate-Solve" or "Hook-Value-Action" framework. 
-   - Example Structure: [Provocative Question/Statement] + [Unique Value/Insight] + [Strong CTA].
-   - Must be between 140-160 characters. No fluff.
-3. TONE: Authoritative yet energetic. Speak directly to the "Hardcore Fan" persona.
-4. KEYWORDS: Focus on semantic relevance (LSI keywords) that fans actually search for (e.g., "records", "historic moments", "player stats").
+# ELITE COPYWRITING GUIDELINES
+1. THE HOOK: Primary keyword must appear in the first 20 characters. Use "Power Words".
+2. THE NARRATIVE: Use PAC (Problem-Agitate-Solve) or HVA (Hook-Value-Action) framework.
+3. CONTEXT: Speark to the "Hardcore Fan" persona.
+4. INTEGRITY: Output ONLY valid JSON.`;
 
-Output STRICTLY valid JSON. No conversational filler. No markdown wrappers.`;
+        const prompt = prefix + instructions;
 
         let systemMessage = "You are a specialized SEO metadata generator for sports trivia.";
         if (isO1) {
@@ -60,6 +59,8 @@ Output STRICTLY valid JSON. No conversational filler. No markdown wrappers.`;
                 temperature: 0.7,
                 maxTokens: 500,
                 responseFormat: isO1 ? null : { type: "json_object" },
+                cacheable: true,
+                cacheKeyContext: { topicName, type: "topic_metadata" },
             }
         );
 
@@ -92,30 +93,28 @@ export async function generateQuizMetadataAI(
         const aiModel = await getAIModel();
         const isO1 = aiModel.startsWith("o1");
 
-        const prompt = `You are an elite SEO copywriter specializing in high-stakes sports trivia and gamified content.
-Generate high-conversion SEO metadata for the sports quiz: "${quizTitle}".
+        const prefix = `SEO GENERATION MISSION:
+- Quiz Title: ${quizTitle}
+- Quiz Narrative: ${description || "None provided"}
+`;
 
-${description ? `Quiz Narrative: "${description}"` : ""}
+        const instructions = `You are an elite SEO strategist specializing in gamified sports content.
+Goal: Designs that trigger the "Competitor Mindset" for "${quizTitle}".
 
-Goal: Design a Title tag and Meta Description that triggers the "Competitor Mindset" in sports fans, maximizing CTR and social shares.
-
-🧾 REQUIRED JSON FORMAT:
+# JSON SCHEMA REQUIREMENTS
 {
   "title": "Challenging, keyword-rich title (Max 60 chars)",
   "description": "Compelling, CTA-driven meta description (Max 160 chars).",
-  "keywords": ["7-10 competitive keywords including the quiz topic"]
+  "keywords": ["7-10 competitive keywords"]
 }
 
-📝 CONVERSION GUIDELINES:
-1. THE CHALLENGE (Title): Include words like "Quiz", "Trivia", "Test", or "Challenge" early. Use a hook that implies difficulty or exclusivity (e.g., "Only 1% Can Pass", "The Ultimate [Topic] Masterclass").
-2. THE PAYOFF (Description): Promise a reward or a feeling of accomplishment. 
-   - Framework: [Intriguing Hook] + [What They'll Learn/Prove] + [Urgent CTA].
-   - Example: "Think you know [Topic]? Prove it by tackling the most advanced trivia challenge online. Play now and claim your rank!"
-   - Must be between 140-160 characters.
-3. TONE: Hard-hitting, competitive, and respectful of deep-cut sports knowledge.
-4. KEYWORDS: Mix head terms with long-tail modifiers (e.g., "[Topic] quiz with answers", "difficult [Topic] trivia").
+# CONVERSION GUIDELINES
+1. THE CHALLENGE: Include "Quiz", "Trivia", or "Test". Use a hook that implies exclusivity.
+2. THE PAYOFF: [Intriguing Hook] + [What They'll Prove] + [Urgent CTA]. 140-160 chars.
+3. TONE: Hard-hitting, competitive.
+4. INTEGRITY: Output STRICTLY valid JSON.`;
 
-Output STRICTLY valid JSON. No prose. No markdown.`;
+        const prompt = prefix + instructions;
 
         let systemMessage = "You are a specialized SEO metadata generator for sports trivia quizzes.";
         if (isO1) {
@@ -130,6 +129,8 @@ Output STRICTLY valid JSON. No prose. No markdown.`;
                 temperature: 0.7,
                 maxTokens: 500,
                 responseFormat: isO1 ? null : { type: "json_object" },
+                cacheable: true,
+                cacheKeyContext: { quizTitle, type: "quiz_metadata" },
             }
         );
 
