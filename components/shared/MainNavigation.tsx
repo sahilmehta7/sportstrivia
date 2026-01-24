@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { UserAvatar } from "@/components/shared/UserAvatar";
 import { NotificationsDropdown } from "@/components/shared/NotificationsDropdown";
-import { User, LogOut, Settings, Menu, X, Moon, Sun, Shuffle, Trophy, Gamepad2, Compass, ShieldCheck } from "lucide-react";
+import { User, LogOut, Menu, Moon, Sun, Shuffle, Trophy, Gamepad2, Compass, ShieldCheck } from "lucide-react";
 import { useTheme } from "next-themes";
 import { signOut, useSession } from "next-auth/react";
 import { cn } from "@/lib/utils";
@@ -18,7 +18,15 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { getGradientText } from "@/lib/showcase-theme";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+
 
 export function MainNavigation() {
   const pathname = usePathname();
@@ -198,23 +206,35 @@ export function MainNavigation() {
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-2 gap-4">
-                        <Link
-                          href="/profile/me"
-                          className="flex flex-col items-center justify-center gap-3 border border-foreground/10 p-4 text-[10px] font-bold uppercase tracking-widest hover:bg-muted transition-colors"
-                          onClick={() => setMobileMenuOpen(false)}
-                        >
-                          <User className="h-5 w-5" />
-                          Profile
-                        </Link>
-                        <Link
-                          href="/challenges"
-                          className="flex flex-col items-center justify-center gap-3 border border-foreground/10 p-4 text-[10px] font-bold uppercase tracking-widest hover:bg-muted transition-colors"
-                          onClick={() => setMobileMenuOpen(false)}
-                        >
-                          <Trophy className="h-5 w-5" />
-                          Rank
-                        </Link>
+                      <div className="flex flex-col gap-2">
+                        {session.user.role === "ADMIN" && (
+                          <Link
+                            href="/admin"
+                            className="flex items-center justify-center gap-3 border-2 border-accent bg-accent/5 p-4 text-[10px] font-bold uppercase tracking-widest hover:bg-accent hover:text-white transition-all text-accent mb-2"
+                            onClick={() => setMobileMenuOpen(false)}
+                          >
+                            <ShieldCheck className="h-5 w-5" />
+                            Command Center
+                          </Link>
+                        )}
+                        <div className="grid grid-cols-2 gap-4">
+                          <Link
+                            href="/profile/me"
+                            className="flex flex-col items-center justify-center gap-3 border border-foreground/10 p-4 text-[10px] font-bold uppercase tracking-widest hover:bg-muted transition-colors"
+                            onClick={() => setMobileMenuOpen(false)}
+                          >
+                            <User className="h-5 w-5" />
+                            Profile
+                          </Link>
+                          <Link
+                            href="/challenges"
+                            className="flex flex-col items-center justify-center gap-3 border border-foreground/10 p-4 text-[10px] font-bold uppercase tracking-widest hover:bg-muted transition-colors"
+                            onClick={() => setMobileMenuOpen(false)}
+                          >
+                            <Trophy className="h-5 w-5" />
+                            Rank
+                          </Link>
+                        </div>
                       </div>
                     </div>
 
@@ -251,14 +271,63 @@ export function MainNavigation() {
 
             {/* Avatar Dropdown - Desktop */}
             <div className="hidden lg:block">
-              <Link href="/profile/me">
-                <UserAvatar
-                  src={session.user.image}
-                  alt={session.user.name || "User"}
-                  size="sm"
-                  className="cursor-pointer border-2 border-foreground/10 hover:border-accent transition-colors rounded-none"
-                />
-              </Link>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="flex items-center outline-none ring-offset-background transition-all focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2">
+                    <UserAvatar
+                      src={session.user.image}
+                      alt={session.user.name || "User"}
+                      size="sm"
+                      className="cursor-pointer border-2 border-foreground/10 hover:border-accent transition-colors rounded-none"
+                    />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-64 rounded-none border-2 border-foreground bg-background p-0 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]" align="end" forceMount>
+                  <DropdownMenuLabel className="font-normal p-0">
+                    <div className="flex flex-col space-y-1 p-5 bg-muted/30">
+                      <p className="text-sm font-bold uppercase tracking-tighter leading-none">{session.user.name}</p>
+                      <p className="text-[10px] font-medium text-muted-foreground leading-none mt-1">
+                        {session.user.email}
+                      </p>
+                    </div>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator className="m-0 bg-foreground/10 h-0.5" />
+                  <div className="p-1">
+                    <Link href="/profile/me">
+                      <DropdownMenuItem className="rounded-none cursor-pointer focus:bg-accent focus:text-white font-bold uppercase tracking-widest text-[10px] py-4 px-5 transition-colors">
+                        <User className="mr-3 h-4 w-4" />
+                        <span>Profile Interface</span>
+                      </DropdownMenuItem>
+                    </Link>
+
+                    {session.user.role === "ADMIN" && (
+                      <Link href="/admin">
+                        <DropdownMenuItem className="rounded-none cursor-pointer focus:bg-accent focus:text-white font-bold uppercase tracking-widest text-[10px] py-4 px-5 transition-colors">
+                          <ShieldCheck className="mr-3 h-4 w-4 text-accent" />
+                          <span>Command Center</span>
+                        </DropdownMenuItem>
+                      </Link>
+                    )}
+
+                    <Link href="/challenges">
+                      <DropdownMenuItem className="rounded-none cursor-pointer focus:bg-accent focus:text-white font-bold uppercase tracking-widest text-[10px] py-4 px-5 transition-colors">
+                        <Trophy className="mr-3 h-4 w-4" />
+                        <span>Rankings & Awards</span>
+                      </DropdownMenuItem>
+                    </Link>
+                  </div>
+                  <DropdownMenuSeparator className="m-0 bg-foreground/10 h-0.5" />
+                  <div className="p-1">
+                    <DropdownMenuItem
+                      className="rounded-none cursor-pointer focus:bg-destructive focus:text-white text-destructive font-bold uppercase tracking-widest text-[10px] py-4 px-5 transition-colors"
+                      onClick={() => signOut({ callbackUrl: "/" })}
+                    >
+                      <LogOut className="mr-3 h-4 w-4" />
+                      <span>Terminate Session</span>
+                    </DropdownMenuItem>
+                  </div>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
         </div>
