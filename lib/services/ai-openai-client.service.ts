@@ -1,3 +1,5 @@
+import { buildAIResponseCacheKey, getCachedAIResponse, setCachedAIResponse } from "@/lib/services/ai-response-cache";
+
 /**
  * Shared OpenAI API client with hybrid support for Responses API and Chat Completions API.
  * 
@@ -19,7 +21,7 @@ export async function callResponsesAPIWithRetry(
   // Combine system message and user prompt for Responses API
   // Responses API uses 'input' field (single string) instead of messages array
   const fullPrompt = `${systemMessage}\n\n${prompt}`;
-  
+
   // Build request body for Responses API
   const requestBody: any = {
     model: aiModel,
@@ -44,15 +46,15 @@ export async function callResponsesAPIWithRetry(
         },
         body: JSON.stringify(requestBody),
       });
-      
+
       if (response.ok) {
         return await response.json();
       }
-      
+
       // Parse error response
       const errorData = await response.json().catch(() => ({}));
       const errorMessage = errorData.error?.message || `HTTP ${response.status}`;
-      
+
       // Retry on 429 (rate limit) or 5xx errors
       if (response.status === 429 || response.status >= 500) {
         if (attempt < maxRetries - 1) {
@@ -62,14 +64,14 @@ export async function callResponsesAPIWithRetry(
           continue;
         }
       }
-      
+
       throw new Error(`OpenAI Responses API error: ${errorMessage}`);
     } catch (error) {
       // If it's the last attempt, throw the error
       if (attempt === maxRetries - 1) {
         throw error;
       }
-      
+
       // Network errors also retry
       if (error instanceof Error && !error.message.includes('OpenAI Responses API error')) {
         const delay = Math.pow(2, attempt) * 1000;
@@ -77,14 +79,22 @@ export async function callResponsesAPIWithRetry(
         await new Promise(resolve => setTimeout(resolve, delay));
         continue;
       }
-      
+
       // If it's an API error that we shouldn't retry, throw immediately
       throw error;
     }
   }
-  
+
   throw new Error("Failed to call OpenAI Responses API after retries");
 }
+
+type OpenAIRequestOptions = {
+  temperature?: number;
+  maxTokens?: number;
+  responseFormat?: { type: "json_object" } | null;
+  cacheable?: boolean;
+  cacheKeyContext?: Record<string, unknown>;
+};
 
 /**
  * Calls the Chat Completions API for non-GPT-5 models.
@@ -93,15 +103,11 @@ export async function callChatCompletionsAPIWithRetry(
   aiModel: string,
   prompt: string,
   systemMessage: string,
-  options: {
-    temperature?: number;
-    maxTokens?: number;
-    responseFormat?: { type: "json_object" } | null;
-  } = {},
+  options: OpenAIRequestOptions = {},
   maxRetries = 3
 ): Promise<any> {
   const isO1 = aiModel.startsWith("o1");
-  
+
   // Build request body for Chat Completions API
   const requestBody: any = {
     model: aiModel,
@@ -126,7 +132,7 @@ export async function callChatCompletionsAPIWithRetry(
   }
 
   // Add token limit parameter - Chat Completions API uses 'max_tokens' for ALL models
-  // Higher limit for reasoning models to account for internal reasoning tokens
+  // For newer models, OpenAI is moving towards 'max_completion_tokens' but 'max_tokens' remains supported
   if (options.maxTokens !== undefined) {
     requestBody.max_tokens = options.maxTokens;
   } else {
@@ -150,15 +156,15 @@ export async function callChatCompletionsAPIWithRetry(
         },
         body: JSON.stringify(requestBody),
       });
-      
+
       if (response.ok) {
         return await response.json();
       }
-      
+
       // Parse error response
       const errorData = await response.json().catch(() => ({}));
       const errorMessage = errorData.error?.message || `HTTP ${response.status}`;
-      
+
       // Retry on 429 (rate limit) or 5xx errors
       if (response.status === 429 || response.status >= 500) {
         if (attempt < maxRetries - 1) {
@@ -168,14 +174,14 @@ export async function callChatCompletionsAPIWithRetry(
           continue;
         }
       }
-      
+
       throw new Error(`OpenAI Chat Completions API error: ${errorMessage}`);
     } catch (error) {
       // If it's the last attempt, throw the error
       if (attempt === maxRetries - 1) {
         throw error;
       }
-      
+
       // Network errors also retry
       if (error instanceof Error && !error.message.includes('OpenAI Chat Completions API error')) {
         const delay = Math.pow(2, attempt) * 1000;
@@ -183,12 +189,12 @@ export async function callChatCompletionsAPIWithRetry(
         await new Promise(resolve => setTimeout(resolve, delay));
         continue;
       }
-      
+
       // If it's an API error that we shouldn't retry, throw immediately
       throw error;
     }
   }
-  
+
   throw new Error("Failed to call OpenAI Chat Completions API after retries");
 }
 
@@ -208,23 +214,61 @@ export async function callOpenAIWithRetry(
   aiModel: string,
   prompt: string,
   systemMessage: string,
-  options: {
-    temperature?: number;
-    maxTokens?: number;
-    responseFormat?: { type: "json_object" } | null;
-  } = {},
+  options: OpenAIRequestOptions = {},
   maxRetries = 3
 ): Promise<any> {
   const isGPT5 = aiModel.startsWith("gpt-5");
-  
+  const isO1 = aiModel.startsWith("o1");
+  const cacheable = options.cacheable !== false;
+  let cacheKey: string | null = null;
+
+  const cacheKeyOptions = isGPT5
+    ? {}
+    : {
+      temperature: !isO1 ? options.temperature ?? 0.8 : undefined,
+      maxTokens: options.maxTokens ?? (isO1 ? 16000 : 4000),
+      responseFormat: !isO1
+        ? options.responseFormat === null
+          ? null
+          : options.responseFormat ?? { type: "json_object" }
+        : null,
+    };
+
+  if (cacheable) {
+    cacheKey = buildAIResponseCacheKey({
+      model: aiModel,
+      systemMessage,
+      prompt,
+      api: isGPT5 ? "responses" : "chat_completions",
+      options: cacheKeyOptions,
+      ...(options.cacheKeyContext ? { context: options.cacheKeyContext } : {}),
+    });
+
+    const cached = getCachedAIResponse<any>(cacheKey);
+    if (cached) {
+      console.log(`[OpenAI Client] ✅ Cache hit for prompt (Key: ${cacheKey.substring(0, 8)}...)`);
+      return cached;
+    } else {
+      console.log(`[OpenAI Client] 🔍 Cache miss for prompt (Key: ${cacheKey.substring(0, 8)}...)`);
+    }
+  }
+
   if (isGPT5) {
     // Use Responses API for GPT-5 models
     console.log("[OpenAI Client] Using Responses API for GPT-5 model");
-    return await callResponsesAPIWithRetry(aiModel, prompt, systemMessage, maxRetries);
+    const completion = await callResponsesAPIWithRetry(aiModel, prompt, systemMessage, maxRetries);
+    if (cacheable && cacheKey) {
+      setCachedAIResponse(cacheKey, completion);
+    }
+    return completion;
   } else {
     // Use Chat Completions API for other models (GPT-4, GPT-4o, GPT-3.5-turbo, o1)
     console.log("[OpenAI Client] Using Chat Completions API for model:", aiModel);
-    return await callChatCompletionsAPIWithRetry(aiModel, prompt, systemMessage, options, maxRetries);
+    const completion = await callChatCompletionsAPIWithRetry(aiModel, prompt, systemMessage, options, maxRetries);
+    if (cacheable && cacheKey) {
+      setCachedAIResponse(cacheKey, completion);
+    }
+    return completion;
   }
 }
 
@@ -335,12 +379,12 @@ export function extractContentFromCompletion(completion: any, aiModel: string): 
   console.log("[OpenAI Client] Full API Response:", JSON.stringify(completion, null, 2));
   console.log("[OpenAI Client] Completion keys:", Object.keys(completion));
   console.log("[OpenAI Client] Completion object type:", completion.object);
-  
+
   let generatedContent: string | null = null;
-  
+
   // Check if this is a Responses API response
   const isResponsesAPI = completion.object === "response" || completion.object === "response_completion" || Object.prototype.hasOwnProperty.call(completion, "output_text");
-  
+
   if (isResponsesAPI) {
     // Responses API formats
     // Path 1: output_text field (primary format for Responses API)
@@ -381,7 +425,7 @@ export function extractContentFromCompletion(completion: any, aiModel: string): 
     console.error("[OpenAI Client] Full completion object:", JSON.stringify(completion, null, 2));
     throw new Error(`No content generated from OpenAI. Model: ${aiModel}. API: ${isResponsesAPI ? 'Responses' : 'Chat Completions'}. Please check console for full response structure.`);
   }
-  
+
   return generatedContent;
 }
 
@@ -392,16 +436,16 @@ export function extractContentFromCompletion(completion: any, aiModel: string): 
 export function extractUsageStats(completion: any): { tokensUsed: number; api: string } {
   let tokensUsed = 0;
   const isResponsesAPI = completion.object === "response" || completion.object === "response_completion" || Object.prototype.hasOwnProperty.call(completion, "output_text");
-  
+
   if (completion.usage?.total_tokens) {
     // Chat Completions API format
     tokensUsed = completion.usage.total_tokens;
   } else if (completion.usage) {
     // Responses API might have different structure
-    tokensUsed = completion.usage.total_tokens || 
-                 (completion.usage.prompt_tokens + completion.usage.completion_tokens) || 0;
+    tokensUsed = completion.usage.total_tokens ||
+      (completion.usage.prompt_tokens + completion.usage.completion_tokens) || 0;
   }
-  
+
   return {
     tokensUsed,
     api: isResponsesAPI ? "responses" : "chat_completions",

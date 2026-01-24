@@ -8,7 +8,7 @@ import { AdminFilterForm } from "@/components/admin/data-table/AdminFilterForm";
 import { AdminPaginationClient } from "@/components/admin/AdminPaginationClient";
 import { Difficulty, Prisma } from "@prisma/client";
 import { TableCell, TableRow } from "@/components/ui/table";
-import { Plus } from "lucide-react";
+import { Plus, Upload } from "lucide-react";
 import Link from "next/link";
 import { TopicFilterCombobox } from "@/components/admin/TopicFilterCombobox";
 
@@ -92,12 +92,20 @@ export default async function QuestionsPage({ searchParams }: QuestionsPageProps
         title="Questions"
         description="Manage all questions in the question pool"
         action={
-          <Link href="/admin/questions/new">
-            <Button>
-              <Plus className="h-4 w-4" />
-              Create Question
-            </Button>
-          </Link>
+          <div className="flex gap-2">
+            <Link href="/admin/questions/import">
+              <Button variant="outline">
+                <Upload className="h-4 w-4" />
+                Import Questions
+              </Button>
+            </Link>
+            <Link href="/admin/questions/new">
+              <Button>
+                <Plus className="h-4 w-4" />
+                Create Question
+              </Button>
+            </Link>
+          </div>
         }
       />
 

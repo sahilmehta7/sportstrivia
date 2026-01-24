@@ -142,7 +142,7 @@ function mapQuestionsToPreview(
 
       const rawAnswers = Array.isArray(question.answers) ? question.answers : [];
       const answers: PreviewAnswer[] = rawAnswers
-        .map((rawAnswer) => {
+        .map((rawAnswer): PreviewAnswer | null => {
           const answer = rawAnswer as Record<string, unknown>;
           const answerText =
             typeof answer.text === "string" && answer.text.trim()
@@ -167,8 +167,7 @@ function mapQuestionsToPreview(
             answer.isCorrect ??
             answer.correct ??
             answer.is_correct ??
-            (typeof answer.score === "number" ? answer.score > 0 : false) ??
-            (typeof answer.weight === "number" ? answer.weight > 0 : false)
+            (typeof answer.score === "number" ? answer.score > 0 : (typeof answer.weight === "number" ? answer.weight > 0 : false))
           );
 
           return {
@@ -212,7 +211,7 @@ function mapQuestionsToPreview(
               : index + 1,
         type: typeRaw,
         answers,
-      };
+      } as PreviewQuestion;
     })
     .filter((question): question is PreviewQuestion => question !== null);
 }

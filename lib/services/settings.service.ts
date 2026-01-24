@@ -1,59 +1,62 @@
 import { prisma } from "@/lib/db";
 
 // Default AI Quiz Generator Prompt Template
-export const DEFAULT_AI_QUIZ_PROMPT = `You are an elite sports trivia architect targeting "Hardcore Sports Fans" who value accuracy, depth, and fascinating storylines.
+export const DEFAULT_AI_QUIZ_PROMPT = `You are a world-class sports trivia architect. Your goal is to create immersive, accurate, and challenging quizzes for "Hardcore Sports Fans".
 
-Context: 
+# ROLE & TONE
+- Expert Curator: Value depth, accuracy, and fascinating storylines.
+- Professional: Maintain high standards for grammar and sports terminology.
+- Engaging: Use energetic and respectful tone towards the sport's history.
+
+# CONTEXT
 - Topic: "{{TOPIC}}"
 - Sport: "{{SPORT}}"
 - Target Questions: {{NUM_QUESTIONS}}
 - Difficulty Tier: {{DIFFICULTY}}
 
-Goal: Create a world-class trivia experience in strict JSON format.
-
-🧾 JSON Schema Requirements:
+# JSON SCHEMA REQUIREMENTS
 {
-  "title": "A punchy, SEO-optimized title (e.g., 'The Ultimate {{TOPIC}} Challenge')",
-  "description": "A compelling 2-sentence hook that makes fans want to play.",
+  "title": "SEO-optimized title (e.g., 'The Ultimate {{TOPIC}} Challenge')",
+  "description": "2-sentence hook making fans want to play.",
   "slug": "{{SLUGIFIED_TOPIC}}-quiz",
   "sport": "{{SPORT}}",
   "difficulty": "{{DIFFICULTY}}",
   "duration": {{DURATION}},
   "passingScore": 70,
   "seo": {
-    "title": "Max 100 chars (aim for 60). Optimized: '{{TOPIC}} Trivia Quiz'",
-    "description": "Max 160 chars. Compelling meta including {{TOPIC}} keywords.",
-    "keywords": ["{{TOPIC_LOWER}}", "trivia", "quiz", "sports", "{{SPORT}}", "stats", "history"]
+    "title": "Max 60 chars. Optimized: '{{TOPIC}} Trivia Quiz'",
+    "description": "Max 160 chars including {{TOPIC}} keywords.",
+    "keywords": ["{{TOPIC_LOWER}}", "trivia", "quiz", "sports", "{{SPORT}}"]
   },
   "questions": [
     {
-      "text": "The main question. Be specific. Avoid 'Who is the best?' (too subjective).",
+      "text": "Specific, objective question. Avoid subjective 'Who is best?'.",
       "difficulty": "easy | medium | hard",
       "topic": "{{TOPIC}}",
-      "hint": "A subtle nudge that adds a layer of trivia without giving it away.",
-      "explanation": "A fascinating 'Did you know?' style fact related to the answer. 1-2 sentences max.",
+      "hint": "Subtle nudge that adds layers without giving it away.",
+      "explanation": "Fascinating 'Did you know?' related to the answer (1-2 sentences).",
       "answers": [
         { "text": "Correct Answer", "isCorrect": true },
-        { "text": "Plausible Distractor 1", "isCorrect": false },
-        { "text": "Plausible Distractor 2", "isCorrect": false },
-        { "text": "Plausible Distractor 3", "isCorrect": false }
+        { "text": "Distractor 1", "isCorrect": false },
+        { "text": "Distractor 2", "isCorrect": false },
+        { "text": "Distractor 3", "isCorrect": false }
       ]
     }
   ]
 }
 
-📝 Quality Benchmarks:
-1. Difficulty Varation: Even if the quiz is {{DIFFICULTY}}, include 20% Easy (confidence builders), 60% Medium (the core), and 20% Hard (true expert testers).
-2. Question Diversity: Mix these types:
-   - Career Stats: (e.g., "In which year did [Player] reach 500 goals?")
-   - Historical Context: (e.g., "This team won the championship despite [Event]...")
-   - Career Milestones: (e.g., "Before joining [Team], where did [Player] play?")
-   - Records & Awards: (e.g., "Who held the record before [Player] broke it?")
-3. Fact-Checking: Ensure all facts are accurate as of early 2025.
-4. Tone: Energetic, professional, and respectful of the sport's history.
-5. JSON Integrity: Output strictly valid JSON. No prose, no markdown wrappers, no conversational filler.
+# QUALITY BENCHMARKS
+1. DIFFICULTY MIX: Even if tier is {{DIFFICULTY}}, include:
+   - 20% Easy (Confidence builders)
+   - 60% Medium (Core expertise)
+   - 20% Hard (True pro tests)
+2. DIVERSITY: Mix stats, history, milestones, and awards.
+3. ACCURACY: All facts must be verified as of early 2025.
+4. INTEGRITY: Output ONLY valid JSON. No prose or markdown wrappers.
 
-Example of a High-Quality Question:
+# EXAMPLES OF EXCELLENCE
+
+## Example 1 (Medium Difficulty)
 {
   "text": "Which legendary stadium is often referred to as 'The Cathedral of Baseball'?",
   "difficulty": "medium",
@@ -65,6 +68,36 @@ Example of a High-Quality Question:
     { "text": "Fenway Park", "isCorrect": false },
     { "text": "Dodger Stadium", "isCorrect": false },
     { "text": "Wrigley Field", "isCorrect": false }
+  ]
+}
+
+## Example 2 (Hard Difficulty)
+{
+  "text": "Who holds the record for the most goals scored in a single FIFA World Cup tournament?",
+  "difficulty": "hard",
+  "topic": "World Cup Records",
+  "hint": "He achieved this feat in the 1958 tournament in Sweden.",
+  "explanation": "Just Fontaine scored 13 goals in the 1958 World Cup, a record that remains unsurpassed in a single edition of the tournament.",
+  "answers": [
+    { "text": "Just Fontaine", "isCorrect": true },
+    { "text": "Gerd Müller", "isCorrect": false },
+    { "text": "Ronaldo", "isCorrect": false },
+    { "text": "Pelé", "isCorrect": false }
+  ]
+}
+
+## Example 3 (Easy Difficulty)
+{
+  "text": "In basketball, how many points is a standard free throw worth?",
+  "difficulty": "easy",
+  "topic": "Rules",
+  "hint": "It is awarded after certain types of fouls.",
+  "explanation": "A free throw is an uncontested shot from the foul line and is worth exactly one point.",
+  "answers": [
+    { "text": "1", "isCorrect": true },
+    { "text": "2", "isCorrect": false },
+    { "text": "3", "isCorrect": false },
+    { "text": "0", "isCorrect": false }
   ]
 }`;
 
@@ -114,6 +147,36 @@ export const SETTINGS_KEYS = {
   AI_QUIZ_PROMPT: "ai_quiz_prompt",
   AI_MODEL: "ai_model",
 } as const;
+
+const SETTINGS_CACHE_TTL_MS = 10 * 60 * 1000;
+
+type CachedSetting = {
+  value: string;
+  expiresAt: number;
+};
+
+const settingsCache = new Map<string, CachedSetting>();
+
+function getCachedSetting(key: string): string | null {
+  const cached = settingsCache.get(key);
+  if (!cached) return null;
+  if (cached.expiresAt < Date.now()) {
+    settingsCache.delete(key);
+    return null;
+  }
+  return cached.value;
+}
+
+function setCachedSetting(key: string, value: string): void {
+  settingsCache.set(key, {
+    value,
+    expiresAt: Date.now() + SETTINGS_CACHE_TTL_MS,
+  });
+}
+
+function clearCachedSetting(key: string): void {
+  settingsCache.delete(key);
+}
 
 // Get a setting value
 export async function getSetting(key: string): Promise<string | null> {
@@ -168,6 +231,7 @@ export async function setSetting(
         updatedBy,
       },
     });
+    setCachedSetting(key, value);
   } catch (error: unknown) {
     const isPrismaError = error instanceof Error && 'code' in error;
     const errorCode = isPrismaError ? (error as { code?: string }).code : undefined;
@@ -183,8 +247,12 @@ export async function setSetting(
 // Get AI Quiz Prompt (with fallback to default)
 export async function getAIQuizPrompt(): Promise<string> {
   try {
+    const cached = getCachedSetting(SETTINGS_KEYS.AI_QUIZ_PROMPT);
+    if (cached) return cached;
     const customPrompt = await getSetting(SETTINGS_KEYS.AI_QUIZ_PROMPT);
-    return customPrompt || DEFAULT_AI_QUIZ_PROMPT;
+    const resolved = customPrompt || DEFAULT_AI_QUIZ_PROMPT;
+    setCachedSetting(SETTINGS_KEYS.AI_QUIZ_PROMPT, resolved);
+    return resolved;
   } catch {
     // If database error, return default
     return DEFAULT_AI_QUIZ_PROMPT;
@@ -194,6 +262,7 @@ export async function getAIQuizPrompt(): Promise<string> {
 // Update AI Quiz Prompt
 export async function updateAIQuizPrompt(prompt: string, updatedBy?: string): Promise<void> {
   await setSetting(SETTINGS_KEYS.AI_QUIZ_PROMPT, prompt, "ai", updatedBy);
+  clearCachedSetting(SETTINGS_KEYS.AI_QUIZ_PROMPT);
 }
 
 // Reset AI Quiz Prompt to default
@@ -202,6 +271,7 @@ export async function resetAIQuizPrompt(): Promise<void> {
     await prisma.appSettings.delete({
       where: { key: SETTINGS_KEYS.AI_QUIZ_PROMPT },
     });
+    clearCachedSetting(SETTINGS_KEYS.AI_QUIZ_PROMPT);
   } catch {
     // Ignore if doesn't exist
   }
@@ -210,8 +280,12 @@ export async function resetAIQuizPrompt(): Promise<void> {
 // Get AI Model (with fallback to default)
 export async function getAIModel(): Promise<string> {
   try {
+    const cached = getCachedSetting(SETTINGS_KEYS.AI_MODEL);
+    if (cached) return cached;
     const customModel = await getSetting(SETTINGS_KEYS.AI_MODEL);
-    return customModel || DEFAULT_AI_MODEL;
+    const resolved = customModel || DEFAULT_AI_MODEL;
+    setCachedSetting(SETTINGS_KEYS.AI_MODEL, resolved);
+    return resolved;
   } catch {
     // If database error, return default
     return DEFAULT_AI_MODEL;
@@ -221,5 +295,5 @@ export async function getAIModel(): Promise<string> {
 // Update AI Model
 export async function updateAIModel(model: string, updatedBy?: string): Promise<void> {
   await setSetting(SETTINGS_KEYS.AI_MODEL, model, "ai", updatedBy);
+  clearCachedSetting(SETTINGS_KEYS.AI_MODEL);
 }
-

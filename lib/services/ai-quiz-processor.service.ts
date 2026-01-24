@@ -119,6 +119,8 @@ export async function processAIQuizTask(taskId: string): Promise<void> {
         temperature: 0.8,
         maxTokens: isO1 ? 16000 : 4000,
         responseFormat: isO1 ? null : { type: "json_object" },
+        cacheable: true,
+        cacheKeyContext: sourceMaterial ? { sourceHash: sourceMaterial.contentSnippet.substring(0, 100) } : undefined,
       }
     );
 
@@ -283,16 +285,19 @@ export function buildPrompt(
     sourceMaterial?: SourceMaterial | null;
   }
 ): string {
-  // Replace all placeholders in the template
-  let prompt = template
-    .replace(/\{\{TOPIC\}\}/g, topic)
-    .replace(/\{\{TOPIC_LOWER\}\}/g, topic.toLowerCase())
-    .replace(/\{\{SLUGIFIED_TOPIC\}\}/g, slugifiedTopic)
-    .replace(/\{\{SPORT\}\}/g, sport)
-    .replace(/\{\{DIFFICULTY\}\}/g, difficulty)
-    .replace(/\{\{NUM_QUESTIONS\}\}/g, numQuestions.toString())
-    .replace(/\{\{DURATION\}\}/g, (numQuestions * 60).toString());
+  // Prefix instructions to help with prompt caching (static instructions first)
+  const prefix = `INSTRUCTIONS FOR GENERATION:
+- Topic should be treated as: ${topic}
+- Sport context: ${sport}
+- Generate exactly ${numQuestions} questions
+- Difficulty level: ${difficulty}
+- Target duration: ${numQuestions * 60} seconds
+`;
 
+  // Start with the instructions then the template
+  let prompt = prefix + template;
+
+  // Add the variable contexts at the end to keep the prefix stable
   if (options?.customTitle) {
     prompt += `\n\nSet the quiz "title" field to "${options.customTitle}" and keep the overall theme aligned with this title.`;
   }
@@ -302,6 +307,16 @@ export function buildPrompt(
     prompt += `\n\nIncorporate the key facts from the following source when writing questions. Focus on accuracy and do not invent details not supported by the source.\nSource URL: ${url}${title ? `\nSource Title: ${title}` : ""
       }\nSource Content:\n"""\n${contentSnippet}\n"""`;
   }
+
+  // Final replacement of placeholders in the entire prompt (after variable parts are appended)
+  prompt = prompt
+    .replace(/\{\{TOPIC\}\}/g, topic)
+    .replace(/\{\{TOPIC_LOWER\}\}/g, topic.toLowerCase())
+    .replace(/\{\{SLUGIFIED_TOPIC\}\}/g, slugifiedTopic)
+    .replace(/\{\{SPORT\}\}/g, sport)
+    .replace(/\{\{DIFFICULTY\}\}/g, difficulty)
+    .replace(/\{\{NUM_QUESTIONS\}\}/g, numQuestions.toString())
+    .replace(/\{\{DURATION\}\}/g, (numQuestions * 60).toString());
 
   return prompt;
 }
@@ -545,4 +560,3 @@ export function determineSportFromTopic(topic: string): string {
 
   return "General";
 }
-
