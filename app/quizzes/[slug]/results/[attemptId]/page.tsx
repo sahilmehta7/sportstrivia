@@ -24,6 +24,8 @@ import {
   QuizResultsActions,
   QuizResultsReviewButton,
 } from "@/components/quiz/results";
+import { PerformanceInsights } from "@/components/quiz/results/PerformanceInsights";
+import { EntranceAnimation } from "@/components/quiz/results/EntranceAnimation";
 import { getTierForPoints } from "@/lib/services/progression.service";
 
 interface QuizResultsPageProps {
@@ -327,7 +329,7 @@ export default async function QuizResultsPage({
   return (
     <ShowcaseThemeProvider>
       <QuizResultsLayout>
-        <div className="space-y-10">
+        <EntranceAnimation className="space-y-10">
 
           <div className="flex flex-col items-center space-y-8">
             <QuizResultsHeader
@@ -374,6 +376,10 @@ export default async function QuizResultsPage({
             />
 
             <QuizResultsStatsGrid data={summaryData} className="w-full max-w-4xl" />
+
+            <div className="w-full max-w-4xl">
+              <PerformanceInsights userAnswers={attempt.userAnswers as any} />
+            </div>
 
             <div className="grid w-full gap-8 lg:grid-cols-2">
               <QuizResultsSection
@@ -579,7 +585,7 @@ export default async function QuizResultsPage({
               </QuizResultsCard>
             </TabsContent>
           </Tabs>
-        </div>
+        </EntranceAnimation>
       </QuizResultsLayout>
     </ShowcaseThemeProvider>
   );

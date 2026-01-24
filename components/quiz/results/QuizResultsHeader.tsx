@@ -23,9 +23,7 @@ export function QuizResultsHeader({
   return (
     <div
       className={cn(
-        "flex flex-col gap-4 px-6 py-5 border-b",
-        theme === "light" ? "border-slate-200/50" : undefined,
-        theme === "dark" ? "border-white/10" : undefined,
+        "flex flex-col gap-4 py-8",
         className,
       )}
     >
@@ -33,9 +31,9 @@ export function QuizResultsHeader({
         <div className="flex items-center gap-3">
           {leading}
           <div>
-            <h1 className={cn("text-lg font-semibold", getTextColor(theme, "primary"))}>{title}</h1>
+            <h1 className={cn("text-3xl font-black uppercase tracking-tighter sm:text-5xl", getTextColor("primary"))}>{title}</h1>
             {subtitle ? (
-              <p className={cn("text-sm", getTextColor(theme, "secondary"))}>{subtitle}</p>
+              <p className={cn("text-lg font-bold italic opacity-60", getTextColor("secondary"))}>{subtitle}</p>
             ) : null}
           </div>
         </div>

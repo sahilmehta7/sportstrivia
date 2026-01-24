@@ -1,7 +1,10 @@
+"use client";
+
 import type { QuizResultsLeaderboardProps } from "./types";
 import { cn } from "@/lib/utils";
-import { getTextColor, getAccentColor } from "@/lib/showcase-theme";
-import { Coins } from "lucide-react";
+import { getTextColor } from "@/lib/showcase-theme";
+import { Coins, Trophy, Medal } from "lucide-react";
+import { motion } from "framer-motion";
 
 export function QuizResultsLeaderboard({
   entries,
@@ -22,72 +25,136 @@ export function QuizResultsLeaderboard({
     );
   }
 
+  const top3 = entries.slice(0, 3);
+  const others = entries.slice(3);
+
   return (
-    <div className="space-y-3">
-      {entries.map((entry, index) => (
-        <div
-          key={`${entry.userId}-${index}`}
-          className={cn(
-            "flex items-center gap-3 rounded-2xl border p-3 backdrop-blur-sm",
-            theme === "light"
-              ? "border-slate-200/50 bg-white/60 shadow-[inset_0_1px_0_rgba(0,0,0,0.05)]"
-              : "border-white/10 bg-white/5 shadow-[inset_0_1px_0_rgba(255,255,255,0.12)]",
-          )}
-        >
-          <div className="relative">
-            <div
-              className={cn(
-                "flex h-10 w-10 items-center justify-center overflow-hidden rounded-full",
-                theme === "light" ? "bg-slate-100" : "bg-white/10",
-              )}
-            >
-              {entry.userImage ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={entry.userImage}
-                  alt={entry.userName || "User"}
-                  className="h-full w-full object-cover"
-                />
-              ) : (
-                <span className={cn("text-sm font-medium", getTextColor(theme, "muted"))}>
-                  {(entry.userName || "U").charAt(0)}
-                </span>
-              )}
+    <div className="space-y-8">
+      {/* Podium Section */}
+      <div className="flex items-end justify-center gap-2 pb-4 pt-8 sm:gap-4">
+        {/* 2nd Place */}
+        {top3[1] && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="flex flex-col items-center"
+          >
+            <div className="relative mb-2">
+              <div className="h-12 w-12 overflow-hidden rounded-full border-2 border-slate-300 bg-slate-100 sm:h-16 sm:w-16">
+                {top3[1].userImage ? (
+                  <img src={top3[1].userImage} alt={top3[1].userName || ""} className="h-full w-full object-cover" />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center font-bold">{(top3[1].userName || "U")[0]}</div>
+                )}
+              </div>
+              <div className="absolute -bottom-1 -right-1 rounded-full bg-slate-300 p-1 text-slate-700 shadow-sm">
+                <Medal className="h-3 w-3 sm:h-4 sm:w-4" />
+              </div>
             </div>
-            <div
-              className={cn(
-                "absolute -bottom-1 -left-1 flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold text-white shadow-lg",
-                theme === "light"
-                  ? "bg-gradient-to-r from-blue-500 to-purple-600"
-                  : "bg-gradient-to-r from-amber-400 to-pink-500",
-              )}
-            >
-              {(index + 1).toString().padStart(2, "0")}
+            <div className="h-16 w-16 rounded-t-lg bg-slate-200/50 text-center dark:bg-slate-700/50 sm:h-20 sm:w-20">
+              <span className="text-xs font-black">2ND</span>
             </div>
-          </div>
+          </motion.div>
+        )}
 
-          <div className="flex-1">
-            <p className={cn("font-semibold", getTextColor(theme, "primary"))}>{entry.userName || "Anonymous"}</p>
-            <p className={cn("text-sm", getTextColor(theme, "muted"))}>
-              {(entry.totalPoints ?? entry.score ?? 0)} points
-            </p>
-          </div>
+        {/* 1st Place */}
+        {top3[0] && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="flex flex-col items-center"
+          >
+            <div className="relative mb-2">
+              <motion.div
+                animate={{ scale: [1, 1.1, 1] }}
+                transition={{ duration: 2, repeat: Infinity }}
+                className="h-16 w-16 overflow-hidden rounded-full border-4 border-amber-400 bg-amber-50 sm:h-20 sm:w-20"
+              >
+                {top3[0].userImage ? (
+                  <img src={top3[0].userImage} alt={top3[0].userName || ""} className="h-full w-full object-cover" />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center font-bold text-lg text-amber-700">{(top3[0].userName || "U")[0]}</div>
+                )}
+              </motion.div>
+              <div className="absolute -bottom-2 -right-2 rounded-full bg-amber-400 p-1.5 text-black shadow-lg">
+                <Trophy className="h-4 w-4 sm:h-5 sm:w-5" />
+              </div>
+            </div>
+            <div className="h-24 w-20 rounded-t-lg bg-amber-400/20 text-center dark:bg-amber-400/10 sm:h-28 sm:w-24">
+              <span className="text-sm font-black text-amber-600">1ST</span>
+            </div>
+          </motion.div>
+        )}
 
-          <div
+        {/* 3rd Place */}
+        {top3[2] && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="flex flex-col items-center"
+          >
+            <div className="relative mb-2">
+              <div className="h-10 w-10 overflow-hidden rounded-full border-2 border-amber-700/50 bg-orange-50 sm:h-14 sm:w-14">
+                {top3[2].userImage ? (
+                  <img src={top3[2].userImage} alt={top3[2].userName || ""} className="h-full w-full object-cover" />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center font-bold">{(top3[2].userName || "U")[0]}</div>
+                )}
+              </div>
+              <div className="absolute -bottom-1 -right-1 rounded-full bg-amber-700/50 p-1 text-white shadow-sm">
+                <Medal className="h-3 w-3 sm:h-4 sm:w-4" />
+              </div>
+            </div>
+            <div className="h-12 w-14 rounded-t-lg bg-amber-700/10 text-center dark:bg-amber-700/5 sm:h-16 sm:w-18">
+              <span className="text-[10px] font-black opacity-60">3RD</span>
+            </div>
+          </motion.div>
+        )}
+      </div>
+
+      <div className="space-y-2">
+        {entries.map((entry, index) => (
+          <motion.div
+            key={`${entry.userId}-${index}`}
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.4 + index * 0.05 }}
             className={cn(
-              "inline-flex items-center gap-1 rounded-lg px-2 py-1 backdrop-blur-sm",
+              "flex items-center gap-3 rounded-2xl border p-3 transition-all",
               theme === "light"
-                ? "border border-blue-200/50 bg-gradient-to-r from-blue-100/80 to-purple-100/80"
-                : "border border-amber-400/30 bg-gradient-to-r from-amber-400/20 to-pink-500/20",
+                ? "border-slate-200/50 bg-white shadow-sm hover:shadow-md"
+                : "border-white/10 bg-white/5 hover:bg-white/10",
+              index < 3 && "bg-primary/5 dark:bg-white/10 border-primary/20 dark:border-white/20"
             )}
           >
-            <Coins className={cn("h-3 w-3", getAccentColor(theme, "primary"))} />
-            <span className={cn("text-sm font-semibold", getTextColor(theme, "primary"))}>
-              {entry.totalPoints ?? entry.score ?? 0}
-            </span>
-          </div>
-        </div>
-      ))}
+            <div className="flex w-6 justify-center text-xs font-black opacity-40">
+              {(index + 1).toString().padStart(2, "0")}
+            </div>
+
+            <div className="h-8 w-8 shrink-0 overflow-hidden rounded-full bg-slate-100 dark:bg-white/10">
+              {entry.userImage ? (
+                <img src={entry.userImage} alt={entry.userName || "User"} className="h-full w-full object-cover" />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center text-xs font-bold">
+                  {(entry.userName || "U").charAt(0)}
+                </div>
+              )}
+            </div>
+
+            <div className="flex-1 min-w-0">
+              <p className={cn("text-sm font-bold truncate", getTextColor("primary"))}>{entry.userName || "Anonymous"}</p>
+            </div>
+
+            <div className="flex items-center gap-1 px-3 py-1 rounded-full bg-primary/5 dark:bg-white/5">
+              <Coins className="h-3 w-3 text-amber-500" />
+              <span className="text-sm font-black tracking-tight">{entry.totalPoints ?? entry.score ?? 0}</span>
+            </div>
+          </motion.div>
+        ))}
+      </div>
     </div>
   );
 }
