@@ -12,6 +12,10 @@ const withPWA = require("@ducanh2912/next-pwa").default({
 });
 
 const nextConfig: NextConfig = {
+  // Silence Turbopack warning about webpack config (from PWA plugin)
+  // We use Turbopack for dev where PWA is disabled anyway
+  // @ts-ignore - The type definition might not be updated yet in all next versions
+  turbopack: {},
 
 
   typescript: {
