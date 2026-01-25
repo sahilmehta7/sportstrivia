@@ -263,9 +263,10 @@ export async function getTopicHierarchy(topicId: string) {
  * Fetch topic tree with all descendants (recursive, uncached)
  * Use this sparingly - prefer cached getDescendantTopicIds for performance
  */
-export async function getTopicTree(parentId: string | null = null): Promise<any[]> {
-  const topics = await prisma.topic.findMany({
-    where: { parentId },
+export async function getTopicTree(rootParentId: string | null = null): Promise<any[]> {
+  // Fetch all topics in one go to avoid N+1 recursive queries
+  // We explicitly select fields to avoid over-fetching
+  const allTopics = await prisma.topic.findMany({
     orderBy: { order: "asc" },
     include: {
       _count: {
@@ -277,17 +278,36 @@ export async function getTopicTree(parentId: string | null = null): Promise<any[
     },
   });
 
-  const result = [];
+  // Create a map for O(1) lookups
+  const topicMap = new Map<string, any>();
+  allTopics.forEach((topic) => {
+    topicMap.set(topic.id, { ...topic, children: [] });
+  });
 
-  for (const topic of topics) {
-    const children = await getTopicTree(topic.id);
-    result.push({
-      ...topic,
-      children,
-    });
+  // Build the tree structure
+  const rootNodes: any[] = [];
+
+  allTopics.forEach((topic) => {
+    const node = topicMap.get(topic.id);
+    if (topic.parentId) {
+      const parent = topicMap.get(topic.parentId);
+      if (parent) {
+        parent.children.push(node);
+      }
+    } else {
+      rootNodes.push(node);
+    }
+  });
+
+  // If a specific parent ID was requested, return its children
+  if (rootParentId) {
+    // If the parent is in our map, return its children
+    const specificParent = topicMap.get(rootParentId);
+    return specificParent ? specificParent.children : [];
   }
 
-  return result;
+  // Otherwise return top-level roots
+  return rootNodes;
 }
 
 interface SearchTopicsInput {

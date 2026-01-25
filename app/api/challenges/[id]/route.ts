@@ -1,8 +1,9 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireAuth } from "@/lib/auth-helpers";
-import { handleError, successResponse, NotFoundError, ForbiddenError } from "@/lib/errors";
+import { handleError, successResponse, NotFoundError, ForbiddenError, BadRequestError } from "@/lib/errors";
 import { challengeInclude } from "@/lib/dto/challenge-filters.dto";
+import { ChallengeStatus } from "@prisma/client";
 
 // GET /api/challenges/[id] - Get challenge details
 export async function GET(
@@ -47,6 +48,93 @@ export async function GET(
       winner,
       userRole: challenge.challengerId === user.id ? "challenger" : "challenged",
     });
+  } catch (error) {
+    return handleError(error);
+  }
+}
+
+// PATCH /api/challenges/[id] - Update challenge status (Accept/Decline)
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const user = await requireAuth();
+    const { id } = await params;
+    const body = await request.json();
+    const { status } = body;
+
+    if (![ChallengeStatus.ACCEPTED, ChallengeStatus.DECLINED].includes(status)) {
+      throw new BadRequestError("Invalid status. Allowed: ACCEPTED, DECLINED");
+    }
+
+    const challenge = await prisma.challenge.findUnique({
+      where: { id },
+      include: {
+        challenger: true,
+      },
+    });
+
+    if (!challenge) {
+      throw new NotFoundError("Challenge not found");
+    }
+
+    // Only the challenged user can accept/decline
+    if (challenge.challengedId !== user.id) {
+      throw new ForbiddenError("Only the challenged user can update status");
+    }
+
+    if (challenge.status !== ChallengeStatus.PENDING) {
+      throw new BadRequestError("Challenge is no longer pending");
+    }
+
+    // Check expiration
+    if (challenge.expiresAt && challenge.expiresAt < new Date()) {
+      throw new BadRequestError("Challenge has expired");
+    }
+
+    // Update status
+    const updatedChallenge = await prisma.challenge.update({
+      where: { id },
+      data: { status },
+      include: challengeInclude,
+    });
+
+    // Notify challenger if accepted
+    if (status === ChallengeStatus.ACCEPTED) {
+      // Import dynamically if needed, or assume it's available. 
+      // Note: reusing logic from accept/route.ts
+      const { createNotification } = await import("@/lib/services/notification.service");
+      await createNotification(
+        challenge.challengerId,
+        "CHALLENGE_ACCEPTED",
+        {
+          byUserId: user.id,
+          byUserName: user.name || user.email,
+          challengeId: challenge.id,
+        },
+        {
+          push: {
+            title: `${user.name || user.email} accepted your challenge`,
+            body: `Jump back into ${updatedChallenge.quiz.title} to compete.`,
+            url: `/challenges/${challenge.id}`,
+            tag: `challenge:${challenge.id}`,
+            data: {
+              challengeId: challenge.id,
+              quizId: updatedChallenge.quiz.id,
+            },
+          },
+        }
+      );
+    }
+
+    return successResponse({
+      challenge: updatedChallenge,
+      message: status === ChallengeStatus.ACCEPTED
+        ? "Challenge accepted. Start the quiz when you're ready!"
+        : "Challenge declined",
+    });
+
   } catch (error) {
     return handleError(error);
   }

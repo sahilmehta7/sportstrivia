@@ -61,3 +61,31 @@ export async function PATCH(request: NextRequest) {
     return handleError(error);
   }
 }
+
+/**
+ * DELETE /api/users/me - Delete current user's account
+ * 
+ * GDPR-compliant endpoint for users to delete their own accounts.
+ * Uses cascading deletes defined in the Prisma schema to remove all related data.
+ */
+export async function DELETE(request: NextRequest) {
+  try {
+    const user = await requireAuth();
+
+    // Use transaction to ensure atomicity
+    await prisma.$transaction(async (tx) => {
+      // The User model has onDelete: Cascade set on most relations,
+      // so deleting the user will cascade to related records
+      await tx.user.delete({
+        where: { id: user.id },
+      });
+    });
+
+    return successResponse({
+      success: true,
+      message: "Your account has been permanently deleted",
+    });
+  } catch (error) {
+    return handleError(error);
+  }
+}

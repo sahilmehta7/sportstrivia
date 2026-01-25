@@ -148,8 +148,8 @@ export function QuizPlayClient({ quizId, quizTitle, quizSlug, initialAttemptLimi
       if (!activeAttemptId) return;
 
       try {
-        const response = await fetch(`/api/attempts/${activeAttemptId}/complete`, {
-          method: "POST",
+        const response = await fetch(`/api/attempts/${activeAttemptId}`, {
+          method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             answers: batchedAnswersRef.current,

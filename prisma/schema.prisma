@@ -149,6 +149,7 @@ model Topic {
   displayImageUrl  String?
   parentId         String?
   level            Int               @default(0)
+  order            Int               @default(0)
   createdAt        DateTime          @default(now())
   updatedAt        DateTime          @updatedAt
   questions        Question[]
@@ -350,6 +351,7 @@ model Question {
   userAnswers          UserAnswer[]
 
   @@index([topicId])
+  @@index([topicId, difficulty])
   @@index([difficulty])
   @@index([type])
 }
@@ -455,7 +457,6 @@ model QuizLeaderboard {
   user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([quizId, userId])
-  @@unique([quizId, rank])
   @@index([quizId, bestPoints(sort: Desc), averageResponseTime])
   @@index([userId])
 }

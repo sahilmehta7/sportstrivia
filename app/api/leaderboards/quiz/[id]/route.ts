@@ -69,7 +69,7 @@ export async function GET(
 
     return successResponse({
       quiz,
-      leaderboard: leaderboard.map((entry) => ({
+      leaderboard: leaderboard.map((entry, index) => ({
         userId: entry.userId,
         userName: entry.user.name,
         userImage: entry.user.image,
@@ -78,20 +78,22 @@ export async function GET(
         bestPoints: entry.bestPoints,
         averageResponseTime: entry.averageResponseTime,
         attempts: entry.attempts,
-        rank: entry.rank,
+        rank: index + 1, // Dynamically assign rank based on sort order
       })),
       userEntry: userEntry
         ? {
-            userId: userEntry.userId,
-            userName: userEntry.user.name,
-            userImage: userEntry.user.image,
-            bestScore: userEntry.bestScore,
-            bestTime: userEntry.bestTime,
-            bestPoints: userEntry.bestPoints,
-            averageResponseTime: userEntry.averageResponseTime,
-            attempts: userEntry.attempts,
-            rank: userEntry.rank,
-          }
+          userId: userEntry.userId,
+          userName: userEntry.user.name,
+          userImage: userEntry.user.image,
+          bestScore: userEntry.bestScore,
+          bestTime: userEntry.bestTime,
+          bestPoints: userEntry.bestPoints,
+          averageResponseTime: userEntry.averageResponseTime,
+          attempts: userEntry.attempts,
+          rank: userEntry.rank > 0
+            ? userEntry.rank
+            : (user ? leaderboard.findIndex(e => e.userId === user.id) + 1 : 0) || 0,
+        }
         : null,
     });
   } catch (error) {

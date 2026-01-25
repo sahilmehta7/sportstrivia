@@ -63,7 +63,11 @@ export function ChallengesClient({
 
   const handleAccept = async (challengeId: string) => {
     try {
-      const response = await fetch(`/api/challenges/${challengeId}/accept`, { method: "PATCH" });
+      const response = await fetch(`/api/challenges/${challengeId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "ACCEPTED" }),
+      });
       if (!response.ok) throw new Error((await response.json()).error || "Failed to accept challenge");
       toast({ title: "Success", description: "Challenge accepted! Take the quiz to compete." });
       refreshChallenges();
@@ -74,7 +78,11 @@ export function ChallengesClient({
 
   const handleDecline = async (challengeId: string) => {
     try {
-      const response = await fetch(`/api/challenges/${challengeId}/decline`, { method: "PATCH" });
+      const response = await fetch(`/api/challenges/${challengeId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "DECLINED" }),
+      });
       if (!response.ok) throw new Error((await response.json()).error || "Failed to decline challenge");
       toast({ title: "Success", description: "Challenge declined" });
       refreshChallenges();
