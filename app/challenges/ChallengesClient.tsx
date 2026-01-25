@@ -111,12 +111,12 @@ export function ChallengesClient({
     });
   };
 
-  const renderChallengesList = (challenges: ChallengeListItem[], icon: LucideIcon, title: string, desc: string, isReceived: boolean = false, isSent: boolean = false) => {
+  const renderChallengesList = (challenges: ChallengeListItem[], Icon: LucideIcon, title: string, desc: string, isReceived: boolean = false, isSent: boolean = false) => {
     if (challenges.length === 0) {
       return (
         <div className="py-24 text-center space-y-6 rounded-[3rem] glass border border-dashed border-white/10">
           <div className="h-16 w-16 mx-auto rounded-full glass border border-white/5 flex items-center justify-center text-muted-foreground/20">
-            {icon({ className: "h-8 w-8" } as any)}
+            <Icon className="h-8 w-8" />
           </div>
           <div className="space-y-1">
             <p className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground/40">{title}</p>
