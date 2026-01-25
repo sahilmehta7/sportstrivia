@@ -295,7 +295,7 @@ export function MainNavigation() {
                     />
                   </button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-64 rounded-none border-2 border-foreground bg-background p-0 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]" align="end" forceMount>
+                <DropdownMenuContent className="w-64 rounded-none border-2 border-foreground bg-background p-0 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]" align="end">
                   <DropdownMenuLabel className="font-normal p-0">
                     <div className="flex flex-col space-y-1 p-5 bg-muted/30">
                       <p className="text-sm font-bold uppercase tracking-tighter leading-none">{session.user.name}</p>

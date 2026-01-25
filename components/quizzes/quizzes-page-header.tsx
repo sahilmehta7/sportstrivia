@@ -4,6 +4,8 @@ import { cn } from "@/lib/utils";
 import { getGradientText } from "@/lib/showcase-theme";
 import { ShieldCheck } from "lucide-react";
 
+import { GlobalQuizSearch } from "@/components/shared/GlobalQuizSearch";
+
 export function QuizzesPageHeader() {
   return (
     <div className="mb-12 space-y-6 text-center lg:text-left md:mb-16">
@@ -21,6 +23,10 @@ export function QuizzesPageHeader() {
         <p className="max-w-xl mx-auto lg:mx-0 text-xl text-muted-foreground font-semibold uppercase tracking-tight leading-tight">
           Test your knowledge with curated trivia challenges from the world of sports. Proven performance required.
         </p>
+
+        <div className="max-w-md mx-auto lg:mx-0 pt-4">
+          <GlobalQuizSearch className="w-full" />
+        </div>
       </div>
     </div>
   );
