@@ -24,15 +24,7 @@ import {
   QuizResultsActions,
   QuizResultsReviewButton,
 } from "@/components/quiz/results";
-import dynamic from "next/dynamic";
-// Lazy load recharts-heavy component
-const PerformanceInsights = dynamic(
-  () => import("@/components/quiz/results/PerformanceInsights").then((mod) => mod.PerformanceInsights),
-  {
-    ssr: false,
-    loading: () => <div className="h-[300px] w-full animate-pulse rounded-2xl bg-white/5" />
-  }
-);
+import { PerformanceInsightsWrapper as PerformanceInsights } from "@/components/quiz/results/PerformanceInsightsWrapper";
 import { EntranceAnimation } from "@/components/quiz/results/EntranceAnimation";
 import { getTierForPoints } from "@/lib/services/progression.service";
 
