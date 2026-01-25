@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { UserAvatar } from "@/components/shared/UserAvatar";
 import { NotificationsDropdown } from "@/components/shared/NotificationsDropdown";
 import { User, LogOut, Menu, Moon, Sun, Shuffle, Trophy, Gamepad2, Compass, ShieldCheck } from "lucide-react";
+import Image from "next/image";
 import { useTheme } from "next-themes";
 import { signOut, useSession } from "next-auth/react";
 import { cn } from "@/lib/utils";
@@ -74,8 +75,14 @@ export function MainNavigation() {
     return (
       <nav className="sticky top-0 z-50 border-b-2 border-foreground bg-background">
         <div className="mx-auto flex h-20 w-full max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-          <Link href="/" className="flex items-center gap-2 group">
-            <ShieldCheck className="h-6 w-6 text-accent" />
+          <Link href="/" className="flex items-center gap-3 group">
+            <Image
+              src="/logo.png"
+              alt="Sports Trivia Logo"
+              width={40}
+              height={40}
+              className="h-10 w-10 object-contain"
+            />
             <span className="text-2xl font-bold tracking-tighter uppercase font-['Barlow_Condensed',sans-serif]">
               SPORTS<span className="text-accent underline decoration-4 underline-offset-4">TRIVIA</span>
             </span>
@@ -106,8 +113,14 @@ export function MainNavigation() {
       />
       <nav className="sticky top-0 z-50 border-b-2 border-foreground/5 bg-background/80 backdrop-blur-md">
         <div className="mx-auto max-w-7xl px-4 h-20 flex items-center gap-6 sm:px-6 lg:px-8">
-          <Link href="/" className="flex items-center gap-2 group shrink-0">
-            <ShieldCheck className="h-6 w-6 text-accent" />
+          <Link href="/" className="flex items-center gap-3 group shrink-0">
+            <Image
+              src="/logo.png"
+              alt="Sports Trivia Logo"
+              width={32}
+              height={32}
+              className="h-8 w-8 object-contain"
+            />
             <span className="text-xl font-bold tracking-tighter uppercase font-['Barlow_Condensed',sans-serif] hidden sm:block">
               SPORTS<span className="text-accent">TRIVIA</span>
             </span>
