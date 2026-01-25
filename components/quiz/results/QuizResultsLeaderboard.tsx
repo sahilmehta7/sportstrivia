@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import type { QuizResultsLeaderboardProps } from "./types";
 import { cn } from "@/lib/utils";
 import { getTextColor } from "@/lib/showcase-theme";
@@ -26,7 +27,6 @@ export function QuizResultsLeaderboard({
   }
 
   const top3 = entries.slice(0, 3);
-  const others = entries.slice(3);
 
   return (
     <div className="space-y-8">
@@ -41,9 +41,15 @@ export function QuizResultsLeaderboard({
             className="flex flex-col items-center"
           >
             <div className="relative mb-2">
-              <div className="h-12 w-12 overflow-hidden rounded-full border-2 border-slate-300 bg-slate-100 sm:h-16 sm:w-16">
+              <div className="h-12 w-12 overflow-hidden rounded-full border-2 border-slate-300 bg-slate-100 sm:h-16 sm:w-16 relative">
                 {top3[1].userImage ? (
-                  <img src={top3[1].userImage} alt={top3[1].userName || ""} className="h-full w-full object-cover" />
+                  <Image
+                    src={top3[1].userImage}
+                    alt={top3[1].userName || ""}
+                    fill
+                    className="object-cover"
+                    unoptimized={!top3[1].userImage.startsWith("https://lh3.googleusercontent.com") && !top3[1].userImage.includes("supabase")}
+                  />
                 ) : (
                   <div className="flex h-full w-full items-center justify-center font-bold">{(top3[1].userName || "U")[0]}</div>
                 )}
@@ -70,10 +76,16 @@ export function QuizResultsLeaderboard({
               <motion.div
                 animate={{ scale: [1, 1.1, 1] }}
                 transition={{ duration: 2, repeat: Infinity }}
-                className="h-16 w-16 overflow-hidden rounded-full border-4 border-amber-400 bg-amber-50 sm:h-20 sm:w-20"
+                className="h-16 w-16 overflow-hidden rounded-full border-4 border-amber-400 bg-amber-50 sm:h-20 sm:w-20 relative"
               >
                 {top3[0].userImage ? (
-                  <img src={top3[0].userImage} alt={top3[0].userName || ""} className="h-full w-full object-cover" />
+                  <Image
+                    src={top3[0].userImage}
+                    alt={top3[0].userName || ""}
+                    fill
+                    className="object-cover"
+                    unoptimized={!top3[0].userImage.startsWith("https://lh3.googleusercontent.com") && !top3[0].userImage.includes("supabase")}
+                  />
                 ) : (
                   <div className="flex h-full w-full items-center justify-center font-bold text-lg text-amber-700">{(top3[0].userName || "U")[0]}</div>
                 )}
@@ -97,9 +109,15 @@ export function QuizResultsLeaderboard({
             className="flex flex-col items-center"
           >
             <div className="relative mb-2">
-              <div className="h-10 w-10 overflow-hidden rounded-full border-2 border-amber-700/50 bg-orange-50 sm:h-14 sm:w-14">
+              <div className="h-10 w-10 overflow-hidden rounded-full border-2 border-amber-700/50 bg-orange-50 sm:h-14 sm:w-14 relative">
                 {top3[2].userImage ? (
-                  <img src={top3[2].userImage} alt={top3[2].userName || ""} className="h-full w-full object-cover" />
+                  <Image
+                    src={top3[2].userImage}
+                    alt={top3[2].userName || ""}
+                    fill
+                    className="object-cover"
+                    unoptimized={!top3[2].userImage.startsWith("https://lh3.googleusercontent.com") && !top3[2].userImage.includes("supabase")}
+                  />
                 ) : (
                   <div className="flex h-full w-full items-center justify-center font-bold">{(top3[2].userName || "U")[0]}</div>
                 )}
@@ -134,9 +152,15 @@ export function QuizResultsLeaderboard({
               {(index + 1).toString().padStart(2, "0")}
             </div>
 
-            <div className="h-8 w-8 shrink-0 overflow-hidden rounded-full bg-slate-100 dark:bg-white/10">
+            <div className="h-8 w-8 shrink-0 overflow-hidden rounded-full bg-slate-100 dark:bg-white/10 relative">
               {entry.userImage ? (
-                <img src={entry.userImage} alt={entry.userName || "User"} className="h-full w-full object-cover" />
+                <Image
+                  src={entry.userImage}
+                  alt={entry.userName || "User"}
+                  fill
+                  className="object-cover"
+                  unoptimized={!entry.userImage.startsWith("https://lh3.googleusercontent.com") && !entry.userImage.includes("supabase")}
+                />
               ) : (
                 <div className="flex h-full w-full items-center justify-center text-xs font-bold">
                   {(entry.userName || "U").charAt(0)}
@@ -158,5 +182,3 @@ export function QuizResultsLeaderboard({
     </div>
   );
 }
-
-
