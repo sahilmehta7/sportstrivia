@@ -339,7 +339,7 @@ export default function EditQuizPage({ params }: EditQuizPageProps) {
         description: `${formData.title} has been updated successfully.`,
       });
 
-      router.push("/admin/quizzes");
+      router.refresh();
     } catch (error: any) {
       toast({
         title: "Error",

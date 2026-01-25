@@ -276,50 +276,23 @@ export function QuizQuestionManager({
         description: "Question has been removed from the quiz.",
       });
     } catch (error: any) {
-      // Revert on error
-      setPoolQuestions(initialPoolQuestions);
       toast({
-        title: "Error",
-        description: error.message,
+        title: "Error removing question",
+        description: error.message + " - Refresh the page to see current state.",
         variant: "destructive",
       });
     }
   };
 
-  const handleUpdatePoints = async (poolId: string, points: number) => {
+  const handleUpdatePoints = (poolId: string, points: number) => {
     if (Number.isNaN(points) || points <= 0) {
       return;
     }
 
-    // Optimistic update
+    // Local update only - saved via "Save Order & Points" button
     setPoolQuestions((prev) =>
       prev.map((question) => (question.poolId === poolId ? { ...question, points } : question))
     );
-
-    try {
-      const response = await fetch(
-        `/api/admin/quizzes/${quiz.id}/questions/${poolId}`,
-        {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ points }),
-        }
-      );
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || "Failed to update points");
-      }
-    } catch (error: any) {
-      // Revert on error
-      setPoolQuestions(initialPoolQuestions);
-      toast({
-        title: "Error",
-        description: error.message || "Failed to update points",
-        variant: "destructive",
-      });
-    }
   };
 
   const handleSaveOrder = async () => {
