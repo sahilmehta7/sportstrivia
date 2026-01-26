@@ -46,10 +46,10 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: [
-      { url: "/icon.svg" },
+      { url: "/logo.png" },
       { url: "/logo-dark.png", media: "(prefers-color-scheme: dark)" },
     ],
-    apple: [{ url: "/apple-icon.png" }],
+    apple: [{ url: "/logo.png" }],
   },
   openGraph: {
     type: "website",
