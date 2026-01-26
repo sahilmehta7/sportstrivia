@@ -7,6 +7,19 @@ import { QuizzesContent } from "./QuizzesContent";
 import type { ShowcaseFilterGroup } from "@/components/showcase/ui/FilterBar";
 import type { PublicQuizListItem, DailyQuizItem, ComingSoonQuiz } from "@/lib/services/public-quiz.service";
 import { PageContainer } from "@/components/shared/PageContainer";
+import { DailyChallengeHero } from "@/components/home/DailyChallengeHero";
+import type { DailyGameType } from "@/lib/utils/daily-game-logic";
+
+interface DailyGameData {
+  gameId: string;
+  gameType: DailyGameType;
+  displayName: string;
+  gameNumber: number;
+  isCompleted: boolean;
+  solved?: boolean;
+  guessCount?: number;
+  maxGuesses: number;
+}
 
 interface QuizzesPageContentProps {
   quizzes: PublicQuizListItem[];
@@ -20,6 +33,7 @@ interface QuizzesPageContentProps {
     total: number;
     limit: number;
   };
+  dailyGameData?: DailyGameData | null;
 }
 
 export function QuizzesPageContent({
@@ -29,11 +43,28 @@ export function QuizzesPageContent({
   comingSoonQuizzes,
   filterGroups,
   pagination,
+  dailyGameData,
 }: QuizzesPageContentProps) {
   return (
     <main className="min-h-screen pb-24">
       <PageContainer>
         <div className="space-y-16">
+          {/* Daily Challenge Hero */}
+          {dailyGameData && (
+            <section>
+              <DailyChallengeHero
+                gameId={dailyGameData.gameId}
+                gameType={dailyGameData.gameType}
+                displayName={dailyGameData.displayName}
+                gameNumber={dailyGameData.gameNumber}
+                isCompleted={dailyGameData.isCompleted}
+                solved={dailyGameData.solved}
+                guessCount={dailyGameData.guessCount}
+                maxGuesses={dailyGameData.maxGuesses}
+              />
+            </section>
+          )}
+
           {/* Featured Quizzes Hero Section */}
           {featuredQuizzes.length > 0 && (
             <section>

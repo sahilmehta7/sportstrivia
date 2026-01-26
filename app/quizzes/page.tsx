@@ -10,6 +10,8 @@ import {
   getDailyRecurringQuizzes,
   getComingSoonQuizzes,
 } from "@/lib/services/public-quiz.service";
+import { getTodaysGame } from "@/lib/services/daily-game.service";
+import { getMaxGuesses, getGameTypeDisplayName, getISTDateString } from "@/lib/utils/daily-game-logic";
 import type { PublicQuizFilters } from "@/lib/dto/quiz-filters.dto";
 import type { ShowcaseFilterGroup } from "@/components/showcase/ui/FilterBar";
 import { Difficulty } from "@prisma/client";
@@ -19,6 +21,36 @@ import { PageContainer } from "@/components/shared/PageContainer";
 
 const HERO_SECTION_LIMIT = 5;
 const DEFAULT_PAGE_SIZE = 12;
+
+// Helper to get daily game data for the hero
+async function getDailyGameData(userId?: string) {
+  try {
+    const game = await getTodaysGame(userId);
+    if (!game) return null;
+
+    const maxGuesses = getMaxGuesses(game.gameType);
+    const isCompleted = game.userAttempt?.solved ||
+      (game.userAttempt?.guessCount ?? 0) >= maxGuesses;
+
+    // Calculate game number
+    const startDate = new Date('2026-01-26');
+    const today = new Date(getISTDateString());
+    const gameNumber = Math.floor((today.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+
+    return {
+      gameId: game.id,
+      gameType: game.gameType,
+      displayName: getGameTypeDisplayName(game.gameType),
+      gameNumber,
+      isCompleted,
+      solved: game.userAttempt?.solved,
+      guessCount: game.userAttempt?.guessCount,
+      maxGuesses,
+    };
+  } catch {
+    return null;
+  }
+}
 
 type SearchParams = {
   [key: string]: string | string[] | undefined;
@@ -227,6 +259,7 @@ async function QuizzesData({
   const dailyQuizzesPromise = getDailyRecurringQuizzes(userId);
   const comingSoonPromise = getComingSoonQuizzes(6);
   const filterGroupsPromise = getFilterGroups(params || {});
+  const dailyGamePromise = getDailyGameData(userId);
 
   const listing = await listingPromise;
 
@@ -266,10 +299,11 @@ async function QuizzesData({
     }
   }
 
-  const [dailyQuizzes, comingSoonQuizzes, filterGroups] = await Promise.all([
+  const [dailyQuizzes, comingSoonQuizzes, filterGroups, dailyGameData] = await Promise.all([
     dailyQuizzesPromise,
     comingSoonPromise,
     filterGroupsPromise,
+    dailyGamePromise,
   ]);
 
   const baseUrl =
@@ -293,12 +327,14 @@ async function QuizzesData({
         comingSoonQuizzes={comingSoonQuizzes}
         filterGroups={filterGroups}
         pagination={listing.pagination}
+        dailyGameData={dailyGameData}
       />
 
       <ItemListStructuredData itemListElements={itemList} name="Sports Trivia Quizzes" />
     </>
   );
 }
+
 
 // Fallback for quizzes loading
 function QuizzesFallback() {

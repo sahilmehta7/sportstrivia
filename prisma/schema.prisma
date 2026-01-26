@@ -98,6 +98,7 @@ model User {
   backgroundTasks    AdminBackgroundTask[]
   pushSubscriptions  PushSubscription[]
   notificationPreferences UserNotificationPreference?
+  dailyGameAttempts  DailyGameAttempt[]
 
   @@index([email])
 }
@@ -249,6 +250,7 @@ model Quiz {
   tags                   QuizTagRelation[]
   topicConfigs           QuizTopicConfig[]
   completionAwards       QuizCompletionBonusAward[]
+  dailyGame              DailyGame?
 
   @@index([slug])
   @@index([sport])
@@ -742,4 +744,48 @@ enum BackgroundTaskStatus {
   COMPLETED
   FAILED
   CANCELLED
+}
+
+/// Daily Wordle-Style Games
+model DailyGame {
+  id          String        @id @default(cuid())
+  date        String        @unique // "YYYY-MM-DD" in IST
+  gameType    DailyGameType
+  targetValue String        // The answer (uppercased)
+  clues       Json?         // Metadata for hints/attributes
+  quizId      String?       @unique
+  quiz        Quiz?         @relation(fields: [quizId], references: [id])
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  attempts    DailyGameAttempt[]
+
+  @@index([date])
+  @@index([gameType])
+}
+
+model DailyGameAttempt {
+  id          String    @id @default(cuid())
+  dailyGameId String
+  userId      String
+  guesses     Json      // Array of guess strings
+  solved      Boolean   @default(false)
+  guessCount  Int       @default(0)
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  dailyGame   DailyGame @relation(fields: [dailyGameId], references: [id], onDelete: Cascade)
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([dailyGameId, userId])
+  @@index([userId])
+  @@index([dailyGameId])
+}
+
+enum DailyGameType {
+  WORD     // Classic Wordle (5-6 letter sports term)
+  ATHLETE  // Guess the player by attributes
+  TEAM     // Guess the team
+  STAT     // Higher/Lower number guess
 }
