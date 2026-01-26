@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 import { useTheme } from "next-themes";
 import { cn } from "@/lib/utils";
+import { m, AnimatePresence, LazyMotion, domAnimation } from "framer-motion";
 
 interface AttemptQuestion {
   id: string;
@@ -55,6 +56,13 @@ interface QuizPlayUIProps {
 
 type ThemeVariant = "light" | "dark";
 
+/*
+  "Minimal Athletic Pro Max" Design
+  - Richer gradients, deeper diffs between layers
+  - Sharper borders (1px) with high contrast in dark mode
+  - "Athletic" typography: tighter tracking, uppercase labels
+  - Interactive tactile feel
+*/
 const variantStyles: Record<ThemeVariant, {
   wrapper: string;
   overlayA: string;
@@ -69,81 +77,83 @@ const variantStyles: Record<ThemeVariant, {
   timeValue: string;
   timeTrack: string;
   timeFill: string;
-  answerBase: string;
-  answerIdle: string;
-  answerSelected: string;
-  answerDisabled: string;
-  answerCorrect: string;
-  answerIncorrect: string;
+  answerBase: string; // Base layout
+  answerIdle: string; // Default state
+  answerSelected: string; // User picked this
+  answerDisabled: string; // Locked state
+  answerCorrect: string; // Revealed correct
+  answerIncorrect: string; // Revealed wrong
   imageFrame: string;
   nextButton: string;
   nextDisabled: string;
 }> = {
   light: {
     wrapper:
-      "bg-gradient-to-br from-amber-100 via-amber-50 to-orange-100 text-slate-900 border-white/50 shadow-[0_36px_96px_-50px_rgba(251,191,36,0.45)]",
-    overlayA: "bg-amber-200/60",
-    overlayB: "bg-orange-200/45",
-    overlayC: "bg-white/55",
+      "bg-gradient-to-br from-amber-50 via-orange-50/50 to-rose-50 text-slate-900 shadow-2xl ring-1 ring-slate-900/5",
+    overlayA: "bg-amber-300/40 mix-blend-multiply filter blur-3xl",
+    overlayB: "bg-orange-300/40 mix-blend-multiply filter blur-3xl",
+    overlayC: "bg-rose-300/40 mix-blend-multiply filter blur-3xl",
     card:
-      "bg-white/85 text-slate-900 shadow-[0_28px_88px_-54px_rgba(15,23,42,0.4)]",
-    helper: "text-slate-600",
-    question: "text-slate-900",
-    progressTrack: "bg-white/70",
-    progressFill: "bg-gradient-to-r from-amber-400 via-amber-300 to-orange-400",
-    timeLabel: "text-slate-600",
-    timeValue: "text-slate-900",
-    timeTrack: "bg-white/60",
-    timeFill: "bg-gradient-to-r from-amber-400 via-amber-300 to-orange-400",
+      "bg-white/60 backdrop-blur-2xl text-slate-900 shadow-[0_8px_32px_-12px_rgba(0,0,0,0.1)] ring-1 ring-white/60",
+    helper: "text-slate-500 font-bold",
+    question: "text-slate-900 tracking-tight",
+    progressTrack: "bg-slate-200/50",
+    progressFill: "bg-gradient-to-r from-amber-500 to-orange-600",
+    timeLabel: "text-slate-500 font-bold",
+    timeValue: "text-slate-900 tracking-tighter",
+    timeTrack: "bg-slate-200/50",
+    timeFill: "bg-gradient-to-r from-amber-500 to-orange-600",
     answerBase:
-      "rounded-full border transition-all duration-300 ease-out px-5 py-3 text-base font-semibold shadow-[0_18px_48px_-30px_rgba(15,23,42,0.35)] focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-amber-400",
+      "relative overflow-hidden rounded-2xl border-2 transition-all duration-200 ease-out px-4 py-4 text-base font-bold tracking-tight shadow-sm active:scale-[0.98]",
     answerIdle:
-      "border-amber-200/70 bg-white/85 text-slate-900 hover:border-amber-300 hover:bg-amber-50/80",
+      "border-transparent bg-white/50 text-slate-700 hover:border-amber-400/50 hover:bg-white/80",
     answerSelected:
-      "border-transparent bg-gradient-to-r from-amber-400 via-amber-300 to-orange-400 text-slate-900 shadow-[0_28px_60px_-30px_rgba(245,158,11,0.65)]",
-    answerDisabled: "pointer-events-none opacity-60",
+      "border-amber-500 bg-amber-500 text-white shadow-lg shadow-amber-500/20",
+    answerDisabled: "cursor-not-allowed opacity-60",
     answerCorrect:
-      "border-emerald-300 bg-emerald-100/90 text-emerald-900 shadow-[0_26px_60px_-36px_rgba(16,185,129,0.4)]",
+      "border-emerald-500 bg-emerald-500 text-white shadow-lg shadow-emerald-500/20",
     answerIncorrect:
-      "border-rose-300 bg-rose-50 text-rose-700 shadow-[0_18px_48px_-34px_rgba(244,63,94,0.35)]",
+      "border-rose-500 bg-rose-500 text-white shadow-lg shadow-rose-500/20",
     imageFrame:
-      "border border-white/50 bg-white/70 shadow-[0_32px_110px_-70px_rgba(15,23,42,0.4)]",
+      "border-2 border-white/50 bg-white/40 shadow-inner rounded-3xl",
     nextButton:
-      "bg-slate-900 text-white hover:bg-slate-800 shadow-[0_24px_70px_-40px_rgba(15,23,42,0.55)]",
-    nextDisabled: "bg-slate-400/40 text-slate-600/70 cursor-not-allowed",
+      "bg-slate-900 text-white shadow-xl shadow-slate-900/10 hover:shadow-2xl hover:shadow-slate-900/20 hover:-translate-y-0.5 active:translate-y-0.5",
+    nextDisabled: "bg-slate-200 text-slate-400 cursor-not-allowed",
   },
   dark: {
     wrapper:
-      "bg-gradient-to-br from-slate-950 via-slate-900 to-black text-white border-white/12 shadow-[0_52px_140px_-64px_rgba(6,182,212,0.45)]",
-    overlayA: "bg-emerald-500/20",
-    overlayB: "bg-cyan-500/15",
-    overlayC: "bg-purple-500/20",
+      "bg-black text-white ring-1 ring-white/10",
+    // More localized, intense glows for 'Pro Max' dark feel
+    overlayA: "bg-emerald-500/10 blur-[100px]",
+    overlayB: "bg-indigo-500/10 blur-[100px]",
+    overlayC: "bg-rose-500/10 blur-[100px]",
     card:
-      "bg-white/[0.08] text-white shadow-[0_60px_160px_-80px_rgba(6,182,212,0.4)] backdrop-blur-xl",
-    helper: "text-white/70",
-    question: "text-white",
-    progressTrack: "bg-white/12",
-    progressFill: "bg-gradient-to-r from-emerald-400 via-cyan-400 to-blue-400",
-    timeLabel: "text-white/65",
-    timeValue: "text-white",
-    timeTrack: "bg-white/15",
-    timeFill: "bg-gradient-to-r from-emerald-400 via-cyan-400 to-blue-400",
+      "bg-[#0A0A0A]/60 backdrop-blur-3xl text-white shadow-2xl ring-1 ring-white/10",
+    helper: "text-white/40 font-bold",
+    question: "text-white tracking-tight drop-shadow-sm",
+    progressTrack: "bg-white/5",
+    progressFill: "bg-gradient-to-r from-emerald-400 to-emerald-500 shadow-[0_0_12px_rgba(52,211,153,0.4)]",
+    timeLabel: "text-white/40 font-bold",
+    timeValue: "text-white tracking-tighter",
+    timeTrack: "bg-white/5",
+    // Dynamic timer color is handled in logic, this is base
+    timeFill: "bg-white",
     answerBase:
-      "rounded-full border transition-all duration-300 ease-out px-5 py-3 text-base font-semibold shadow-[0_20px_60px_-36px_rgba(15,23,42,0.7)] focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-0 focus-visible:ring-emerald-400/70",
+      "relative overflow-hidden rounded-2xl border lg:border-2 transition-all duration-200 ease-out px-4 py-4 text-base font-bold tracking-tight active:scale-[0.98]",
     answerIdle:
-      "border-white/20 bg-white/5 text-white/90 hover:border-emerald-400/60 hover:bg-emerald-400/10",
+      "border-white/5 bg-white/5 text-white/70 hover:border-white/20 hover:bg-white/10 hover:text-white",
     answerSelected:
-      "border-transparent bg-gradient-to-r from-emerald-400 via-cyan-400 to-blue-400 text-slate-950 shadow-[0_32px_80px_-36px_rgba(6,182,212,0.6)]",
-    answerDisabled: "pointer-events-none opacity-50",
+      "border-transparent bg-white text-black shadow-[0_0_30px_-5px_rgba(255,255,255,0.3)]",
+    answerDisabled: "cursor-not-allowed opacity-40",
     answerCorrect:
-      "border-emerald-400 bg-emerald-400/15 text-emerald-200 shadow-[0_24px_70px_-38px_rgba(16,185,129,0.45)]",
+      "border-transparent bg-emerald-500 text-black shadow-[0_0_40px_-10px_rgba(16,185,129,0.5)]",
     answerIncorrect:
-      "border-rose-400/70 bg-rose-500/15 text-rose-200 shadow-[0_20px_60px_-40px_rgba(248,113,113,0.45)]",
+      "border-transparent bg-rose-500 text-white shadow-[0_0_40px_-10px_rgba(244,63,94,0.5)]",
     imageFrame:
-      "border border-white/15 bg-white/10 shadow-[0_40px_140px_-80px_rgba(6,182,212,0.45)] backdrop-blur",
+      "border border-white/10 bg-white/5 shadow-2xl rounded-3xl",
     nextButton:
-      "bg-white text-slate-900 hover:bg-slate-200/90 shadow-[0_30px_90px_-50px_rgba(6,182,212,0.5)]",
-    nextDisabled: "bg-white/15 text-white/40 cursor-not-allowed",
+      "bg-white text-black shadow-[0_0_30px_-10px_rgba(255,255,255,0.4)] hover:shadow-[0_0_50px_-10px_rgba(255,255,255,0.5)] hover:-translate-y-0.5 active:translate-y-0.5",
+    nextDisabled: "bg-white/10 text-white/20 cursor-not-allowed",
   },
 };
 
@@ -164,17 +174,16 @@ export function QuizPlayUI({
   timeLimit,
   selectedAnswerId,
   feedback,
-  isReviewing,
+  isReviewing, // Used for 'locking in' state
   isAdvancing,
   onAnswerSelect,
   onNext,
   reviewTimeout: _reviewTimeout = 900,
-  helperText = "Tap an answer to lock it in",
+  helperText = "Select an option",
   className,
 }: QuizPlayUIProps) {
   const { theme, systemTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
-  const [isVisible, setIsVisible] = useState(false);
 
   // Resolve theme (user preference or system)
   const resolvedTheme = useMemo(() => {
@@ -187,12 +196,6 @@ export function QuizPlayUI({
 
   useEffect(() => {
     setMounted(true);
-    const timeout = window.setTimeout(() => {
-      setIsVisible(true);
-    }, 40);
-    return () => {
-      window.clearTimeout(timeout);
-    };
   }, []);
 
   const formattedTime = formatSeconds(timeLeft);
@@ -210,6 +213,9 @@ export function QuizPlayUI({
   const rawProgress = totalQuestions > 0 ? (currentIndex / totalQuestions) * 100 : 0;
   const progressPercent = totalQuestions > 0 ? Math.max(rawProgress, 4) : 0;
   const timePercent = timeLimit > 0 ? Math.min(Math.max((timeLeft / timeLimit) * 100, 0), 100) : 100;
+
+  // Timer urgency
+  const isUrgent = timeLeft <= 5 && timeLeft > 0;
 
   // Determine answer states
   const getAnswerState = (answerId: string) => {
@@ -236,16 +242,16 @@ export function QuizPlayUI({
   const answerMediaFrameClass = useMemo(
     () =>
       currentVariant === "light"
-        ? "border-amber-200/70 bg-white/85 shadow-[0_12px_36px_-22px_rgba(15,23,42,0.3)]"
-        : "border-white/20 bg-white/10 shadow-[0_16px_48px_-28px_rgba(15,23,42,0.55)]",
+        ? "border-amber-200/70 bg-white/85 shadow-sm"
+        : "border-white/20 bg-white/10 shadow-sm",
     [currentVariant]
   );
 
   const answerMediaBadgeClass = useMemo(
     () =>
       currentVariant === "light"
-        ? "border-amber-200/70 bg-amber-50/80 text-amber-700"
-        : "border-white/20 bg-white/10 text-white/80",
+        ? "bg-amber-100 text-amber-800 border-amber-200"
+        : "bg-white/20 text-white border-white/20 backdrop-blur-md",
     [currentVariant]
   );
 
@@ -254,259 +260,252 @@ export function QuizPlayUI({
     onAnswerSelect(answerId);
   };
 
+  if (!mounted) return null;
+
   return (
-    <div
-      className={cn(
-        "relative flex min-h-[560px] w-full flex-col overflow-hidden rounded-[40px] border px-4 py-6 transition-all duration-700 ease-out sm:px-6 sm:py-8",
-        styles.wrapper,
-        isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6",
-        className
-      )}
-      role="region"
-      aria-label={`Quiz question ${currentIndex + 1} of ${totalQuestions}`}
-    >
-      <div className="pointer-events-none">
-        <div className={cn("absolute -left-20 -top-24 h-64 w-64 rounded-full blur-3xl", styles.overlayA)} />
-        <div className={cn("absolute bottom-12 -right-16 h-72 w-72 rounded-full blur-[140px]", styles.overlayB)} />
-        <div className={cn("absolute left-1/2 top-1/2 h-80 w-80 -translate-x-1/2 -translate-y-1/2 rounded-full blur-[180px]", styles.overlayC)} />
-      </div>
-
-      <div className="relative z-10 flex flex-1 flex-col">
-        {/* Progress Section */}
-        <div
-          className={cn(
-            "mt-2 grid w-full gap-4 transition-all duration-700 ease-out sm:grid-cols-[minmax(0,1fr)_minmax(180px,220px)] sm:items-end",
-            isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
-          )}
-        >
-          <div className="space-y-2">
-            <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-[0.35em] opacity-80">
-              <span>
-                Question {currentIndex + 1} of {totalQuestions}
-              </span>
-              <span>{Math.round(rawProgress)}%</span>
-            </div>
-            <div
-              className={cn("relative h-2 w-full overflow-hidden rounded-full", styles.progressTrack)}
-              role="progressbar"
-              aria-valuemin={0}
-              aria-valuemax={totalQuestions > 0 ? totalQuestions - 1 : 1}
-              aria-valuenow={currentIndex}
-              aria-label="Question progress"
-              aria-describedby="question-progress-summary"
-            >
-              <div
-                className={cn("absolute inset-y-0 left-0 rounded-full", styles.progressFill)}
-                style={{
-                  width: `${progressPercent}%`,
-                  transition: "width 650ms cubic-bezier(0.4, 0, 0.2, 1)",
-                }}
-              />
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <div className="flex items-center justify-between text-[0.7rem] font-semibold uppercase tracking-[0.35em]">
-              <span className={styles.timeLabel}>Time left</span>
-              <span className={cn("text-base font-black tracking-tight", styles.timeValue)}>
-                {formattedTime}
-              </span>
-            </div>
-            <div
-              className={cn("relative h-2 overflow-hidden rounded-full", styles.timeTrack)}
-              role="progressbar"
-              aria-valuemin={0}
-              aria-valuemax={Math.max(timeLimit, 1)}
-              aria-valuenow={Math.max(timeLeft, 0)}
-              aria-label="Time remaining"
-              aria-describedby="time-remaining-summary"
-            >
-              <div
-                className={cn("absolute inset-y-0 left-0 rounded-full", styles.timeFill)}
-                style={{
-                  width: `${timePercent}%`,
-                  transition: "width 600ms cubic-bezier(0.22, 1, 0.36, 1)",
-                }}
-              />
-            </div>
-          </div>
+    <LazyMotion features={domAnimation}>
+      <m.div
+        className={cn(
+          "relative flex min-h-[600px] w-full flex-col overflow-hidden rounded-[40px] border px-4 py-8 sm:px-8 sm:py-10",
+          styles.wrapper,
+          className
+        )}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, ease: "easeOut" }}
+      >
+        {/* Ambient Backgrounds */}
+        <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
+          <m.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 1.5 }}
+            className={cn("absolute -left-20 -top-24 h-96 w-96 rounded-full opacity-60", styles.overlayA)}
+          />
+          <m.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 1.5, delay: 0.2 }}
+            className={cn("absolute bottom-0 -right-20 h-[500px] w-[500px] rounded-full opacity-50", styles.overlayB)}
+          />
+          <m.div
+            animate={{
+              opacity: [0.3, 0.6, 0.3],
+              scale: [1, 1.1, 1],
+            }}
+            transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+            className={cn("absolute left-1/2 top-1/2 h-[600px] w-[600px] -translate-x-1/2 -translate-y-1/2 rounded-full opacity-30", styles.overlayC)}
+          />
         </div>
 
-        {/* Question Card */}
-        <div
-          className={cn(
-            "relative mt-6 flex flex-1 flex-col gap-6 rounded-[32px] px-5 py-6 transition-all duration-700 ease-out sm:px-8 sm:py-9",
-            styles.card,
-            isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
-          )}
-        >
-          <div className="space-y-6">
-            {/* Question Image - Only render if exists */}
-            {hasQuestionImage && (
+        <div className="relative z-10 flex flex-1 flex-col gap-8">
+          {/* Header: Progress & Timer */}
+          <div className="grid w-full grid-cols-[1fr_auto] gap-6 items-end">
+            {/* Progress Bar */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between text-[10px] sm:text-xs font-bold uppercase tracking-[0.2em] opacity-70">
+                <span>
+                  Question {currentIndex + 1} <span className="opacity-40">/ {totalQuestions}</span>
+                </span>
+                <span>{Math.round(rawProgress)}%</span>
+              </div>
               <div
-                className={cn(
-                  "relative w-full overflow-hidden rounded-[32px] aspect-[4/3]",
-                  styles.imageFrame
-                )}
+                className={cn("relative h-2 w-full overflow-hidden rounded-full", styles.progressTrack)}
               >
-                <Image
-                  src={question.questionImageUrl!}
-                  alt={questionPrompt}
-                  fill
-                  className="object-cover"
-                  sizes="(min-width: 1024px) 460px, 100vw"
-                  priority
+                <m.div
+                  className={cn("absolute inset-y-0 left-0 rounded-full", styles.progressFill)}
+                  animate={{ width: `${progressPercent}%` }}
+                  transition={{ duration: 0.8, ease: "circOut" }}
                 />
               </div>
-            )}
-            {!hasQuestionImage && showAnswerPreview && (
-              <div
-                className={cn(
-                  "relative flex w-full items-center justify-center gap-4 rounded-[32px] border px-6 py-8",
-                  styles.imageFrame
-                )}
-              >
-                <div className="flex flex-wrap items-center justify-center gap-4">
-                  {answerImageUrls.slice(0, 4).map((url, index) => (
-                    <div
-                      key={url}
-                      className="relative h-20 w-20 overflow-hidden rounded-2xl border border-white/30 bg-white/10 shadow-[0_20px_60px_-35px_rgba(15,23,42,0.6)]"
-                    >
-                      <Image
-                        src={url}
-                        alt={`Answer option preview ${index + 1}`}
-                        fill
-                        className="object-cover"
-                        sizes="80px"
-                      />
-                    </div>
-                  ))}
+            </div>
+
+            {/* Timer */}
+            <div className="space-y-3 min-w-[120px]">
+              <div className="flex items-center justify-between text-[10px] sm:text-xs font-bold uppercase tracking-[0.2em] opacity-70">
+                <span className={styles.timeLabel}>Time Left</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <m.div
+                  animate={isUrgent ? { scale: [1, 1.05, 1], opacity: [1, 0.8, 1] } : {}}
+                  transition={isUrgent ? { duration: 0.5, repeat: Infinity } : {}}
+                  className={cn(
+                    "text-3xl font-black tracking-tighter tabular-nums leading-none",
+                    styles.timeValue,
+                    isUrgent && "text-rose-500"
+                  )}
+                >
+                  {formattedTime}
+                </m.div>
+
+                {/* Circular Timer Visual */}
+                <div className="relative h-8 w-8">
+                  <svg className="h-full w-full -rotate-90 text-transparent" viewBox="0 0 36 36">
+                    <title>Time Remaining Circle</title>
+                    {/* Background Circle */}
+                    <path
+                      className={isUrgent ? "stroke-rose-900/20" : "stroke-white/10"}
+                      d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                      fill="none"
+                      strokeWidth="4"
+                    />
+                    {/* Progress Circle */}
+                    <m.path
+                      className={isUrgent ? "stroke-rose-500" : "stroke-current"}
+                      stroke={isUrgent ? undefined : "url(#gradient)"} // Use simple color or gradient
+                      strokeDasharray={`${timePercent}, 100`}
+                      d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                      fill="none"
+                      strokeWidth="4"
+                      strokeLinecap="round"
+                      animate={{ strokeDasharray: `${timePercent}, 100` }}
+                      transition={{ duration: 0.5, ease: "linear" }}
+                      style={!isUrgent && currentVariant === 'dark' ? { stroke: 'white' } : {}}
+                    />
+                  </svg>
                 </div>
               </div>
-            )}
-
-            {/* Question Text - Adjust size based on image presence */}
-            <div className={cn("space-y-3", hasQuestionImage ? "mt-0" : "mt-0")}>
-              <p className={cn("text-xs font-semibold uppercase tracking-[0.35em]", styles.helper)}>
-                {helperText}
-              </p>
-              <p className={cn(
-                "font-semibold leading-snug",
-                hasQuestionImage 
-                  ? "text-2xl sm:text-3xl"  // Smaller when image present
-                  : "text-3xl sm:text-4xl",  // Larger when no image
-                styles.question
-              )}>
-                {questionPrompt}
-              </p>
-            </div>
-
-            {/* Answers */}
-            <div className="grid w-full gap-3 sm:grid-cols-2">
-              {question.answers.map((answer) => {
-                const answerState = getAnswerState(answer.id);
-                const hasAnswerMedia = Boolean(answer.answerImageUrl || answer.answerVideoUrl || answer.answerAudioUrl);
-                const enableHover = !(isAdvancing || isReviewing || Boolean(feedback));
-
-                return (
-                  <button
-                    key={answer.id}
-                    type="button"
-                    onClick={() => handleAnswerClick(answer.id)}
-                    className={cn(
-                      styles.answerBase,
-                      "w-full justify-between gap-3",
-                      answerState === "idle" && styles.answerIdle,
-                      answerState === "selected" && styles.answerSelected,
-                      answerState === "correct" && styles.answerCorrect,
-                      answerState === "incorrect" && styles.answerIncorrect,
-                      (isAdvancing || isReviewing || feedback) && styles.answerDisabled,
-                      enableHover && "hover:-translate-y-0.5 hover:shadow-[0_18px_40px_-35px_rgba(15,23,42,0.45)]"
-                    )}
-                    disabled={isAdvancing || isReviewing || Boolean(feedback)}
-                    aria-pressed={answer.id === selectedAnswerId}
-                    aria-label={answer.answerText}
-                  >
-                    <span className="flex w-full items-center gap-3 text-left">
-                      {/* Answer Media - Only show if exists */}
-                      {hasAnswerMedia && (
-                        <span
-                          className={cn(
-                            "relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-2xl border",
-                            answerMediaFrameClass
-                          )}
-                          aria-hidden="true"
-                        >
-                          {answer.answerImageUrl ? (
-                            <Image
-                              src={answer.answerImageUrl}
-                              alt=""
-                              fill
-                              className="object-cover"
-                              sizes="48px"
-                            />
-                          ) : answer.answerVideoUrl ? (
-                            <span className="text-lg">🎬</span>
-                          ) : (
-                            <span className="text-lg">🔊</span>
-                          )}
-                        </span>
-                      )}
-                      <span className="text-left leading-tight">{answer.answerText}</span>
-                    </span>
-                    {answerState === "correct" && (
-                      <span className={cn(
-                        "rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.3em]",
-                        answerMediaBadgeClass
-                      )}>
-                        Correct
-                      </span>
-                    )}
-                    {answerState === "incorrect" && (
-                      <span className={cn(
-                        "rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.3em]",
-                        answerMediaBadgeClass
-                      )}>
-                        Incorrect
-                      </span>
-                    )}
-                  </button>
-                );
-              })}
             </div>
           </div>
 
-          {/* Next Button */}
-          <div className="mt-auto">
-            <button
-              type="button"
+          {/* Question & Answers Area */}
+          <div className="flex-1 flex flex-col justify-center">
+            <AnimatePresence mode="wait">
+              <m.div
+                key={question.id}
+                initial={{ opacity: 0, x: 50, filter: "blur(10px)" }}
+                animate={{ opacity: 1, x: 0, filter: "blur(0px)" }}
+                exit={{ opacity: 0, x: -50, filter: "blur(10px)" }}
+                transition={{
+                  type: "spring",
+                  stiffness: 300,
+                  damping: 30,
+                  opacity: { duration: 0.3 }
+                }}
+                className={cn(
+                  "flex flex-col gap-8 rounded-[32px] p-6 sm:p-8",
+                  styles.card
+                )}
+              >
+                {/* Question Content */}
+                <div className="space-y-6">
+                  {hasQuestionImage && (
+                    <div className={cn("relative w-full overflow-hidden aspect-video", styles.imageFrame)}>
+                      <Image
+                        src={question.questionImageUrl!}
+                        alt={questionPrompt}
+                        fill
+                        className="object-cover"
+                        sizes="(min-width: 1024px) 600px, 100vw"
+                        priority
+                      />
+                    </div>
+                  )}
+
+                  {!hasQuestionImage && showAnswerPreview && (
+                    <div className={cn("relative flex w-full flex-wrap justify-center gap-4 py-8", styles.imageFrame)}>
+                      {answerImageUrls.slice(0, 4).map((url, index) => (
+                        <div key={index} className="relative h-24 w-24 overflow-hidden rounded-xl border border-white/10 shadow-lg">
+                          <Image src={url} alt={`Option ${index + 1}`} fill className="object-cover" />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  <div className="space-y-4">
+                    <p className={cn("text-xs font-bold uppercase tracking-[0.25em]", styles.helper)}>
+                      {helperText}
+                    </p>
+                    <h2 className={cn(
+                      "font-bold leading-tight",
+                      hasQuestionImage ? "text-2xl sm:text-3xl" : "text-3xl sm:text-4xl md:text-5xl",
+                      styles.question
+                    )}>
+                      {questionPrompt}
+                    </h2>
+                  </div>
+                </div>
+
+                {/* Answers Grid */}
+                <div className="grid w-full gap-4 sm:grid-cols-2">
+                  {question.answers.map((answer, i) => {
+                    const answerState = getAnswerState(answer.id);
+                    const hasAnswerMedia = Boolean(answer.answerImageUrl || answer.answerVideoUrl || answer.answerAudioUrl);
+                    const enableHover = !(isAdvancing || isReviewing || Boolean(feedback));
+
+                    return (
+                      <m.button
+                        key={answer.id}
+                        layoutId={`answer-${answer.id}`}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: i * 0.1 }}
+                        onClick={() => handleAnswerClick(answer.id)}
+                        whileHover={enableHover ? { scale: 1.02, y: -2 } : {}}
+                        whileTap={enableHover ? { scale: 0.98 } : {}}
+                        disabled={isAdvancing || isReviewing || Boolean(feedback)}
+                        className={cn(
+                          styles.answerBase,
+                          "flex flex-col justify-center gap-3 text-left min-h-[80px]",
+                          answerState === "idle" && styles.answerIdle,
+                          answerState === "selected" && styles.answerSelected,
+                          answerState === "correct" && styles.answerCorrect,
+                          answerState === "incorrect" && styles.answerIncorrect,
+                          (isAdvancing || isReviewing || feedback) && styles.answerDisabled
+                        )}
+                      >
+                        <div className="flex w-full items-center gap-4">
+                          {hasAnswerMedia && (
+                            <div className={cn("relative h-14 w-14 shrink-0 overflow-hidden rounded-lg border", answerMediaFrameClass)}>
+                              {answer.answerImageUrl ? (
+                                <Image src={answer.answerImageUrl} alt="" fill className="object-cover" />
+                              ) : <span className="flex h-full w-full items-center justify-center text-xl">📷</span>}
+                            </div>
+                          )}
+                          <span className="text-lg leading-snug">{answer.answerText}</span>
+                        </div>
+
+                        {/* Status Badge */}
+                        {answerState === "correct" && (
+                          <m.div
+                            initial={{ opacity: 0, scale: 0.8 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            className={cn("absolute top-3 right-3 rounded-full border px-2 py-0.5 text-[10px] uppercase font-bold tracking-widest", answerMediaBadgeClass)}
+                          >
+                            Correct
+                          </m.div>
+                        )}
+                      </m.button>
+                    );
+                  })}
+                </div>
+              </m.div>
+            </AnimatePresence>
+          </div>
+
+          {/* Footer / Next Button */}
+          <div className="flex justify-end pt-4">
+            <m.button
               onClick={onNext}
-              className={cn(
-                "inline-flex w-full items-center justify-center rounded-full px-6 py-3 text-lg font-semibold transition-all duration-300",
-                isNextDisabled ? styles.nextDisabled : styles.nextButton,
-                isAdvancing && "scale-[0.99]"
-              )}
               disabled={isNextDisabled}
+              whileHover={!isNextDisabled ? { scale: 1.05 } : {}}
+              whileTap={!isNextDisabled ? { scale: 0.95 } : {}}
+              animate={isNextDisabled ? { opacity: 0.5 } : { opacity: 1 }}
+              className={cn(
+                "relative overflow-hidden rounded-full px-10 py-4 text-lg font-bold tracking-wide transition-colors",
+                isNextDisabled ? styles.nextDisabled : styles.nextButton
+              )}
             >
-              {isAdvancing ? "Loading" : currentIndex + 1 >= totalQuestions ? "Complete" : "Next"}
-            </button>
-          </div>
-
-          {/* Feedback Message (Screen Reader) */}
-          <div className="sr-only" role="status" aria-live="polite">
-            {feedback?.message ?? ""}
+              <span className="relative z-10 flex items-center gap-2">
+                {isAdvancing ? "Processing..." : currentIndex + 1 >= totalQuestions ? "Finish Quiz" : "Next Question"}
+                {!isAdvancing && currentIndex + 1 < totalQuestions && (
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
+                )}
+              </span>
+            </m.button>
           </div>
         </div>
-      </div>
-
-      <div className="sr-only" aria-live="polite">
-        <span id="question-progress-summary">
-          Question {currentIndex + 1} of {totalQuestions}. {Math.round(progressPercent)} percent complete.
-        </span>
-        <span id="time-remaining-summary">
-          {Math.max(timeLeft, 0)} seconds remaining.
-        </span>
-      </div>
-    </div>
+      </m.div>
+    </LazyMotion>
   );
 }
