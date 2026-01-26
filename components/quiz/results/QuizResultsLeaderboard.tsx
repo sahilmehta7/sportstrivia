@@ -168,8 +168,25 @@ export function QuizResultsLeaderboard({
               )}
             </div>
 
-            <div className="flex-1 min-w-0">
+            <div className="flex-1 min-w-0 flex items-center gap-2">
               <p className={cn("text-sm font-bold truncate", getTextColor("primary"))}>{entry.userName || "Anonymous"}</p>
+              {entry.topBadge && (
+                <div className="relative group/badge">
+                  <div className={cn(
+                    "h-5 w-5 rounded-full border flex items-center justify-center bg-black/5",
+                    entry.topBadge.rarity === "LEGENDARY" ? "border-amber-500 bg-amber-500/10 text-amber-500" :
+                      entry.topBadge.rarity === "EPIC" ? "border-purple-500 bg-purple-500/10 text-purple-500" :
+                        entry.topBadge.rarity === "RARE" ? "border-sky-500 bg-sky-500/10 text-sky-500" :
+                          "border-slate-300 bg-slate-100 text-slate-400"
+                  )}>
+                    {entry.topBadge.imageUrl ? (
+                      <Image src={entry.topBadge.imageUrl} alt={entry.topBadge.name} width={16} height={16} className="object-cover" />
+                    ) : (
+                      <Trophy className="h-3 w-3" />
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="flex items-center gap-1 px-3 py-1 rounded-full bg-primary/5 dark:bg-white/5">

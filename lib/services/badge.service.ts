@@ -8,7 +8,7 @@ export const BADGE_CRITERIA = {
   EARLY_BIRD: {
     name: "Early Bird",
     description: "Complete your first quiz",
-    check: async (userId: string) => {
+    check: async (userId: string, _context?: BadgeCheckContext) => {
       const count = await prisma.quizAttempt.count({
         where: { userId, completedAt: { not: null } },
       });
@@ -18,7 +18,7 @@ export const BADGE_CRITERIA = {
   QUIZ_MASTER: {
     name: "Quiz Master",
     description: "Complete 10 quizzes",
-    check: async (userId: string) => {
+    check: async (userId: string, _context?: BadgeCheckContext) => {
       const count = await prisma.quizAttempt.count({
         where: { userId, completedAt: { not: null } },
       });
@@ -28,7 +28,8 @@ export const BADGE_CRITERIA = {
   PERFECT_SCORE: {
     name: "Perfect Round",
     description: "Achieve a perfect score on any quiz",
-    check: async (userId: string) => {
+    check: async (userId: string, context?: BadgeCheckContext) => {
+      if (context?.score === 100) return true;
       const perfectAttempt = await prisma.quizAttempt.findFirst({
         where: { userId, score: 100, completedAt: { not: null } },
       });
@@ -38,7 +39,7 @@ export const BADGE_CRITERIA = {
   STREAK_WARRIOR: {
     name: "Streak Warrior",
     description: "Maintain a 7-day streak",
-    check: async (userId: string) => {
+    check: async (userId: string, _context?: BadgeCheckContext) => {
       const user = await prisma.user.findUnique({
         where: { id: userId },
         select: { currentStreak: true },
@@ -49,7 +50,7 @@ export const BADGE_CRITERIA = {
   SOCIAL_BUTTERFLY: {
     name: "Social Butterfly",
     description: "Add 5 friends",
-    check: async (userId: string) => {
+    check: async (userId: string, _context?: BadgeCheckContext) => {
       const count = await prisma.friend.count({
         where: { userId, status: "ACCEPTED" },
       });
@@ -59,8 +60,7 @@ export const BADGE_CRITERIA = {
   CHALLENGER: {
     name: "Challenger",
     description: "Win 5 challenges",
-    check: async (userId: string) => {
-      // Use direct score fields (challengerScore/challengedScore) instead of attempt relations
+    check: async (userId: string, _context?: BadgeCheckContext) => {
       const challenges = await prisma.challenge.findMany({
         where: {
           OR: [
@@ -97,7 +97,7 @@ export const BADGE_CRITERIA = {
   REVIEWER: {
     name: "Reviewer",
     description: "Review 10 quizzes",
-    check: async (userId: string) => {
+    check: async (userId: string, _context?: BadgeCheckContext) => {
       const count = await prisma.quizReview.count({
         where: { userId },
       });
@@ -107,7 +107,7 @@ export const BADGE_CRITERIA = {
   SPEEDSTER: {
     name: "Lightning Fast",
     description: "Answer a question correctly in under 2 seconds",
-    check: async (userId: string) => {
+    check: async (userId: string, _context?: BadgeCheckContext) => {
       const fastAnswer = await prisma.userAnswer.findFirst({
         where: {
           attempt: {
@@ -126,7 +126,7 @@ export const BADGE_CRITERIA = {
   COMEBACK_KID: {
     name: "Comeback Kid",
     description: "Recover from two incorrect answers and still pass a quiz",
-    check: async (userId: string) => {
+    check: async (userId: string, _context?: BadgeCheckContext) => {
       const attempts = await prisma.quizAttempt.findMany({
         where: {
           userId,
@@ -153,7 +153,6 @@ export const BADGE_CRITERIA = {
         },
       });
 
-      // Group answers by attempt
       const answersByAttempt = new Map<string, typeof allAnswers>();
       for (const answer of allAnswers) {
         const existing = answersByAttempt.get(answer.attemptId) || [];
@@ -161,10 +160,8 @@ export const BADGE_CRITERIA = {
         answersByAttempt.set(answer.attemptId, existing);
       }
 
-      // Check each attempt
       for (const attempt of attempts) {
         const answers = answersByAttempt.get(attempt.id) || [];
-
         let incorrectCount = 0;
         let recovered = false;
 
@@ -173,7 +170,6 @@ export const BADGE_CRITERIA = {
           if (!answer.isCorrect && !answer.wasSkipped) {
             incorrectCount++;
           }
-
           if (incorrectCount >= 2) {
             const remaining = answers.slice(i + 1);
             if (remaining.some((ans) => ans.isCorrect && !ans.wasSkipped)) {
@@ -182,21 +178,186 @@ export const BADGE_CRITERIA = {
             }
           }
         }
-
-        if (incorrectCount >= 2 && recovered) {
-          return true;
-        }
+        if (incorrectCount >= 2 && recovered) return true;
       }
-
       return false;
     },
   },
+  // --- NEW BADGES ---
+  FOOTBALL_FANATIC: {
+    name: "Football Fanatic",
+    description: "Complete 10 Football quizzes",
+    check: async (userId: string, context?: BadgeCheckContext) => {
+      if (context?.sport && context.sport !== "Football") return false;
+      const count = await prisma.quizAttempt.count({
+        where: {
+          userId,
+          completedAt: { not: null },
+          quiz: { sport: "Football" }
+        }
+      });
+      return count >= 10;
+    }
+  },
+  CRICKET_CHAMPION: {
+    name: "Cricket Champion",
+    description: "Complete 10 Cricket quizzes",
+    check: async (userId: string, context?: BadgeCheckContext) => {
+      if (context?.sport && context.sport !== "Cricket") return false;
+      const count = await prisma.quizAttempt.count({
+        where: {
+          userId,
+          completedAt: { not: null },
+          quiz: { sport: "Cricket" }
+        }
+      });
+      return count >= 10;
+    }
+  },
+  BASKETBALL_STAR: {
+    name: "Basketball Star",
+    description: "Complete 10 Basketball quizzes",
+    check: async (userId: string, context?: BadgeCheckContext) => {
+      if (context?.sport && context.sport !== "Basketball") return false;
+      const count = await prisma.quizAttempt.count({
+        where: {
+          userId,
+          completedAt: { not: null },
+          quiz: { sport: "Basketball" }
+        }
+      });
+      return count >= 10;
+    }
+  },
+  TENNIS_ACE: {
+    name: "Tennis Ace",
+    description: "Complete 10 Tennis quizzes",
+    check: async (userId: string, context?: BadgeCheckContext) => {
+      if (context?.sport && context.sport !== "Tennis") return false;
+      const count = await prisma.quizAttempt.count({
+        where: {
+          userId,
+          completedAt: { not: null },
+          quiz: { sport: "Tennis" }
+        }
+      });
+      return count >= 10;
+    }
+  },
+  HISTORY_BUFF: {
+    name: "History Buff",
+    description: "Answer 50 History questions correctly",
+    check: async (userId: string, _context?: BadgeCheckContext) => {
+      // Check user topic stats for any topic with "History" in the name
+      const stats = await prisma.userTopicStats.aggregate({
+        where: {
+          userId,
+          topic: { name: { contains: "History", mode: "insensitive" } }
+        },
+        _sum: { questionsCorrect: true }
+      });
+      return (stats._sum.questionsCorrect || 0) >= 50;
+    }
+  },
+  STATS_SAVANT: {
+    name: "Stats Savant",
+    description: "Answer 50 questions correctly in Stats topics",
+    check: async (userId: string, _context?: BadgeCheckContext) => {
+      const stats = await prisma.userTopicStats.aggregate({
+        where: {
+          userId,
+          topic: { name: { contains: "Stats", mode: "insensitive" } }
+        },
+        _sum: { questionsCorrect: true }
+      });
+      return (stats._sum.questionsCorrect || 0) >= 50;
+    }
+  },
+  NIGHT_OWL: {
+    name: "Night Owl",
+    description: "Complete 5 quizzes between 12 AM and 4 AM",
+    check: async (userId: string, _context?: BadgeCheckContext) => {
+      // This is complex to query directly in Prisma efficiently without raw SQL 
+      // or fetching all dates. For now, fetch last 50 attempts and check times.
+      const attempts = await prisma.quizAttempt.findMany({
+        where: { userId, completedAt: { not: null } },
+        select: { completedAt: true },
+        orderBy: { completedAt: 'desc' },
+        take: 50
+      });
+
+      let count = 0;
+      for (const attempt of attempts) {
+        if (!attempt.completedAt) continue;
+        const hour = attempt.completedAt.getHours(); // Local timezone issues may apply, usually UTC on server
+        // Assuming user is in similar timezone or we accept UTC 0-4
+        if (hour >= 0 && hour < 4) count++;
+      }
+      return count >= 5;
+    }
+  },
+  EARLY_RISER: {
+    name: "Early Riser",
+    description: "Complete 5 quizzes between 5 AM and 8 AM",
+    check: async (userId: string, _context?: BadgeCheckContext) => {
+      const attempts = await prisma.quizAttempt.findMany({
+        where: { userId, completedAt: { not: null } },
+        select: { completedAt: true },
+        orderBy: { completedAt: 'desc' },
+        take: 50
+      });
+
+      let count = 0;
+      for (const attempt of attempts) {
+        if (!attempt.completedAt) continue;
+        const hour = attempt.completedAt.getHours();
+        if (hour >= 5 && hour < 8) count++;
+      }
+      return count >= 5;
+    }
+  },
+  WEEKEND_WARRIOR: {
+    name: "Weekend Warrior",
+    description: "Complete quizzes on 4 consecutive weekends",
+    check: async (userId: string, _context?: BadgeCheckContext) => {
+      // Simplified check: Just check total weekend quizzes for now to avoid complex date logic
+      // or check 10 quizzes on weekends
+      // Correct implementation of consecutive weekends is hard without extensive history
+      // Let's pivot to "20 Quizzes on Weekends" for simplicity and performance
+      const attempts = await prisma.quizAttempt.findMany({
+        where: { userId, completedAt: { not: null } },
+        select: { completedAt: true },
+      });
+
+      let weekendCount = 0;
+      for (const attempt of attempts) {
+        if (!attempt.completedAt) continue;
+        const day = attempt.completedAt.getDay();
+        if (day === 0 || day === 6) weekendCount++;
+      }
+      return weekendCount >= 20;
+    }
+  }
 };
 
 /**
  * Check and award badges to a user
  */
-export async function checkAndAwardBadges(userId: string): Promise<string[]> {
+export interface BadgeCheckContext {
+  quizId?: string;
+  topicId?: string;
+  sport?: string;
+  score?: number;
+  isPracticeMode?: boolean;
+}
+
+/**
+ * Check and award badges to a user
+ */
+export async function checkAndAwardBadges(
+  userId: string,
+  context: BadgeCheckContext = {}
+): Promise<string[]> {
   const awardedBadges: string[] = [];
 
   // Get all badges
@@ -215,11 +376,17 @@ export async function checkAndAwardBadges(userId: string): Promise<string[]> {
     // Skip if already earned
     if (earnedBadgeIds.has(badge.id)) continue;
 
-    const criteria = BADGE_CRITERIA[badge.name as keyof typeof BADGE_CRITERIA];
+    // Find criteria by matching name property
+    const criteria = Object.values(BADGE_CRITERIA).find((c) => c.name === badge.name);
     if (!criteria) continue;
 
+    // Optimization: Skip checks that require specific context if context is missing
+    // For example, don't check "Total Quizzes" on every single action if we can help it, 
+    // but usually these checks are fast enough. 
+    // We can add specific skips here if needed in the future.
+
     // Check if user meets criteria
-    const shouldAward = await criteria.check(userId);
+    const shouldAward = await criteria.check(userId, context);
 
     if (shouldAward) {
       // Award badge

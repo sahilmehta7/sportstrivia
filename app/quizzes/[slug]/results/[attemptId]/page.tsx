@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { Prisma } from "@prisma/client";
 import { auth } from "@/lib/auth";
 import Link from "next/link";
+import { BadgeCelebration } from "@/components/quiz/results/BadgeCelebration";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { CheckCircle2, XCircle, Trophy } from "lucide-react";
@@ -328,6 +329,7 @@ export default async function QuizResultsPage({
 
   return (
     <ShowcaseThemeProvider>
+      <BadgeCelebration />
       <QuizResultsLayout>
         <EntranceAnimation className="space-y-10">
 

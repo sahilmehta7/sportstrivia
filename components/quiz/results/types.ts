@@ -15,7 +15,13 @@ export interface QuizResultsSummaryData {
   averageResponseTimeSeconds: number;
 }
 
-export type QuizResultsLeaderboardEntry = LeaderboardEntry;
+export interface QuizResultsLeaderboardEntry extends LeaderboardEntry {
+  topBadge?: {
+    name: string;
+    imageUrl: string | null;
+    rarity: string;
+  } | null;
+}
 
 export interface QuizResultsSummaryProps {
   data: QuizResultsSummaryData;

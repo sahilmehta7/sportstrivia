@@ -214,7 +214,14 @@ export function QuizPlayClient({ quizId, quizTitle, quizSlug, initialAttemptLimi
           setFeedback(null);
           setCurrentQuestion(null);
           setStatus("redirecting");
-          router.push(`/quizzes/${destinationSlug}/results/${attemptData.id}?fresh=1`);
+
+          const awardedBadges = result.data?.awardedBadges;
+          let redirectUrl = `/quizzes/${destinationSlug}/results/${attemptData.id}?fresh=1`;
+          if (Array.isArray(awardedBadges) && awardedBadges.length > 0) {
+            redirectUrl += `&badges=${encodeURIComponent(awardedBadges.join(","))}`;
+          }
+
+          router.push(redirectUrl);
           return;
         }
 

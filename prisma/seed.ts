@@ -1,4 +1,4 @@
-import { PrismaClient, Difficulty, QuestionType } from "@prisma/client";
+import { PrismaClient, Difficulty, QuestionType, BadgeCategory, BadgeRarity } from "@prisma/client";
 import {
   LEVELS_MAX,
   TIERS_MAX,
@@ -308,22 +308,32 @@ async function main() {
   // Create badges
   const _firstQuizBadge = await prisma.badge.upsert({
     where: { name: "First Quiz Complete" },
-    update: {},
+    update: {
+      category: BadgeCategory.GENERAL,
+      rarity: BadgeRarity.COMMON
+    },
     create: {
       name: "First Quiz Complete",
       description: "Complete your first quiz",
       imageUrl: "/badges/first-quiz.png",
+      category: BadgeCategory.GENERAL,
+      rarity: BadgeRarity.COMMON,
       criteria: { type: "quiz_complete", count: 1 },
     },
   });
 
   const _perfectScoreBadge = await prisma.badge.upsert({
     where: { name: "Perfect Round" },
-    update: {},
+    update: {
+      category: BadgeCategory.GENERAL,
+      rarity: BadgeRarity.EPIC
+    },
     create: {
       name: "Perfect Round",
       description: "Achieve a perfect score on any quiz",
       imageUrl: "/badges/perfect-score.png",
+      category: BadgeCategory.GENERAL,
+      rarity: BadgeRarity.EPIC,
       criteria: { type: "perfect_score", count: 1 },
     },
   });
@@ -331,89 +341,275 @@ async function main() {
   // Create remaining badges
   const _quizMasterBadge = await prisma.badge.upsert({
     where: { name: "Quiz Master" },
-    update: {},
+    update: {
+      category: BadgeCategory.GENERAL,
+      rarity: BadgeRarity.RARE
+    },
     create: {
       name: "Quiz Master",
       description: "Complete 10 quizzes",
       imageUrl: "/badges/quiz-master.png",
+      category: BadgeCategory.GENERAL,
+      rarity: BadgeRarity.RARE,
       criteria: { type: "quiz_complete", count: 10 },
     },
   });
 
   const earlyBirdBadge = await prisma.badge.upsert({
     where: { name: "Early Bird" },
-    update: {},
+    update: {
+      category: BadgeCategory.GENERAL,
+      rarity: BadgeRarity.COMMON
+    },
     create: {
       name: "Early Bird",
       description: "Complete your first quiz",
       imageUrl: "/badges/early-bird.png",
+      category: BadgeCategory.GENERAL,
+      rarity: BadgeRarity.COMMON,
       criteria: { type: "first_quiz", count: 1 },
     },
   });
 
   const streakWarriorBadge = await prisma.badge.upsert({
     where: { name: "Streak Warrior" },
-    update: {},
+    update: {
+      category: BadgeCategory.STREAK,
+      rarity: BadgeRarity.RARE
+    },
     create: {
       name: "Streak Warrior",
       description: "Maintain a 7-day streak",
       imageUrl: "/badges/streak-warrior.png",
+      category: BadgeCategory.STREAK,
+      rarity: BadgeRarity.RARE,
       criteria: { type: "streak", count: 7 },
     },
   });
 
   const socialButterflyBadge = await prisma.badge.upsert({
     where: { name: "Social Butterfly" },
-    update: {},
+    update: {
+      category: BadgeCategory.GENERAL,
+      rarity: BadgeRarity.COMMON
+    },
     create: {
       name: "Social Butterfly",
       description: "Add 5 friends",
       imageUrl: "/badges/social-butterfly.png",
+      category: BadgeCategory.GENERAL,
+      rarity: BadgeRarity.COMMON,
       criteria: { type: "friends", count: 5 },
     },
   });
 
   const _challengerBadge = await prisma.badge.upsert({
     where: { name: "Challenger" },
-    update: {},
+    update: {
+      category: BadgeCategory.GENERAL,
+      rarity: BadgeRarity.RARE
+    },
     create: {
       name: "Challenger",
       description: "Win 5 challenges",
       imageUrl: "/badges/challenger.png",
+      category: BadgeCategory.GENERAL,
+      rarity: BadgeRarity.RARE,
       criteria: { type: "challenge_wins", count: 5 },
     },
   });
 
   const _reviewerBadge = await prisma.badge.upsert({
     where: { name: "Reviewer" },
-    update: {},
+    update: {
+      category: BadgeCategory.GENERAL,
+      rarity: BadgeRarity.COMMON
+    },
     create: {
       name: "Reviewer",
       description: "Review 10 quizzes",
       imageUrl: "/badges/reviewer.png",
+      category: BadgeCategory.GENERAL,
+      rarity: BadgeRarity.COMMON,
       criteria: { type: "reviews", count: 10 },
     },
   });
 
   const _lightningFastBadge = await prisma.badge.upsert({
     where: { name: "Lightning Fast" },
-    update: {},
+    update: {
+      category: BadgeCategory.GENERAL,
+      rarity: BadgeRarity.EPIC
+    },
     create: {
       name: "Lightning Fast",
       description: "Answer a question correctly in under 2 seconds",
       imageUrl: "/badges/lightning-fast.png",
+      category: BadgeCategory.GENERAL,
+      rarity: BadgeRarity.EPIC,
       criteria: { type: "fast_answer", seconds: 2 },
     },
   });
 
   const _comebackKidBadge = await prisma.badge.upsert({
     where: { name: "Comeback Kid" },
-    update: {},
+    update: {
+      category: BadgeCategory.GENERAL,
+      rarity: BadgeRarity.RARE
+    },
     create: {
       name: "Comeback Kid",
       description: "Recover from two incorrect answers and still pass a quiz",
       imageUrl: "/badges/comeback-kid.png",
+      category: BadgeCategory.GENERAL,
+      rarity: BadgeRarity.RARE,
       criteria: { type: "comeback", minIncorrect: 2 },
+    },
+  });
+
+  // --- NEW BADGES ---
+
+  await prisma.badge.upsert({
+    where: { name: "Football Fanatic" },
+    update: {
+      category: BadgeCategory.SPORT,
+      rarity: BadgeRarity.RARE
+    },
+    create: {
+      name: "Football Fanatic",
+      description: "Complete 10 Football quizzes",
+      imageUrl: "/badges/football-fanatic.png",
+      category: BadgeCategory.SPORT,
+      rarity: BadgeRarity.RARE,
+      criteria: { type: "sport_quiz_count", sport: "Football", count: 10 },
+    },
+  });
+
+  await prisma.badge.upsert({
+    where: { name: "Cricket Champion" },
+    update: {
+      category: BadgeCategory.SPORT,
+      rarity: BadgeRarity.RARE
+    },
+    create: {
+      name: "Cricket Champion",
+      description: "Complete 10 Cricket quizzes",
+      imageUrl: "/badges/cricket-champion.png",
+      category: BadgeCategory.SPORT,
+      rarity: BadgeRarity.RARE,
+      criteria: { type: "sport_quiz_count", sport: "Cricket", count: 10 },
+    },
+  });
+
+  await prisma.badge.upsert({
+    where: { name: "Basketball Star" },
+    update: {
+      category: BadgeCategory.SPORT,
+      rarity: BadgeRarity.RARE
+    },
+    create: {
+      name: "Basketball Star",
+      description: "Complete 10 Basketball quizzes",
+      imageUrl: "/badges/basketball-star.png",
+      category: BadgeCategory.SPORT,
+      rarity: BadgeRarity.RARE,
+      criteria: { type: "sport_quiz_count", sport: "Basketball", count: 10 },
+    },
+  });
+
+  await prisma.badge.upsert({
+    where: { name: "Tennis Ace" },
+    update: {
+      category: BadgeCategory.SPORT,
+      rarity: BadgeRarity.RARE
+    },
+    create: {
+      name: "Tennis Ace",
+      description: "Complete 10 Tennis quizzes",
+      imageUrl: "/badges/tennis-ace.png",
+      category: BadgeCategory.SPORT,
+      rarity: BadgeRarity.RARE,
+      criteria: { type: "sport_quiz_count", sport: "Tennis", count: 10 },
+    },
+  });
+
+  await prisma.badge.upsert({
+    where: { name: "History Buff" },
+    update: {
+      category: BadgeCategory.TOPIC,
+      rarity: BadgeRarity.RARE
+    },
+    create: {
+      name: "History Buff",
+      description: "Answer 50 History questions correctly",
+      imageUrl: "/badges/history-buff.png",
+      category: BadgeCategory.TOPIC,
+      rarity: BadgeRarity.RARE,
+      criteria: { type: "topic_questions", topic: "History", count: 50 },
+    },
+  });
+
+  await prisma.badge.upsert({
+    where: { name: "Stats Savant" },
+    update: {
+      category: BadgeCategory.TOPIC,
+      rarity: BadgeRarity.EPIC
+    },
+    create: {
+      name: "Stats Savant",
+      description: "Answer 50 questions correctly in Stats topics",
+      imageUrl: "/badges/stats-savant.png",
+      category: BadgeCategory.TOPIC,
+      rarity: BadgeRarity.EPIC,
+      criteria: { type: "topic_questions", topic: "Stats", count: 50 },
+    },
+  });
+
+  await prisma.badge.upsert({
+    where: { name: "Weekend Warrior" },
+    update: {
+      category: BadgeCategory.STREAK,
+      rarity: BadgeRarity.EPIC
+    },
+    create: {
+      name: "Weekend Warrior",
+      description: "Complete quizzes on 4 consecutive weekends",
+      imageUrl: "/badges/weekend-warrior.png",
+      category: BadgeCategory.STREAK,
+      rarity: BadgeRarity.EPIC,
+      criteria: { type: "streak_weekend", count: 4 },
+    },
+  });
+
+  await prisma.badge.upsert({
+    where: { name: "Night Owl" },
+    update: {
+      category: BadgeCategory.STREAK,
+      rarity: BadgeRarity.RARE
+    },
+    create: {
+      name: "Night Owl",
+      description: "Complete 5 quizzes between 12 AM and 4 AM",
+      imageUrl: "/badges/night-owl.png",
+      category: BadgeCategory.STREAK,
+      rarity: BadgeRarity.RARE,
+      criteria: { type: "time_range", start: 0, end: 4, count: 5 },
+    },
+  });
+
+  await prisma.badge.upsert({
+    where: { name: "Early Riser" },
+    update: {
+      category: BadgeCategory.STREAK,
+      rarity: BadgeRarity.RARE
+    },
+    create: {
+      name: "Early Riser",
+      description: "Complete 5 quizzes between 5 AM and 8 AM",
+      imageUrl: "/badges/early-riser.png",
+      category: BadgeCategory.STREAK,
+      rarity: BadgeRarity.RARE,
+      criteria: { type: "time_range", start: 5, end: 8, count: 5 },
     },
   });
 
