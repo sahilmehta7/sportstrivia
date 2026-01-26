@@ -28,6 +28,8 @@ import {
 import { PerformanceInsightsWrapper as PerformanceInsights } from "@/components/quiz/results/PerformanceInsightsWrapper";
 import { EntranceAnimation } from "@/components/quiz/results/EntranceAnimation";
 import { getTierForPoints } from "@/lib/services/progression.service";
+import { QuizResultsLeaderboardData, LeaderboardSkeleton } from "@/components/quiz/results/QuizResultsLeaderboardData";
+import { Suspense } from "react";
 
 interface QuizResultsPageProps {
   params: Promise<{ slug: string; attemptId: string }>;
@@ -89,6 +91,14 @@ export default async function QuizResultsPage({
               explanationImageUrl: true,
               explanationVideoUrl: true,
               timeLimit: true,
+              answers: {
+                where: { isCorrect: true },
+                select: {
+                  id: true,
+                  answerText: true,
+                  answerImageUrl: true,
+                },
+              },
             },
           },
           answer: {
@@ -118,139 +128,9 @@ export default async function QuizResultsPage({
     notFound();
   }
 
-  // Check if answers should be revealed
-  const now = new Date();
-  const revealAnswers =
-    attempt.completedAt &&
-    (!attempt.quiz.answersRevealTime ||
-      attempt.quiz.answersRevealTime <= now);
-
-  // Get correct answers if they should be revealed
-  let correctAnswersMap = new Map();
-  if (revealAnswers) {
-    const questionIds = attempt.userAnswers.map((ua) => ua.questionId);
-    const questions = await prisma.question.findMany({
-      where: { id: { in: questionIds } },
-      include: {
-        answers: {
-          where: { isCorrect: true },
-          select: {
-            id: true,
-            answerText: true,
-            answerImageUrl: true,
-          },
-        },
-      },
-    });
-
-    for (const question of questions) {
-      const correctAnswer = question.answers[0];
-      if (correctAnswer) {
-        correctAnswersMap.set(question.id, correctAnswer);
-      }
-    }
-  }
-
-
   // Build quiz-specific leaderboard (top 10) with recurring aggregation support
-  let quizLeaderboard:
-    | Array<{
-      userId: string;
-      user: { id: string; name: string | null; image: string | null } | null;
-      bestPoints?: number | null;
-      bestScore?: number | null;
-      averageResponseTime?: number | null;
-    }>
-    | [] = [];
-
-  if (attempt.quiz.recurringType === "DAILY" || attempt.quiz.recurringType === "WEEKLY") {
-    const isDaily = attempt.quiz.recurringType === "DAILY";
-    const rows = await prisma.$queryRaw<Array<{
-      userId: string;
-      bestPoints: number;
-      avg_response: number | null;
-      name: string | null;
-      image: string | null;
-    }>>(
-      isDaily
-        ? Prisma.sql`
-            WITH per_period_best AS (
-              SELECT
-                "userId",
-                date_trunc('day', "completedAt") AS period_start,
-                MAX("totalPoints") AS best_points,
-                AVG(COALESCE("averageResponseTime", 0)) AS avg_response
-              FROM "QuizAttempt"
-              WHERE "quizId" = ${attempt.quiz.id}
-                AND "isPracticeMode" = false
-                AND "completedAt" IS NOT NULL
-              GROUP BY "userId", date_trunc('day', "completedAt")
-            ),
-            aggregated AS (
-              SELECT
-                "userId",
-                SUM(best_points) AS sum_points,
-                AVG(avg_response) AS avg_response
-              FROM per_period_best
-              GROUP BY "userId"
-            )
-            SELECT a."userId", a.sum_points::int AS "bestPoints", a.avg_response, u.name, u.image
-            FROM aggregated a
-            JOIN "User" u ON u.id = a."userId"
-            ORDER BY a.sum_points DESC, a.avg_response ASC
-            LIMIT 10
-          `
-        : Prisma.sql`
-            WITH per_period_best AS (
-              SELECT
-                "userId",
-                date_trunc('week', "completedAt") AS period_start,
-                MAX("totalPoints") AS best_points,
-                AVG(COALESCE("averageResponseTime", 0)) AS avg_response
-              FROM "QuizAttempt"
-              WHERE "quizId" = ${attempt.quiz.id}
-                AND "isPracticeMode" = false
-                AND "completedAt" IS NOT NULL
-              GROUP BY "userId", date_trunc('week', "completedAt")
-            ),
-            aggregated AS (
-              SELECT
-                "userId",
-                SUM(best_points) AS sum_points,
-                AVG(avg_response) AS avg_response
-              FROM per_period_best
-              GROUP BY "userId"
-            )
-            SELECT a."userId", a.sum_points::int AS "bestPoints", a.avg_response, u.name, u.image
-            FROM aggregated a
-            JOIN "User" u ON u.id = a."userId"
-            ORDER BY a.sum_points DESC, a.avg_response ASC
-            LIMIT 10
-          `
-    );
-
-    quizLeaderboard = rows.map((r) => ({
-      userId: r.userId,
-      user: { id: r.userId, name: r.name, image: r.image },
-      bestPoints: r.bestPoints,
-      averageResponseTime: r.avg_response ?? 0,
-    }));
-  } else {
-    quizLeaderboard = await prisma.quizLeaderboard.findMany({
-      where: {
-        quizId: attempt.quiz.id,
-      },
-      include: {
-        user: { select: { id: true, name: true, image: true } },
-      },
-      orderBy: [
-        { bestPoints: "desc" },
-        { averageResponseTime: "asc" },
-        { bestScore: "desc" },
-      ],
-      take: 10,
-    });
-  }
+  // This is now handled by QuizResultsLeaderboardData server component for better performance
+  // and Suspensification
 
   const userProgressPromise = prisma.user.findUnique({
     where: { id: session.user.id },
@@ -299,6 +179,13 @@ export default async function QuizResultsPage({
     ...(completionPart > 0 ? [{ label: "Completion Bonus", points: completionPart, icon: "🏆" }] : []),
   ];
 
+  // Check if answers should be revealed
+  const now = new Date();
+  const revealAnswers =
+    attempt.completedAt &&
+    (!attempt.quiz.answersRevealTime ||
+      attempt.quiz.answersRevealTime <= now);
+
   const summaryData = {
     quizTitle: attempt.quiz.title,
     userName: attempt.user?.name || "Anonymous",
@@ -311,21 +198,6 @@ export default async function QuizResultsPage({
     longestStreak: attempt.longestStreak || 0,
     averageResponseTimeSeconds: attempt.averageResponseTime || 0,
   };
-
-  const leaderboardEntries = quizLeaderboard.map((entry, index) => {
-    const user = (entry as any).user ?? null;
-    const totalPoints =
-      Number((entry as any).bestPoints ?? entry.bestPoints ?? entry.bestScore ?? 0) || 0;
-
-    return {
-      userId: (entry as any).userId ?? user?.id ?? `anonymous-${index}`,
-      userName: user?.name ?? null,
-      userImage: user?.image ?? null,
-      score: totalPoints,
-      totalPoints,
-      rank: index + 1,
-    };
-  });
 
   return (
     <ShowcaseThemeProvider>
@@ -474,11 +346,12 @@ export default async function QuizResultsPage({
             </TabsList>
 
             <TabsContent value="leaderboard">
-              <QuizResultsCard className="mt-4">
-                <QuizResultsSection title="Top Players" className="p-6">
-                  <QuizResultsLeaderboard entries={leaderboardEntries} />
-                </QuizResultsSection>
-              </QuizResultsCard>
+              <Suspense fallback={<LeaderboardSkeleton />}>
+                <QuizResultsLeaderboardData
+                  quizId={attempt.quiz.id}
+                  recurringType={attempt.quiz.recurringType}
+                />
+              </Suspense>
             </TabsContent>
 
             <TabsContent value="answers">
@@ -490,7 +363,7 @@ export default async function QuizResultsPage({
                   {attempt.userAnswers.map((userAnswer, index) => {
                     const isCorrect = userAnswer.isCorrect && !userAnswer.wasSkipped;
                     const wasSkipped = userAnswer.wasSkipped;
-                    const correctAnswer = correctAnswersMap.get(userAnswer.questionId);
+                    const correctAnswer = (userAnswer.question as any).answers?.[0];
 
                     return (
                       <div

@@ -7,5 +7,6 @@ export * from "./QuizResultsLeaderboard";
 export * from "./QuizResultsActions";
 export * from "./QuizResultsSection";
 export * from "./QuizResultsReviewButton";
+export * from "./QuizResultsLeaderboardData";
 
 

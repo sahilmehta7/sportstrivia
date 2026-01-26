@@ -302,7 +302,7 @@ export function MainNavigation() {
 
             {/* Avatar Dropdown - Desktop */}
             <div className="hidden lg:block">
-              <DropdownMenu>
+              <DropdownMenu modal={false}>
                 <DropdownMenuTrigger asChild>
                   <button className="flex items-center outline-none ring-offset-background transition-all focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2">
                     <UserAvatar

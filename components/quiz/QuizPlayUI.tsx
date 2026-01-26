@@ -266,7 +266,7 @@ export function QuizPlayUI({
     <LazyMotion features={domAnimation}>
       <m.div
         className={cn(
-          "relative flex min-h-[600px] w-full flex-col overflow-hidden rounded-[40px] border px-4 py-8 sm:px-8 sm:py-10",
+          "relative flex min-h-[500px] w-full flex-col overflow-hidden rounded-[40px] border px-4 py-4 sm:px-8 sm:py-8 lg:min-h-[600px]",
           styles.wrapper,
           className
         )}
@@ -298,9 +298,9 @@ export function QuizPlayUI({
           />
         </div>
 
-        <div className="relative z-10 flex flex-1 flex-col gap-8">
+        <div className="relative z-10 flex flex-1 flex-col gap-4 sm:gap-6">
           {/* Header: Progress & Timer */}
-          <div className="grid w-full grid-cols-[1fr_auto] gap-6 items-end">
+          <div className="grid w-full grid-cols-[1fr_auto] gap-4 items-end">
             {/* Progress Bar */}
             <div className="space-y-3">
               <div className="flex items-center justify-between text-[10px] sm:text-xs font-bold uppercase tracking-[0.2em] opacity-70">
@@ -321,25 +321,25 @@ export function QuizPlayUI({
             </div>
 
             {/* Timer */}
-            <div className="space-y-3 min-w-[120px]">
+            <div className="space-y-1.5 min-w-[100px] sm:min-w-[120px]">
               <div className="flex items-center justify-between text-[10px] sm:text-xs font-bold uppercase tracking-[0.2em] opacity-70">
                 <span className={styles.timeLabel}>Time Left</span>
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 sm:gap-3">
                 <m.div
                   animate={isUrgent ? { scale: [1, 1.05, 1], opacity: [1, 0.8, 1] } : {}}
                   transition={isUrgent ? { duration: 0.5, repeat: Infinity } : {}}
                   className={cn(
-                    "text-3xl font-black tracking-tighter tabular-nums leading-none",
+                    "text-2xl sm:text-3xl font-black tracking-tighter tabular-nums leading-none",
                     styles.timeValue,
-                    isUrgent && "text-rose-500"
+                    isUrgent && "text-rose-500 font-['Barlow_Condensed',sans-serif]"
                   )}
                 >
                   {formattedTime}
                 </m.div>
 
                 {/* Circular Timer Visual */}
-                <div className="relative h-8 w-8">
+                <div className="relative h-6 w-6 sm:h-8 sm:w-8">
                   <svg className="h-full w-full -rotate-90 text-transparent" viewBox="0 0 36 36">
                     <title>Time Remaining Circle</title>
                     {/* Background Circle */}
@@ -383,14 +383,14 @@ export function QuizPlayUI({
                   opacity: { duration: 0.3 }
                 }}
                 className={cn(
-                  "flex flex-col gap-8 rounded-[32px] p-6 sm:p-8",
+                  "flex flex-col gap-4 sm:gap-6 rounded-[32px] p-4 sm:p-6",
                   styles.card
                 )}
               >
                 {/* Question Content */}
-                <div className="space-y-6">
+                <div className="space-y-4 sm:space-y-6">
                   {hasQuestionImage && (
-                    <div className={cn("relative w-full overflow-hidden aspect-video", styles.imageFrame)}>
+                    <div className={cn("relative w-full overflow-hidden aspect-video max-h-[25vh] sm:max-h-[35vh]", styles.imageFrame)}>
                       <Image
                         src={question.questionImageUrl!}
                         alt={questionPrompt}
@@ -403,22 +403,22 @@ export function QuizPlayUI({
                   )}
 
                   {!hasQuestionImage && showAnswerPreview && (
-                    <div className={cn("relative flex w-full flex-wrap justify-center gap-4 py-8", styles.imageFrame)}>
+                    <div className={cn("relative flex w-full flex-wrap justify-center gap-4 py-4 sm:py-8", styles.imageFrame)}>
                       {answerImageUrls.slice(0, 4).map((url, index) => (
-                        <div key={index} className="relative h-24 w-24 overflow-hidden rounded-xl border border-white/10 shadow-lg">
+                        <div key={index} className="relative h-16 w-16 sm:h-24 sm:w-24 overflow-hidden rounded-xl border border-white/10 shadow-lg">
                           <Image src={url} alt={`Option ${index + 1}`} fill className="object-cover" />
                         </div>
                       ))}
                     </div>
                   )}
 
-                  <div className="space-y-4">
-                    <p className={cn("text-xs font-bold uppercase tracking-[0.25em]", styles.helper)}>
+                  <div className="space-y-2 sm:space-y-4">
+                    <p className={cn("text-[10px] sm:text-xs font-bold uppercase tracking-[0.25em] font-['Barlow_Condensed',sans-serif]", styles.helper)}>
                       {helperText}
                     </p>
                     <h2 className={cn(
-                      "font-bold leading-tight",
-                      hasQuestionImage ? "text-2xl sm:text-3xl" : "text-3xl sm:text-4xl md:text-5xl",
+                      "font-bold leading-tight uppercase tracking-tighter font-['Barlow_Condensed',sans-serif]",
+                      hasQuestionImage ? "text-xl sm:text-2xl lg:text-3xl" : "text-2xl sm:text-3xl md:text-4xl lg:text-5xl",
                       styles.question
                     )}>
                       {questionPrompt}
@@ -427,7 +427,7 @@ export function QuizPlayUI({
                 </div>
 
                 {/* Answers Grid */}
-                <div className="grid w-full gap-4 sm:grid-cols-2">
+                <div className="grid w-full gap-3 sm:gap-4 sm:grid-cols-2">
                   {question.answers.map((answer, i) => {
                     const answerState = getAnswerState(answer.id);
                     const hasAnswerMedia = Boolean(answer.answerImageUrl || answer.answerVideoUrl || answer.answerAudioUrl);
@@ -437,7 +437,7 @@ export function QuizPlayUI({
                       <m.button
                         key={answer.id}
                         layoutId={`answer-${answer.id}`}
-                        initial={{ opacity: 0, y: 20 }}
+                        initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: i * 0.1 }}
                         onClick={() => handleAnswerClick(answer.id)}
@@ -446,7 +446,7 @@ export function QuizPlayUI({
                         disabled={isAdvancing || isReviewing || Boolean(feedback)}
                         className={cn(
                           styles.answerBase,
-                          "flex flex-col justify-center gap-3 text-left min-h-[80px]",
+                          "flex flex-col justify-center gap-2 text-left min-h-[60px] sm:min-h-[72px]",
                           answerState === "idle" && styles.answerIdle,
                           answerState === "selected" && styles.answerSelected,
                           answerState === "correct" && styles.answerCorrect,
@@ -454,15 +454,15 @@ export function QuizPlayUI({
                           (isAdvancing || isReviewing || feedback) && styles.answerDisabled
                         )}
                       >
-                        <div className="flex w-full items-center gap-4">
+                        <div className="flex w-full items-center gap-3 sm:gap-4">
                           {hasAnswerMedia && (
-                            <div className={cn("relative h-14 w-14 shrink-0 overflow-hidden rounded-lg border", answerMediaFrameClass)}>
+                            <div className={cn("relative h-10 w-10 sm:h-14 sm:w-14 shrink-0 overflow-hidden rounded-lg border", answerMediaFrameClass)}>
                               {answer.answerImageUrl ? (
                                 <Image src={answer.answerImageUrl} alt="" fill className="object-cover" />
                               ) : <span className="flex h-full w-full items-center justify-center text-xl">📷</span>}
                             </div>
                           )}
-                          <span className="text-lg leading-snug">{answer.answerText}</span>
+                          <span className="text-sm sm:text-base lg:text-lg leading-snug">{answer.answerText}</span>
                         </div>
 
                         {/* Status Badge */}
@@ -484,7 +484,7 @@ export function QuizPlayUI({
           </div>
 
           {/* Footer / Next Button */}
-          <div className="flex justify-end pt-4">
+          <div className="flex justify-end pt-2">
             <m.button
               onClick={onNext}
               disabled={isNextDisabled}
