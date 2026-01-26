@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { TopicSelector } from "@/components/admin/TopicSelector";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Save } from "lucide-react";
@@ -198,23 +198,12 @@ export default function NewTopicPage() {
 
             <div className="space-y-2">
               <Label htmlFor="parentId">Parent Topic</Label>
-              <Select
+              <TopicSelector
+                topics={[{ id: "none", name: "None (root topic)", level: 0 }, ...topics]}
                 value={formData.parentId || "none"}
-                onValueChange={(val) => updateField("parentId", val === "none" ? "" : val)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="None (root topic)" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">None (root topic)</SelectItem>
-                  {topics.map((topic) => (
-                    <SelectItem key={topic.id} value={topic.id}>
-                      {"  ".repeat(topic.level)}
-                      {topic.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                onChange={(val) => updateField("parentId", val === "none" ? "" : val)}
+                placeholder="Select parent topic (optional)"
+              />
               <p className="text-xs text-muted-foreground">
                 Leave as &quot;None&quot; to create a top-level topic
               </p>

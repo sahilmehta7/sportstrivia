@@ -12,6 +12,7 @@ import Link from "next/link";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { TopicSelector } from "@/components/admin/TopicSelector";
 import {
   Dialog,
   DialogContent,
@@ -161,7 +162,7 @@ export default function TopicConfigPage({ params }: TopicConfigPageProps) {
         throw new Error(result.error || "Failed to update configuration");
       }
 
-      setTopicConfigs(topicConfigs.map(config => 
+      setTopicConfigs(topicConfigs.map(config =>
         config.id === configId ? result.data : config
       ));
 
@@ -274,9 +275,9 @@ export default function TopicConfigPage({ params }: TopicConfigPageProps) {
                     <div className="flex items-center gap-2">
                       <span className="font-medium">{config.topic.name}</span>
                       <Badge variant={
-                        config.difficulty === "EASY" ? "secondary" : 
-                        config.difficulty === "HARD" ? "destructive" : 
-                        "default"
+                        config.difficulty === "EASY" ? "secondary" :
+                          config.difficulty === "HARD" ? "destructive" :
+                            "default"
                       }>
                         {config.difficulty}
                       </Badge>
@@ -375,25 +376,13 @@ export default function TopicConfigPage({ params }: TopicConfigPageProps) {
           <div className="space-y-4">
             <div className="space-y-2">
               <Label>Topic *</Label>
-              <Select value={selectedTopic} onValueChange={setSelectedTopic}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a topic" />
-                </SelectTrigger>
-                <SelectContent>
-                  {availableTopicsFiltered.length === 0 ? (
-                    <div className="p-2 text-sm text-muted-foreground">
-                      No topics available
-                    </div>
-                  ) : (
-                    availableTopicsFiltered.map((topic) => (
-                      <SelectItem key={topic.id} value={topic.id}>
-                        {"  ".repeat(topic.level)}
-                        {topic.name}
-                      </SelectItem>
-                    ))
-                  )}
-                </SelectContent>
-              </Select>
+              <TopicSelector
+                topics={availableTopicsFiltered}
+                value={selectedTopic}
+                onChange={setSelectedTopic}
+                placeholder="Select a topic"
+                searchPlaceholder="Search topics..."
+              />
             </div>
 
             <div className="space-y-2">
@@ -429,8 +418,8 @@ export default function TopicConfigPage({ params }: TopicConfigPageProps) {
             <Button variant="outline" onClick={() => setAddDialogOpen(false)}>
               Cancel
             </Button>
-            <Button 
-              onClick={handleAddTopic} 
+            <Button
+              onClick={handleAddTopic}
               disabled={saving || !selectedTopic}
             >
               {saving ? "Adding..." : "Add Topic"}

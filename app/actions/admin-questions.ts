@@ -13,6 +13,193 @@ export type DuplicateRemovalResult = {
     details?: string[];
 };
 
+export type DuplicateGroup = {
+    text: string;
+    questions: {
+        id: string;
+        topicName: string; // "Skill"
+        createdAt: Date;
+        usageCount: {
+            userAnswers: number;
+            quizPools: number;
+        };
+    }[];
+    hasTopicConflict: boolean;
+};
+
+export async function getDuplicateGroups(): Promise<DuplicateGroup[]> {
+    try {
+        await requireAdmin();
+
+        const allQuestions = await prisma.question.findMany({
+            select: {
+                id: true,
+                questionText: true,
+                createdAt: true,
+                topic: {
+                    select: { name: true }
+                },
+                _count: {
+                    select: {
+                        userAnswers: true,
+                        quizPools: true,
+                    }
+                }
+            },
+            orderBy: { createdAt: "asc" },
+        });
+
+        const groups = new Map<string, typeof allQuestions>();
+        for (const q of allQuestions) {
+            const normalizedText = q.questionText.trim().toLowerCase();
+            if (!groups.has(normalizedText)) {
+                groups.set(normalizedText, []);
+            }
+            groups.get(normalizedText)!.push(q);
+        }
+
+        const duplicateGroups: DuplicateGroup[] = [];
+
+        for (const [text, questions] of groups.entries()) {
+            if (questions.length <= 1) continue;
+
+            // Check for topic conflict
+            const topicNames = new Set(questions.map(q => q.topic.name));
+            const hasTopicConflict = topicNames.size > 1;
+
+            duplicateGroups.push({
+                text: questions[0].questionText, // Use the first one's text for display
+                questions: questions.map(q => ({
+                    id: q.id,
+                    topicName: q.topic.name,
+                    createdAt: q.createdAt,
+                    usageCount: q._count
+                })),
+                hasTopicConflict
+            });
+        }
+
+        return duplicateGroups;
+
+    } catch (error) {
+        console.error("Error fetching duplicate groups:", error);
+        throw new Error("Failed to fetch duplicates");
+    }
+}
+
+export async function resolveDuplicateGroup(keepId: string, removeIds: string[]): Promise<{ success: boolean; error?: string }> {
+    try {
+        await requireAdmin();
+
+        const keep = await prisma.question.findUnique({ where: { id: keepId } });
+        if (!keep) throw new Error("Target question not found");
+
+        await prisma.$transaction(async (tx) => {
+            // 1. Map Answers (from all removed questions to the keep question)
+            const origAnswers = await tx.answer.findMany({ where: { questionId: keep.id } });
+
+            for (const removeId of removeIds) {
+                const dupAnswers = await tx.answer.findMany({ where: { questionId: removeId } });
+
+                const answerMap = new Map<string, string>();
+                for (const dAns of dupAnswers) {
+                    const match = origAnswers.find(o =>
+                        o.answerText.trim().toLowerCase() === dAns.answerText.trim().toLowerCase()
+                    );
+                    if (match) {
+                        answerMap.set(dAns.id, match.id);
+                    }
+                }
+
+                // 2. Move UserAnswers
+                const dupUserAnswers = await tx.userAnswer.findMany({ where: { questionId: removeId } });
+
+                if (dupUserAnswers.length > 0) {
+                    const attemptIds = Array.from(new Set(dupUserAnswers.map(ua => ua.attemptId)));
+                    const conflictAnswers = await tx.userAnswer.findMany({
+                        where: {
+                            questionId: keep.id,
+                            attemptId: { in: attemptIds }
+                        },
+                        select: { attemptId: true }
+                    });
+
+                    const attemptIdsWithOrig = new Set(conflictAnswers.map(a => a.attemptId));
+
+                    for (const ua of dupUserAnswers) {
+                        if (attemptIdsWithOrig.has(ua.attemptId)) {
+                            await tx.userAnswer.delete({ where: { id: ua.id } });
+                        } else {
+                            const newAnswerId = ua.answerId ? answerMap.get(ua.answerId) : null;
+                            await tx.userAnswer.update({
+                                where: { id: ua.id },
+                                data: {
+                                    questionId: keep.id,
+                                    answerId: newAnswerId ?? null
+                                }
+                            });
+                        }
+                    }
+                }
+
+                // 3. Move QuizPools
+                const dupPools = await tx.quizQuestionPool.findMany({ where: { questionId: removeId } });
+                for (const pool of dupPools) {
+                    const conflict = await tx.quizQuestionPool.findUnique({
+                        where: { quizId_questionId: { quizId: pool.quizId, questionId: keep.id } }
+                    });
+
+                    if (conflict) {
+                        await tx.quizQuestionPool.delete({ where: { id: pool.id } });
+                    } else {
+                        await tx.quizQuestionPool.update({
+                            where: { id: pool.id },
+                            data: { questionId: keep.id }
+                        });
+                    }
+                }
+
+                // 4. Move Reports
+                await tx.questionReport.updateMany({
+                    where: { questionId: removeId },
+                    data: { questionId: keep.id }
+                });
+
+                // 5. Update QuizAttempts
+                const attemptsWithDup = await tx.quizAttempt.findMany({
+                    where: { selectedQuestionIds: { has: removeId } },
+                    select: { id: true, selectedQuestionIds: true }
+                });
+
+                for (const attempt of attemptsWithDup) {
+                    const newIds = attempt.selectedQuestionIds.map(id =>
+                        id === removeId ? keep.id : id
+                    );
+                    const uniqueIds = Array.from(new Set(newIds));
+
+                    await tx.quizAttempt.update({
+                        where: { id: attempt.id },
+                        data: { selectedQuestionIds: uniqueIds }
+                    });
+                }
+
+                // 6. Delete the Duplicate
+                await tx.question.delete({ where: { id: removeId } });
+            }
+        }, {
+            timeout: 20000,
+            maxWait: 5000
+        });
+
+        revalidatePath("/admin/questions");
+        return { success: true };
+
+    } catch (error: any) {
+        console.error("Error resolving duplicate group:", error);
+        return { success: false, error: error.message };
+    }
+}
+
 export async function findAndRemoveDuplicateQuestions(): Promise<DuplicateRemovalResult> {
     try {
         await requireAdmin();

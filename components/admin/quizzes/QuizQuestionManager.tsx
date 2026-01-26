@@ -37,6 +37,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { getAvailableQuestions } from "@/app/admin/quizzes/actions";
+import { TopicSelector } from "@/components/admin/TopicSelector";
 
 interface TopicOption {
   id: string;
@@ -428,20 +429,13 @@ export function QuizQuestionManager({
 
             <div className="space-y-2">
               <Label>Topic</Label>
-              <Select value={topicFilter || "all"} onValueChange={(value) => setTopicFilter(value === "all" ? "" : value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="All topics" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All topics</SelectItem>
-                  {topics.map((topic) => (
-                    <SelectItem key={topic.id} value={topic.id}>
-                      {"— ".repeat(topic.level ?? 0)}
-                      {topic.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <TopicSelector
+                topics={[{ id: "all", name: "All topics", level: 0 }, ...topics]}
+                value={topicFilter || "all"}
+                onChange={(value) => setTopicFilter(value === "all" ? "" : value)}
+                placeholder="All topics"
+                searchPlaceholder="Search topics..."
+              />
             </div>
 
             <div className="space-y-2">
