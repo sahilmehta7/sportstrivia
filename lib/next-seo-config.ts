@@ -18,6 +18,7 @@ export const defaultSeoConfig = {
     name: "Sports Trivia Platform",
     url: BASE_URL,
     logo: `${BASE_URL}/logo.png`,
+    logoDark: `${BASE_URL}/logo-dark.png`,
     description: "Test your sports knowledge with interactive trivia quizzes covering all major sports",
   },
 };

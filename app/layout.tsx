@@ -44,6 +44,13 @@ export const metadata: Metadata = {
     address: false,
     telephone: false,
   },
+  icons: {
+    icon: [
+      { url: "/icon.svg" },
+      { url: "/logo-dark.png", media: "(prefers-color-scheme: dark)" },
+    ],
+    apple: [{ url: "/apple-icon.png" }],
+  },
   openGraph: {
     type: "website",
     locale: "en_US",
