@@ -21,6 +21,7 @@ const config = [
       "dist/**",
       "coverage/**",
       "build/**",
+      "public/**",
     ],
   },
   js.configs.recommended,

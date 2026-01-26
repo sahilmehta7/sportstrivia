@@ -33,7 +33,7 @@ export function DailyGameBoard({
     gameNumber,
 }: DailyGameBoardProps) {
     switch (gameType) {
-        case 'WORD':
+        case 'WORD': {
             // Convert initial guesses to LetterResult format if we have target
             const letterGuesses: LetterResult[][] = [];
             const letterStatuses: Record<string, LetterStatus> = {};
@@ -90,6 +90,7 @@ export function DailyGameBoard({
                     gameNumber={gameNumber}
                 />
             );
+        }
 
         case 'ATHLETE':
         case 'TEAM':

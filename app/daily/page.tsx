@@ -31,7 +31,7 @@ export default async function DailyPage() {
                         NO GAME TODAY
                     </h1>
                     <p className="text-muted-foreground uppercase tracking-wide text-sm">
-                        Check back later for today's challenge
+                        Check back later for today&apos;s challenge
                     </p>
                 </div>
             </div>

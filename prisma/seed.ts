@@ -25,7 +25,7 @@ async function main() {
   console.log("✓ Created admin user");
 
   // Create sample user
-  const user = await prisma.user.upsert({
+  const _user = await prisma.user.upsert({
     where: { email: "user@sportstrivia.com" },
     update: {},
     create: {
@@ -355,7 +355,7 @@ async function main() {
     },
   });
 
-  const earlyBirdBadge = await prisma.badge.upsert({
+  const _earlyBirdBadge = await prisma.badge.upsert({
     where: { name: "Early Bird" },
     update: {
       category: BadgeCategory.GENERAL,
@@ -371,7 +371,7 @@ async function main() {
     },
   });
 
-  const streakWarriorBadge = await prisma.badge.upsert({
+  const _streakWarriorBadge = await prisma.badge.upsert({
     where: { name: "Streak Warrior" },
     update: {
       category: BadgeCategory.STREAK,
@@ -387,7 +387,7 @@ async function main() {
     },
   });
 
-  const socialButterflyBadge = await prisma.badge.upsert({
+  const _socialButterflyBadge = await prisma.badge.upsert({
     where: { name: "Social Butterfly" },
     update: {
       category: BadgeCategory.GENERAL,

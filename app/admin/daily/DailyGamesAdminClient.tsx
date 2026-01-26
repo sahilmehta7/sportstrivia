@@ -346,7 +346,7 @@ export function DailyGamesAdminClient({ initialGames }: DailyGamesAdminClientPro
                         {games.length === 0 ? (
                             <TableRow>
                                 <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                                    No games scheduled. Click "Add Game" or "Auto-Schedule" to get started.
+                                    No games scheduled. Click &quot;Add Game&quot; or &quot;Auto-Schedule&quot; to get started.
                                 </TableCell>
                             </TableRow>
                         ) : (

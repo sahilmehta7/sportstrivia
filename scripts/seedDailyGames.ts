@@ -144,21 +144,24 @@ async function seedDailyGames() {
                 targetValue = SPORTS_WORDS[i % SPORTS_WORDS.length];
                 clues = { length: targetValue.length, hint: 'Sports-related term' };
                 break;
-            case 'ATHLETE':
+            case 'ATHLETE': {
                 const athlete = ATHLETES[i % ATHLETES.length];
                 targetValue = athlete.name;
                 clues = athlete.clues;
                 break;
-            case 'TEAM':
+            }
+            case 'TEAM': {
                 const team = TEAMS[i % TEAMS.length];
                 targetValue = team.name;
                 clues = team.clues;
                 break;
-            case 'STAT':
+            }
+            case 'STAT': {
                 const stat = STATS[i % STATS.length];
                 targetValue = stat.targetValue;
                 clues = { ...stat.clues, description: stat.name };
                 break;
+            }
             default:
                 targetValue = 'SCORE';
         }

@@ -16,18 +16,6 @@ export function BadgeCelebration() {
     const [currentIndex, setCurrentIndex] = useState(0);
     const [isOpen, setIsOpen] = useState(false);
 
-    useEffect(() => {
-        const badgeParam = searchParams.get("badges");
-        if (badgeParam) {
-            const badgeNames = badgeParam.split(",").filter(Boolean);
-            if (badgeNames.length > 0) {
-                setBadges(badgeNames);
-                setIsOpen(true);
-                triggerConfetti();
-            }
-        }
-    }, [searchParams]);
-
     const triggerConfetti = () => {
         const duration = 3000;
         const end = Date.now() + duration;
@@ -54,6 +42,18 @@ export function BadgeCelebration() {
         };
         frame();
     };
+
+    useEffect(() => {
+        const badgeParam = searchParams.get("badges");
+        if (badgeParam) {
+            const badgeNames = badgeParam.split(",").filter(Boolean);
+            if (badgeNames.length > 0) {
+                setBadges(badgeNames);
+                setIsOpen(true);
+                triggerConfetti();
+            }
+        }
+    }, [searchParams]);
 
     const handleNext = () => {
         if (currentIndex < badges.length - 1) {

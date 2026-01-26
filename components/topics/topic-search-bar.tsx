@@ -74,7 +74,7 @@ export function TopicQuizSearchBar({
         const next = params.toString();
         await router.push(next ? `${pathname}?${next}` : pathname, { scroll: false });
         lastExecutedQueryRef.current = normalizedQuery;
-      } catch (err) {
+      } catch {
         setError("Failed to update search.");
       }
     };

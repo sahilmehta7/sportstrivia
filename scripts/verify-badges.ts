@@ -1,4 +1,4 @@
-import { PrismaClient, BadgeCategory, BadgeRarity, QuestionType, Difficulty } from "@prisma/client";
+import { PrismaClient, Difficulty } from "@prisma/client";
 import { checkAndAwardBadges } from "../lib/services/badge.service";
 
 const prisma = new PrismaClient();
@@ -50,7 +50,7 @@ async function main() {
     // 4. Simulate 10 attempts
     console.log("Simulating 10 attempts...");
     for (let i = 0; i < 10; i++) {
-        const attempt = await prisma.quizAttempt.create({
+        const _attempt = await prisma.quizAttempt.create({
             data: {
                 userId: user.id,
                 quizId: quiz.id,

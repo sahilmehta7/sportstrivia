@@ -1,7 +1,8 @@
 "use client";
 
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import { Zap, ShieldCheck, Activity, ArrowRight, Sparkles } from "lucide-react";
+import { Zap, ArrowRight, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getGradientText } from "@/lib/showcase-theme";
 
@@ -29,10 +30,11 @@ export function TopicHero({
       <div className="relative overflow-hidden rounded-[3rem] glass-elevated border border-white/10">
         {backgroundImageUrl && (
           <div className="absolute inset-0">
-            <img
+            <Image
               src={backgroundImageUrl}
               alt=""
-              className="h-full w-full object-cover opacity-[0.07] grayscale"
+              fill
+              className="object-cover opacity-[0.07] grayscale"
             />
             <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background/60 to-background" />
           </div>
@@ -58,7 +60,7 @@ export function TopicHero({
             {(primaryCta || secondaryCta) && (
               <div className="flex flex-wrap items-center gap-4">
                 {primaryCta && (
-                  <Button asChild variant="neon" size="xl" className="rounded-2xl px-10">
+                  <Button asChild variant="athletic" size="xl" className="rounded-2xl px-10">
                     <a href={primaryCta.href}>
                       {primaryCta.label}
                       <ArrowRight className="ml-3 h-5 w-5" />
@@ -76,7 +78,7 @@ export function TopicHero({
 
           {stats && stats.length > 0 && (
             <div className="lg:w-80 grid gap-4">
-              {stats.map((stat, i) => (
+              {stats.map((stat) => (
                 <div key={stat.label} className="relative group/stat">
                   <div className="absolute inset-x-0 bottom-0 h-[1px] bg-gradient-to-r from-transparent via-primary/20 to-transparent opacity-0 group-hover/stat:opacity-100 transition-opacity" />
                   <div className="p-6 rounded-[2rem] glass border border-white/5 space-y-2 group-hover/stat:bg-white/5 transition-all">

@@ -152,7 +152,7 @@ export async function submitGuess(
             isCorrect = guess.toUpperCase() === game.targetValue.toUpperCase();
             feedback = { match: isCorrect, guessedName: guess };
             break;
-        case 'STAT':
+        case 'STAT': {
             const guessNum = parseFloat(guess);
             const targetNum = parseFloat(game.targetValue);
             isCorrect = guessNum === targetNum;
@@ -161,6 +161,7 @@ export async function submitGuess(
                 direction: guessNum < targetNum ? 'higher' : guessNum > targetNum ? 'lower' : 'correct',
             };
             break;
+        }
         default:
             feedback = {};
     }

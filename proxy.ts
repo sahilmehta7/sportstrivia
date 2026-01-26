@@ -163,7 +163,7 @@ export default auth(async function proxy(req: NextAuthRequest) {
     }
 
     const rateLimitKey = `${prefix}:${clientIP}`;
-    const { allowed, remaining, resetAt } = checkRateLimit(rateLimitKey, config);
+    const { allowed, remaining: _remaining, resetAt } = checkRateLimit(rateLimitKey, config);
 
     if (!allowed) {
       return new NextResponse(

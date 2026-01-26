@@ -61,18 +61,22 @@ function getGameTypeForDay(dayIndex: number): DailyGameType {
 
 function getGameContent(gameType: DailyGameType, seed: number): { targetValue: string; clues: Record<string, unknown> } {
     switch (gameType) {
-        case 'WORD':
+        case 'WORD': {
             const word = SPORTS_WORDS[seed % SPORTS_WORDS.length];
             return { targetValue: word, clues: { length: word.length, hint: 'Sports-related term' } };
-        case 'ATHLETE':
+        }
+        case 'ATHLETE': {
             const athlete = ATHLETES[seed % ATHLETES.length];
             return { targetValue: athlete.name, clues: athlete.clues };
-        case 'TEAM':
+        }
+        case 'TEAM': {
             const team = TEAMS[seed % TEAMS.length];
             return { targetValue: team.name, clues: team.clues };
-        case 'STAT':
+        }
+        case 'STAT': {
             const stat = STATS[seed % STATS.length];
             return { targetValue: stat.value, clues: { description: stat.description, player: stat.player } };
+        }
     }
 }
 

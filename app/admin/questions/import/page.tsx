@@ -176,8 +176,8 @@ export default function QuestionsImportPage() {
                         {/* Validation Result */}
                         {validationResult && (
                             <div className={`rounded-lg border p-4 ${validationResult.valid
-                                    ? "border-green-500 bg-green-50 dark:bg-green-950"
-                                    : "border-red-500 bg-red-50 dark:bg-red-950"
+                                ? "border-green-500 bg-green-50 dark:bg-green-950"
+                                : "border-red-500 bg-red-50 dark:bg-red-950"
                                 }`}>
                                 <div className="flex items-start gap-2">
                                     {validationResult.valid ? (
@@ -278,7 +278,7 @@ export default function QuestionsImportPage() {
                                 <div>
                                     <h4 className="font-semibold mb-2">Optional Fields</h4>
                                     <ul className="list-disc list-inside space-y-1 text-muted-foreground">
-                                        <li><code className="text-xs">topic</code> - Topic name (will create if doesn't exist)</li>
+                                        <li><code className="text-xs">topic</code> - Topic name (will create if doesn&apos;t exist)</li>
                                         <li><code className="text-xs">difficulty</code> - easy, medium, hard</li>
                                         <li><code className="text-xs">hint</code> - Optional hint text</li>
                                         <li><code className="text-xs">explanation</code> - Explanation shown after answering</li>

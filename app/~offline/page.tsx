@@ -30,9 +30,9 @@ export default function OfflinePage() {
                     <line x1="12" y1="20" x2="12.01" y2="20" />
                 </svg>
             </div>
-            <h1 className="text-2xl font-bold tracking-tight mb-2">You're Offline</h1>
+            <h1 className="text-2xl font-bold tracking-tight mb-2">You&apos;re Offline</h1>
             <p className="text-muted-foreground max-w-[400px] mb-8">
-                It looks like you've lost your internet connection. Please check your network and try again.
+                It looks like you&apos;ve lost your internet connection. Please check your network and try again.
             </p>
             <button
                 onClick={() => window.location.reload()}
