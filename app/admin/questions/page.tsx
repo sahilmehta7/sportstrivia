@@ -11,6 +11,7 @@ import { TableCell, TableRow } from "@/components/ui/table";
 import { Plus, Upload } from "lucide-react";
 import Link from "next/link";
 import { TopicFilterCombobox } from "@/components/admin/TopicFilterCombobox";
+import { DuplicateQuestionButton } from "@/components/admin/questions/DuplicateQuestionButton";
 
 interface QuestionsPageProps {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
@@ -93,6 +94,7 @@ export default async function QuestionsPage({ searchParams }: QuestionsPageProps
         description="Manage all questions in the question pool"
         action={
           <div className="flex gap-2">
+            <DuplicateQuestionButton />
             <Link href="/admin/questions/import">
               <Button variant="outline">
                 <Upload className="h-4 w-4" />

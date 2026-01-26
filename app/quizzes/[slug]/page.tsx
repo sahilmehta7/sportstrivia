@@ -8,7 +8,7 @@ import { generateQuizMetaTags } from "@/lib/seo-utils";
 import { formatPlayerCount, formatQuizDuration, getSportGradient } from "@/lib/quiz-formatters";
 import { ShowcaseButton } from "@/components/showcase/ui/buttons/Button";
 import { ShowcaseReviewsPanel } from "@/components/showcase/ui";
-import { Star, Clock, Trophy, Users, ShieldCheck, Zap, ArrowRight, Calendar, Info, Share2, MessageSquare } from "lucide-react";
+import { Star, Clock, Trophy, Users, ShieldCheck, Zap, ArrowRight, Calendar, Info, MessageSquare } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth-helpers";
 import { getAttemptLimitStatus } from "@/lib/services/attempt-limit.service";
 import { ArticleJsonLd, AggregateRatingJsonLd } from "next-seo";
@@ -16,6 +16,7 @@ import { getCanonicalUrl } from "@/lib/next-seo-config";
 import { cn } from "@/lib/utils";
 import { getBlurCircles, getGradientText } from "@/lib/showcase-theme";
 import { PageContainer } from "@/components/shared/PageContainer";
+import { ShareQuizButton } from "./share-quiz-button";
 
 interface QuizDetailPageProps {
   params: Promise<{ slug: string }>;
@@ -411,10 +412,7 @@ export default async function QuizDetailPage({ params }: QuizDetailPageProps) {
                         </ShowcaseButton>
                       </Link>
                     )}
-                    <ShowcaseButton variant="glass" size="xl" className="w-full sm:w-auto">
-                      <Share2 className="mr-3 h-5 w-5" />
-                      SHARE
-                    </ShowcaseButton>
+                    <ShareQuizButton title={quiz.title} url={quizUrl} />
                   </div>
                 </div>
               </div>

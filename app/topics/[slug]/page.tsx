@@ -24,7 +24,7 @@ import { ModernFilterBar } from "@/components/quizzes/modern-filter-bar";
 import { QuizCard } from "@/components/quizzes/quiz-card";
 import { QuizPagination } from "@/components/quizzes/quiz-pagination";
 import { StreakIndicator } from "@/components/shared/StreakIndicator";
-import { AISuggestionModal } from "@/components/topics/ai-suggestion-modal";
+
 import { TopicQuizSearchBar } from "@/components/topics/topic-search-bar";
 import {
   getRecentSearchQueriesForUser,
@@ -82,6 +82,7 @@ async function fetchFeaturedQuizzesForTopic(topicIds: string[]): Promise<PublicQ
   return prisma.quiz.findMany({
     where: {
       isPublished: true,
+      status: "PUBLISHED",
       isFeatured: true,
       OR: [
         {
@@ -506,22 +507,7 @@ export default async function TopicDetailPage({
                 </Card>
               )}
 
-              <Card className="rounded-2xl border border-border/40 bg-gradient-to-br from-purple-500/10 via-background to-background shadow-sm">
-                <CardHeader>
-                  <CardTitle className="text-lg">Need inspiration?</CardTitle>
-                  <CardDescription>Let AI whip up a fresh quiz idea</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <AISuggestionModal
-                    topicName={topic.name}
-                    trigger={
-                      <button className="w-full rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition hover:bg-primary/90">
-                        Generate with AI
-                      </button>
-                    }
-                  />
-                </CardContent>
-              </Card>
+
             </aside>
           </div>
         </section>
