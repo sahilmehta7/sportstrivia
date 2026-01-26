@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useEffect, useState, useTransition } from "react";
+import React, { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -164,8 +164,14 @@ export function QuizQuestionManager({
     })
   );
 
+  const poolQuestionsRef = useRef(poolQuestions);
+
+  useEffect(() => {
+    poolQuestionsRef.current = poolQuestions;
+  }, [poolQuestions]);
+
   const loadAvailableQuestions = useCallback(() => {
-    const excludeIds = poolQuestions.map((question) => question.questionId);
+    const excludeIds = poolQuestionsRef.current.map((question) => question.questionId);
     startTransition(async () => {
       try {
         const questions = await getAvailableQuestions({
@@ -183,7 +189,7 @@ export function QuizQuestionManager({
         });
       }
     });
-  }, [difficultyFilter, poolQuestions, searchQuery, toast, topicFilter, startTransition]);
+  }, [difficultyFilter, searchQuery, toast, topicFilter, startTransition]);
 
   useEffect(() => {
     if (addDialogOpen) {
@@ -236,16 +242,20 @@ export function QuizQuestionManager({
         },
       ]);
 
+      // Remove from available list immediately so user can't add it again
+      setAvailableQuestions((prev) => prev.filter((q) => q.id !== questionId));
+
       toast({
         title: "Question added!",
-        description: "Question has been added to the quiz.",
+        description: "Question has been added to the quiz. You can continue adding more.",
       });
 
-      setAddDialogOpen(false);
-      setSearchQuery("");
-      setTopicFilter("");
-      setDifficultyFilter("");
-      setAvailableQuestions([]);
+      // Keep dialog open for multiple additions
+      // setAddDialogOpen(false);
+      // setSearchQuery("");
+      // setTopicFilter("");
+      // setDifficultyFilter("");
+      // setAvailableQuestions([]);
     } catch (error: any) {
       toast({
         title: "Error",

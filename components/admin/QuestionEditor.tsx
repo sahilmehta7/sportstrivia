@@ -26,6 +26,7 @@ import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { X, Plus, CheckCircle, Sparkles, Loader2 } from "lucide-react";
+import { TopicSelector } from "@/components/admin/TopicSelector";
 import { questionSchema, answerSchema } from "@/lib/validations/question.schema";
 import { Difficulty, QuestionType } from "@prisma/client";
 import { useToast } from "@/hooks/use-toast";
@@ -319,22 +320,14 @@ export function QuestionEditor({
                 control={form.control}
                 name="topicId"
                 render={({ field }) => (
-                  <FormItem>
+                  <FormItem className="flex flex-col">
                     <FormLabel>Topic *</FormLabel>
-                    <Select value={field.value} onValueChange={field.onChange}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select topic" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {topics.map((topic) => (
-                          <SelectItem key={topic.id} value={topic.id}>
-                            {`${"— ".repeat(topic.level ?? 0)}${topic.name}`}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <TopicSelector
+                      topics={topics}
+                      value={field.value}
+                      onChange={field.onChange}
+                      placeholder="Select topic"
+                    />
                     <FormMessage />
                   </FormItem>
                 )}

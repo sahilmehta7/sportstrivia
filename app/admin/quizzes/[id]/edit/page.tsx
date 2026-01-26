@@ -45,6 +45,7 @@ import {
 } from "@/constants/attempts";
 import type { AttemptResetPeriodValue } from "@/constants/attempts";
 import { regenerateQuizSEOAction } from "../../actions";
+import { TopicSelector } from "@/components/admin/TopicSelector";
 
 interface EditQuizPageProps {
   params: Promise<{ id: string }>;
@@ -1096,28 +1097,20 @@ export default function EditQuizPage({ params }: EditQuizPageProps) {
               <div className="grid gap-4 md:grid-cols-3">
                 <div className="space-y-2">
                   <Label htmlFor="sport">Sport</Label>
-                  <Select
+                  <TopicSelector
+                    topics={(() => {
+                      const list = sports;
+                      const cur = formData.sport?.trim();
+                      const exists = cur && list.some((t) => t.name.toLowerCase() === cur.toLowerCase());
+                      const merged = !cur || exists ? list : [{ id: "current", name: cur }, ...list];
+                      return merged;
+                    })()}
                     value={formData.sport || undefined}
-                    onValueChange={(value) => updateField("sport", value)}
+                    onChange={(value) => updateField("sport", value)}
+                    placeholder={loadingSports ? "Loading..." : "Select sport (root topic)"}
                     disabled={loadingSports}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder={loadingSports ? "Loading..." : "Select sport (root topic)"} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {(() => {
-                        const list = sports;
-                        const cur = formData.sport?.trim();
-                        const exists = cur && list.some((t) => t.name.toLowerCase() === cur.toLowerCase());
-                        const merged = !cur || exists ? list : [{ id: "current", name: cur }, ...list];
-                        return merged;
-                      })().map((t) => (
-                        <SelectItem key={t.id} value={t.name}>
-                          {t.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                    valueKey="name"
+                  />
                 </div>
 
                 <div className="space-y-2">

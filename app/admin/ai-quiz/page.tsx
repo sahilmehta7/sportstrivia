@@ -14,6 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import Link from "next/link";
+import { TopicSelector } from "@/components/admin/TopicSelector";
 
 export default function AIQuizGeneratorPage() {
   const router = useRouter();
@@ -346,19 +347,12 @@ export default function AIQuizGeneratorPage() {
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="topic">Topic *</Label>
-              <Select value={selectedTopic} onValueChange={handleTopicChange}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a topic" />
-                </SelectTrigger>
-                <SelectContent>
-                  {topics.map((topic) => (
-                    <SelectItem key={topic.id} value={topic.id}>
-                      {"  ".repeat(topic.level)}
-                      {topic.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <TopicSelector
+                topics={topics}
+                value={selectedTopic}
+                onChange={handleTopicChange}
+                placeholder="Select a topic"
+              />
               <p className="text-xs text-muted-foreground">
                 All questions will be about this topic. Leave blank if you provide a custom theme or URL.
               </p>

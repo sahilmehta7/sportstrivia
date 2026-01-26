@@ -32,6 +32,7 @@ import { QuizInput, quizSchema } from "@/lib/validations/quiz.schema";
 import { Difficulty, QuizStatus } from "@prisma/client";
 import { generateSlug } from "@/lib/slug-utils";
 import { CollapsibleSection } from "@/components/admin/quiz/StreamlinedQuizForm";
+import { TopicSelector } from "@/components/admin/TopicSelector";
 
 interface RootTopic {
   id: string;
@@ -279,22 +280,14 @@ export default function NewQuizPage() {
                       <FormItem>
                         <FormLabel>Sport</FormLabel>
                         <FormControl>
-                          <Select
+                          <TopicSelector
+                            topics={sports}
                             value={field.value}
-                            onValueChange={field.onChange}
+                            onChange={field.onChange}
+                            placeholder={loadingSports ? "Loading..." : "Select sport (root topic)"}
                             disabled={loadingSports}
-                          >
-                            <SelectTrigger>
-                              <SelectValue placeholder={loadingSports ? "Loading..." : "Select sport (root topic)"} />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {sports.map((t) => (
-                                <SelectItem key={t.id} value={t.name}>
-                                  {t.name}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
+                            valueKey="name"
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
