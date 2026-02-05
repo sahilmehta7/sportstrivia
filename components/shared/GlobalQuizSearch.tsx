@@ -157,6 +157,16 @@ export function GlobalQuizSearch({ className, showOnMobile = false }: GlobalQuiz
   }, [pathname, searchParamValue]);
 
   useEffect(() => {
+    // Only fetch suggestions when the user focuses the input
+    if (!isFocused) {
+      return;
+    }
+
+    // Don't refetch if we already have suggestions
+    if (suggestions.recent.length > 0 || suggestions.trending.length > 0) {
+      return;
+    }
+
     let active = true;
 
     const fetchSuggestions = async () => {
@@ -220,7 +230,7 @@ export function GlobalQuizSearch({ className, showOnMobile = false }: GlobalQuiz
       active = false;
       suggestionsAbortRef.current?.abort();
     };
-  }, []);
+  }, [isFocused, suggestions.recent.length, suggestions.trending.length]);
 
   useEffect(() => {
     const query = trimmedSearch;
