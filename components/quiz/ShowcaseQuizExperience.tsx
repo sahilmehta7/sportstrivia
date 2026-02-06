@@ -146,7 +146,7 @@ export function ShowcaseQuizExperience({
   const [isReviewing, setIsReviewing] = useState(false);
   const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
 
-  const reviewTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const reviewTimeoutRef = useRef<number | null>(null);
 
   const totalQuestions = questions.length;
   const currentQuestion = questions[activeIndex];

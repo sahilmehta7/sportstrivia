@@ -143,7 +143,7 @@ export function PushSubscriptionCard() {
 
           <div className="flex items-center gap-4">
             <Button
-              variant={isSubscribed ? "glass" : "neon"}
+              variant={isSubscribed ? "glass" : "accent"}
               size="xl"
               onClick={isSubscribed ? unsubscribe : subscribe}
               disabled={isLoading}

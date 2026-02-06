@@ -1,6 +1,5 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
-import { Prisma } from "@prisma/client";
 import { auth } from "@/lib/auth";
 import Link from "next/link";
 import { BadgeCelebration } from "@/components/quiz/results/BadgeCelebration";
@@ -21,7 +20,6 @@ import {
   QuizResultsSummary,
   QuizResultsStatsGrid,
   QuizResultsSection,
-  QuizResultsLeaderboard,
   QuizResultsActions,
   QuizResultsReviewButton,
 } from "@/components/quiz/results";

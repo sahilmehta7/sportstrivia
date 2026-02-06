@@ -181,7 +181,7 @@ async function importTopics(
               parentId,
               level,
               description: topicData.description || existing.description,
-              imageUrl: topicData.imageUrl || existing.imageUrl,
+              displayImageUrl: topicData.imageUrl || undefined,
             },
           });
           updated++;
@@ -200,7 +200,7 @@ async function importTopics(
             name: topicData.name,
             slug,
             description: topicData.description,
-            imageUrl: topicData.imageUrl,
+            displayImageUrl: topicData.imageUrl,
             parentId,
             level,
           },

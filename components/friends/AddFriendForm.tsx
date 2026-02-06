@@ -73,7 +73,7 @@ export function AddFriendForm({ onSuccess }: AddFriendFormProps) {
               </div>
             </div>
 
-            <Button variant="neon" size="xl" type="submit" disabled={loading} className="w-full">
+            <Button variant="accent" size="xl" type="submit" disabled={loading} className="w-full">
               <Send className="mr-3 h-5 w-5" />
               {loading ? "TRANSMITTING..." : "INITIALIZE SYNC"}
             </Button>

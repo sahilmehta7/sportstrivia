@@ -87,7 +87,7 @@ export function DailyQuizWidget({ dailyQuizzes }: DailyQuizWidgetProps) {
 
                     {quiz.completedToday && (
                       <div className="absolute top-6 left-6">
-                        <Badge variant="neon" className="px-3 py-1 text-[8px] tracking-widest uppercase">
+                        <Badge variant="secondary" className="px-3 py-1 text-[8px] tracking-widest uppercase">
                           <Trophy className="mr-2 h-3 w-3" />
                           SYNC COMPLETED
                         </Badge>
@@ -140,7 +140,7 @@ export function DailyQuizWidget({ dailyQuizzes }: DailyQuizWidgetProps) {
                     </div>
                   </div>
 
-                  <Button asChild variant={isMain ? "neon" : "glass"} size="xl" className="rounded-2xl w-full sm:w-fit px-10">
+                  <Button asChild variant={isMain ? "accent" : "glass"} size="xl" className="rounded-2xl w-full sm:w-fit px-10">
                     <Link href={`/quizzes/${quiz.slug}`}>
                       {quiz.completedToday ? "REPLAY MISSION" : "INITIALIZE SYNC"}
                       <ChevronRight className="ml-3 h-5 w-5 group-hover:translate-x-1 transition-transform" />

@@ -23,7 +23,11 @@ export function buildReportWhereClause(filters: ReportListFilters): Prisma.Quest
   }
 
   if (filters.category) {
-    where.category = filters.category;
+    where.question = {
+      topic: {
+        slug: filters.category,
+      },
+    };
   }
 
   return where;

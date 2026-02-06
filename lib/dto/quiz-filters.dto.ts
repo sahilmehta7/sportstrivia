@@ -97,10 +97,10 @@ export function buildPublicQuizWhereClause(filters: PublicQuizFilters): Prisma.Q
     if (!raw) {
       // Empty search string, skip
     } else {
-    // Normalize: replace punctuation with spaces, collapse whitespace
+      // Normalize: replace punctuation with spaces, collapse whitespace
       const normalized = raw.replace(/[^a-z0-9\s]+/gi, " ").trim();
-    const tokens = normalized
-      .split(/\s+/)
+      const tokens = normalized
+        .split(/\s+/)
         .filter((t) => t.length >= 1 && /[a-z0-9]/i.test(t)) // Allow single char tokens and numbers
         .slice(0, 10); // Increase token cap for better search coverage
 
@@ -108,46 +108,33 @@ export function buildPublicQuizWhereClause(filters: PublicQuizFilters): Prisma.Q
         // Build search conditions for direct fields
         // Note: Prisma's contains works with null values, but we use OR to ensure at least one field matches
         const directFields: Prisma.QuizWhereInput[] = [
-        { title: { contains: token, mode: "insensitive" } },
-        { slug: { contains: token, mode: "insensitive" } },
-        { sport: { contains: token, mode: "insensitive" } },
+          { title: { contains: token, mode: "insensitive" } },
+          { slug: { contains: token, mode: "insensitive" } },
+          { sport: { contains: token, mode: "insensitive" } },
         ];
-        
+
         // Only include description if it's not null/empty (Prisma handles this, but be explicit)
         directFields.push({
           description: { contains: token, mode: "insensitive" },
         });
 
         // Build nested relation conditions
-        const relationFields = [
-        {
-          tags: {
-            some: {
-              tag: {
-                OR: [
-                  { name: { contains: token, mode: "insensitive" } },
-                  { slug: { contains: token, mode: "insensitive" } },
-                ],
+        const relationFields: Prisma.QuizWhereInput[] = [
+          {
+            tags: {
+              some: {
+                tag: {
+                  OR: [
+                    { name: { contains: token, mode: "insensitive" } },
+                    { slug: { contains: token, mode: "insensitive" } },
+                  ],
+                },
               },
             },
           },
-        },
-        {
-          topicConfigs: {
-            some: {
-              topic: {
-                OR: [
-                  { name: { contains: token, mode: "insensitive" } },
-                  { slug: { contains: token, mode: "insensitive" } },
-                ],
-              },
-            },
-          },
-        },
-        {
-          questionPool: {
-            some: {
-              question: {
+          {
+            topicConfigs: {
+              some: {
                 topic: {
                   OR: [
                     { name: { contains: token, mode: "insensitive" } },
@@ -157,7 +144,20 @@ export function buildPublicQuizWhereClause(filters: PublicQuizFilters): Prisma.Q
               },
             },
           },
-        },
+          {
+            questionPool: {
+              some: {
+                question: {
+                  topic: {
+                    OR: [
+                      { name: { contains: token, mode: "insensitive" } },
+                      { slug: { contains: token, mode: "insensitive" } },
+                    ],
+                  },
+                },
+              },
+            },
+          },
         ];
 
         // Combine all search fields
@@ -166,14 +166,14 @@ export function buildPublicQuizWhereClause(filters: PublicQuizFilters): Prisma.Q
         };
       };
 
-    if (tokens.length > 0) {
+      if (tokens.length > 0) {
         // Require all tokens to match somewhere (AND over tokens) for precision
         // Each token can match in any field, but all tokens must be present
-      andConditions.push({ AND: tokens.map((t) => buildTokenOr(t)) });
-    } else {
+        andConditions.push({ AND: tokens.map((t) => buildTokenOr(t)) });
+      } else {
         // Fallback: if tokenization failed, search the raw query as-is
-      const searchTerm = raw;
-      andConditions.push(buildTokenOr(searchTerm));
+        const searchTerm = raw;
+        andConditions.push(buildTokenOr(searchTerm));
       }
     }
   }

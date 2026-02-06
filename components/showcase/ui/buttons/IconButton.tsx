@@ -10,6 +10,7 @@ export interface ShowcaseIconButtonProps
   variant?: ButtonVariant;
   size?: ButtonSize;
   isLoading?: boolean;
+  disabled?: boolean;
   ariaLabel: string;
 }
 

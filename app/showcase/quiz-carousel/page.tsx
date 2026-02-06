@@ -83,7 +83,7 @@ export default async function QuizCarouselShowcasePage() {
       durationLabel: formatQuizDuration(quiz.duration ?? quiz.timePerQuestion),
       playersLabel: formatPlayerCount(quiz._count?.attempts),
       accent: getSportGradient(quiz.sport, index),
-      coverImageUrl: quiz.descriptionImageUrl,
+      coverImageUrl: quiz.descriptionImageUrl ?? "https://images.unsplash.com/photo-1540747913346-19e32dc3e97e",
     }));
   } catch (error) {
     console.warn("[showcase/quiz-carousel] Using fallback data", error);

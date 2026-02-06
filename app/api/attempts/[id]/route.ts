@@ -12,173 +12,173 @@ import { recomputeUserProgress } from "@/lib/services/gamification.service";
 import { createNotification } from "@/lib/services/notification.service";
 
 const quizSelection = {
-  id: true,
-  title: true,
-  slug: true,
-  passingScore: true,
-  completionBonus: true,
-  timePerQuestion: true,
+    id: true,
+    title: true,
+    slug: true,
+    passingScore: true,
+    completionBonus: true,
+    timePerQuestion: true,
 } as const;
 
 const userAnswerSelection = {
-  include: {
-    question: {
-      select: {
-        id: true,
-        questionText: true,
-        explanation: true,
-        explanationImageUrl: true,
-        explanationVideoUrl: true,
-        timeLimit: true,
-        difficulty: true,
-      },
-    },
-    answer: true,
-  },
-} as const;
-
-type AttemptWithDetails = Prisma.QuizAttemptGetPayload<{
-  include: {
-    quiz: {
-      select: typeof quizSelection;
-    };
-    userAnswers: typeof userAnswerSelection;
-  };
-}>;
-
-// GET /api/attempts/[id] - Get attempt results
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    const user = await requireAuth();
-    const { id } = await params;
-
-    const attempt = await prisma.quizAttempt.findUnique({
-      where: { id },
-      include: {
-        quiz: {
-          select: {
-            id: true,
-            title: true,
-            slug: true,
-            passingScore: true,
-            answersRevealTime: true,
-            timePerQuestion: true,
-          },
-        },
-        userAnswers: {
-          include: {
-            question: {
-              select: {
+    include: {
+        question: {
+            select: {
                 id: true,
                 questionText: true,
-                questionImageUrl: true,
                 explanation: true,
                 explanationImageUrl: true,
                 explanationVideoUrl: true,
                 timeLimit: true,
-              },
+                difficulty: true,
             },
-            answer: {
-              select: {
-                id: true,
-                answerText: true,
-                answerImageUrl: true,
-              },
-            },
-          },
         },
-      },
-    });
+        answer: true,
+    },
+} as const;
 
-    if (!attempt) {
-      throw new NotFoundError("Quiz attempt not found");
-    }
-
-    // Verify ownership
-    if (attempt.userId !== user.id) {
-      throw new UnauthorizedError();
-    }
-
-    // Check if answers should be revealed
-    const now = new Date();
-    const revealAnswers =
-      attempt.completedAt &&
-      (!attempt.quiz.answersRevealTime ||
-        attempt.quiz.answersRevealTime <= now);
-
-    // Get correct answers if they should be revealed
-    const correctAnswersMap = new Map<string, { id: string; answerText: string; answerImageUrl: string | null }>();
-    if (revealAnswers) {
-      const questionIds = attempt.userAnswers.map((ua) => ua.questionId);
-      const questions = await prisma.question.findMany({
-        where: { id: { in: questionIds } },
-        include: {
-          answers: {
-            where: { isCorrect: true },
-            select: {
-              id: true,
-              answerText: true,
-              answerImageUrl: true,
-            },
-          },
-        },
-      });
-
-      for (const question of questions) {
-        const correctAnswer = question.answers[0];
-        if (correctAnswer) {
-          correctAnswersMap.set(question.id, correctAnswer);
-        }
-      }
-    }
-
-    const response = {
-      attempt: {
-        id: attempt.id,
-        quizId: attempt.quizId,
-        score: attempt.score,
-        totalQuestions: attempt.totalQuestions,
-        correctAnswers: attempt.correctAnswers,
-        passed: attempt.passed,
-        totalPoints: attempt.totalPoints,
-        longestStreak: attempt.longestStreak,
-        averageResponseTime: attempt.averageResponseTime,
-        totalTimeSpent: attempt.totalTimeSpent,
-        startedAt: attempt.startedAt,
-        completedAt: attempt.completedAt,
-        isPracticeMode: attempt.isPracticeMode,
-      },
-      quiz: attempt.quiz,
-      revealAnswers,
-      answers: attempt.userAnswers.map((ua) => ({
-        questionId: ua.questionId,
-        questionText: ua.question.questionText,
-        questionImageUrl: ua.question.questionImageUrl,
-        userAnswer: ua.answer,
-        isCorrect: ua.isCorrect,
-        wasSkipped: ua.wasSkipped,
-        timeSpent: ua.timeSpent,
-        basePoints: ua.basePoints,
-        timeBonus: ua.timeBonus,
-        streakBonus: ua.streakBonus,
-        totalPoints: ua.totalPoints,
-        timeLimit: ua.question.timeLimit ?? attempt.quiz.timePerQuestion ?? 60,
-        ...(revealAnswers && {
-          correctAnswer: correctAnswersMap.get(ua.questionId),
-          explanation: ua.question.explanation,
-          explanationImageUrl: ua.question.explanationImageUrl,
-          explanationVideoUrl: ua.question.explanationVideoUrl,
-        }),
-      })),
+type AttemptWithDetails = Prisma.QuizAttemptGetPayload<{
+    include: {
+        quiz: {
+            select: typeof quizSelection;
+        };
+        userAnswers: typeof userAnswerSelection;
     };
+}>;
 
-    return successResponse(response);
-  } catch (error) {
-    return handleError(error);
-  }
+// GET /api/attempts/[id] - Get attempt results
+export async function GET(
+    request: NextRequest,
+    { params }: { params: Promise<{ id: string }> }
+) {
+    try {
+        const user = await requireAuth();
+        const { id } = await params;
+
+        const attempt = await prisma.quizAttempt.findUnique({
+            where: { id },
+            include: {
+                quiz: {
+                    select: {
+                        id: true,
+                        title: true,
+                        slug: true,
+                        passingScore: true,
+                        answersRevealTime: true,
+                        timePerQuestion: true,
+                    },
+                },
+                userAnswers: {
+                    include: {
+                        question: {
+                            select: {
+                                id: true,
+                                questionText: true,
+                                questionImageUrl: true,
+                                explanation: true,
+                                explanationImageUrl: true,
+                                explanationVideoUrl: true,
+                                timeLimit: true,
+                            },
+                        },
+                        answer: {
+                            select: {
+                                id: true,
+                                answerText: true,
+                                answerImageUrl: true,
+                            },
+                        },
+                    },
+                },
+            },
+        });
+
+        if (!attempt) {
+            throw new NotFoundError("Quiz attempt not found");
+        }
+
+        // Verify ownership
+        if (attempt.userId !== user.id) {
+            throw new UnauthorizedError();
+        }
+
+        // Check if answers should be revealed
+        const now = new Date();
+        const revealAnswers =
+            attempt.completedAt &&
+            (!attempt.quiz.answersRevealTime ||
+                attempt.quiz.answersRevealTime <= now);
+
+        // Get correct answers if they should be revealed
+        const correctAnswersMap = new Map<string, { id: string; answerText: string; answerImageUrl: string | null }>();
+        if (revealAnswers) {
+            const questionIds = attempt.userAnswers.map((ua) => ua.questionId);
+            const questions = await prisma.question.findMany({
+                where: { id: { in: questionIds } },
+                include: {
+                    answers: {
+                        where: { isCorrect: true },
+                        select: {
+                            id: true,
+                            answerText: true,
+                            answerImageUrl: true,
+                        },
+                    },
+                },
+            });
+
+            for (const question of questions) {
+                const correctAnswer = question.answers[0];
+                if (correctAnswer) {
+                    correctAnswersMap.set(question.id, correctAnswer);
+                }
+            }
+        }
+
+        const response = {
+            attempt: {
+                id: attempt.id,
+                quizId: attempt.quizId,
+                score: attempt.score,
+                totalQuestions: attempt.totalQuestions,
+                correctAnswers: attempt.correctAnswers,
+                passed: attempt.passed,
+                totalPoints: attempt.totalPoints,
+                longestStreak: attempt.longestStreak,
+                averageResponseTime: attempt.averageResponseTime,
+                totalTimeSpent: attempt.totalTimeSpent,
+                startedAt: attempt.startedAt,
+                completedAt: attempt.completedAt,
+                isPracticeMode: attempt.isPracticeMode,
+            },
+            quiz: attempt.quiz,
+            revealAnswers,
+            answers: attempt.userAnswers.map((ua) => ({
+                questionId: ua.questionId,
+                questionText: ua.question.questionText,
+                questionImageUrl: ua.question.questionImageUrl,
+                userAnswer: ua.answer,
+                isCorrect: ua.isCorrect,
+                wasSkipped: ua.wasSkipped,
+                timeSpent: ua.timeSpent,
+                basePoints: ua.basePoints,
+                timeBonus: ua.timeBonus,
+                streakBonus: ua.streakBonus,
+                totalPoints: ua.totalPoints,
+                timeLimit: ua.question.timeLimit ?? attempt.quiz.timePerQuestion ?? 60,
+                ...(revealAnswers && {
+                    correctAnswer: correctAnswersMap.get(ua.questionId),
+                    explanation: ua.question.explanation,
+                    explanationImageUrl: ua.question.explanationImageUrl,
+                    explanationVideoUrl: ua.question.explanationVideoUrl,
+                }),
+            })),
+        };
+
+        return successResponse(response);
+    } catch (error) {
+        return handleError(error);
+    }
 }
 
 // PATCH /api/attempts/[id] - Complete quiz attempt and calculate score
@@ -438,38 +438,59 @@ export async function PATCH(
             }
         }
 
-        // Update user statistics with final totalPoints (including bonus if awarded)
-        const progression = await updateUserStatistics(
-            user.id,
-            attempt.quizId,
-            completedAttempt,
-            totalPoints
+        // Calculate elapsed time for leaderboard (needed before parallel execution)
+        const totalElapsedSeconds = Math.floor(
+            (new Date().getTime() - attempt.startedAt.getTime()) / 1000
         );
 
-        // Update quiz leaderboard if not practice mode
-        if (!attempt.isPracticeMode) {
-            const totalElapsedSeconds = Math.floor(
-                (new Date().getTime() - attempt.startedAt.getTime()) / 1000
-            );
-
-            await updateQuizLeaderboard(
+        // Run all non-critical operations in parallel for performance
+        // These operations are independent and can safely run concurrently
+        const [
+            progressionResult,
+            _leaderboardResult,
+            badgeResult,
+            _gamificationResult
+        ] = await Promise.allSettled([
+            // 1. Update user statistics
+            updateUserStatistics(
                 user.id,
                 attempt.quizId,
-                scorePercentage,
-                totalPoints,
-                averageResponseTime,
-                totalElapsedSeconds
-            );
-        }
+                completedAttempt,
+                totalPoints
+            ),
+            // 2. Update quiz leaderboard (skip in practice mode)
+            attempt.isPracticeMode
+                ? Promise.resolve(null)
+                : updateQuizLeaderboard(
+                    user.id,
+                    attempt.quizId,
+                    scorePercentage,
+                    totalPoints,
+                    averageResponseTime,
+                    totalElapsedSeconds
+                ),
+            // 3. Check and award badges
+            checkAndAwardBadges(user.id),
+            // 4. Recompute level/tier progression
+            recomputeUserProgress(user.id).catch(() => null)
+        ]);
 
-        // Check and award badges
-        const awardedBadges = await checkAndAwardBadges(user.id);
-        // Recompute level/tier after points and stats updates
-        try {
-            await recomputeUserProgress(user.id);
-        } catch {
-            // Silently fail - recomputation is not critical for quiz completion
-        }
+        // Extract results, treating failures as non-blocking
+        const progression = progressionResult.status === 'fulfilled'
+            ? progressionResult.value
+            : {
+                tier: 'ROOKIE' as const,
+                tierLabel: 'Rookie',
+                totalPoints: 0,
+                leveledUp: false,
+                nextTier: null,
+                nextTierLabel: null,
+                pointsToNext: null,
+                progressPercent: 0
+            };
+        const awardedBadges = badgeResult.status === 'fulfilled'
+            ? badgeResult.value
+            : [];
 
         return successResponse({
             awardedBadges,

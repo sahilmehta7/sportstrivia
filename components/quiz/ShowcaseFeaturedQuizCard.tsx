@@ -110,7 +110,7 @@ export function ShowcaseFeaturedQuizCard({
           </div>
 
           {ctaHref && (
-            <Button asChild variant="neon" size="xl" className="rounded-2xl px-12 group-hover:scale-[1.05] transition-transform w-full sm:w-fit">
+            <Button asChild variant="accent" size="xl" className="rounded-2xl px-12 group-hover:scale-[1.05] transition-transform w-full sm:w-fit">
               <Link href={ctaHref}>
                 {ctaLabel}
                 <ChevronRight className="ml-3 h-6 w-6 group-hover:translate-x-1 transition-transform" />

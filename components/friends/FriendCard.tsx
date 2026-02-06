@@ -96,7 +96,7 @@ export function FriendCard({
                     <Eye className="h-4 w-4" />
                   </Button>
                 </Link>
-                <Button variant="neon" size="icon" onClick={handleChallengeClick} className="h-10 w-10 rounded-xl">
+                <Button variant="accent" size="icon" onClick={handleChallengeClick} className="h-10 w-10 rounded-xl">
                   <Swords className="h-4 w-4" />
                 </Button>
                 {onRemove && (

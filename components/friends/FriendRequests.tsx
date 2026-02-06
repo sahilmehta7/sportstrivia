@@ -141,7 +141,7 @@ function RequestItem({ user, date, isProcessing, onAccept, onDecline, onCancel, 
               </Button>
             ) : (
               <>
-                <Button variant="neon" size="sm" onClick={onAccept} disabled={isProcessing} className="flex-1 sm:flex-none h-11 rounded-xl uppercase font-black text-[10px] tracking-widest">
+                <Button variant="accent" size="sm" onClick={onAccept} disabled={isProcessing} className="flex-1 sm:flex-none h-11 rounded-xl uppercase font-black text-[10px] tracking-widest">
                   <Check className="mr-2 h-4 w-4" />
                   SYNC
                 </Button>

@@ -9,8 +9,8 @@ import type { ShowcaseTheme } from "@/components/showcase/ShowcaseThemeProvider"
 import { getSurfaceStyles, getTextColor, getDividerStyles, getChipStyles } from "@/lib/showcase-theme";
 
 function StatRow({ theme, topic }: any) {
-	const textPrimary = getTextColor(theme, "primary");
-	const textSecondary = getTextColor(theme, "secondary");
+	const textPrimary = getTextColor("primary");
+	const textSecondary = getTextColor("secondary");
 	return (
 		<div
 			className={cn(
@@ -21,7 +21,7 @@ function StatRow({ theme, topic }: any) {
 		>
 			<div className="col-span-5 flex items-center gap-3">
 				{topic.icon && (
-					<div className={cn("flex h-8 w-8 items-center justify-center rounded-lg text-sm", theme === "light" ? "bg-white/80" : "bg-white/10")}> 
+					<div className={cn("flex h-8 w-8 items-center justify-center rounded-lg text-sm", theme === "light" ? "bg-white/80" : "bg-white/10")}>
 						<span className="leading-none">{topic.icon}</span>
 					</div>
 				)}
@@ -40,7 +40,7 @@ function StatRow({ theme, topic }: any) {
 				</div>
 			</div>
 			<div className="col-span-3 text-right">
-				<span className={cn("rounded-full px-3 py-1 text-[10px] font-semibold uppercase tracking-wider", getChipStyles(theme, "outline"))}>
+				<span className={cn("rounded-full px-3 py-1 text-[10px] font-semibold uppercase tracking-wider", getChipStyles("outline"))}>
 					{topic.quizzesTaken} played
 				</span>
 			</div>
@@ -117,8 +117,8 @@ export default function TopicWiseStatsCompleteShowcasePage() {
 
 	const theme: ShowcaseTheme = mounted ? (nextTheme === "light" ? "light" : "dark") : "dark";
 
-	const textPrimary = getTextColor(theme, "primary");
-	const divider = getDividerStyles(theme);
+	const textPrimary = getTextColor("primary");
+	const divider = getDividerStyles();
 
 	const mapped = (topics ?? []).map((t) => ({
 		id: t.id,
@@ -138,7 +138,7 @@ export default function TopicWiseStatsCompleteShowcasePage() {
 			breadcrumbs={[{ label: "UI Components", href: "/showcase" }, { label: "Complete Topic Wise Stats" }]}
 		>
 			{unauth ? (
-				<div className={cn("rounded-[24px] p-6 text-center", getSurfaceStyles(theme, "raised"))}>
+				<div className={cn("rounded-[24px] p-6 text-center", getSurfaceStyles("raised"))}>
 					<p className="mb-4 text-sm">Sign in to view your complete topic-wise stats.</p>
 					<GlassButton asChild>
 						<Link href="/auth/signin">Sign in</Link>
@@ -149,7 +149,7 @@ export default function TopicWiseStatsCompleteShowcasePage() {
 					"space-y-5 rounded-[24px] p-5 backdrop-blur-xl ring-1",
 					theme === "light" ? "ring-white/50" : "ring-white/10",
 					"shadow-[0_24px_80px_-40px_rgba(0,0,0,0.45)]",
-					getSurfaceStyles(theme, "raised")
+					getSurfaceStyles("raised")
 				)}>
 					<ShowcaseSectionHeader
 						eyebrow="Insights"
@@ -157,7 +157,7 @@ export default function TopicWiseStatsCompleteShowcasePage() {
 						subtitle="Drill down into accuracy, attempts, and streaks"
 					/>
 
-					<div className={cn("grid grid-cols-12 items-center gap-3 rounded-xl border p-3 text-[11px] font-medium uppercase tracking-wider", getSurfaceStyles(theme, "sunken"))}>
+					<div className={cn("grid grid-cols-12 items-center gap-3 rounded-xl border p-3 text-[11px] font-medium uppercase tracking-wider", getSurfaceStyles("sunken"))}>
 						<div className="col-span-5">Topic</div>
 						<div className="col-span-4">Accuracy</div>
 						<div className="col-span-3 text-right">Attempts</div>
@@ -168,7 +168,7 @@ export default function TopicWiseStatsCompleteShowcasePage() {
 					) : (
 						<div className="space-y-3">
 							{mapped.length === 0 ? (
-								<div className={cn("rounded-xl p-6 text-sm", getSurfaceStyles(theme, "sunken"))}>No topic stats available.</div>
+								<div className={cn("rounded-xl p-6 text-sm", getSurfaceStyles("sunken"))}>No topic stats available.</div>
 							) : (
 								mapped.map((t) => <StatRow key={t.id} theme={theme} topic={t} />)
 							)}

@@ -24,7 +24,6 @@ import {
   ChevronDown,
   FileText,
   Wrench,
-  Zap,
   Activity,
   ShieldCheck,
   Globe

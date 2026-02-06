@@ -8,6 +8,8 @@ const sizeMap: Record<ButtonSize, string> = {
   sm: "h-3.5 w-3.5 border-2",
   md: "h-4 w-4 border-2",
   lg: "h-5 w-5 border-2",
+  xl: "h-6 w-6 border-3",
+
 };
 
 export function ShowcaseSpinner({ size = "md" as ButtonSize }) {

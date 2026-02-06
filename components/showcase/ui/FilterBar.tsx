@@ -90,7 +90,7 @@ export function ShowcaseFilterBar({ groups, className, condensed = false, onChan
                     <Button
                       key={option.value}
                       type="button"
-                      variant={active ? "neon" : "glass"}
+                      variant={active ? "accent" : "glass"}
                       size="sm"
                       onClick={() => onChange?.(group.id, option)}
                       className={cn(

@@ -1,14 +1,11 @@
 "use client";
 
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { UserAvatar } from "@/components/shared/UserAvatar";
 import { ExpirationTimer } from "./ExpirationTimer";
-import { Trophy, Swords, CheckCircle2, Zap, ArrowRight, ShieldCheck, Clock } from "lucide-react";
+import { Trophy, Swords, CheckCircle2, ArrowRight, ShieldCheck, Clock } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
-import { getGradientText } from "@/lib/showcase-theme";
 
 interface ChallengeCardProps {
   challenge: {
@@ -151,7 +148,7 @@ export function ChallengeCard({
             {challenge.status === "PENDING" && isChallenged && (
               <>
                 {onAccept && (
-                  <Button variant="neon" size="sm" onClick={onAccept} className="flex-1 sm:flex-none">
+                  <Button variant="accent" size="sm" onClick={onAccept} className="flex-1 sm:flex-none">
                     ACCEPT MISSION
                   </Button>
                 )}
@@ -167,7 +164,7 @@ export function ChallengeCard({
               <>
                 {((isChallenger && challenge.challengerScore === null) || (isChallenged && challenge.challengedScore === null)) ? (
                   <Link href={`/quizzes/${challenge.quiz.slug}/play`} className="w-full sm:w-auto">
-                    <Button variant="neon" size="sm" className="w-full">
+                    <Button variant="accent" size="sm" className="w-full">
                       COMMENCE BATTLE
                     </Button>
                   </Link>
@@ -178,7 +175,7 @@ export function ChallengeCard({
             )}
 
             {bothCompleted && onViewResults && (
-              <Button variant="neon" size="sm" onClick={onViewResults} className="w-full sm:w-auto">
+              <Button variant="accent" size="sm" onClick={onViewResults} className="w-full sm:w-auto">
                 <Trophy className="mr-2 h-3.5 w-3.5" />
                 REVEAL DATA
               </Button>

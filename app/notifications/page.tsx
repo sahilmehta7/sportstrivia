@@ -213,7 +213,7 @@ export default function NotificationsPage() {
                               </h4>
                               <div className="flex items-center gap-4 mt-1">
                                 <span className="text-[10px] font-bold tracking-widest text-muted-foreground uppercase">{formatDate(notification.createdAt)}</span>
-                                {!notification.read && <Badge variant="neon" className="px-1.5 py-0 text-[7px] tracking-widest uppercase h-4">NEW SIGNAL</Badge>}
+                                {!notification.read && <Badge variant="secondary" className="px-1.5 py-0 text-[7px] tracking-widest uppercase h-4">NEW SIGNAL</Badge>}
                               </div>
                             </div>
 

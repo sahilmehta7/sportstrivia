@@ -23,7 +23,6 @@ export function Breadcrumbs({ items, className, showHome = true }: BreadcrumbsPr
     : items;
 
   const breadcrumbJsonLdItems = allItems.map((item, index) => ({
-    position: index + 1,
     name: item.name,
     ...(item.url && index !== allItems.length - 1 ? { item: getCanonicalUrl(item.url) } : {}),
   }));
@@ -67,7 +66,7 @@ export function Breadcrumbs({ items, className, showHome = true }: BreadcrumbsPr
       </nav>
 
       {/* Structured Data */}
-      <BreadcrumbJsonLd itemListElements={breadcrumbJsonLdItems} />
+      <BreadcrumbJsonLd items={breadcrumbJsonLdItems} />
     </>
   );
 }

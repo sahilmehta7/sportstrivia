@@ -95,7 +95,7 @@ export default async function ShowcaseQuizCard2Page() {
           name: coachName,
           avatarUrl: `https://api.dicebear.com/7.x/avataaars/png?seed=${encodeURIComponent(coachName)}`,
         },
-        coverImageUrl: quiz.descriptionImageUrl ?? undefined,
+        coverImageUrl: quiz.descriptionImageUrl ?? "https://images.unsplash.com/photo-1540747913346-19e32dc3e97e",
         accent,
       };
     });

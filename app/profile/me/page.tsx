@@ -31,25 +31,25 @@ export default async function MyProfilePage() {
 
   const stats = statsData
     ? {
-        stats: statsData.stats,
-        topTopics: statsData.topTopics.map((topic) => ({
-          ...topic,
-          successRate: Number(topic.successRate),
-          questionsAnswered: Number(topic.questionsAnswered),
-          questionsCorrect: Number(topic.questionsCorrect),
-        })),
-        recentAttempts: statsData.recentAttempts.map((attempt) => ({
-          ...attempt,
-          score: attempt.score === null ? null : Number(attempt.score),
-          completedAt: attempt.completedAt.toISOString(),
-        })),
-        leaderboardPositions: statsData.leaderboardPositions.map((entry) => ({
-          ...entry,
-          bestScore: Number(entry.bestScore),
-          bestTime: entry.bestTime === null ? null : Number(entry.bestTime),
-        })),
-        perfectScores: statsData.perfectScores,
-      }
+      stats: statsData.stats,
+      topTopics: statsData.topTopics.map((topic) => ({
+        ...topic,
+        successRate: Number(topic.successRate),
+        questionsAnswered: Number(topic.questionsAnswered),
+        questionsCorrect: Number(topic.questionsCorrect),
+      })),
+      recentAttempts: statsData.recentAttempts.map((attempt) => ({
+        ...attempt,
+        score: attempt.score === null ? null : Number(attempt.score),
+        completedAt: attempt.completedAt ? attempt.completedAt.toISOString() : new Date().toISOString(),
+      })),
+      leaderboardPositions: statsData.leaderboardPositions.map((entry) => ({
+        ...entry,
+        bestScore: Number(entry.bestScore),
+        bestTime: entry.bestTime === null ? null : Number(entry.bestTime),
+      })),
+      perfectScores: statsData.perfectScores,
+    }
     : null;
 
   const badges = badgeProgress.map((progress) => ({

@@ -1,12 +1,13 @@
 import { prisma } from "@/lib/db";
+import { User } from "@prisma/client";
 import { computeLevelFromPoints, getTierForLevel } from "@/lib/services/gamification.service";
 
 async function main() {
   const batchSize = Number(process.env.BATCH_SIZE ?? 200);
   let processed = 0;
   let cursor: string | null = null;
-  for (;;) {
-    const users = await prisma.user.findMany({
+  for (; ;) {
+    const users: User[] = await prisma.user.findMany({
       take: batchSize,
       ...(cursor ? { skip: 1, cursor: { id: cursor } } : {}),
       orderBy: { id: "asc" },

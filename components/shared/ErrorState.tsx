@@ -47,7 +47,7 @@ export function ErrorState({
 
       <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
         {onRetry && (
-          <Button onClick={onRetry} variant="neon" size="xl" className="w-full sm:w-auto rounded-2xl px-10 shadow-neon-magenta/20">
+          <Button onClick={onRetry} variant="accent" size="xl" className="w-full sm:w-auto rounded-2xl px-10 shadow-neon-magenta/20">
             <RefreshCw className="mr-3 h-5 w-5 group-hover:rotate-180 transition-transform duration-500" />
             {action.toUpperCase()}
           </Button>

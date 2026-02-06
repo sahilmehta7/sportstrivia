@@ -33,11 +33,11 @@ const notificationMessages: Record<NotificationType, string> = {
 
 type NotificationDeliveryOptions = {
   push?:
-    | false
-    | (Partial<PushMessagePayload> & {
-        url?: string;
-        tag?: string;
-      });
+  | false
+  | (Partial<PushMessagePayload> & {
+    url?: string;
+    tag?: string;
+  });
 };
 
 async function isPushOptIn(userId: string): Promise<boolean> {
@@ -148,7 +148,7 @@ export async function createBatchNotifications(
         icon: typeof options?.push === "object" ? options.push.icon : undefined,
         badge: typeof options?.push === "object" ? options.push.badge : undefined,
         tag:
-          (typeof options?.push === "object" && options.push.tag) ??
+          (typeof options?.push === "object" ? options.push.tag : undefined) ??
           `${type}:${Date.now()}`,
         url: typeof options?.push === "object" ? options.push.url : data.url,
         data: {
