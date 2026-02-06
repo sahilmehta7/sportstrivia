@@ -104,7 +104,7 @@ const variantStyles: Record<ThemeVariant, {
     timeTrack: "bg-slate-200/50",
     timeFill: "bg-gradient-to-r from-amber-500 to-orange-600",
     answerBase:
-      "relative overflow-hidden rounded-2xl border-2 transition-all duration-200 ease-out px-4 py-4 text-base font-bold tracking-tight shadow-sm active:scale-[0.98]",
+      "relative overflow-hidden rounded-2xl border-2 transition-all duration-200 ease-out px-4 py-4 text-sm sm:text-base font-bold tracking-tight shadow-sm active:scale-[0.98]",
     answerIdle:
       "border-transparent bg-white/50 text-slate-700 hover:border-amber-400/50 hover:bg-white/80",
     answerSelected:
@@ -139,7 +139,7 @@ const variantStyles: Record<ThemeVariant, {
     // Dynamic timer color is handled in logic, this is base
     timeFill: "bg-white",
     answerBase:
-      "relative overflow-hidden rounded-2xl border lg:border-2 transition-all duration-200 ease-out px-4 py-4 text-base font-bold tracking-tight active:scale-[0.98]",
+      "relative overflow-hidden rounded-2xl border lg:border-2 transition-all duration-200 ease-out px-4 py-4 text-sm sm:text-base font-bold tracking-tight active:scale-[0.98]",
     answerIdle:
       "border-white/5 bg-white/5 text-white/70 hover:border-white/20 hover:bg-white/10 hover:text-white",
     answerSelected:
@@ -418,7 +418,7 @@ export function QuizPlayUI({
                     </p>
                     <h2 className={cn(
                       "font-bold leading-tight uppercase tracking-tighter font-['Barlow_Condensed',sans-serif]",
-                      hasQuestionImage ? "text-xl sm:text-2xl lg:text-3xl" : "text-2xl sm:text-3xl md:text-4xl lg:text-5xl",
+                      hasQuestionImage ? "text-lg sm:text-xl lg:text-2xl" : "text-xl sm:text-2xl md:text-3xl",
                       styles.question
                     )}>
                       {questionPrompt}
@@ -462,7 +462,7 @@ export function QuizPlayUI({
                               ) : <span className="flex h-full w-full items-center justify-center text-xl">📷</span>}
                             </div>
                           )}
-                          <span className="text-sm sm:text-base lg:text-lg leading-snug">{answer.answerText}</span>
+                          <span className="text-xs sm:text-sm lg:text-base leading-snug">{answer.answerText}</span>
                         </div>
 
                         {/* Status Badge */}
