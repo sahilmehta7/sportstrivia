@@ -422,15 +422,15 @@ export function QuizPlayClient({ quizId, quizTitle, quizSlug, initialAttemptLimi
 
       clearAdvanceTimeout();
 
-      // Only auto-advance with old timeout if NOT using new UI
-      if (!isLastQuestion && nextQuestion && !ENABLE_NEW_QUIZ_UI) {
+      // Only auto-advance with old timeout if NOT using new UI, OR if it's a timeout (forced auto-advance)
+      if (!isLastQuestion && nextQuestion && (!ENABLE_NEW_QUIZ_UI || fromTimer)) {
         advanceTimeoutRef.current = setTimeout(() => {
           setCurrentIndex(nextIndex);
           setCurrentQuestion(nextQuestion);
           setFeedback(null);
           resetTimerForQuestion(nextQuestion);
           setPendingQuestionId(null);
-        }, fromTimer ? 350 : 550);
+        }, fromTimer ? 1500 : 550); // Longer delay for timeout so user sees feedback
       } else if (isLastQuestion) {
         // Last question - submit everything
         if (ENABLE_NEW_QUIZ_UI) {
@@ -525,7 +525,35 @@ export function QuizPlayClient({ quizId, quizTitle, quizSlug, initialAttemptLimi
 
   // Handle next button for new UI (with review flow)
   const handleNext = useCallback(async () => {
-    if (!selectedAnswerId || !currentQuestion || isReviewing || feedback) {
+    // 1. If we already have feedback (answered or timed out), "Next" just moves us forward immediately
+    if (feedback) {
+      if (advanceTimeoutRef.current) {
+        clearTimeout(advanceTimeoutRef.current);
+        advanceTimeoutRef.current = null;
+      }
+
+      const nextIndex = currentIndex + 1;
+      const nextQuestion = questions[nextIndex];
+      const isLastQuestion = currentIndex >= totalQuestions - 1;
+
+      if (nextQuestion) {
+        setCurrentIndex(nextIndex);
+        setCurrentQuestion(nextQuestion);
+        setFeedback(null);
+        setSelectedAnswerId(null);
+        setIsReviewing(false);
+        resetTimerForQuestion(nextQuestion);
+      } else if (isLastQuestion) {
+        setIsReviewing(false);
+        startCompletion(async () => {
+          await completeAttempt();
+        });
+      }
+      return;
+    }
+
+    // 2. Otherwise, we are trying to submit an answer manually
+    if (!selectedAnswerId || !currentQuestion || isReviewing) {
       return;
     }
 
