@@ -5,7 +5,7 @@ import {
   ShowcaseHeroSplit,
   ShowcaseHeroBanner,
   ShowcaseHeroDeck,
-} from "@/components/showcase/ui";
+} from "@/components/showcase/ui/HeroVariants";
 import {
   ArrowRight,
   Play,

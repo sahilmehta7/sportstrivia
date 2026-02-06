@@ -2,7 +2,13 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { auth } from "@/lib/auth";
 import Link from "next/link";
-import { BadgeCelebration } from "@/components/quiz/results/BadgeCelebration";
+import dynamic from "next/dynamic";
+
+const BadgeCelebration = dynamic(
+  () => import("@/components/quiz/results/BadgeCelebration").then((mod) => mod.BadgeCelebration),
+  { ssr: false }
+);
+
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { CheckCircle2, XCircle, Trophy } from "lucide-react";
@@ -199,7 +205,7 @@ export default async function QuizResultsPage({
 
   return (
     <ShowcaseThemeProvider>
-      <BadgeCelebration />
+      {resolvedSearchParams?.badges && <BadgeCelebration />}
       <QuizResultsLayout>
         <EntranceAnimation className="space-y-10">
 
