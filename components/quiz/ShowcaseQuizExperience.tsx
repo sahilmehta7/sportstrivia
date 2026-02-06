@@ -73,7 +73,7 @@ const variantStyles: Record<ShowcaseQuizExperienceVariant, {
     timeTrack: "bg-white/60",
     timeFill: "bg-gradient-to-r from-amber-400 via-amber-300 to-orange-400",
     answerBase:
-      "rounded-full border transition-all duration-300 ease-out px-5 py-3 text-base font-semibold shadow-[0_18px_48px_-30px_rgba(15,23,42,0.35)] focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-amber-400",
+      "rounded-full border transition-all duration-300 ease-out px-5 py-3 text-sm font-semibold shadow-[0_18px_48px_-30px_rgba(15,23,42,0.35)] focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-amber-400",
     answerIdle:
       "border-amber-200/70 bg-white/85 text-slate-900 hover:border-amber-300 hover:bg-amber-50/80",
     answerSelected:
@@ -106,7 +106,7 @@ const variantStyles: Record<ShowcaseQuizExperienceVariant, {
     timeTrack: "bg-white/15",
     timeFill: "bg-gradient-to-r from-emerald-400 via-cyan-400 to-blue-400",
     answerBase:
-      "rounded-full border transition-all duration-300 ease-out px-5 py-3 text-base font-semibold shadow-[0_20px_60px_-36px_rgba(15,23,42,0.7)] focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-0 focus-visible:ring-emerald-400/70",
+      "rounded-full border transition-all duration-300 ease-out px-5 py-3 text-sm font-semibold shadow-[0_20px_60px_-36px_rgba(15,23,42,0.7)] focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-0 focus-visible:ring-emerald-400/70",
     answerIdle:
       "border-white/20 bg-white/5 text-white/90 hover:border-emerald-400/60 hover:bg-emerald-400/10",
     answerSelected:
@@ -260,8 +260,8 @@ export function ShowcaseQuizExperience({
     const feedback = isSelectionCorrect
       ? "Nice! That's correct."
       : correctAnswerText
-      ? `Correct answer: ${correctAnswerText}`
-      : "Revealing the correct answer...";
+        ? `Correct answer: ${correctAnswerText}`
+        : "Revealing the correct answer...";
 
     setFeedbackMessage(feedback);
     setIsReviewing(true);
@@ -423,7 +423,7 @@ export function ShowcaseQuizExperience({
               <p className={cn("text-xs font-semibold uppercase tracking-[0.35em]", styles.helper)}>
                 {helperText}
               </p>
-              <p className={cn("text-2xl font-semibold leading-snug sm:text-3xl", styles.question)}>
+              <p className={cn("text-xl font-semibold leading-snug sm:text-2xl", styles.question)}>
                 {questionPrompt}
               </p>
             </div>
