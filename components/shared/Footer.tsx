@@ -1,29 +1,25 @@
 import Link from "next/link";
 import { Twitter, Facebook, Youtube, ShieldCheck, ArrowRight } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { getGradientText } from "@/lib/showcase-theme";
 
 export function Footer() {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="bg-foreground text-background">
-      <div className="mx-auto max-w-7xl px-4 py-24 sm:px-6 lg:px-8">
-        <div className="grid gap-16 lg:grid-cols-2">
-          {/* Brand Section */}
-          <div className="space-y-12">
-            <div className="space-y-6">
-              <Link href="/" className="flex items-center gap-3 group">
-                <ShieldCheck className="h-8 w-8 text-accent" />
-                <span className="text-4xl font-bold tracking-tighter uppercase font-['Barlow_Condensed',sans-serif]">
-                  SPORTS<span className="text-accent">TRIVIA</span>
-                </span>
-              </Link>
-              <p className="max-w-md text-xl font-medium text-background/60 leading-tight uppercase tracking-tight">
-                THE ULTIMATE ARENA FOR SPORT FANATICS. PROVEN PERFORMANCE. MAXIMUM IQ.
-              </p>
-            </div>
+    <footer className="w-full bg-background border-t border-accent/20">
+      <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-12 lg:gap-8">
 
+          {/* Brand Section */}
+          <div className="lg:col-span-1 space-y-8">
+            <Link href="/" className="flex items-center gap-2 group w-fit">
+              <ShieldCheck className="h-8 w-8 text-accent group-hover:scale-110 transition-transform duration-300" />
+              <span className="text-3xl font-black italic tracking-tighter uppercase font-['Barlow_Condensed',sans-serif] text-foreground">
+                SPORTS<span className="text-accent">TRIVIA</span>
+              </span>
+            </Link>
+            <p className="text-sm font-medium text-foreground/60 uppercase tracking-widest leading-relaxed max-w-xs">
+              The ultimate arena for sports fanatics. Prove your knowledge. Claim your glory.
+            </p>
             <div className="flex gap-4">
               {[
                 { icon: Twitter, href: "https://twitter.com/sportstriviain", label: "Twitter" },
@@ -34,52 +30,57 @@ export function Footer() {
                   key={href}
                   href={href}
                   aria-label={label}
-                  className="flex h-12 w-12 items-center justify-center border-2 border-background/10 hover:border-accent hover:text-accent transition-all duration-300"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex h-10 w-10 items-center justify-center border border-white/10 hover:border-accent hover:bg-accent/10 hover:text-accent text-foreground/60 transition-all duration-300"
                 >
-                  <Icon className="h-5 w-5" />
+                  <Icon className="h-4 w-4" />
                 </Link>
               ))}
             </div>
           </div>
 
-          {/* Links Section */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-12">
+          {/* Links Sections */}
+          <div className="lg:col-span-3 grid grid-cols-1 sm:grid-cols-3 gap-8 sm:gap-12">
             {[
               {
-                heading: "Playbook",
+                heading: "Competition",
                 links: [
-                  { label: "All Quizzes", href: "/quizzes" },
-                  { label: "Live Rankings", href: "/leaderboard" },
-                  { label: "Pro Challenges", href: "/challenges" },
+                  { label: "Leaderboard", href: "/leaderboard" },
+                  { label: "Challenges", href: "/challenges" },
+                  { label: "Quizzes", href: "/quizzes" },
                 ],
               },
               {
-                heading: "Intelligence",
+                heading: "Discover",
                 links: [
                   { label: "Topic Index", href: "/topics" },
                   { label: "Global Search", href: "/search" },
-                  { label: "Arena Stats", href: "/profile/me" },
+                  { label: "My Profile", href: "/profile/me" },
                 ],
               },
               {
-                heading: "Corporate",
+                heading: "Company",
                 links: [
-                  { label: "Privacy Policy", href: "/" },
-                  { label: "Terms of Usage", href: "/" },
-                  { label: "Contact Support", href: "/" },
+                  { label: "Privacy Policy", href: "/privacy" },
+                  { label: "Terms of Usage", href: "/terms" },
+                  { label: "Contact Support", href: "mailto:support@sportstrivia.in" },
                 ],
               },
             ].map((column) => (
               <div key={column.heading} className="space-y-6">
-                <h4 className="text-xs font-bold uppercase tracking-[0.25em] text-accent">
+                <h4 className="text-sm font-black uppercase italic tracking-widest text-accent border-l-2 border-accent pl-3">
                   {column.heading}
                 </h4>
-                <ul className="space-y-4">
+                <ul className="space-y-3">
                   {column.links.map((link) => (
                     <li key={`${column.heading}-${link.label}`}>
-                      <Link href={link.href} className="flex items-center gap-2 group text-sm font-bold uppercase tracking-widest text-background/40 transition-colors hover:text-background">
-                        <ArrowRight className="h-3 w-3 opacity-0 -ml-5 group-hover:opacity-100 group-hover:ml-0 transition-all" />
-                        {link.label}
+                      <Link
+                        href={link.href}
+                        className="group flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-foreground/50 hover:text-accent transition-colors duration-300"
+                      >
+                        <ArrowRight className="h-3 w-3 opacity-0 -ml-4 group-hover:opacity-100 group-hover:ml-0 transition-all duration-300 text-accent" />
+                        <span>{link.label}</span>
                       </Link>
                     </li>
                   ))}
@@ -89,13 +90,14 @@ export function Footer() {
           </div>
         </div>
 
-        <div className="mt-24 pt-12 border-t border-background/10 flex flex-col md:flex-row justify-between items-center gap-6">
-          <div className="text-[10px] font-bold uppercase tracking-[0.3em] text-background/30">
-            © {currentYear} SPORTS TRIVIA COLLECTIVE. ALL RIGHTS RESERVED.
+        {/* Bottom Bar */}
+        <div className="mt-16 pt-8 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-4 text-[10px] font-bold uppercase tracking-[0.2em] text-foreground/30">
+          <div>
+            © {currentYear} SPORTS TRIVIA COLLECTIVE.
           </div>
-          <div className="flex items-center gap-4">
-            <div className="h-1.5 w-1.5 rounded-full bg-accent animate-pulse" />
-            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-accent">Arena Servers Operational</span>
+          <div className="flex items-center gap-2">
+            <div className="h-1 w-1 rounded-full bg-accent animate-pulse" />
+            <span>Operational</span>
           </div>
         </div>
       </div>
