@@ -10,7 +10,7 @@ import {
 import type { ShowcaseTheme } from "@/components/showcase/ShowcaseThemeProvider";
 import type { QuizResultsSummaryData } from "./types";
 
-const CONFETTI_COLORS = ["#ef4444", "#22c55e", "#eab308", "#3b82f6", "#a855f7", "#ec4899"];
+const CONFETTI_COLORS = ["#10b981", "#fbbf24", "#f43f5e", "#3b82f6", "#8b5cf6"];
 
 interface QuizResultsSummaryProps {
   data: QuizResultsSummaryData;
@@ -22,35 +22,35 @@ interface QuizResultsSummaryProps {
 
 function formatTime(seconds: number) {
   if (!seconds || Number.isNaN(seconds)) {
-    return "0 sec";
+    return "0s";
   }
   const totalSeconds = Math.max(0, Math.round(seconds));
   const minutes = Math.floor(totalSeconds / 60);
   const remainingSeconds = totalSeconds % 60;
   if (minutes === 0) {
-    return `${remainingSeconds} sec`;
+    return `${remainingSeconds}s`;
   }
   if (remainingSeconds === 0) {
-    return `${minutes} min`;
+    return `${minutes}m`;
   }
-  return `${minutes} min ${remainingSeconds} sec`;
+  return `${minutes}m ${remainingSeconds}s`;
 }
 
 export function QuizResultsSummary({ data, theme, confetti = false, footer, className }: QuizResultsSummaryProps) {
   const percentage = (data.correctAnswers / data.totalQuestions) * 100;
 
-  let performanceLabel = "Keep Practicing!";
+  let performanceLabel = "KEEP PUSHING";
   let performanceColor = "text-rose-500";
 
   if (percentage >= 90) {
-    performanceLabel = "Legendary Performance!";
-    performanceColor = "text-amber-500";
+    performanceLabel = "LEGENDARY STATUS";
+    performanceColor = "text-amber-400";
   } else if (percentage >= 75) {
-    performanceLabel = "Pro Status!";
-    performanceColor = "text-emerald-500";
+    performanceLabel = "PRO PERFORMANCE";
+    performanceColor = "text-emerald-400";
   } else if (percentage >= 50) {
-    performanceLabel = "Great Effort!";
-    performanceColor = "text-blue-500";
+    performanceLabel = "STRONG EFFORT";
+    performanceColor = "text-blue-400";
   }
 
   return (
@@ -60,7 +60,7 @@ export function QuizResultsSummary({ data, theme, confetti = false, footer, clas
           {[...Array(20)].map((_, _i) => (
             <motion.div
               key={_i}
-              className="absolute h-2 w-2 rounded-full"
+              className="absolute h-1.5 w-1.5 rounded-sm"
               initial={{
                 top: "50%",
                 left: "50%",
@@ -89,70 +89,52 @@ export function QuizResultsSummary({ data, theme, confetti = false, footer, clas
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="relative z-10 space-y-6"
+        className="relative z-10 space-y-8"
       >
-        <div className="space-y-2">
+        <div className="space-y-1">
           <motion.h2
             initial={{ scale: 0.9 }}
             animate={{ scale: 1 }}
-            className={cn("text-2xl font-black uppercase tracking-tighter sm:text-4xl", getTextColor("primary"))}
+            className={cn("text-xl font-bold uppercase tracking-[0.2em] text-zinc-500")}
           >
-            Quiz Complete
+            Mission Complete
           </motion.h2>
           <motion.p
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.2 }}
-            className={cn("text-lg font-bold italic", performanceColor)}
+            className={cn("text-3xl font-black italic tracking-tighter sm:text-4xl", performanceColor)}
           >
             {performanceLabel}
           </motion.p>
         </div>
 
-        <div className="relative mx-auto flex h-40 w-40 items-center justify-center sm:h-48 sm:w-48">
+        <div className="relative mx-auto flex h-48 w-48 items-center justify-center">
           {/* Animated background rings */}
           <motion.div
-            className="absolute inset-0 rounded-full border-4 border-dashed border-primary/10"
+            className="absolute inset-0 rounded-full border border-dashed border-zinc-700 opacity-20"
             animate={{ rotate: 360 }}
-            transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+            transition={{ duration: 40, repeat: Infinity, ease: "linear" }}
           />
           <motion.div
-            className="absolute inset-4 rounded-full border-2 border-dotted border-primary/20"
+            className="absolute inset-4 rounded-full border border-dotted border-zinc-500 opacity-20"
             animate={{ rotate: -360 }}
-            transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
+            transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
           />
 
           <motion.div
             initial={{ scale: 0, rotate: -180 }}
             animate={{ scale: 1, rotate: 0 }}
-            transition={{ type: "spring", damping: 12, stiffness: 100, delay: 0.3 }}
+            transition={{ type: "spring", damping: 15, stiffness: 100, delay: 0.3 }}
             className={cn(
-              "relative flex h-32 w-32 flex-col items-center justify-center rounded-full text-center shadow-2xl sm:h-36 sm:w-36",
-              theme === "light"
-                ? "bg-primary text-primary-foreground"
-                : "bg-white text-black",
+              "relative flex h-36 w-36 flex-col items-center justify-center rounded-full border-4 border-zinc-800 bg-zinc-900 text-center shadow-2xl shadow-black/50"
             )}
           >
-            <div className="text-4xl font-black sm:text-5xl">{data.correctAnswers}</div>
-            <div className="text-[10px] font-bold uppercase tracking-widest opacity-70">
-              Out of {data.totalQuestions}
+            <div className="text-6xl font-black text-white">{data.correctAnswers}</div>
+            <div className="mt-1 h-px w-8 bg-zinc-700" />
+            <div className="mt-1 text-xs font-bold uppercase tracking-widest text-zinc-500">
+              {data.totalQuestions}
             </div>
-          </motion.div>
-
-          {/* Floating icons */}
-          <motion.div
-            animate={{ y: [0, -10, 0] }}
-            transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-            className="absolute -right-2 top-4 rounded-full bg-amber-400 p-2 text-black shadow-lg"
-          >
-            <Trophy className="h-5 w-5" />
-          </motion.div>
-          <motion.div
-            animate={{ y: [0, 10, 0] }}
-            transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-            className="absolute -left-4 bottom-8 rounded-full bg-blue-500 p-2 text-white shadow-lg"
-          >
-            <Target className="h-5 w-5" />
           </motion.div>
         </div>
 
@@ -160,10 +142,10 @@ export function QuizResultsSummary({ data, theme, confetti = false, footer, clas
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.6 }}
-          className="inline-flex items-center gap-2 rounded-full border border-primary/10 bg-primary/5 px-4 py-2 text-sm font-medium"
+          className="inline-flex items-center gap-2 rounded-sm border border-emerald-500/20 bg-emerald-500/10 px-4 py-1.5 text-xs font-bold uppercase tracking-widest text-emerald-400"
         >
-          <Clock className="h-4 w-4 text-primary" />
-          <span>Finished in {formatTime(data.timeSpentSeconds)}</span>
+          <Clock className="h-3 w-3" />
+          <span>Time: {formatTime(data.timeSpentSeconds)}</span>
         </motion.div>
 
         {footer ? <div className="mt-4">{footer}</div> : null}
@@ -181,25 +163,28 @@ interface QuizResultsStatsGridProps {
 export function QuizResultsStatsGrid({ data, className }: QuizResultsStatsGridProps) {
   const cards = [
     {
-      label: "Best Streak",
-      icon: <Zap className="h-4 w-4 text-amber-500" />,
+      label: "Streak",
+      icon: <Zap className="h-4 w-4 text-amber-400" />,
       value: data.longestStreak,
-      unit: "Questions",
-      color: "bg-amber-500/10 border-amber-500/20",
+      unit: "MAX",
+      color: "bg-zinc-900 border-zinc-800 hover:border-amber-500/50",
+      accent: "text-amber-400"
     },
     {
-      label: "Avg Speed",
-      icon: <Clock className="h-4 w-4 text-emerald-500" />,
+      label: "Speed",
+      icon: <Clock className="h-4 w-4 text-emerald-400" />,
       value: data.averageResponseTimeSeconds.toFixed(1),
-      unit: "Sec / Quest",
-      color: "bg-emerald-500/10 border-emerald-500/20",
+      unit: "SEC/Q",
+      color: "bg-zinc-900 border-zinc-800 hover:border-emerald-500/50",
+      accent: "text-emerald-400"
     },
     {
-      label: "IQ Rank",
-      icon: <Star className="h-4 w-4 text-blue-500" />,
-      value: Math.round((data.correctAnswers / data.totalQuestions) * 150),
-      unit: "Estimated",
-      color: "bg-blue-500/10 border-blue-500/20",
+      label: "Rating",
+      icon: <Star className="h-4 w-4 text-blue-400" />,
+      value: Math.round((data.correctAnswers / data.totalQuestions) * 100),
+      unit: "PTS",
+      color: "bg-zinc-900 border-zinc-800 hover:border-blue-500/50",
+      accent: "text-blue-400"
     },
   ];
 
@@ -211,21 +196,20 @@ export function QuizResultsStatsGrid({ data, className }: QuizResultsStatsGridPr
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 + index * 0.1 }}
-          whileHover={{ y: -5 }}
           className={cn(
-            "flex flex-col items-center justify-center rounded-2xl border p-6 text-center transition-colors",
+            "flex flex-col items-center justify-center rounded-lg border p-6 text-center transition-all duration-300",
             card.color
           )}
         >
-          <div className="mb-2 rounded-full bg-white p-2 shadow-sm dark:bg-white/10">
+          <div className="mb-3 rounded-sm bg-zinc-800 p-2 text-white">
             {card.icon}
           </div>
-          <p className="text-[10px] font-black uppercase tracking-widest opacity-60">
+          <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">
             {card.label}
           </p>
-          <div className="flex items-baseline gap-1">
-            <span className="text-3xl font-black">{card.value}</span>
-            <span className="text-[10px] font-bold opacity-40">{card.unit}</span>
+          <div className="mt-1 flex items-baseline gap-1">
+            <span className={cn("text-3xl font-black tabular-nums", card.accent)}>{card.value}</span>
+            <span className="text-[10px] font-bold text-zinc-600">{card.unit}</span>
           </div>
         </motion.div>
       ))}

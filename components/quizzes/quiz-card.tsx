@@ -34,98 +34,98 @@ export function QuizCard({ quiz }: QuizCardProps) {
   const coverImage = quiz.descriptionImageUrl;
   const rating = quiz.averageRating ?? 0;
   const hasRating = quiz.totalReviews > 0;
-  const difficultyLabel = `${quiz.difficulty.charAt(0)}${quiz.difficulty
-    .slice(1)
-    .toLowerCase()}`;
+  // Format difficulty: EASY -> Easy, but we'll use uppercase in UI
+  const difficultyDisplay = quiz.difficulty;
 
   return (
-    <Card className="group overflow-hidden border-border/60 bg-gradient-to-b from-background/80 via-background/90 to-muted/40 transition-shadow hover:shadow-xl">
-      <Link href={`/quizzes/${quiz.slug}`} className="block">
-        <CardHeader className="p-0">
-          <div className="relative aspect-[16/9] w-full overflow-hidden bg-muted">
-            {coverImage ? (
-              <Image
-                src={coverImage}
-                alt={`${quiz.title} cover`}
-                fill
-                className="object-cover transition-transform duration-300 group-hover:scale-105"
-                sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
-                priority={false}
-              />
-            ) : (
-              <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-muted via-muted/80 to-muted-foreground/10">
-                <span className="text-sm font-medium text-muted-foreground/80">
-                  Cover coming soon
-                </span>
-              </div>
-            )}
-            {quiz.isFeatured && (
-              <div className="absolute left-4 top-4 rounded-full bg-primary/90 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-primary-foreground shadow">
+    <Card className="group relative overflow-hidden rounded-lg border-white/10 bg-zinc-950 transition-all duration-300 hover:border-white/20 hover:shadow-2xl hover:shadow-black/50">
+      <Link href={`/quizzes/${quiz.slug}`} className="flex h-full flex-col">
+        {/* Cover Image */}
+        <div className="relative aspect-[16/9] w-full overflow-hidden bg-zinc-900">
+          {coverImage ? (
+            <Image
+              src={coverImage}
+              alt={`${quiz.title} cover`}
+              fill
+              className="object-cover transition-transform duration-500 will-change-transform group-hover:scale-105"
+              sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+              priority={false}
+            />
+          ) : (
+            // Fallback pattern
+            <div className="flex h-full w-full items-center justify-center bg-zinc-900 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-zinc-800 to-zinc-950">
+              <span className="text-xs font-bold uppercase tracking-widest text-zinc-700">
+                No Cover
+              </span>
+            </div>
+          )}
+
+          {/* Featured Badge - Minimal */}
+          {quiz.isFeatured && (
+            <div className="absolute left-3 top-3 flex items-center gap-1.5 rounded-sm bg-emerald-500/90 px-2 py-0.5 backdrop-blur-md">
+              <span className="relative flex h-1.5 w-1.5">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-white opacity-75"></span>
+                <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-white"></span>
+              </span>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-white">
                 Featured
+              </span>
+            </div>
+          )}
+
+          {/* Difficulty Badge - Absolute positioning for tighter layout */}
+          <div className="absolute bottom-3 right-3">
+            <Badge
+              variant="outline"
+              className={cn(
+                "rounded-sm border-0 px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest backdrop-blur-md",
+                quiz.difficulty === 'EASY' && "bg-emerald-500/20 text-emerald-300",
+                quiz.difficulty === 'MEDIUM' && "bg-amber-500/20 text-amber-300",
+                quiz.difficulty === 'HARD' && "bg-rose-500/20 text-rose-300"
+              )}
+            >
+              {difficultyDisplay}
+            </Badge>
+          </div>
+        </div>
+
+        <CardContent className="flex flex-1 flex-col justify-between space-y-4 p-5">
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">
+                {quiz.sport ?? "Multi-sport"}
+              </span>
+            </div>
+            <CardTitle className="line-clamp-2 text-lg font-bold uppercase leading-tight tracking-tight text-white group-hover:text-emerald-400 transition-colors">
+              {quiz.title}
+            </CardTitle>
+
+            {quiz.description && (
+              <CardDescription className="line-clamp-2 text-xs font-medium text-zinc-400">
+                {quiz.description}
+              </CardDescription>
+            )}
+          </div>
+
+          <div className="flex items-center justify-between border-t border-white/5 pt-4">
+            <div className="flex items-center gap-4 text-xs font-medium text-zinc-400">
+              <div className="flex items-center gap-1.5">
+                <Clock className="h-3.5 w-3.5" />
+                <span>{formatDuration(quiz.duration)}</span>
               </div>
-            )}
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-4 p-6">
-          <div className="flex items-start justify-between gap-3">
-            <CardTitle className="text-xl leading-tight">{quiz.title}</CardTitle>
-            {quiz.difficulty && (
-              <Badge className={cn("rounded-full px-3 py-1 text-xs", difficultyColors[quiz.difficulty])}>
-                {difficultyLabel}
-              </Badge>
-            )}
-          </div>
-          {quiz.description && (
-            <CardDescription className="line-clamp-3 text-sm text-muted-foreground">
-              {quiz.description}
-            </CardDescription>
-          )}
-          <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
-            <div className="flex items-center gap-1">
-              <Clock className="h-4 w-4" />
-              <span>{formatDuration(quiz.duration)}</span>
+              <div className="flex items-center gap-1.5">
+                <Users className="h-3.5 w-3.5" />
+                <span>{quiz._count.attempts > 1000 ? `${(quiz._count.attempts / 1000).toFixed(1)}k` : quiz._count.attempts}</span>
+              </div>
             </div>
-            <div className="flex items-center gap-1">
-              <Users className="h-4 w-4" />
-              <span>{quiz._count.attempts.toLocaleString()} attempts</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <Star className="h-4 w-4 fill-primary text-primary" />
-              {hasRating ? (
-                <span>
-                  {rating.toFixed(1)}
-                  <span className="text-xs text-muted-foreground/80">
-                    {` (${quiz.totalReviews})`}
-                  </span>
-                </span>
-              ) : (
-                <span className="text-muted-foreground/80">New</span>
-              )}
+
+            {/* Rating */}
+            <div className="flex items-center gap-1 text-xs font-bold text-amber-400">
+              <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+              {hasRating ? <span>{rating.toFixed(1)}</span> : <span className="text-zinc-600">--</span>}
             </div>
           </div>
-          {quiz.tags.length > 0 && (
-            <div className="flex flex-wrap gap-2">
-              {quiz.tags.slice(0, 4).map(({ tag }) => (
-                <Badge
-                  key={tag.slug}
-                  variant="outline"
-                  className="border-primary/20 bg-primary/5 text-xs font-normal text-primary/80"
-                >
-                  #{tag.name}
-                </Badge>
-              ))}
-              {quiz.tags.length > 4 && (
-                <Badge variant="outline" className="text-xs font-normal">
-                  +{quiz.tags.length - 4} more
-                </Badge>
-              )}
-            </div>
-          )}
         </CardContent>
-        <CardFooter className="flex items-center justify-between border-t border-border/60 bg-muted/20 p-6 text-sm text-muted-foreground">
-          <span>{quiz.sport ?? "Multi-sport"}</span>
-          <span className="font-medium text-primary">Play quiz →</span>
-        </CardFooter>
       </Link>
     </Card>
   );

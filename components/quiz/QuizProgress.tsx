@@ -13,23 +13,30 @@ interface QuizProgressProps {
 
 export const QuizProgress = memo(function QuizProgress({ currentIndex, totalQuestions, styles }: QuizProgressProps) {
     const rawProgress = totalQuestions > 0 ? (currentIndex / totalQuestions) * 100 : 0;
-    const progressPercent = totalQuestions > 0 ? Math.max(rawProgress, 4) : 0;
+    const progressPercent = totalQuestions > 0 ? Math.max(rawProgress, 0) : 0;
 
     return (
-        <div className="space-y-3">
-            <div className="flex items-center justify-between text-[10px] sm:text-xs font-bold uppercase tracking-[0.2em] opacity-70">
-                <span>
-                    Question {currentIndex + 1} <span className="opacity-40">/ {totalQuestions}</span>
-                </span>
-                <span>{Math.round(rawProgress)}%</span>
+        <div className="space-y-2">
+            <div className="flex items-end justify-between">
+                <div className="flex flex-col">
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">
+                        Progression
+                    </span>
+                    <div className="flex items-baseline gap-1 font-mono text-sm font-bold text-white">
+                        <span>{String(currentIndex + 1).padStart(2, '0')}</span>
+                        <span className="text-zinc-600">/</span>
+                        <span className="text-zinc-600">{String(totalQuestions).padStart(2, '0')}</span>
+                    </div>
+                </div>
+                <div className="font-mono text-[10px] font-bold text-emerald-400">
+                    {Math.round(rawProgress)}%
+                </div>
             </div>
-            <div
-                className={cn("relative h-2 w-full overflow-hidden rounded-full", styles.progressTrack)}
-            >
+            <div className="relative h-1 w-full overflow-hidden bg-zinc-800">
                 <m.div
-                    className={cn("absolute inset-y-0 left-0 rounded-full", styles.progressFill)}
+                    className="absolute inset-y-0 left-0 bg-emerald-500"
                     animate={{ width: `${progressPercent}%` }}
-                    transition={{ duration: 0.8, ease: "circOut" }}
+                    transition={{ duration: 0.5, ease: "circOut" }}
                 />
             </div>
         </div>
