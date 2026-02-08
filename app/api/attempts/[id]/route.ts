@@ -1,4 +1,4 @@
-import { NextRequest } from "next/server";
+import { NextRequest, after } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireAuth } from "@/lib/auth-helpers";
 import { handleError, successResponse, NotFoundError, UnauthorizedError, ForbiddenError } from "@/lib/errors";
@@ -18,6 +18,8 @@ const quizSelection = {
     passingScore: true,
     completionBonus: true,
     timePerQuestion: true,
+    sport: true,
+    topicId: true,
 } as const;
 
 const userAnswerSelection = {
@@ -423,19 +425,39 @@ export async function PATCH(
         // Award one-time completion bonus if passed BEFORE stats/leaderboard
         let completionBonusAwarded = 0;
         if (passed && !attempt.isPracticeMode) {
-            completionBonusAwarded = await awardCompletionBonusIfEligible({
-                userId: user.id,
-                quizId: attempt.quizId,
-            });
-            if (completionBonusAwarded > 0) {
-                totalPoints += completionBonusAwarded;
-                totalPoints = Math.round(totalPoints);
-                await prisma.quizAttempt.update({
-                    where: { id: completedAttempt.id },
-                    data: { totalPoints },
-                });
-                completedAttempt.totalPoints = totalPoints;
-            }
+            // We will calculate this inside after() to not block, but we need to return it? 
+            // Actually, the UI displays the bonus. If we move it to background, we can't show it immediately.
+            // The plan said "Wrap awardCompletionBonusIfEligible... inside after()".
+            // If I do that, `completionBonusAwarded` in the response will be 0 or undefined.
+            // Accessing the bonus is critical for the "Points" display. 
+            // However, `updateUserStatistics` and `checkAndAwardBadges` are definitely side effects.
+            // `awardCompletionBonusIfEligible` updates the total points.
+            // If I move it to background, the user won't see the updated total points immediately in the response.
+            // BUT, the plan was approved. "Response is sent immediately while tasks run in the background".
+            // This implies we accept that some data might be "mostly up to date" or handled optimistically by UI?
+            // Or maybe I should keep bonus calculation sync if it's fast?
+            // Looking at `awardCompletionBonusIfEligible`, it does a DB read and write.
+            // If I move it to background, I must return `completionBonusAwarded: 0` (or estimate it?).
+            // The implementation plan says "Wrap awardCompletionBonusIfEligible... inside after()". I will follow the plan. 
+            // The UI might show "Completion Bonus" if I return it. 
+            // Wait, if I return 0, the UI won't show it. 
+            // User won't see the bonus animation. 
+            // I should probably keep bonus sync OR accept the UX tradeoff.
+            // Actually, `awardCompletionBonusIfEligible` returns the bonus amount. 
+            // If I move it to `after`, I can't return the amount.
+            // Maybe I can calculate if they *should* get it (optimistically) and allow `after` to actually write it?
+            // `awardCompletionBonusIfEligible` checks `quizCompletionBonusAward` table.
+            // If I optimize, I can check if they have it locally (maybe too expensive?).
+            // Let's stick to the plan: move it to `after`. The user might miss the "Bonus" popping up instantly, 
+            // OR I can try to predict it? 
+            // "completionBonus" is on the quiz. If passed and not practice and not previously awarded...
+            // Checking "previously awarded" requires a DB query.
+            // That DB query is what `awardCompletionBonusIfEligible` does.
+            // So if I want to avoid blocking, I can't check it.
+            // I will move it to `after` and accept that `completionBonusAwarded` will be 0 in the immediate response.
+            // The "Total Points" in the response will technically be "points from questions".
+            // The subsequent lazy load of user progress might pick it up if it wins the race, but unlikely.
+            // This seems like a valid tradeoff for performance.
         }
 
         // Calculate elapsed time for leaderboard (needed before parallel execution)
@@ -443,59 +465,66 @@ export async function PATCH(
             (new Date().getTime() - attempt.startedAt.getTime()) / 1000
         );
 
-        // Run all non-critical operations in parallel for performance
-        // These operations are independent and can safely run concurrently
-        const [
-            progressionResult,
-            _leaderboardResult,
-            badgeResult,
-            _gamificationResult
-        ] = await Promise.allSettled([
-            // 1. Update user statistics
-            updateUserStatistics(
-                user.id,
-                attempt.quizId,
-                completedAttempt,
-                totalPoints
-            ),
-            // 2. Update quiz leaderboard (skip in practice mode)
-            attempt.isPracticeMode
-                ? Promise.resolve(null)
-                : updateQuizLeaderboard(
-                    user.id,
-                    attempt.quizId,
-                    scorePercentage,
-                    totalPoints,
-                    averageResponseTime,
-                    totalElapsedSeconds
-                ),
-            // 3. Check and award badges
-            checkAndAwardBadges(user.id),
-            // 4. Recompute level/tier progression
-            recomputeUserProgress(user.id).catch(() => null)
-        ]);
+        // Schedule heavy tasks in background
+        after(async () => {
+            try {
+                // 1. Award completion bonus
+                let bonus = 0;
+                if (passed && !attempt.isPracticeMode) {
+                    bonus = await awardCompletionBonusIfEligible({
+                        userId: user.id,
+                        quizId: attempt.quizId,
+                    });
+                    if (bonus > 0) {
+                        // Update attempt total points with bonus
+                        await prisma.quizAttempt.update({
+                            where: { id: completedAttempt.id },
+                            data: { totalPoints: completedAttempt.totalPoints + bonus },
+                        });
+                    }
+                }
 
-        // Extract results, treating failures as non-blocking
-        const progression = progressionResult.status === 'fulfilled'
-            ? progressionResult.value
-            : {
-                tier: 'ROOKIE' as const,
-                tierLabel: 'Rookie',
-                totalPoints: 0,
-                leveledUp: false,
-                nextTier: null,
-                nextTierLabel: null,
-                pointsToNext: null,
-                progressPercent: 0
-            };
-        const awardedBadges = badgeResult.status === 'fulfilled'
-            ? badgeResult.value
-            : [];
+                const finalPoints = totalPoints + bonus;
 
+                // 2. Run other updates in parallel
+                await Promise.allSettled([
+                    updateUserStatistics(
+                        user.id,
+                        attempt.quizId,
+                        completedAttempt,
+                        finalPoints
+                    ),
+                    attempt.isPracticeMode
+                        ? Promise.resolve(null)
+                        : updateQuizLeaderboard(
+                            user.id,
+                            attempt.quizId,
+                            scorePercentage,
+                            finalPoints,
+                            averageResponseTime,
+                            totalElapsedSeconds
+                        ),
+                    checkAndAwardBadges(user.id, {
+                        quizId: attempt.quizId,
+                        topicId: attempt.quiz.topicId,
+                        sport: attempt.quiz.sport || undefined,
+                        score: scorePercentage,
+                        isPracticeMode: attempt.isPracticeMode
+                    }),
+                    recomputeUserProgress(user.id)
+                ]);
+            } catch (err) {
+                console.error("Background task error:", err);
+            }
+        });
+
+        // Return immediate response with calculated score
+        // badges/progression will be null/empty in the immediate response,
+        // expecting the client to handle it or lazy load as per new plan.
         return successResponse({
-            awardedBadges,
-            progression,
-            completionBonusAwarded,
+            awardedBadges: [],
+            progression: null,
+            completionBonusAwarded: 0,
             attempt: {
                 id: completedAttempt.id,
                 quizId: completedAttempt.quizId,
