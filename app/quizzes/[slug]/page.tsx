@@ -3,7 +3,6 @@ import Link from "next/link";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
-import { Prisma } from "@prisma/client";
 import { generateQuizMetaTags } from "@/lib/seo-utils";
 import { formatPlayerCount, formatQuizDuration } from "@/lib/quiz-formatters";
 import { ShowcaseButton } from "@/components/showcase/ui/buttons/Button";
@@ -17,6 +16,7 @@ import { cn } from "@/lib/utils";
 import { getBlurCircles, getGradientText } from "@/lib/showcase-theme";
 import { PageContainer } from "@/components/shared/PageContainer";
 import { ShareQuizButton } from "./share-quiz-button";
+import { getCachedQuiz, getCachedQuizStats, getCachedLeaderboard } from "@/lib/quiz-cache";
 
 interface QuizDetailPageProps {
   params: Promise<{ slug: string }>;
@@ -45,6 +45,8 @@ function ensureArray<T>(value: T[] | null | undefined): T[] {
 }
 
 export const dynamic = 'auto';
+
+// Revalidate page execution every 5 minutes, though inner data has its own cache controls
 export const revalidate = 300;
 
 export async function generateStaticParams() {
@@ -63,14 +65,9 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({ params }: QuizDetailPageProps): Promise<Metadata> {
   const { slug } = await params;
-  const quiz = await prisma.quiz.findUnique({
-    where: { slug },
-    select: {
-      title: true, description: true, seoTitle: true, seoDescription: true,
-      seoKeywords: true, sport: true, difficulty: true, descriptionImageUrl: true,
-      slug: true, isPublished: true, status: true,
-    },
-  });
+
+  // Use cached fetcher
+  const quiz = await getCachedQuiz(slug);
 
   if (!quiz || !quiz.isPublished || quiz.status !== "PUBLISHED") {
     return { title: "Quiz not found", description: "The requested quiz could not be found." };
@@ -104,113 +101,56 @@ export async function generateMetadata({ params }: QuizDetailPageProps): Promise
 
 export default async function QuizDetailPage({ params }: QuizDetailPageProps) {
   const { slug } = await params;
+
+  // 1. Fetch the main quiz definition (Cached)
+  const quiz = await getCachedQuiz(slug);
   const user = await getCurrentUser();
   const isAdmin = user?.role === "ADMIN";
-  let quiz: any;
-  let showcaseReviews: any[] = [];
-  let uniqueUsersCount: number = 0;
 
-  try {
-    quiz = await prisma.quiz.findUnique({
-      where: { slug },
-      select: {
-        id: true,
-        title: true,
-        description: true,
-        slug: true,
-        sport: true,
-        difficulty: true,
-        duration: true,
-        timePerQuestion: true,
-        descriptionImageUrl: true,
-        createdAt: true,
-        updatedAt: true,
-        averageRating: true,
-        totalReviews: true,
-        maxAttemptsPerUser: true,
-        attemptResetPeriod: true,
-        recurringType: true,
-        isPublished: true,
-        status: true,
-        _count: { select: { attempts: true, reviews: true } },
-        leaderboard: {
-          take: 3,
-          orderBy: [{ bestScore: "desc" }, { averageResponseTime: "asc" }],
-          include: {
-            user: { select: { name: true, email: true, image: true } },
-          },
-        },
-        topicConfigs: {
-          include: { topic: { select: { name: true } } },
-          orderBy: { createdAt: "asc" },
-          take: 1,
-        },
-      },
-    });
-
-    if (!quiz || (!isAdmin && (!quiz.isPublished || quiz.status !== "PUBLISHED"))) {
-      notFound();
-    }
-
-    const [distinctUsers, rawReviews] = await Promise.all([
-      prisma.quizAttempt.findMany({
-        where: { quizId: quiz.id },
-        distinct: ["userId"],
-        select: { userId: true },
-      }),
-      prisma.quizReview.findMany({
-        where: { quizId: quiz.id },
-        include: { user: { select: { name: true, image: true } } },
-        orderBy: { createdAt: "desc" },
-        take: 10,
-      }),
-    ]);
-
-    uniqueUsersCount = distinctUsers.length;
-    showcaseReviews = (rawReviews || []).map((r) => ({
-      id: r.id,
-      reviewer: { name: r.user?.name || "Anonymous", avatarUrl: r.user?.image },
-      rating: r.rating,
-      quote: r.comment ?? "",
-      dateLabel: r.createdAt.toLocaleDateString(),
-    }));
-  } catch (error) {
-    if (error instanceof Error && error.message.includes("NEXT_HTTP_ERROR_FALLBACK")) {
-      throw error;
-    }
-    console.error("Error fetching quiz data:", error);
+  if (!quiz || (!isAdmin && (!quiz.isPublished || quiz.status !== "PUBLISHED"))) {
     notFound();
   }
 
+  // 2. Parallelize all secondary data fetching
+  // - Stats (reviews/users) -> Cached short term
+  // - Leaderboard -> Cached short term
+  // - User specific status -> Dynamic (uncached)
+  const [stats, leaderboard, attemptLimitStatus] = await Promise.all([
+    getCachedQuizStats(quiz.id),
+    getCachedLeaderboard(quiz.id, quiz.recurringType),
+    (async () => {
+      if (!user || !quiz.maxAttemptsPerUser) return null;
+      const now = new Date();
+      return getAttemptLimitStatus(prisma, {
+        userId: user.id,
+        quiz: {
+          id: quiz.id,
+          maxAttemptsPerUser: quiz.maxAttemptsPerUser,
+          attemptResetPeriod: quiz.attemptResetPeriod,
+        },
+        referenceDate: now,
+      });
+    })()
+  ]);
+
+  const { uniqueUsersCount, recentReviews } = stats;
+  const sidebarLeaderboard = leaderboard;
+
   const heroImageUrl = getValidImageUrl(quiz.descriptionImageUrl);
   const topicConfigs = ensureArray(quiz.topicConfigs);
-  const leaderboardRecords = ensureArray(quiz.leaderboard);
   const durationLabel = formatQuizDuration(quiz.duration ?? quiz.timePerQuestion);
   const playersLabel = formatPlayerCount(uniqueUsersCount);
   const badgeLabel = (topicConfigs[0] as any)?.topic?.name ?? quiz.sport ?? quiz.difficulty ?? "Arena";
 
-  const now = new Date();
-  const hasAttemptLimit = quiz.maxAttemptsPerUser != null;
-  const attemptLimitStatus = user && hasAttemptLimit
-    ? await getAttemptLimitStatus(prisma, {
-      userId: user.id,
-      quiz: {
-        id: quiz.id,
-        maxAttemptsPerUser: quiz.maxAttemptsPerUser,
-        attemptResetPeriod: quiz.attemptResetPeriod,
-      },
-      referenceDate: now,
-    })
-    : null;
-
   const maxAttempts = quiz.maxAttemptsPerUser ?? null;
   const remainingAttempts = attemptLimitStatus?.remainingBeforeStart ?? maxAttempts;
-  const isLimitReached = attemptLimitStatus?.isLimitReached ?? (hasAttemptLimit && (remainingAttempts ?? 0) <= 0);
+  const isLimitReached = attemptLimitStatus?.isLimitReached ?? (quiz.maxAttemptsPerUser != null && (remainingAttempts ?? 0) <= 0);
   const resetAt = attemptLimitStatus?.resetAt;
   const attemptProgressPercent = maxAttempts !== null && maxAttempts > 0
     ? Math.max(0, Math.min(100, ((remainingAttempts ?? 0) / maxAttempts) * 100))
     : 0;
 
+  // 3. Conditional Fetch: Only fetch best attempt if limit is reached (Dynamic)
   let bestAttemptId: string | null = null;
   if (isLimitReached && user) {
     const bestAttempt = await prisma.quizAttempt.findFirst({
@@ -219,79 +159,6 @@ export default async function QuizDetailPage({ params }: QuizDetailPageProps) {
       select: { id: true },
     });
     bestAttemptId = bestAttempt?.id ?? null;
-  }
-
-  let sidebarLeaderboard: any[] = [];
-  if (quiz.recurringType === "DAILY" || quiz.recurringType === "WEEKLY") {
-    const isDaily = quiz.recurringType === "DAILY";
-    const rows = await prisma.$queryRaw<any[]>(
-      isDaily
-        ? Prisma.sql`
-            WITH per_period_best AS (
-              SELECT
-                "userId",
-                date_trunc('day', "completedAt") AS period_start,
-                MAX("totalPoints") AS best_points,
-                AVG(COALESCE("averageResponseTime", 0)) AS avg_response
-              FROM "QuizAttempt"
-              WHERE "quizId" = ${quiz.id}
-                AND "isPracticeMode" = false
-                AND "completedAt" IS NOT NULL
-              GROUP BY "userId", date_trunc('day', "completedAt")
-            ),
-            aggregated AS (
-              SELECT
-                "userId",
-                SUM(best_points) AS sum_points,
-                AVG(avg_response) AS avg_response
-              FROM per_period_best
-              GROUP BY "userId"
-            )
-            SELECT a."userId", a.sum_points::int AS "bestPoints", a.avg_response, u.name, u.email
-            FROM aggregated a
-            JOIN "User" u ON u.id = a."userId"
-            ORDER BY a.sum_points DESC, a.avg_response ASC
-            LIMIT 5
-          `
-        : Prisma.sql`
-            WITH per_period_best AS (
-              SELECT
-                "userId",
-                date_trunc('week', "completedAt") AS period_start,
-                MAX("totalPoints") AS best_points,
-                AVG(COALESCE("averageResponseTime", 0)) AS avg_response
-              FROM "QuizAttempt"
-              WHERE "quizId" = ${quiz.id}
-                AND "isPracticeMode" = false
-                AND "completedAt" IS NOT NULL
-              GROUP BY "userId", date_trunc('week', "completedAt")
-            ),
-            aggregated AS (
-              SELECT
-                "userId",
-                SUM(best_points) AS sum_points,
-                AVG(avg_response) AS avg_response
-              FROM per_period_best
-              GROUP BY "userId"
-            )
-            SELECT a."userId", a.sum_points::int AS "bestPoints", a.avg_response, u.name, u.email
-            FROM aggregated a
-            JOIN "User" u ON u.id = a."userId"
-            ORDER BY a.sum_points DESC, a.avg_response ASC
-            LIMIT 5
-          `
-    );
-    sidebarLeaderboard = (rows || []).map((r, index) => ({
-      name: r.name || r.email?.split("@")[0] || `Player ${index + 1}`,
-      score: r.bestPoints || 0,
-      rank: index + 1,
-    }));
-  } else {
-    sidebarLeaderboard = leaderboardRecords.map((entry: any, index: number) => ({
-      name: entry.user?.name || entry.user?.email?.split("@")[0] || `Player ${index + 1}`,
-      score: Math.round(entry.bestScore || entry.bestPoints || 0),
-      rank: entry.rank && entry.rank < 999999 ? entry.rank : index + 1,
-    }));
   }
 
   const averageRating = typeof quiz.averageRating === "number" ? quiz.averageRating : 0;
@@ -419,7 +286,7 @@ export default async function QuizDetailPage({ params }: QuizDetailPageProps) {
 
               {/* Transmission Feed (Reviews) */}
               <div className="pt-12">
-                <ShowcaseReviewsPanel reviews={showcaseReviews} className="bg-transparent" />
+                <ShowcaseReviewsPanel reviews={recentReviews} className="bg-transparent" />
               </div>
             </div>
 
@@ -519,3 +386,4 @@ export default async function QuizDetailPage({ params }: QuizDetailPageProps) {
     </>
   );
 }
+
