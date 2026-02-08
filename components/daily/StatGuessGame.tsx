@@ -39,6 +39,7 @@ export function StatGuessGame({
     const [gameOver, setGameOver] = useState(isCompleted);
     const [won, setWon] = useState(false);
     const [showResult, setShowResult] = useState(false);
+    const [solution, setSolution] = useState(targetValue);
     const { toast } = useToast();
 
     const handleSubmit = async () => {
@@ -80,6 +81,9 @@ export function StatGuessGame({
             if (data.isCorrect || data.gameOver) {
                 setGameOver(true);
                 setWon(data.isCorrect);
+                if (data.solution) {
+                    setSolution(data.solution);
+                }
                 setTimeout(() => setShowResult(true), 500);
             }
 
@@ -201,7 +205,7 @@ export function StatGuessGame({
                     animate={{ opacity: 1 }}
                     className="text-center p-4 bg-muted rounded-xl"
                 >
-                    <p className="text-lg">The answer was <span className="font-bold text-primary">{targetValue}</span></p>
+                    <p className="text-lg">The answer was <span className="font-bold text-primary">{solution}</span></p>
                 </motion.div>
             )}
 
@@ -211,9 +215,10 @@ export function StatGuessGame({
                     <DailyGameResult
                         won={won}
                         guesses={[]} // Simplified for stat mode
+
                         maxGuesses={maxGuesses}
                         gameNumber={gameNumber}
-                        targetWord={targetValue}
+                        targetWord={solution}
                         onClose={() => setShowResult(false)}
                     />
                 )}

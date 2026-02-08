@@ -30,6 +30,7 @@ export function WordleGame({
     gameNumber,
 }: WordleGameProps) {
     const [guesses, setGuesses] = useState<LetterResult[][]>(initialGuesses);
+    const [solution, setSolution] = useState(targetWord);
     const [currentGuess, setCurrentGuess] = useState('');
     const [letterStatuses, setLetterStatuses] = useState<Record<string, LetterStatus>>(initialLetterStatuses);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -119,6 +120,9 @@ export function WordleGame({
                 if (data.isCorrect || data.gameOver) {
                     setGameOver(true);
                     setWon(data.isCorrect);
+                    if (data.solution) {
+                        setSolution(data.solution);
+                    }
                     setTimeout(() => setShowResult(true), 500);
                 }
             }, wordLength * 100 + 500);
@@ -157,7 +161,7 @@ export function WordleGame({
                         guesses={guesses}
                         maxGuesses={maxGuesses}
                         gameNumber={gameNumber}
-                        targetWord={targetWord}
+                        targetWord={solution}
                         onClose={() => setShowResult(false)}
                     />
                 )}

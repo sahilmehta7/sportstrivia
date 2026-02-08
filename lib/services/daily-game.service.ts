@@ -91,6 +91,7 @@ export interface GuessResult {
     feedback: LetterResult[] | Record<string, unknown>;
     attempt: DailyGameAttempt;
     message?: string;
+    solution?: string;
 }
 
 /**
@@ -205,6 +206,7 @@ export async function submitGuess(
         gameOver,
         feedback,
         attempt,
+        solution: gameOver ? game.targetValue : undefined,
         message: isCorrect ? 'Congratulations! You solved it!' : gameOver ? `Game over! The answer was ${game.targetValue}` : undefined,
     };
 }
