@@ -2,12 +2,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { auth } from "@/lib/auth";
 import Link from "next/link";
-import dynamic from "next/dynamic";
-
-const BadgeCelebration = dynamic(
-  () => import("@/components/quiz/results/BadgeCelebration").then((mod) => mod.BadgeCelebration),
-  { ssr: false }
-);
+import { BadgeCelebrationWrapper } from "@/components/quiz/results/BadgeCelebrationWrapper";
 
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -170,7 +165,7 @@ export default async function QuizResultsPage({
 
   return (
     <ShowcaseThemeProvider>
-      {resolvedSearchParams?.badges && <BadgeCelebration />}
+      {resolvedSearchParams?.badges && <BadgeCelebrationWrapper />}
       <QuizResultsLayout>
         <EntranceAnimation className="space-y-10">
 

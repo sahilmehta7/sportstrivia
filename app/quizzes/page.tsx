@@ -223,12 +223,14 @@ async function getFilterGroups(searchParams: SearchParams): Promise<ShowcaseFilt
 
   const categoryOptions = [
     { value: "all", label: "All Sports" },
-    ...topicsWithCounts.map((topic) => ({
-      value: topic.slug,
-      label: topic.name,
-      emoji: sportEmojiMap[topic.name] || "🏆",
-      count: topic.quizCount,
-    })),
+    ...topicsWithCounts
+      .filter((topic) => Object.keys(sportEmojiMap).includes(topic.name))
+      .map((topic) => ({
+        value: topic.slug,
+        label: topic.name,
+        emoji: sportEmojiMap[topic.name] || "🏆",
+        count: topic.quizCount,
+      })),
   ];
 
   return [
