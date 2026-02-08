@@ -40,7 +40,7 @@ export function ShowcaseNewsletterSignup({
           placeholder="Enter your email"
           value={email}
           onChange={(event) => setEmail(event.target.value)}
-          className={cn("h-11 rounded-full px-5", getInputStyles(theme))}
+          className={cn("h-11 rounded-full px-5", getInputStyles())}
         />
         <Button type="submit" className="rounded-full uppercase tracking-[0.3em]">
           Subscribe

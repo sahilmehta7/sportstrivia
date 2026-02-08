@@ -1,12 +1,12 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image"; // Added Image
 import { type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import {
-  getGlassCard,
-  getTextColor,
+  getTextColor, // Removed getGlassCard
   getGradientText,
 } from "@/lib/showcase-theme";
 
@@ -99,12 +99,13 @@ export function ShowcaseHeroSpotlight({
     >
       {backgroundImageUrl && (
         <div className="pointer-events-none absolute inset-0 -z-10">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
+          <Image
             src={backgroundImageUrl}
             alt=""
-            className="h-full w-full object-cover opacity-10 mix-blend-overlay"
-            loading="lazy"
+            fill
+            className="object-cover opacity-10 mix-blend-overlay"
+            sizes="100vw"
+            priority={false}
           />
           <div className="absolute inset-0 bg-gradient-to-br from-background/80 via-background/40 to-transparent" />
         </div>

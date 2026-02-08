@@ -147,7 +147,7 @@ export function DigestPreferencesCard() {
                 </div>
               </div>
 
-              <Button variant="neon" size="lg" onClick={savePreferences} disabled={saving || loading} className="w-full sm:w-auto px-10 rounded-2xl">
+              <Button variant="accent" size="lg" onClick={savePreferences} disabled={saving || loading} className="w-full sm:w-auto px-10 rounded-2xl">
                 {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Database className="h-4 w-4 mr-2" />}
                 SYNC PROTOCOL
               </Button>

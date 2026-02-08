@@ -23,29 +23,28 @@ export function DuplicateResolutionModal({ open, onOpenChange }: DuplicateResolu
 
     useEffect(() => {
         if (open) {
+            const loadDuplicates = async () => {
+                setIsLoading(true);
+                try {
+                    const data = await getDuplicateGroups();
+                    setGroups(data);
+                } catch (error) {
+                    toast({
+                        title: "Error",
+                        description: "Failed to load duplicates.",
+                        variant: "destructive",
+                    });
+                    onOpenChange(false);
+                } finally {
+                    setIsLoading(false);
+                }
+            };
             loadDuplicates();
         } else {
             setGroups([]);
             setCurrentIndex(0);
         }
-    }, [open]);
-
-    const loadDuplicates = async () => {
-        setIsLoading(true);
-        try {
-            const data = await getDuplicateGroups();
-            setGroups(data);
-        } catch (error) {
-            toast({
-                title: "Error",
-                description: "Failed to load duplicates.",
-                variant: "destructive",
-            });
-            onOpenChange(false);
-        } finally {
-            setIsLoading(false);
-        }
-    };
+    }, [open, onOpenChange, toast]);
 
     const handleResolve = async (keepId: string) => {
         setResolving(true);

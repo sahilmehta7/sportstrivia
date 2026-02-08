@@ -49,6 +49,7 @@ export function AthleteGuessGame({
     const [gameOver, setGameOver] = useState(isCompleted);
     const [won, setWon] = useState(false);
     const [showResult, setShowResult] = useState(false);
+    const [solution, setSolution] = useState(targetValue);
     const { toast } = useToast();
 
     const handleSubmit = async () => {
@@ -105,6 +106,9 @@ export function AthleteGuessGame({
             if (data.isCorrect || data.gameOver) {
                 setGameOver(true);
                 setWon(data.isCorrect);
+                if (data.solution) {
+                    setSolution(data.solution);
+                }
                 setTimeout(() => setShowResult(true), 500);
             }
 
@@ -221,7 +225,7 @@ export function AthleteGuessGame({
                         guesses={[]} // Simplified for athlete mode
                         maxGuesses={maxGuesses}
                         gameNumber={gameNumber}
-                        targetWord={targetValue}
+                        targetWord={solution}
                         onClose={() => setShowResult(false)}
                     />
                 )}

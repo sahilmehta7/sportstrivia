@@ -15,8 +15,9 @@ export type ChipEmphasis = "solid" | "outline" | "ghost" | "accent";
 
 /**
  * Standard glass card with backdrop blur
+ * @param _theme - Optional legacy parameter, ignored (uses CSS variables)
  */
-export function getGlassCard(): string {
+export function getGlassCard(_theme?: unknown): string {
   return "glass rounded-md";
 }
 
@@ -83,11 +84,19 @@ export function getBlurCircles(): BlurCircles {
   };
 }
 
-/* ===================
-   TEXT COLORS
-   =================== */
-
-export function getTextColor(variant: "primary" | "secondary" | "muted" = "primary"): string {
+/**
+ * Get text color for variant
+ * @param _themeOrVariant - Optional legacy theme parameter OR the variant
+ * @param variantArg - Variant when using legacy 2-arg signature
+ */
+export function getTextColor(
+  _themeOrVariant?: unknown | "primary" | "secondary" | "muted",
+  variantArg?: "primary" | "secondary" | "muted"
+): string {
+  // Support legacy (theme, variant) signature
+  const variant = typeof _themeOrVariant === "string" && ["primary", "secondary", "muted"].includes(_themeOrVariant)
+    ? _themeOrVariant as "primary" | "secondary" | "muted"
+    : variantArg ?? "primary";
   const tokens: Record<string, string> = {
     primary: "text-foreground",
     secondary: "text-muted-foreground",
@@ -99,7 +108,20 @@ export function getTextColor(variant: "primary" | "secondary" | "muted" = "prima
 /**
  * Gradient text effect
  */
-export function getGradientText(variant: "editorial" | "accent" | "neon" = "editorial"): string {
+/**
+ * Gradient text effect
+ * @param _themeOrVariant - Optional legacy theme parameter OR the variant
+ * @param variantArg - Variant when using legacy 2-arg signature
+ */
+export function getGradientText(
+  _themeOrVariant?: unknown | "editorial" | "accent" | "neon",
+  variantArg?: "editorial" | "accent" | "neon"
+): string {
+  // Support legacy (theme, variant) signature
+  const variant = typeof _themeOrVariant === "string" && ["editorial", "accent", "neon"].includes(_themeOrVariant)
+    ? _themeOrVariant as "editorial" | "accent" | "neon"
+    : variantArg ?? "editorial";
+
   if (variant === "neon") return "text-gradient-primary"; // Use primary for neon
   return variant === "editorial" ? "text-gradient-editorial" : "text-gradient-accent";
 }
@@ -108,9 +130,20 @@ export function getGradientText(variant: "editorial" | "accent" | "neon" = "edit
    ACCENT COLORS
    =================== */
 
+/**
+ * Get accent color class
+ * @param _themeOrType - Optional legacy theme parameter OR the type
+ * @param typeArg - Type when using legacy 2-arg signature
+ */
 export function getAccentColor(
-  type: "primary" | "secondary" | "success" | "warning" | "error"
+  _themeOrType?: unknown | "primary" | "secondary" | "success" | "warning" | "error",
+  typeArg?: "primary" | "secondary" | "success" | "warning" | "error"
 ): string {
+  // Support legacy (theme, type) signature
+  const type = typeof _themeOrType === "string" && ["primary", "secondary", "success", "warning", "error"].includes(_themeOrType)
+    ? _themeOrType as "primary" | "secondary" | "success" | "warning" | "error"
+    : typeArg ?? "primary";
+
   const tokens: Record<string, string> = {
     primary: "text-primary",
     secondary: "text-secondary",
@@ -121,11 +154,19 @@ export function getAccentColor(
   return tokens[type] ?? tokens.primary;
 }
 
-/* ===================
-   SURFACE STYLES
-   =================== */
-
-export function getSurfaceStyles(variant: SurfaceVariant = "base"): string {
+/**
+ * Get surface styles for variant
+ * @param _themeOrVariant - Optional legacy theme parameter OR the variant
+ * @param variantArg - Variant when using legacy 2-arg signature
+ */
+export function getSurfaceStyles(
+  _themeOrVariant?: unknown | SurfaceVariant,
+  variantArg?: SurfaceVariant
+): string {
+  // Support legacy (theme, variant) signature
+  const variant = typeof _themeOrVariant === "string" && ["base", "raised", "sunken", "glass"].includes(_themeOrVariant)
+    ? _themeOrVariant as SurfaceVariant
+    : variantArg ?? "base";
   switch (variant) {
     case "raised":
       return "bg-card-elevated border border-border shadow-athletic";
@@ -162,11 +203,19 @@ export function getInputStylesCompact(): string {
   ].join(" ");
 }
 
-/* ===================
-   CHIP/BADGE STYLES
-   =================== */
-
-export function getChipStyles(emphasis: ChipEmphasis = "solid"): string {
+/**
+ * Get chip styles for emphasis
+ * @param _themeOrEmphasis - Optional legacy theme parameter OR the emphasis
+ * @param emphasisArg - Emphasis when using legacy 2-arg signature
+ */
+export function getChipStyles(
+  _themeOrEmphasis?: unknown | ChipEmphasis,
+  emphasisArg?: ChipEmphasis
+): string {
+  // Support legacy (theme, emphasis) signature
+  const emphasis = typeof _themeOrEmphasis === "string" && ["solid", "outline", "ghost", "accent"].includes(_themeOrEmphasis)
+    ? _themeOrEmphasis as ChipEmphasis
+    : emphasisArg ?? "solid";
   const base = "inline-flex items-center rounded-sm px-3 py-1 text-sm font-semibold transition-colors uppercase tracking-wider";
 
   switch (emphasis) {
@@ -220,11 +269,11 @@ export function getCardGlow(): string {
   return "shadow-glass hover:shadow-glass-lg transition-shadow duration-base";
 }
 
-/* ===================
-   DIVIDER
-   =================== */
-
-export function getDividerStyles(): string {
+/**
+ * Get divider styles
+ * @param _theme - Optional legacy parameter, ignored
+ */
+export function getDividerStyles(_theme?: unknown): string {
   return "bg-border";
 }
 

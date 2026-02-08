@@ -18,172 +18,133 @@ export const metadata: Metadata = {
 
 async function getQuizJourneyData() {
   try {
-  const quiz = await prisma.quiz.findFirst({
-    where: {
-      isPublished: true,
-      status: "PUBLISHED",
-    },
-    orderBy: {
-      updatedAt: "desc",
-    },
-    include: {
-      _count: {
-        select: {
-          attempts: true,
-        },
+    const quiz = await prisma.quiz.findFirst({
+      where: {
+        isPublished: true,
+        status: "PUBLISHED",
       },
-      leaderboard: {
-        take: 3,
-        orderBy: [
-          { bestPoints: "desc" },
-          { averageResponseTime: "asc" },
-        ],
-        include: {
-          user: {
-            select: {
-              name: true,
-              email: true,
+      orderBy: {
+        updatedAt: "desc",
+      },
+      include: {
+        _count: {
+          select: {
+            attempts: true,
+          },
+        },
+        leaderboard: {
+          take: 3,
+          orderBy: [
+            { bestPoints: "desc" },
+            { averageResponseTime: "asc" },
+          ],
+          include: {
+            user: {
+              select: {
+                name: true,
+                email: true,
+              },
             },
           },
         },
-      },
-      topicConfigs: {
-        include: {
-          topic: {
-            select: {
-              name: true,
+        topicConfigs: {
+          include: {
+            topic: {
+              select: {
+                name: true,
+              },
             },
           },
+          orderBy: {
+            createdAt: "asc",
+          },
+          take: 1,
         },
-        orderBy: {
-          createdAt: "asc",
-        },
-        take: 1,
-      },
-      questionPool: {
-        orderBy: {
-          order: "asc",
-        },
-        take: 4,
-        include: {
-          question: {
-            select: {
-              id: true,
-              questionText: true,
-              questionImageUrl: true,
-              timeLimit: true,
-              answers: {
-                select: {
-                  id: true,
-                  answerText: true,
-                  answerImageUrl: true,
-                  answerVideoUrl: true,
-                  answerAudioUrl: true,
-                  isCorrect: true,
-                },
-                orderBy: {
-                  displayOrder: "asc",
+        questionPool: {
+          orderBy: {
+            order: "asc",
+          },
+          take: 4,
+          include: {
+            question: {
+              select: {
+                id: true,
+                questionText: true,
+                questionImageUrl: true,
+                timeLimit: true,
+                answers: {
+                  select: {
+                    id: true,
+                    answerText: true,
+                    answerImageUrl: true,
+                    answerVideoUrl: true,
+                    answerAudioUrl: true,
+                    isCorrect: true,
+                  },
+                  orderBy: {
+                    displayOrder: "asc",
+                  },
                 },
               },
             },
           },
         },
       },
-    },
-  });
+    });
 
-  if (!quiz) {
-    notFound();
-  }
+    if (!quiz) {
+      notFound();
+    }
 
-  const fallbackTime = quiz.timePerQuestion ?? 5 * 60;
+    const fallbackTime = quiz.timePerQuestion ?? 5 * 60;
 
-  const experienceQuestions: ShowcaseQuizExperienceQuestion[] = quiz.questionPool
-    .map((entry, index) => {
-      const question = entry.question;
-      if (!question || question.answers.length === 0) {
-        return null;
-      }
+    const experienceQuestions: ShowcaseQuizExperienceQuestion[] = quiz.questionPool
+      .map((entry, index) => {
+        const question = entry.question;
+        if (!question || question.answers.length === 0) {
+          return null;
+        }
 
-      const baseTime = question.timeLimit ?? fallbackTime;
-      const lowerBound = Math.max(12, Math.floor(baseTime * 0.5));
-      const simulatedTime = Math.max(baseTime - index * 12 - 5, lowerBound);
+        const baseTime = question.timeLimit ?? fallbackTime;
+        const lowerBound = Math.max(12, Math.floor(baseTime * 0.5));
+        const simulatedTime = Math.max(baseTime - index * 12 - 5, lowerBound);
 
-      const correctAnswer = question.answers.find((answer) => answer.isCorrect);
-      const shuffledAnswers = shuffleArray(question.answers);
+        const correctAnswer = question.answers.find((answer) => answer.isCorrect);
+        const shuffledAnswers = shuffleArray(question.answers);
 
-      return {
-        id: question.id,
-        prompt: question.questionText,
-        imageUrl: question.questionImageUrl,
-        timeLimit: baseTime,
-        timeRemaining: simulatedTime,
-        answers: shuffledAnswers.map((answer) => ({
-          id: answer.id,
-          text: answer.answerText,
-          imageUrl: answer.answerImageUrl,
-          videoUrl: answer.answerVideoUrl,
-          audioUrl: answer.answerAudioUrl,
-          isCorrect: answer.isCorrect ?? false,
-        })),
-        correctAnswerId: correctAnswer?.id ?? null,
-      } satisfies ShowcaseQuizExperienceQuestion;
-    })
-    .filter(Boolean) as ShowcaseQuizExperienceQuestion[];
+        return {
+          id: question.id,
+          prompt: question.questionText,
+          imageUrl: question.questionImageUrl,
+          timeLimit: baseTime,
+          timeRemaining: simulatedTime,
+          answers: shuffledAnswers.map((answer) => ({
+            id: answer.id,
+            text: answer.answerText,
+            imageUrl: answer.answerImageUrl,
+            videoUrl: answer.answerVideoUrl,
+            audioUrl: answer.answerAudioUrl,
+            isCorrect: answer.isCorrect ?? false,
+          })),
+          correctAnswerId: correctAnswer?.id ?? null,
+        } satisfies ShowcaseQuizExperienceQuestion;
+      })
+      .filter(Boolean) as ShowcaseQuizExperienceQuestion[];
 
-  const latestAttempt = await prisma.quizAttempt.findFirst({
-    where: {
-      quizId: quiz.id,
-      completedAt: { not: null },
-    },
-    include: {
-      quiz: {
-        select: {
-          id: true,
-          title: true,
-          slug: true,
-          passingScore: true,
-        },
-      },
-      user: {
-        select: {
-          id: true,
-          name: true,
-          image: true,
-        },
-      },
-      userAnswers: {
-        include: {
-          question: {
-            select: {
-              id: true,
-              questionText: true,
-              explanation: true,
-            },
-          },
-          answer: {
-            select: {
-              id: true,
-              answerText: true,
-            },
-          },
-        },
-      },
-    },
-    orderBy: {
-      completedAt: "desc",
-    },
-  });
-
-  let leaderboardData: LeaderboardEntry[] = [];
-
-  if (latestAttempt) {
-    const quizAttempts = await prisma.quizAttempt.findMany({
+    const latestAttempt = await prisma.quizAttempt.findFirst({
       where: {
         quizId: quiz.id,
         completedAt: { not: null },
       },
       include: {
+        quiz: {
+          select: {
+            id: true,
+            title: true,
+            slug: true,
+            passingScore: true,
+          },
+        },
         user: {
           select: {
             id: true,
@@ -191,24 +152,63 @@ async function getQuizJourneyData() {
             image: true,
           },
         },
+        userAnswers: {
+          include: {
+            question: {
+              select: {
+                id: true,
+                questionText: true,
+                explanation: true,
+              },
+            },
+            answer: {
+              select: {
+                id: true,
+                answerText: true,
+              },
+            },
+          },
+        },
       },
-      orderBy: [
-        { score: "desc" },
-        { totalPoints: "desc" },
-        { completedAt: "asc" },
-      ],
-      take: 10,
+      orderBy: {
+        completedAt: "desc",
+      },
     });
 
-    leaderboardData = quizAttempts.map((attempt, index) => ({
-      userId: attempt.userId,
-      userName: attempt.user.name,
-      userImage: attempt.user.image,
-      score: attempt.score || 0,
-      totalPoints: attempt.totalPoints || 0,
-      rank: index + 1,
-    }));
-  }
+    let leaderboardData: LeaderboardEntry[] = [];
+
+    if (latestAttempt) {
+      const quizAttempts = await prisma.quizAttempt.findMany({
+        where: {
+          quizId: quiz.id,
+          completedAt: { not: null },
+        },
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              image: true,
+            },
+          },
+        },
+        orderBy: [
+          { score: "desc" },
+          { totalPoints: "desc" },
+          { completedAt: "asc" },
+        ],
+        take: 10,
+      });
+
+      leaderboardData = quizAttempts.map((attempt, index) => ({
+        userId: attempt.userId,
+        userName: attempt.user.name,
+        userImage: attempt.user.image,
+        score: attempt.score || 0,
+        totalPoints: attempt.totalPoints || 0,
+        rank: index + 1,
+      }));
+    }
 
     return {
       quiz,
@@ -303,7 +303,7 @@ export default async function ShowcaseQuizJourneyPage() {
 
   const gradients = [0, 1, 2, 3].map((index) => getSportGradient(quiz.sport, index));
 
-  const leaderboardEntries = quiz.leaderboard.map((entry, index) => ({
+  const leaderboardEntries = quiz.leaderboard.map((entry: any, index: number) => ({
     name:
       entry.user?.name || entry.user?.email?.split("@")[0] || `Player ${index + 1}`,
     score: Math.round(entry.bestPoints ?? 0),

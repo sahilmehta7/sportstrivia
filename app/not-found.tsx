@@ -5,7 +5,7 @@ import { ShowcaseThemeProvider } from "@/components/showcase/ShowcaseThemeProvid
 import { getBlurCircles, getGradientText } from "@/lib/showcase-theme";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { ShieldAlert, ArrowLeft, Home, Search } from "lucide-react";
+import { ShieldAlert, Home, Search } from "lucide-react";
 
 export default function NotFound() {
   const { circle1, circle2, circle3 } = getBlurCircles();

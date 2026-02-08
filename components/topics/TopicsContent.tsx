@@ -84,7 +84,7 @@ export function TopicsContent({ featured, topics, l2TopicsByParent, suggestedChi
               <div className="flex items-center gap-4">
                 <div className="h-4 w-1 rounded-full bg-secondary shadow-neon-magenta" />
                 <h2 className="text-2xl font-black uppercase tracking-tight">Priority Assignments</h2>
-                <Badge variant="neon" className="px-2 py-0 text-[8px] tracking-widest uppercase h-4">HOT</Badge>
+                <Badge variant="secondary" className="px-2 py-0 text-[8px] tracking-widest uppercase h-4">HOT</Badge>
               </div>
 
               <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">

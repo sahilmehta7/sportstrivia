@@ -47,6 +47,7 @@ export default async function QuizCardShowcasePage() {
     return (
       <div className="relative flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 p-6">
         <ShowcaseQuizCard
+          id={quiz.id}
           title={quiz.title}
           badgeLabel={badgeLabel}
           durationLabel={durationLabel}
@@ -63,6 +64,7 @@ export default async function QuizCardShowcasePage() {
   return (
     <div className="relative flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 p-6">
       <ShowcaseQuizCard
+        id="demo-card"
         title="Legends of the Premier League"
         badgeLabel="Football"
         durationLabel="20 min"

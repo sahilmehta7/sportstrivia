@@ -32,7 +32,7 @@ export default {
       // Transfer user ID and role from token to session
       if (session.user && token.id) {
         session.user.id = token.id as string;
-        session.user.role = token.role as string;
+        session.user.role = token.role as import("@prisma/client").UserRole;
       }
       return session;
     },

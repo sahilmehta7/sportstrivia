@@ -25,14 +25,14 @@ interface TestResult {
 
 async function testFullTextSearch(): Promise<TestResult> {
   const startTime = Date.now();
-  
+
   try {
     // Use the exported searchTopics function directly
-    const results = await topicServiceModule.searchTopics('cricket', { skip: 0, take: 10 });
-    
+    const results = await topicServiceModule.searchTopics({ query: 'cricket', page: 1, limit: 10 });
+
     const executionTime = Date.now() - startTime;
     const hasResults = results.topics.length > 0;
-    
+
     // Verify full-text search is being used by checking execution plan
     const planResult = await prisma.$queryRawUnsafe<Array<any>>(
       `EXPLAIN (ANALYZE, BUFFERS)
@@ -44,14 +44,14 @@ async function testFullTextSearch(): Promise<TestResult> {
       ORDER BY rank DESC
       LIMIT 10;`
     );
-    
+
     const plan = planResult.map((r: any) => r['QUERY PLAN'] || r.query_plan || JSON.stringify(r)).join('\n');
     const usesGINIndex = plan.includes('Topic_fts_idx') || plan.includes('Bitmap Index Scan');
-    
+
     return {
       name: 'Full-Text Search',
       passed: hasResults && usesGINIndex,
-      message: usesGINIndex 
+      message: usesGINIndex
         ? `✅ Using GIN index, found ${results.topics.length} results in ${executionTime}ms`
         : `⚠️  Not using GIN index (might be cached or small dataset)`,
       executionTime,
@@ -67,7 +67,7 @@ async function testFullTextSearch(): Promise<TestResult> {
 
 async function testQuizQueryIndex(): Promise<TestResult> {
   const startTime = Date.now();
-  
+
   try {
     // Test query that should use the new composite index
     const explainResult = await prisma.$queryRawUnsafe<Array<any>>(
@@ -80,14 +80,14 @@ async function testQuizQueryIndex(): Promise<TestResult> {
       ORDER BY "createdAt" DESC
       LIMIT 12;`
     );
-    
+
     const executionTime = Date.now() - startTime;
     const plan = explainResult.map((r: any) => r['QUERY PLAN'] || r.query_plan || JSON.stringify(r)).join('\n');
-    
+
     // Check if using index (might use partial index or seq scan depending on data size)
     const usesIndex = plan.includes('Index') || plan.includes('published');
     const isFast = executionTime < 100; // Should be very fast
-    
+
     return {
       name: 'Quiz Filtering Query',
       passed: isFast,
@@ -107,7 +107,7 @@ async function testQuizQueryIndex(): Promise<TestResult> {
 
 async function testQuizAttemptDateQuery(): Promise<TestResult> {
   const startTime = Date.now();
-  
+
   try {
     // Get a real user ID for testing
     const user = await prisma.user.findFirst({ select: { id: true } });
@@ -130,12 +130,12 @@ async function testQuizAttemptDateQuery(): Promise<TestResult> {
       ORDER BY "completedAt" DESC;`,
       user.id
     );
-    
+
     const executionTime = Date.now() - startTime;
     const plan = explainResult.map((r: any) => r['QUERY PLAN'] || r.query_plan || JSON.stringify(r)).join('\n');
-    const usesIndex = plan.includes('QuizAttempt_userId_quizId_completedAt_idx') || 
-                      plan.includes('Index Scan');
-    
+    const usesIndex = plan.includes('QuizAttempt_userId_quizId_completedAt_idx') ||
+      plan.includes('Index Scan');
+
     return {
       name: 'QuizAttempt Date Range Query',
       passed: usesIndex || executionTime < 50,
@@ -155,7 +155,7 @@ async function testQuizAttemptDateQuery(): Promise<TestResult> {
 
 async function testNotificationQuery(): Promise<TestResult> {
   const startTime = Date.now();
-  
+
   try {
     const user = await prisma.user.findFirst({ select: { id: true } });
     if (!user) {
@@ -176,12 +176,12 @@ async function testNotificationQuery(): Promise<TestResult> {
       LIMIT 10;`,
       user.id
     );
-    
+
     const executionTime = Date.now() - startTime;
     const plan = explainResult.map((r: any) => r['QUERY PLAN'] || r.query_plan || JSON.stringify(r)).join('\n');
     const usesIndex = plan.includes('Notification_userId_read_createdAt_desc_idx') ||
-                      plan.includes('Index Scan');
-    
+      plan.includes('Index Scan');
+
     return {
       name: 'Notification Query',
       passed: executionTime < 50,
@@ -210,9 +210,9 @@ async function testRLSEnabled(): Promise<TestResult> {
       WHERE t.schemaname = 'public'
         AND t.tablename NOT LIKE '_prisma%';`
     );
-    
+
     const enabledCount = Number(result[0]?.count || 0);
-    
+
     // Check that at least most tables have RLS enabled (allowing for system tables)
     return {
       name: 'RLS Enabled',
@@ -245,9 +245,9 @@ async function testVerificationTokenPK(): Promise<TestResult> {
         AND c.table_name = 'VerificationToken'
         AND c.column_name = 'id';`
     );
-    
+
     const hasPK = result.length > 0 && result[0].is_primary;
-    
+
     return {
       name: 'VerificationToken Primary Key',
       passed: hasPK,
@@ -298,9 +298,9 @@ async function main() {
   console.log('\n' + '='.repeat(80));
   const passed = results.filter((r) => r.passed).length;
   const total = results.length;
-  
+
   console.log(`\n📊 Test Results: ${passed}/${total} passed\n`);
-  
+
   if (passed === total) {
     console.log('✅ All optimizations verified!\n');
   } else {

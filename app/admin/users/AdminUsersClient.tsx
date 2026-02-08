@@ -58,8 +58,8 @@ interface User {
   role: string;
   currentStreak: number;
   longestStreak: number;
-  createdAt: string;
-  lastActiveDate: string | null;
+  createdAt: Date;
+  lastActiveDate: Date | null;
   _count: {
     quizAttempts: number;
     reviews: number;
@@ -185,7 +185,7 @@ export function AdminUsersClient({
     }
   };
 
-  const formatDate = (date: string | null) => {
+  const formatDate = (date: Date | string | null) => {
     if (!date) return "Never";
     return new Intl.DateTimeFormat("en-US", {
       month: "short",

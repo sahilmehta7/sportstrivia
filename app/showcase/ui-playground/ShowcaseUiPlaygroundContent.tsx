@@ -257,14 +257,14 @@ export function ShowcaseUiPlaygroundContent({ filterGroups }: ShowcaseUiPlaygrou
         <ShowcaseAnnouncementBanner message="Creator Week is live—new packs drop daily." href="#" />
 
         <ShowcaseSearchBar chips={searchChips} showAdvancedButton />
-        <ShowcaseFilterBar groups={filterGroups} onReset={() => {}} />
+        <ShowcaseFilterBar groups={filterGroups} />
         <ShowcaseFilterDrawer>
-          <ShowcaseFilterBar groups={filterGroups} condensed onChange={() => {}} />
+          <ShowcaseFilterBar groups={filterGroups} condensed />
         </ShowcaseFilterDrawer>
         <ShowcaseSortDropdown
           value="trending"
           options={[{ value: "trending", label: "Trending", metric: "+18%" }, { value: "new", label: "Newest" }, { value: "rating", label: "Rating", metric: "4.8" }]}
-          onChange={() => {}}
+          onChange={() => { }}
         />
 
         <ShowcaseTrendingRail items={trendingItems} />
@@ -276,7 +276,7 @@ export function ShowcaseUiPlaygroundContent({ filterGroups }: ShowcaseUiPlaygrou
           title="Featured Quizzes"
           subtitle="Mix and match components to craft your listing."
         />
-        <ShowcaseMasonryGrid columns={2} className="gap-6">
+        <ShowcaseMasonryGrid className="gap-6">
           {quizCards.map((card) => (
             <ShowcaseQuickPreviewModal
               key={card.id}
@@ -327,12 +327,12 @@ export function ShowcaseUiPlaygroundContent({ filterGroups }: ShowcaseUiPlaygrou
                   topicsMapped.length > 0
                     ? topicsMapped
                     : [
-                        { id: "t1", label: "Premier League", accuracyPercent: 88, quizzesTaken: 34, streak: 4, icon: "⚽" },
-                        { id: "t2", label: "NBA", accuracyPercent: 76, quizzesTaken: 21, streak: 2, icon: "🏀" },
-                        { id: "t3", label: "Cricket", accuracyPercent: 69, quizzesTaken: 18, streak: 3, icon: "🏏" },
-                        { id: "t4", label: "Formula 1", accuracyPercent: 82, quizzesTaken: 12, streak: 1, icon: "🏎️" },
-                        { id: "t5", label: "NFL", accuracyPercent: 64, quizzesTaken: 15, icon: "🏈" },
-                      ]
+                      { id: "t1", label: "Premier League", accuracyPercent: 88, quizzesTaken: 34, streak: 4, icon: "⚽" },
+                      { id: "t2", label: "NBA", accuracyPercent: 76, quizzesTaken: 21, streak: 2, icon: "🏀" },
+                      { id: "t3", label: "Cricket", accuracyPercent: 69, quizzesTaken: 18, streak: 3, icon: "🏏" },
+                      { id: "t4", label: "Formula 1", accuracyPercent: 82, quizzesTaken: 12, streak: 1, icon: "🏎️" },
+                      { id: "t5", label: "NFL", accuracyPercent: 64, quizzesTaken: 15, icon: "🏈" },
+                    ]
                 }
                 limit={3}
                 viewAllHref="/showcase/topic-wise-stats-complete"
@@ -345,12 +345,12 @@ export function ShowcaseUiPlaygroundContent({ filterGroups }: ShowcaseUiPlaygrou
                   topicsMapped.length > 0
                     ? topicsMapped
                     : [
-                        { id: "t1", label: "Tennis", accuracyPercent: 91, quizzesTaken: 27, icon: "🎾" },
-                        { id: "t2", label: "La Liga", accuracyPercent: 79, quizzesTaken: 14, icon: "⚽" },
-                        { id: "t3", label: "Olympics", accuracyPercent: 72, quizzesTaken: 10, icon: "🏅" },
-                        { id: "t4", label: "Baseball", accuracyPercent: 65, quizzesTaken: 9, icon: "⚾" },
-                        { id: "t5", label: "Rugby", accuracyPercent: 58, quizzesTaken: 6, icon: "🏉" },
-                      ]
+                      { id: "t1", label: "Tennis", accuracyPercent: 91, quizzesTaken: 27, icon: "🎾" },
+                      { id: "t2", label: "La Liga", accuracyPercent: 79, quizzesTaken: 14, icon: "⚽" },
+                      { id: "t3", label: "Olympics", accuracyPercent: 72, quizzesTaken: 10, icon: "🏅" },
+                      { id: "t4", label: "Baseball", accuracyPercent: 65, quizzesTaken: 9, icon: "⚾" },
+                      { id: "t5", label: "Rugby", accuracyPercent: 58, quizzesTaken: 6, icon: "🏉" },
+                    ]
                 }
                 limit={5}
                 viewAllHref="/showcase/topic-wise-stats-complete"
@@ -366,7 +366,7 @@ export function ShowcaseUiPlaygroundContent({ filterGroups }: ShowcaseUiPlaygrou
             title="Pagination Component"
             subtitle="Elegant page navigation with ellipsis support for large datasets."
           />
-          
+
           <div className="space-y-8">
             {/* Basic Pagination */}
             <div className="rounded-2xl border p-6" style={{ backgroundColor: 'rgba(255, 255, 255, 0.6)' }}>
@@ -449,11 +449,11 @@ export function ShowcaseUiPlaygroundContent({ filterGroups }: ShowcaseUiPlaygrou
 
         {/* Performance & Progress Components */}
         <div className="grid gap-6 md:grid-cols-2">
-          <ShowcasePerformanceSparkline 
+          <ShowcasePerformanceSparkline
             label={sparklineData.label}
             values={sparklineData.values}
           />
-          <ShowcaseProgressTrackerRibbon 
+          <ShowcaseProgressTrackerRibbon
             label={levelProgress.label}
             current={levelProgress.current}
             goal={levelProgress.goal}

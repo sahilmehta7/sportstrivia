@@ -86,12 +86,10 @@ export function ChallengeResultsModal({
                     </>
                   )}
                 </p>
-                {winner !== "tie" && (
-                  <p className="text-sm text-muted-foreground mt-1">
-                    Score difference:{" "}
-                    {Math.abs(challengerScore - challengedScore).toFixed(1)}%
-                  </p>
-                )}
+                <p className="text-sm text-muted-foreground mt-1">
+                  Score difference:{" "}
+                  {Math.abs(challengerScore - challengedScore).toFixed(1)}%
+                </p>
               </CardContent>
             </Card>
           )}

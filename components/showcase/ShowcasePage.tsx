@@ -18,10 +18,10 @@ interface ShowcasePageProps {
 
 export function ShowcasePage({ title, subtitle, badge, variant = "default", children, actions, breadcrumbs }: ShowcasePageProps) {
   const { theme } = useShowcaseTheme();
-  const blur = getBlurCircles(theme);
+  const blur = getBlurCircles();
 
   return (
-    <div className={cn("relative min-h-screen overflow-hidden px-4 py-12 sm:px-6 lg:py-16", getBackgroundVariant(variant, theme))}>
+    <div className={cn("relative min-h-screen overflow-hidden px-4 py-12 sm:px-6 lg:py-16", getBackgroundVariant(variant))}>
       <div className="absolute inset-0 -z-10 opacity-70">
         <div className={cn("absolute -left-20 top-24 h-72 w-72 rounded-full blur-[120px]", blur.circle1)} />
         <div className={cn("absolute right-12 top-12 h-64 w-64 rounded-full blur-[100px]", blur.circle2)} />
@@ -34,7 +34,7 @@ export function ShowcasePage({ title, subtitle, badge, variant = "default", chil
             <ShowcaseBreadcrumbs items={breadcrumbs} homeLabel="Showcase" />
           </div>
         )}
-        
+
         <header className="flex flex-col gap-4 text-center">
           {badge && (
             <span className={cn("mx-auto inline-flex items-center gap-2 rounded-full px-4 py-1 text-xs uppercase tracking-[0.35em]", getTextColor(theme, "muted"), theme === "light" ? "border border-slate-200/50 bg-slate-100/80" : "border border-white/20 bg-white/10")}>{badge}</span>

@@ -30,7 +30,7 @@ export async function sendDigestEmail(options: {
 
   await client.emails.send({
     from: getDigestFromAddress(),
-    reply_to: getDigestReplyToAddress(),
+    replyTo: getDigestReplyToAddress(),
     to: options.to,
     subject: options.subject,
     html: options.html,

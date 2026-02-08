@@ -53,7 +53,7 @@ export function ShowcaseQuizSummaryCard({
       className={cn(
         "flex h-full w-full flex-col overflow-hidden rounded-[2rem] p-4 transition-transform duration-500 hover:-translate-y-1",
         getSurfaceStyles(theme, "sunken"),
-        getCardGlow(theme)
+        getCardGlow()
       )}
     >
       <div className="relative mb-4 overflow-hidden rounded-[1.5rem]">

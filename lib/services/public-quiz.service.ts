@@ -8,6 +8,8 @@ import {
   type PaginationResult,
   type PublicQuizFilters,
 } from "@/lib/dto/quiz-filters.dto";
+
+export type { PublicQuizFilters };
 import { getTopicIdsWithDescendants } from "@/lib/services/topic.service";
 import { recordSearchQuery } from "@/lib/services/search-query.service";
 
@@ -62,8 +64,8 @@ export interface PublicQuizListResponse {
     topic?: string;
     isFeatured?: boolean;
     comingSoon?: boolean;
-    minDuration: number | null;
-    maxDuration: number | null;
+    minDuration?: number;
+    maxDuration?: number;
     minRating?: number;
     sortBy?: "popularity" | "rating" | "createdAt";
     sortOrder?: "asc" | "desc";
@@ -135,8 +137,8 @@ export async function getPublicQuizList(
       topic: filters.topic,
       isFeatured: filters.isFeatured,
       comingSoon: filters.comingSoon,
-      minDuration: filters.minDuration ? filters.minDuration / 60 : null,
-      maxDuration: filters.maxDuration ? filters.maxDuration / 60 : null,
+      minDuration: filters.minDuration ? filters.minDuration / 60 : undefined,
+      maxDuration: filters.maxDuration ? filters.maxDuration / 60 : undefined,
       minRating: filters.minRating,
       sortBy: filters.sortBy,
       sortOrder: filters.sortOrder,

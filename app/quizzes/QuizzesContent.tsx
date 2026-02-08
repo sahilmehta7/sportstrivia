@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useTransition, useRef, useEffect } from "react";
 import { ShowcaseQuizCard } from "@/components/quiz/ShowcaseQuizCard";
@@ -11,7 +10,7 @@ import type { PublicQuizListItem } from "@/lib/services/public-quiz.service";
 import { getSportGradient } from "@/lib/quiz-formatters";
 import { cn } from "@/lib/utils";
 import { getGradientText } from "@/lib/showcase-theme";
-import { Search, Info } from "lucide-react";
+import { Search } from "lucide-react";
 
 interface QuizzesContentProps {
   quizzes: PublicQuizListItem[];

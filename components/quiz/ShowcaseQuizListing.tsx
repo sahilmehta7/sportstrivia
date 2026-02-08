@@ -13,14 +13,14 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Clock, Star, Users, Search, Filter, SortAsc, SortDesc } from "lucide-react";
-import type { PublicQuizListResponse, PublicQuizFilterOptions, PublicQuizFilters } from "@/lib/services/public-quiz.service";
+import type { PublicQuizListResponse, QuizFilterOptions, PublicQuizFilters } from "@/lib/services/public-quiz.service";
 import type { PublicQuizListItem } from "@/lib/services/public-quiz.service";
 import { Difficulty } from "@prisma/client";
 import Image from "next/image";
 
 interface ShowcaseQuizListingProps {
   listing: PublicQuizListResponse;
-  filterOptions: PublicQuizFilterOptions;
+  filterOptions: QuizFilterOptions;
   appliedFilters: PublicQuizFilters;
   featuredQuizzes: PublicQuizListItem[];
   dailyQuizzes: any[];
@@ -142,7 +142,7 @@ export function ShowcaseQuizListing({
             Find the perfect quiz with our powerful filters
           </p>
         </div>
-        
+
         <Card className={cn("p-6", getGlassCard(theme))}>
           <CardHeader>
             <CardTitle className={cn("flex items-center gap-2", getTextColor(theme, "primary"))}>
@@ -214,7 +214,7 @@ export function ShowcaseQuizListing({
                   Sort By
                 </label>
                 <div className="flex gap-2">
-                  <Select value={sortBy} onValueChange={setSortBy}>
+                  <Select value={sortBy} onValueChange={(value) => setSortBy(value as "createdAt" | "popularity" | "rating")}>
                     <SelectTrigger className="flex-1">
                       <SelectValue />
                     </SelectTrigger>
@@ -300,7 +300,7 @@ export function ShowcaseQuizListing({
                       sizes="(min-width: 1024px) 300px, 60vw"
                     />
                   ) : (
-                    <div className={cn("w-full h-full flex items-center justify-center", 
+                    <div className={cn("w-full h-full flex items-center justify-center",
                       theme === "light" ? "bg-gradient-to-br from-blue-100 to-purple-100" : "bg-gradient-to-br from-blue-900 to-purple-900"
                     )}>
                       <span className="text-4xl">⚽</span>

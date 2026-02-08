@@ -14,7 +14,7 @@ export function QuizResultsCard({ theme, className, children }: QuizResultsCardP
     <div
       className={cn(
         "relative rounded-[1.75rem] border backdrop-blur-xl overflow-hidden",
-        getGlassCard(theme),
+        getGlassCard(),
         className,
       )}
     >

@@ -19,7 +19,7 @@ export function BackgroundDemoContent() {
     >
       <div className="space-y-8">
         {/* Instructions */}
-        <Card className={cn("p-6", getGlassCard(theme))}>
+        <Card className={cn("p-6", getGlassCard())}>
           <h2 className={cn("mb-4 text-2xl font-bold", theme === "light" ? "text-slate-900" : "text-white")}>
             How This Works
           </h2>
@@ -33,7 +33,7 @@ export function BackgroundDemoContent() {
         </Card>
 
         {/* Background Reference */}
-        <Card className={cn("p-6", getGlassCard(theme))}>
+        <Card className={cn("p-6", getGlassCard())}>
           <h3 className={cn("mb-4 text-xl font-semibold", theme === "light" ? "text-slate-900" : "text-white")}>
             Background Implementation
           </h3>
@@ -41,7 +41,7 @@ export function BackgroundDemoContent() {
             <div className="rounded-lg bg-slate-100 dark:bg-slate-900 p-4">
               <div className="text-xs text-slate-500 dark:text-slate-400 mb-2">showcase-theme.ts</div>
               <pre className="text-xs overflow-x-auto">
-{`export function getBackgroundVariant(theme: ShowcaseTheme) {
+                {`export function getBackgroundVariant(theme: ShowcaseTheme) {
   return theme === "light"
     ? "bg-gradient-to-br from-white/80 via-slate-50/90 to-blue-50/80"
     : "bg-slate-950";
@@ -52,7 +52,7 @@ export function BackgroundDemoContent() {
         </Card>
 
         {/* Testing Cards */}
-        <Card className={cn("p-6", getGlassCard(theme))}>
+        <Card className={cn("p-6", getGlassCard())}>
           <h3 className={cn("mb-4 text-xl font-semibold", theme === "light" ? "text-slate-900" : "text-white")}>
             Theme Test
           </h3>

@@ -24,9 +24,9 @@ function parseContext(value: string | null): SearchContext {
 export async function GET(request: NextRequest) {
   try {
     // Apply rate limiting
-    const identifier = request.ip || request.headers.get("x-forwarded-for") || "anonymous";
+    const identifier = (request as any).ip || request.headers.get("x-forwarded-for") || "anonymous";
     const rateLimitResult = await checkRateLimit(identifier, searchSuggestionsRateLimiter);
-    
+
     if (!rateLimitResult.success) {
       return new Response(
         JSON.stringify({
@@ -46,7 +46,7 @@ export async function GET(request: NextRequest) {
         }
       );
     }
-    
+
     const { searchParams } = new URL(request.url);
     const context = parseContext(searchParams.get("context"));
     const session = await auth();

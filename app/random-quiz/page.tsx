@@ -5,7 +5,7 @@ import { ShowcaseFeaturedQuizCard } from "@/components/quiz/ShowcaseFeaturedQuiz
 import { formatPlayerCount, formatQuizDuration, getSportGradient } from "@/lib/quiz-formatters";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { ArrowLeft, Target, ShieldAlert, Sparkles, Activity } from "lucide-react";
+import { ArrowLeft, Target, ShieldAlert, Activity } from "lucide-react";
 import type { Metadata } from "next";
 import type { Prisma } from "@prisma/client";
 import { PageContainer } from "@/components/shared/PageContainer";

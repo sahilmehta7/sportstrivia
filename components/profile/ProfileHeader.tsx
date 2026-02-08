@@ -114,7 +114,7 @@ export function ProfileHeader({
               {isOwnProfile ? (
                 showEditButton && (
                   <Link href="/profile/me">
-                    <Button variant="neon" size="lg" className="w-full sm:w-auto">
+                    <Button variant="accent" size="lg" className="w-full sm:w-auto">
                       <Edit className="mr-3 h-4 w-4" />
                       CONFIGURE PROFILE
                     </Button>
@@ -123,7 +123,7 @@ export function ProfileHeader({
               ) : (
                 <>
                   {friendStatus === "none" && onAddFriend && (
-                    <Button variant="neon" size="lg" onClick={onAddFriend} className="w-full sm:w-auto">
+                    <Button variant="accent" size="lg" onClick={onAddFriend} className="w-full sm:w-auto">
                       <UserPlus className="mr-3 h-4 w-4" />
                       TRANSMIT REQUEST
                     </Button>
@@ -137,7 +137,7 @@ export function ProfileHeader({
                   {friendStatus === "friends" && (
                     <>
                       {onChallenge && (
-                        <Button variant="neon" size="lg" onClick={onChallenge} className="w-full sm:w-auto">
+                        <Button variant="accent" size="lg" onClick={onChallenge} className="w-full sm:w-auto">
                           <Swords className="mr-3 h-4 w-4" />
                           CHALLENGE ARENA
                         </Button>

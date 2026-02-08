@@ -108,7 +108,7 @@ export function FeaturedCard({ quiz, className }: FeaturedCardProps) {
               </div>
             </div>
 
-            <Button asChild variant="neon" size="xl" className="rounded-2xl px-10 group-hover:scale-[1.05] transition-transform">
+            <Button asChild variant="accent" size="xl" className="rounded-2xl px-10 group-hover:scale-[1.05] transition-transform">
               <Link href={`/quizzes/${quiz.slug}`}>
                 Play NOW
               </Link>

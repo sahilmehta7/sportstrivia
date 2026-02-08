@@ -9,7 +9,6 @@ import {
 } from "@/lib/services/search-query.service";
 import { TopicsContent } from "@/components/topics/TopicsContent";
 import { ShowcaseThemeProvider } from "@/components/showcase/ShowcaseThemeProvider";
-import { TopicCardSkeleton } from "@/components/shared/skeletons";
 import { PageContainer } from "@/components/shared/PageContainer";
 
 export const metadata: Metadata = {
