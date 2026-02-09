@@ -19,7 +19,11 @@ const quizSelection = {
     completionBonus: true,
     timePerQuestion: true,
     sport: true,
-    topicId: true,
+    topicConfigs: {
+        select: {
+            topicId: true
+        }
+    }
 } as const;
 
 const userAnswerSelection = {
@@ -506,7 +510,7 @@ export async function PATCH(
                         ),
                     checkAndAwardBadges(user.id, {
                         quizId: attempt.quizId,
-                        topicId: attempt.quiz.topicId,
+                        topicId: attempt.quiz.topicConfigs[0]?.topicId,
                         sport: attempt.quiz.sport || undefined,
                         score: scorePercentage,
                         isPracticeMode: attempt.isPracticeMode

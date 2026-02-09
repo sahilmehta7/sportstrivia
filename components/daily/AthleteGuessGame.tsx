@@ -2,9 +2,11 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, ArrowUp, ArrowDown, Check, X } from 'lucide-react';
+import { Search, Trophy, Medal, User, Flag, Calendar, Hash, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { DailyGameResult } from './DailyGameResult';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
@@ -23,15 +25,8 @@ interface AthleteGuessGameProps {
 
 interface GuessResult {
     name: string;
-    attributes: {
-        key: string;
-        value: string | number;
-        status: 'match' | 'higher' | 'lower' | 'wrong';
-    }[];
+    isCorrect: boolean;
 }
-
-// Attributes to display for comparison
-const DISPLAY_ATTRIBUTES = ['team', 'league', 'position', 'age', 'number', 'conference'];
 
 export function AthleteGuessGame({
     gameId,
@@ -70,37 +65,12 @@ export function AthleteGuessGame({
                 throw new Error(data.error || 'Failed to submit guess');
             }
 
-            // Build attributes comparison from clues
-            const attributes: GuessResult['attributes'] = [];
-            if (clues) {
-                DISPLAY_ATTRIBUTES.forEach(key => {
-                    if (clues[key] !== undefined) {
-                        // Mock comparison - in real app, this would come from the API
-                        const targetVal = clues[key];
-                        const guessedVal = targetVal; // Simplified for now
-
-                        let status: 'match' | 'higher' | 'lower' | 'wrong' = 'wrong';
-                        if (data.isCorrect) {
-                            status = 'match';
-                        } else if (typeof targetVal === 'number') {
-                            status = Math.random() > 0.5 ? 'higher' : 'lower';
-                        }
-
-                        attributes.push({
-                            key,
-                            value: guessedVal as string | number,
-                            status,
-                        });
-                    }
-                });
-            }
-
             const newGuess: GuessResult = {
                 name: searchQuery.toUpperCase(),
-                attributes,
+                isCorrect: data.isCorrect,
             };
 
-            setGuesses(prev => [...prev, newGuess]);
+            setGuesses(prev => [newGuess, ...prev]);
             setSearchQuery('');
 
             if (data.isCorrect || data.gameOver) {
@@ -109,7 +79,7 @@ export function AthleteGuessGame({
                 if (data.solution) {
                     setSolution(data.solution);
                 }
-                setTimeout(() => setShowResult(true), 500);
+                setTimeout(() => setShowResult(true), 1500);
             }
 
         } catch (error) {
@@ -125,96 +95,127 @@ export function AthleteGuessGame({
 
     const remainingGuesses = maxGuesses - guesses.length;
 
+    // Helper to format clue keys
+    const formatClueKey = (key: string) => {
+        return key
+            .replace(/([A-Z])/g, ' $1')
+            .replace(/^./, str => str.toUpperCase());
+    };
+
+    // Helper to get icon for clue key
+    const getClueIcon = (key: string) => {
+        const lowerKey = key.toLowerCase();
+        if (lowerKey.includes('sport')) return <Medal className="w-4 h-4" />;
+        if (lowerKey.includes('team')) return <Flag className="w-4 h-4" />;
+        if (lowerKey.includes('age')) return <Calendar className="w-4 h-4" />;
+        if (lowerKey.includes('number')) return <Hash className="w-4 h-4" />;
+        if (lowerKey.includes('cham') || lowerKey.includes('award') || lowerKey.includes('slam')) return <Trophy className="w-4 h-4" />;
+        return <User className="w-4 h-4" />;
+    };
+
     return (
-        <div className="flex flex-col items-center gap-6 py-4 w-full max-w-2xl mx-auto px-4">
+        <div className="flex flex-col items-center gap-8 py-6 w-full max-w-2xl mx-auto px-4">
             {/* Header */}
-            <div className="text-center">
-                <h2 className="text-lg font-semibold text-muted-foreground mb-1">
+            <div className="text-center space-y-2">
+                <h2 className="text-2xl font-bold tracking-tight">
                     Guess the {gameType === 'ATHLETE' ? 'Athlete' : 'Team'}
                 </h2>
-                <p className="text-sm text-muted-foreground">
-                    {remainingGuesses} guesses remaining
-                </p>
+                <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+                    <span className={cn(
+                        "font-medium",
+                        remainingGuesses <= 2 ? "text-red-500" : "text-emerald-500"
+                    )}>
+                        {remainingGuesses} attempts remaining
+                    </span>
+                </div>
             </div>
+
+            {/* Profile Card */}
+            <Card className="w-full bg-card/50 backdrop-blur-sm border-primary/20 shadow-lg">
+                <CardHeader className="pb-2">
+                    <CardTitle className="text-lg font-medium flex items-center gap-2">
+                        <User className="w-5 h-5 text-primary" />
+                        Player Profile
+                    </CardTitle>
+                </CardHeader>
+                <CardContent className="grid grid-cols-2 md:grid-cols-3 gap-4 pt-4">
+                    {clues && Object.entries(clues).map(([key, value]) => (
+                        <div key={key} className="flex flex-col gap-1 p-3 rounded-lg bg-accent/50 border border-border/50">
+                            <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                                {getClueIcon(key)}
+                                {formatClueKey(key)}
+                            </div>
+                            <div className="text-sm md:text-base font-bold text-foreground truncate" title={String(value)}>
+                                {String(value)}
+                            </div>
+                        </div>
+                    ))}
+                </CardContent>
+            </Card>
 
             {/* Search Input */}
             {!gameOver && (
-                <div className="flex gap-2 w-full max-w-md">
-                    <div className="relative flex-1">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                        <Input
-                            type="text"
-                            placeholder={`Search ${gameType === 'ATHLETE' ? 'athlete' : 'team'} name...`}
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
-                            className="pl-10"
-                            disabled={isSubmitting}
-                        />
+                <div className="w-full max-w-md space-y-4">
+                    <div className="flex gap-2">
+                        <div className="relative flex-1">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                            <Input
+                                type="text"
+                                placeholder={`Enter ${gameType === 'ATHLETE' ? 'athlete' : 'team'} name...`}
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
+                                className="pl-10 bg-background/50 border-primary/20 focus-visible:ring-primary/30 h-11"
+                                disabled={isSubmitting}
+                                autoFocus
+                            />
+                        </div>
+                        <Button
+                            onClick={handleSubmit}
+                            disabled={!searchQuery.trim() || isSubmitting}
+                            className="h-11 px-6 font-semibold"
+                            size="lg"
+                        >
+                            Guess
+                        </Button>
                     </div>
-                    <Button
-                        onClick={handleSubmit}
-                        disabled={!searchQuery.trim() || isSubmitting}
-                    >
-                        Guess
-                    </Button>
                 </div>
             )}
 
-            {/* Guesses Table */}
+            {/* Guesses List */}
             {guesses.length > 0 && (
-                <motion.div
-                    className="w-full overflow-x-auto"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                >
-                    <table className="w-full min-w-[600px]">
-                        <thead>
-                            <tr className="border-b border-border">
-                                <th className="text-left py-2 px-3 font-medium text-sm">Name</th>
-                                {DISPLAY_ATTRIBUTES.map(attr => (
-                                    <th key={attr} className="text-center py-2 px-2 font-medium text-sm capitalize">
-                                        {attr}
-                                    </th>
-                                ))}
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <AnimatePresence>
-                                {guesses.map((guess, i) => (
-                                    <motion.tr
-                                        key={i}
-                                        initial={{ opacity: 0, y: -20 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        transition={{ delay: i * 0.1 }}
-                                        className="border-b border-border/50"
-                                    >
-                                        <td className="py-3 px-3 font-medium">{guess.name}</td>
-                                        {guess.attributes.map((attr, j) => (
-                                            <td key={j} className="py-2 px-2 text-center">
-                                                <div
-                                                    className={cn(
-                                                        'inline-flex items-center justify-center gap-1 px-2 py-1 rounded-md text-sm font-medium',
-                                                        attr.status === 'match' && 'bg-emerald-500 text-white',
-                                                        attr.status === 'higher' && 'bg-amber-500 text-white',
-                                                        attr.status === 'lower' && 'bg-amber-500 text-white',
-                                                        attr.status === 'wrong' && 'bg-zinc-200 dark:bg-zinc-700'
-                                                    )}
-                                                >
-                                                    {attr.value}
-                                                    {attr.status === 'match' && <Check className="w-3 h-3" />}
-                                                    {attr.status === 'higher' && <ArrowUp className="w-3 h-3" />}
-                                                    {attr.status === 'lower' && <ArrowDown className="w-3 h-3" />}
-                                                    {attr.status === 'wrong' && <X className="w-3 h-3" />}
-                                                </div>
-                                            </td>
-                                        ))}
-                                    </motion.tr>
-                                ))}
-                            </AnimatePresence>
-                        </tbody>
-                    </table>
-                </motion.div>
+                <div className="w-full max-w-md space-y-2">
+                    <div className="text-sm font-medium text-muted-foreground px-1">
+                        Recent Guesses
+                    </div>
+                    <div className="space-y-2">
+                        <AnimatePresence mode="popLayout">
+                            {guesses.map((guess, i) => (
+                                <motion.div
+                                    key={`${guess.name}-${i}`}
+                                    initial={{ opacity: 0, y: -20, scale: 0.95 }}
+                                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                                    exit={{ opacity: 0, scale: 0.9 }}
+                                    className={cn(
+                                        "flex items-center justify-between p-3 rounded-lg border shadow-sm backdrop-blur-sm",
+                                        guess.isCorrect
+                                            ? "bg-emerald-500/10 border-emerald-500/50 text-emerald-700 dark:text-emerald-400"
+                                            : "bg-background/80 border-border text-muted-foreground"
+                                    )}
+                                >
+                                    <span className="font-semibold tracking-wide">{guess.name}</span>
+                                    {guess.isCorrect ? (
+                                        <Badge variant="outline" className="bg-emerald-500/20 text-emerald-600 border-emerald-500/30">
+                                            Correct
+                                        </Badge>
+                                    ) : (
+                                        <X className="w-4 h-4 opacity-50" />
+                                    )}
+                                </motion.div>
+                            ))}
+                        </AnimatePresence>
+                    </div>
+                </div>
             )}
 
             {/* Result Modal */}
@@ -222,7 +223,10 @@ export function AthleteGuessGame({
                 {showResult && (
                     <DailyGameResult
                         won={won}
-                        guesses={[]} // Simplified for athlete mode
+                        guesses={guesses.map(g => ({
+                            letter: '',
+                            status: g.isCorrect ? 'correct' : 'absent'
+                        })) as any} // Keeping compatible with result grid logic
                         maxGuesses={maxGuesses}
                         gameNumber={gameNumber}
                         targetWord={solution}
@@ -233,3 +237,4 @@ export function AthleteGuessGame({
         </div>
     );
 }
+
