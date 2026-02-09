@@ -146,6 +146,9 @@ model Topic {
   name             String            @unique
   slug             String            @unique
   description      String?
+  seoTitle         String?
+  seoDescription   String?
+  seoKeywords      String[]
   displayEmoji     String?
   displayImageUrl  String?
   parentId         String?

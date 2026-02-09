@@ -109,7 +109,7 @@ async function fetchFeaturedQuizzesForTopic(topicIds: string[]): Promise<PublicQ
   });
 }
 
-import { generateTopicMetadataAI } from "@/lib/services/ai-seo.service";
+
 
 export async function generateMetadata({
   params,
@@ -123,16 +123,14 @@ export async function generateMetadata({
     return {};
   }
 
-  // Try AI-generated metadata first
-  const aiMetadata = await generateTopicMetadataAI(topic.name, topic.description);
-
-  const title = aiMetadata?.title || `${topic.name} Trivia Quizzes | Sports Trivia`;
-  const description = aiMetadata?.description || (topic.description
+  // Use stored SEO metadata or fallback to templates
+  const title = topic.seoTitle || `${topic.name} Trivia Quizzes | Sports Trivia`;
+  const description = topic.seoDescription || (topic.description
     ? topic.description.length > 160
       ? `${topic.description.slice(0, 157)}...`
       : topic.description
     : `Explore trivia quizzes, key facts, and highlights for ${topic.name} on Sports Trivia.`);
-  const keywords = aiMetadata?.keywords || [topic.name.toLowerCase(), "trivia", "quiz", "sports"];
+  const keywords = topic.seoKeywords.length > 0 ? topic.seoKeywords : [topic.name.toLowerCase(), "trivia", "quiz", "sports"];
 
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://www.sportstrivia.in";
 
