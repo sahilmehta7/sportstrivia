@@ -173,8 +173,8 @@ export default async function QuizDetailPage({ params }: QuizDetailPageProps) {
         url={quizUrl}
         headline={quiz.title}
         image={articleImages}
-        datePublished={quiz.createdAt?.toISOString() || ""}
-        dateModified={quiz.updatedAt?.toISOString() || ""}
+        datePublished={new Date(quiz.createdAt ?? new Date()).toISOString()}
+        dateModified={new Date(quiz.updatedAt ?? new Date()).toISOString()}
         author={{
           name: "Sports Trivia Team",
         }}
