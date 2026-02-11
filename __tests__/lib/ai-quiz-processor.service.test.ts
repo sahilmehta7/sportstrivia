@@ -1,5 +1,6 @@
 import { processAIQuizTask, buildPrompt, extractJSON, determineSportFromTopic, fetchSourceMaterial } from "@/lib/services/ai-quiz-processor.service";
 import { BackgroundTaskType } from "@prisma/client";
+import { clearAIResponseCache } from "@/lib/services/ai-response-cache";
 
 // Mock dependencies
 jest.mock("@/lib/services/background-task.service", () => ({
@@ -104,6 +105,7 @@ describe("ai-quiz-processor.service", () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    clearAIResponseCache();
     process.env.OPENAI_API_KEY = "test-key";
 
     // Setup default mocks

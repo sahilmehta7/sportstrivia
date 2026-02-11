@@ -4,7 +4,7 @@ import { type PublicQuizFilters } from "@/lib/dto/quiz-filters.dto";
 import { Difficulty } from "@prisma/client";
 import { getPublicQuizList } from "@/lib/services/public-quiz.service";
 import { validateSearchQuery } from "@/lib/validations/search.schema";
-import { searchRateLimiter, checkRateLimit } from "@/lib/rate-limit";
+import { searchRateLimiter, checkRateLimitStrict } from "@/lib/rate-limit";
 
 // GET /api/quizzes - List published quizzes with advanced filtering and sorting
 export async function GET(request: NextRequest) {
@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
     const rawSearch = searchParams.get("search");
     if (rawSearch) {
       const identifier = request.headers.get("x-forwarded-for")?.split(',')[0] || "anonymous";
-      const rateLimitResult = await checkRateLimit(identifier, searchRateLimiter);
+      const rateLimitResult = await checkRateLimitStrict(identifier, searchRateLimiter);
 
       if (!rateLimitResult.success) {
         return new Response(
@@ -80,4 +80,3 @@ export async function GET(request: NextRequest) {
     return handleError(error);
   }
 }
-

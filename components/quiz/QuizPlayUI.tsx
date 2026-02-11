@@ -17,7 +17,7 @@ interface AttemptQuestion {
   explanationImageUrl?: string | null;
   explanationVideoUrl?: string | null;
   timeLimit?: number | null;
-  correctAnswerId: string | null;
+  correctAnswerId?: string | null;
   answers: {
     id: string;
     answerText: string;
@@ -28,7 +28,7 @@ interface AttemptQuestion {
 }
 
 interface QuestionFeedback {
-  isCorrect: boolean;
+  isCorrect: boolean | null;
   wasSkipped: boolean;
   message: string;
   selectedAnswerId: string | null;

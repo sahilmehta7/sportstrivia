@@ -6,7 +6,7 @@ import {
   getRecentSearchQueriesForUser,
   getTrendingSearchQueries,
 } from "@/lib/services/search-query.service";
-import { searchSuggestionsRateLimiter, checkRateLimit } from "@/lib/rate-limit";
+import { searchSuggestionsRateLimiter, checkRateLimitStrict } from "@/lib/rate-limit";
 
 function parseContext(value: string | null): SearchContext {
   if (!value) return SearchContext.QUIZ;
@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
   try {
     // Apply rate limiting
     const identifier = (request as any).ip || request.headers.get("x-forwarded-for") || "anonymous";
-    const rateLimitResult = await checkRateLimit(identifier, searchSuggestionsRateLimiter);
+    const rateLimitResult = await checkRateLimitStrict(identifier, searchSuggestionsRateLimiter);
 
     if (!rateLimitResult.success) {
       return new Response(

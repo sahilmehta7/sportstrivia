@@ -8,7 +8,7 @@ type QuizStyles = typeof variantStyles["light"];
 
 interface AttemptQuestion {
     id: string;
-    correctAnswerId: string | null;
+    correctAnswerId?: string | null;
     answers: {
         id: string;
         answerText: string;
@@ -19,7 +19,7 @@ interface AttemptQuestion {
 }
 
 interface QuestionFeedback {
-    isCorrect: boolean;
+    isCorrect: boolean | null;
     selectedAnswerId: string | null;
 }
 
@@ -50,7 +50,7 @@ export const AnswerGrid = memo(function AnswerGrid({
             if (answerId === question.correctAnswerId) {
                 return "correct";
             }
-            if (answerId === feedback?.selectedAnswerId && !feedback.isCorrect) {
+            if (answerId === feedback?.selectedAnswerId && feedback.isCorrect === false) {
                 return "incorrect";
             }
             return "idle";

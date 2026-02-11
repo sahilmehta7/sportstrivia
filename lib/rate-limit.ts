@@ -35,6 +35,13 @@ const noOpRateLimiter = {
   }),
 } as unknown as Ratelimit;
 
+// In production, force callers into explicit fallback behavior when Redis is unavailable.
+const unavailableRateLimiter = {
+  limit: async () => {
+    throw new Error("RATE_LIMIT_UNAVAILABLE");
+  },
+} as unknown as Ratelimit;
+
 // Helper to create rate limiters with fallback
 function createRateLimiter(requests: number, window: `${number} ${"s" | "m" | "h" | "d"}`): Ratelimit {
   if (isRedisConfigured()) {
@@ -45,17 +52,22 @@ function createRateLimiter(requests: number, window: `${number} ${"s" | "m" | "h
         analytics: true,
       });
     } catch (error) {
-      console.warn("[rate-limit] Failed to initialize rate limiter, using no-op:", error);
-      return noOpRateLimiter;
+      if (process.env.NODE_ENV === "development") {
+        console.warn("[rate-limit] Failed to initialize rate limiter, using no-op:", error);
+        return noOpRateLimiter;
+      }
+      console.error("[rate-limit] Failed to initialize rate limiter in production:", error);
+      return unavailableRateLimiter;
     }
   }
 
-  // Without Redis, use no-op limiter (works in both dev and production)
-  // This prevents build errors when Redis is not configured
+  // Without Redis, only development can run fail-open.
   if (process.env.NODE_ENV === "development") {
     console.warn("[rate-limit] Redis not configured, using no-op rate limiter");
+    return noOpRateLimiter;
   }
-  return noOpRateLimiter;
+  console.error("[rate-limit] Redis not configured in production; enabling fail-safe behavior");
+  return unavailableRateLimiter;
 }
 
 // Create rate limiters for different endpoints

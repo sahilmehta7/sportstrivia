@@ -81,16 +81,17 @@ function getGameContent(gameType: DailyGameType, seed: number): { targetValue: s
 }
 
 export async function GET(request: NextRequest) {
-    // Verify cron secret or manual trigger
-    const cronSecret = request.headers.get('x-cron-secret');
     const authHeader = request.headers.get('authorization');
+    const expectedAuthHeader = process.env.CRON_SECRET
+        ? `Bearer ${process.env.CRON_SECRET}`
+        : null;
 
-    if (cronSecret !== process.env.CRON_SECRET && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-        // Allow in development or if accessing from Vercel
-        const isVercel = request.headers.get('x-vercel-cron') === '1';
-        if (!isVercel && process.env.NODE_ENV !== 'development') {
+    if (process.env.NODE_ENV !== "development") {
+        if (!expectedAuthHeader || authHeader !== expectedAuthHeader) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
+    } else if (expectedAuthHeader && authHeader !== expectedAuthHeader) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     try {

@@ -108,7 +108,6 @@ export async function GET(request: NextRequest) {
                         select: {
                             id: true,
                             name: true,
-                            email: true,
                         },
                     },
                 },
@@ -122,7 +121,6 @@ export async function GET(request: NextRequest) {
                         select: {
                             id: true,
                             name: true,
-                            email: true,
                         },
                     },
                 },
@@ -238,7 +236,7 @@ export async function GET(request: NextRequest) {
         // Prepare export data with metadata
         const exportData = {
             exportDate: new Date().toISOString(),
-            exportVersion: "1.0",
+            exportVersion: "1.1",
             user: userData,
             accounts,
             quizAttempts,

@@ -375,10 +375,12 @@ export function extractContentFromCompletion(completion: any, aiModel: string): 
     return null;
   };
 
-  // Comprehensive logging for debugging
-  console.log("[OpenAI Client] Full API Response:", JSON.stringify(completion, null, 2));
-  console.log("[OpenAI Client] Completion keys:", Object.keys(completion));
-  console.log("[OpenAI Client] Completion object type:", completion.object);
+  const requestId = typeof completion?.id === "string" ? completion.id : "unknown";
+  console.log("[OpenAI Client] Parsing completion response", {
+    requestId,
+    object: completion?.object ?? null,
+    keys: Object.keys(completion ?? {}),
+  });
 
   let generatedContent: string | null = null;
 
@@ -421,8 +423,11 @@ export function extractContentFromCompletion(completion: any, aiModel: string): 
       console.warn("[OpenAI Client] ⚠️ Falling back to entire response conversion");
       return fallback;
     }
-    console.error("[OpenAI Client] ❌ Could not find content in any known path");
-    console.error("[OpenAI Client] Full completion object:", JSON.stringify(completion, null, 2));
+    console.error("[OpenAI Client] ❌ Could not find content in any known path", {
+      requestId,
+      object: completion?.object ?? null,
+      keys: Object.keys(completion ?? {}),
+    });
     throw new Error(`No content generated from OpenAI. Model: ${aiModel}. API: ${isResponsesAPI ? 'Responses' : 'Chat Completions'}. Please check console for full response structure.`);
   }
 

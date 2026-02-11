@@ -84,7 +84,7 @@ export async function processAIQuizTask(taskId: string): Promise<void> {
     // Log for debugging
     console.log("[AI Generator] Processing task:", taskId);
     console.log("[AI Generator] Using model:", aiModel);
-    console.log("[AI Generator] Prompt source:", promptTemplate.substring(0, 100) + "...");
+    console.log("[AI Generator] Prompt template loaded");
 
     // Build the prompt with placeholders replaced
     const resolvedSport = (quizSport || sport || determineSportFromTopic(resolvedTopic)).trim() || "General";
@@ -153,7 +153,7 @@ export async function processAIQuizTask(taskId: string): Promise<void> {
       generatedQuiz = JSON.parse(cleanedContent);
     } catch (error: any) {
       parseError = error.message;
-      console.error("[AI Generator] Failed to parse:", cleanedContent.substring(0, 500));
+      console.error("[AI Generator] Failed to parse AI output");
 
       // Store raw response even on parse failure so we can retry parsing later
       await updateBackgroundTask(taskId, {
@@ -193,7 +193,7 @@ export async function processAIQuizTask(taskId: string): Promise<void> {
     if (!Array.isArray(generatedQuiz.questions) || generatedQuiz.questions.length === 0) {
       const validationError = "Generated quiz has no questions array or questions array is empty";
       console.error("[AI Generator] Validation failed:", validationError);
-      console.error("[AI Generator] Generated quiz structure:", JSON.stringify(generatedQuiz, null, 2).substring(0, 500));
+      console.error("[AI Generator] Generated quiz structure invalid");
       await updateBackgroundTask(taskId, {
         result: {
           rawResponse: rawResponseData,

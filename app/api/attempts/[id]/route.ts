@@ -10,6 +10,7 @@ import type { Prisma } from "@prisma/client";
 import { checkAndAwardBadges } from "@/lib/services/badge.service";
 import { recomputeUserProgress } from "@/lib/services/gamification.service";
 import { createNotification } from "@/lib/services/notification.service";
+import { z } from "zod";
 
 const quizSelection = {
     id: true,
@@ -51,6 +52,14 @@ type AttemptWithDetails = Prisma.QuizAttemptGetPayload<{
         userAnswers: typeof userAnswerSelection;
     };
 }>;
+
+const completeAttemptSchema = z.object({
+    answers: z.array(z.object({
+        questionId: z.string().cuid(),
+        answerId: z.string().cuid().nullable(),
+        timeSpent: z.number().int().min(0).max(3600),
+    })).max(500).optional(),
+});
 
 // GET /api/attempts/[id] - Get attempt results
 export async function GET(
@@ -197,11 +206,7 @@ export async function PATCH(
         const { id } = await params;
 
         const body = await request.json().catch(() => ({}));
-        const batchedAnswers = body.answers as Array<{
-            questionId: string;
-            answerId: string | null;
-            timeSpent: number;
-        }> | undefined;
+        const { answers: batchedAnswers } = completeAttemptSchema.parse(body);
 
         // Get attempt with answers
         const attempt = await prisma.quizAttempt.findUnique({
@@ -223,11 +228,11 @@ export async function PATCH(
 
         // Check if already completed
         if (attempt.completedAt) {
-            // Just return success without full results to keep it light
             return successResponse({
                 awardedBadges: [],
                 progression: null,
-                completionBonusAwarded: 0,
+                completionBonusAwarded: null,
+                bonusStatus: "APPLIED" as const,
                 attempt: {
                     id: attempt.id,
                     quizId: attempt.quizId,
@@ -238,20 +243,23 @@ export async function PATCH(
             });
         }
 
-        // Process batched answers if provided
         if (batchedAnswers && Array.isArray(batchedAnswers) && batchedAnswers.length > 0) {
-            const questionIds = batchedAnswers.map((a) => a.questionId);
-
-            // Verify all questions belong to this attempt
             const validQuestions = attempt.selectedQuestionIds;
-            const invalidQuestions = questionIds.filter(id => !validQuestions.includes(id));
+            const uniqueBatchedAnswers = new Map<string, {
+                questionId: string;
+                answerId: string | null;
+                timeSpent: number;
+            }>();
 
-            if (invalidQuestions.length > 0) {
-                // We'll just filter them out rather than failing strictly, to be robust
-                console.warn(`Attempt ${id} submitted answers for invalid questions: ${invalidQuestions.join(", ")}`);
+            for (const answer of batchedAnswers) {
+                if (!validQuestions.includes(answer.questionId)) continue;
+                if (!uniqueBatchedAnswers.has(answer.questionId)) {
+                    uniqueBatchedAnswers.set(answer.questionId, answer);
+                }
             }
 
-            // Fetch question details for correctness checking
+            const questionIds = Array.from(uniqueBatchedAnswers.keys());
+
             const questions = await prisma.question.findMany({
                 where: { id: { in: questionIds } },
                 include: { answers: true },
@@ -259,20 +267,15 @@ export async function PATCH(
 
             const questionMap = new Map(questions.map(q => [q.id, q]));
 
-            // Create answers in transaction
-            const answersToCreate = batchedAnswers
-                .filter(a => validQuestions.includes(a.questionId))
+            const alreadyAnswered = new Set(attempt.userAnswers.map((ua) => ua.questionId));
+            const answersToCreate = Array.from(uniqueBatchedAnswers.values())
                 .map(answer => {
                     const question = questionMap.get(answer.questionId);
-                    if (!question) return null; // Should not happen given query above
+                    if (!question || alreadyAnswered.has(answer.questionId)) return null;
 
                     const correctAnswer = question.answers.find(a => a.isCorrect);
                     const isCorrect = answer.answerId === correctAnswer?.id;
                     const wasSkipped = answer.answerId === null;
-
-                    // Check if answer already exists (deduplication)
-                    const existing = attempt.userAnswers.find(ua => ua.questionId === answer.questionId);
-                    if (existing) return null;
 
                     return {
                         attemptId: id,
@@ -286,9 +289,10 @@ export async function PATCH(
                 .filter((data): data is NonNullable<typeof data> => data !== null);
 
             if (answersToCreate.length > 0) {
-                await prisma.$transaction(
-                    answersToCreate.map((data) => prisma.userAnswer.create({ data }))
-                );
+                await prisma.userAnswer.createMany({
+                    data: answersToCreate,
+                    skipDuplicates: true,
+                });
             }
         }
 
@@ -303,9 +307,16 @@ export async function PATCH(
 
         if (!updatedAttempt) throw new Error("Failed to reload attempt");
 
-        const orderedAnswers = [...updatedAttempt.userAnswers].sort(
+        const orderedAnswersByCreatedAt = [...updatedAttempt.userAnswers].sort(
             (a, b) => a.createdAt.getTime() - b.createdAt.getTime()
         );
+        const uniqueAnswersByQuestion = new Map<string, (typeof orderedAnswersByCreatedAt)[number]>();
+        for (const answer of orderedAnswersByCreatedAt) {
+            if (!uniqueAnswersByQuestion.has(answer.questionId)) {
+                uniqueAnswersByQuestion.set(answer.questionId, answer);
+            }
+        }
+        const orderedAnswers = Array.from(uniqueAnswersByQuestion.values());
 
         // Precompute quiz scale based on quiz completionBonus and selected questions' configuration
         const questionConfigs = orderedAnswers.map((ua) => ({
@@ -403,8 +414,8 @@ export async function PATCH(
                     )
                 );
 
-                return tx.quizAttempt.update({
-                    where: { id },
+                const completionUpdate = await tx.quizAttempt.updateMany({
+                    where: { id, completedAt: null },
                     data: {
                         score: scorePercentage,
                         correctAnswers,
@@ -415,6 +426,12 @@ export async function PATCH(
                         averageResponseTime,
                         totalTimeSpent,
                     },
+                });
+                if (completionUpdate.count === 0) {
+                    return null;
+                }
+                return tx.quizAttempt.findUnique({
+                    where: { id },
                     include: {
                         quiz: { select: quizSelection },
                         userAnswers: userAnswerSelection,
@@ -426,42 +443,27 @@ export async function PATCH(
             }
         );
 
-        // Award one-time completion bonus if passed BEFORE stats/leaderboard
-        let completionBonusAwarded = 0;
-        if (passed && !attempt.isPracticeMode) {
-            // We will calculate this inside after() to not block, but we need to return it? 
-            // Actually, the UI displays the bonus. If we move it to background, we can't show it immediately.
-            // The plan said "Wrap awardCompletionBonusIfEligible... inside after()".
-            // If I do that, `completionBonusAwarded` in the response will be 0 or undefined.
-            // Accessing the bonus is critical for the "Points" display. 
-            // However, `updateUserStatistics` and `checkAndAwardBadges` are definitely side effects.
-            // `awardCompletionBonusIfEligible` updates the total points.
-            // If I move it to background, the user won't see the updated total points immediately in the response.
-            // BUT, the plan was approved. "Response is sent immediately while tasks run in the background".
-            // This implies we accept that some data might be "mostly up to date" or handled optimistically by UI?
-            // Or maybe I should keep bonus calculation sync if it's fast?
-            // Looking at `awardCompletionBonusIfEligible`, it does a DB read and write.
-            // If I move it to background, I must return `completionBonusAwarded: 0` (or estimate it?).
-            // The implementation plan says "Wrap awardCompletionBonusIfEligible... inside after()". I will follow the plan. 
-            // The UI might show "Completion Bonus" if I return it. 
-            // Wait, if I return 0, the UI won't show it. 
-            // User won't see the bonus animation. 
-            // I should probably keep bonus sync OR accept the UX tradeoff.
-            // Actually, `awardCompletionBonusIfEligible` returns the bonus amount. 
-            // If I move it to `after`, I can't return the amount.
-            // Maybe I can calculate if they *should* get it (optimistically) and allow `after` to actually write it?
-            // `awardCompletionBonusIfEligible` checks `quizCompletionBonusAward` table.
-            // If I optimize, I can check if they have it locally (maybe too expensive?).
-            // Let's stick to the plan: move it to `after`. The user might miss the "Bonus" popping up instantly, 
-            // OR I can try to predict it? 
-            // "completionBonus" is on the quiz. If passed and not practice and not previously awarded...
-            // Checking "previously awarded" requires a DB query.
-            // That DB query is what `awardCompletionBonusIfEligible` does.
-            // So if I want to avoid blocking, I can't check it.
-            // I will move it to `after` and accept that `completionBonusAwarded` will be 0 in the immediate response.
-            // The "Total Points" in the response will technically be "points from questions".
-            // The subsequent lazy load of user progress might pick it up if it wins the race, but unlikely.
-            // This seems like a valid tradeoff for performance.
+        if (!completedAttempt) {
+            const latestAttempt = await prisma.quizAttempt.findUnique({
+                where: { id },
+                include: { quiz: { select: quizSelection } },
+            });
+            if (!latestAttempt) {
+                throw new NotFoundError("Quiz attempt not found");
+            }
+            return successResponse({
+                awardedBadges: [],
+                progression: null,
+                completionBonusAwarded: null,
+                bonusStatus: "APPLIED" as const,
+                attempt: {
+                    id: latestAttempt.id,
+                    quizId: latestAttempt.quizId,
+                    quizSlug: latestAttempt.quiz.slug,
+                    score: latestAttempt.score,
+                    passed: latestAttempt.passed
+                }
+            });
         }
 
         // Calculate elapsed time for leaderboard (needed before parallel execution)
@@ -469,7 +471,6 @@ export async function PATCH(
             (new Date().getTime() - attempt.startedAt.getTime()) / 1000
         );
 
-        // Schedule heavy tasks in background
         after(async () => {
             try {
                 // 1. Award completion bonus
@@ -522,13 +523,11 @@ export async function PATCH(
             }
         });
 
-        // Return immediate response with calculated score
-        // badges/progression will be null/empty in the immediate response,
-        // expecting the client to handle it or lazy load as per new plan.
         return successResponse({
             awardedBadges: [],
             progression: null,
-            completionBonusAwarded: 0,
+            completionBonusAwarded: null,
+            bonusStatus: "PENDING" as const,
             attempt: {
                 id: completedAttempt.id,
                 quizId: completedAttempt.quizId,

@@ -38,6 +38,8 @@ next-env.d.ts
 
 # prisma
 /prisma/migrations/**/migration.sql
+!/prisma/migrations/20260211113000_useranswer_unique_attempt_question/
+!/prisma/migrations/20260211113000_useranswer_unique_attempt_question/migration.sql
 
 # test
 /test-results/

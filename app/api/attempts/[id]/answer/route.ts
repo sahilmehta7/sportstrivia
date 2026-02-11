@@ -7,8 +7,17 @@ import { z } from "zod";
 const submitAnswerSchema = z.object({
   questionId: z.string().cuid(),
   answerId: z.string().cuid().nullable(),
-  timeSpent: z.number().int().min(0),
+  timeSpent: z.number().int().min(0).max(3600),
 });
+
+function isUniqueConstraintError(error: unknown): boolean {
+  return Boolean(
+    error &&
+    typeof error === "object" &&
+    "code" in error &&
+    (error as { code?: string }).code === "P2002"
+  );
+}
 
 // PUT /api/attempts/[id]/answer - Submit an answer
 export async function PUT(
@@ -48,16 +57,28 @@ export async function PUT(
       throw new BadRequestError("Question not part of this quiz attempt");
     }
 
-    // Check if answer already exists for this question
-    const existingAnswer = await prisma.userAnswer.findFirst({
+    // Check if answer already exists for this question. Treat retries as idempotent success.
+    const existingAnswer = await prisma.userAnswer.findUnique({
       where: {
-        attemptId: id,
-        questionId,
+        attemptId_questionId: {
+          attemptId: id,
+          questionId,
+        },
       },
     });
 
     if (existingAnswer) {
-      throw new BadRequestError("Answer already submitted for this question");
+      return successResponse({
+        questionId,
+        isCorrect: existingAnswer.isCorrect,
+        wasSkipped: existingAnswer.wasSkipped,
+        alreadySubmitted: true,
+        message: existingAnswer.wasSkipped
+          ? "Question skipped"
+          : existingAnswer.isCorrect
+            ? "Correct answer!"
+            : "Incorrect answer",
+      });
     }
 
     // Get the correct answer
@@ -76,31 +97,64 @@ export async function PUT(
     const isCorrect = answerId === correctAnswer?.id;
     const wasSkipped = answerId === null;
 
-    // Create user answer
-    await prisma.userAnswer.create({
-      data: {
-        attemptId: id,
-        questionId,
-        answerId,
-        isCorrect,
-        wasSkipped,
-        timeSpent,
-      },
-    });
+    let created = false;
+    try {
+      // Create user answer
+      await prisma.userAnswer.create({
+        data: {
+          attemptId: id,
+          questionId,
+          answerId,
+          isCorrect,
+          wasSkipped,
+          timeSpent,
+        },
+      });
+      created = true;
+    } catch (error) {
+      // Concurrent duplicate submission: return idempotent success.
+      if (isUniqueConstraintError(error)) {
+        const duplicate = await prisma.userAnswer.findUnique({
+          where: {
+            attemptId_questionId: {
+              attemptId: id,
+              questionId,
+            },
+          },
+        });
+        if (duplicate) {
+          return successResponse({
+            questionId,
+            isCorrect: duplicate.isCorrect,
+            wasSkipped: duplicate.wasSkipped,
+            alreadySubmitted: true,
+            message: duplicate.wasSkipped
+              ? "Question skipped"
+              : duplicate.isCorrect
+                ? "Correct answer!"
+                : "Incorrect answer",
+          });
+        }
+      }
+      throw error;
+    }
 
-    // Update question statistics
-    await prisma.question.update({
-      where: { id: questionId },
-      data: {
-        timesAnswered: { increment: 1 },
-        ...(isCorrect && { timesCorrect: { increment: 1 } }),
-      },
-    });
+    // Update question statistics only for newly created answers
+    if (created) {
+      await prisma.question.update({
+        where: { id: questionId },
+        data: {
+          timesAnswered: { increment: 1 },
+          ...(isCorrect && { timesCorrect: { increment: 1 } }),
+        },
+      });
+    }
 
     return successResponse({
       questionId,
       isCorrect,
       wasSkipped,
+      alreadySubmitted: false,
       message: wasSkipped
         ? "Question skipped"
         : isCorrect

@@ -375,7 +375,7 @@ export default async function QuizResultsPage({
                             </div>
                           ) : null}
 
-                          {userAnswer.question.explanation ? (
+                          {revealAnswers && userAnswer.question.explanation ? (
                             <div className="rounded-lg bg-slate-100/70 p-3 text-sm text-slate-700 dark:bg-white/10 dark:text-white/80">
                               <p className="mb-1 text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-white/60">
                                 Explanation

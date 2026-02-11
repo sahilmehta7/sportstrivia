@@ -190,8 +190,6 @@ export async function POST(request: NextRequest) {
 
         const randomizedAnswers = shuffleArray(answers);
 
-        const correctAnswer = question.answers.find((answer) => answer.isCorrect);
-
         return {
           order: index,
           id: question.id,
@@ -200,12 +198,8 @@ export async function POST(request: NextRequest) {
           questionVideoUrl: question.questionVideoUrl,
           questionAudioUrl: question.questionAudioUrl,
           hint: question.hint,
-          explanation: question.explanation,
-          explanationImageUrl: question.explanationImageUrl,
-          explanationVideoUrl: question.explanationVideoUrl,
           timeLimit: question.timeLimit,
           answers: randomizedAnswers,
-          correctAnswerId: correctAnswer?.id ?? null,
         };
       })
       .filter((question): question is NonNullable<typeof question> => question !== null);

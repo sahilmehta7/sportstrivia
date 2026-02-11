@@ -422,6 +422,7 @@ model UserAnswer {
   attempt     QuizAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
   question    Question    @relation(fields: [questionId], references: [id])
 
+  @@unique([attemptId, questionId])
   @@index([attemptId])
   @@index([questionId])
 }

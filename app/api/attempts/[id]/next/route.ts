@@ -72,8 +72,6 @@ export async function GET(
 
     const randomizedAnswers = shuffleArray(answers);
 
-    const correctAnswer = question.answers.find((answer) => answer.isCorrect);
-
     return successResponse({
       nextQuestion: {
         id: question.id,
@@ -82,12 +80,8 @@ export async function GET(
         questionVideoUrl: question.questionVideoUrl,
         questionAudioUrl: question.questionAudioUrl,
         hint: question.hint,
-        explanation: question.explanation,
-        explanationImageUrl: question.explanationImageUrl,
-        explanationVideoUrl: question.explanationVideoUrl,
         timeLimit: question.timeLimit,
         answers: randomizedAnswers,
-        correctAnswerId: correctAnswer?.id ?? null,
       },
       position: answeredCount,
       total,

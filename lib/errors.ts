@@ -133,7 +133,7 @@ export function handleError(error: unknown) {
   if (error instanceof Error) {
     return NextResponse.json(
       {
-        error: error.message,
+        error: "Internal server error",
         code: "INTERNAL_ERROR",
       },
       { status: 500 }

@@ -42,7 +42,7 @@ interface AttemptQuestion {
   explanationImageUrl?: string | null;
   explanationVideoUrl?: string | null;
   timeLimit?: number | null;
-  correctAnswerId: string | null;
+  correctAnswerId?: string | null;
   answers: {
     id: string;
     answerText: string;
@@ -58,7 +58,7 @@ interface QuizConfig {
 }
 
 interface QuestionFeedback {
-  isCorrect: boolean;
+  isCorrect: boolean | null;
   wasSkipped: boolean;
   message: string;
   selectedAnswerId: string | null;
@@ -387,12 +387,16 @@ export function QuizPlayClient({ quizId, quizTitle, quizSlug, initialAttemptLimi
       const timeSpent = Math.max(timeLimit - timeLeft, 0);
       const wasSkipped = fromTimer || answerId === null;
 
-      const correctAnswerId = currentQuestion.correctAnswerId;
+      const correctAnswerId = currentQuestion.correctAnswerId ?? null;
       const correctAnswerText =
-        currentQuestion.answers.find((answer) => answer.id === correctAnswerId)?.answerText ?? null;
+        correctAnswerId
+          ? currentQuestion.answers.find((answer) => answer.id === correctAnswerId)?.answerText ?? null
+          : null;
 
       const optimisticIsCorrect =
-        !!answerId && !!correctAnswerId && answerId === correctAnswerId && !wasSkipped;
+        correctAnswerId
+          ? !!answerId && answerId === correctAnswerId && !wasSkipped
+          : null;
 
       const previousIndex = currentIndex;
       const nextIndex = currentIndex + 1;
@@ -411,13 +415,15 @@ export function QuizPlayClient({ quizId, quizTitle, quizSlug, initialAttemptLimi
         wasSkipped,
         message: wasSkipped
           ? "Question skipped"
-          : optimisticIsCorrect
+          : optimisticIsCorrect === true
             ? "Correct answer!"
-            : "Incorrect answer",
+            : optimisticIsCorrect === false
+              ? "Incorrect answer"
+              : "Answer submitted",
         selectedAnswerId: answerId,
         correctAnswerId,
         correctAnswerText,
-        explanation: currentQuestion.explanation ?? null,
+        explanation: null,
       });
 
       clearAdvanceTimeout();
@@ -801,7 +807,7 @@ export function QuizPlayClient({ quizId, quizTitle, quizSlug, initialAttemptLimi
               const isSelected = feedback?.selectedAnswerId === answer.id;
               const isCorrectAnswer = feedback?.correctAnswerId === answer.id;
               const isIncorrectSelection =
-                isSelected && !feedback?.isCorrect && !feedback?.wasSkipped;
+                isSelected && feedback?.isCorrect === false && !feedback?.wasSkipped;
 
               let statusHint: string | null = null;
               if (feedback) {
@@ -862,21 +868,20 @@ export function QuizPlayClient({ quizId, quizTitle, quizSlug, initialAttemptLimi
 
           {feedback && (
             <Alert
-              variant={feedback.isCorrect ? "default" : "destructive"}
-              className={cn(!feedback.isCorrect && "border-red-500 bg-red-500/5")}
+              variant={feedback.isCorrect === true ? "default" : "destructive"}
+              className={cn(feedback.isCorrect === false && "border-red-500 bg-red-500/5")}
             >
-              <AlertTitle>{feedback.isCorrect ? "Correct!" : "Not quite"}</AlertTitle>
+              <AlertTitle>
+                {feedback.isCorrect === true ? "Correct!" : feedback.isCorrect === false ? "Not quite" : "Answer received"}
+              </AlertTitle>
               <AlertDescription>
                 <div className="space-y-2 text-sm">
                   <p>{feedback.message}</p>
-                  {feedback.correctAnswerText && (!feedback.isCorrect || feedback.wasSkipped) && (
+                  {feedback.correctAnswerText && (feedback.isCorrect !== true || feedback.wasSkipped) && (
                     <p>
                       The answer was{" "}
                       <span className="font-semibold text-foreground">{feedback.correctAnswerText}</span>.
                     </p>
-                  )}
-                  {feedback.explanation && (
-                    <p className="text-xs text-muted-foreground">{feedback.explanation}</p>
                   )}
                 </div>
               </AlertDescription>
