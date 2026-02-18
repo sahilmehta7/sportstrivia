@@ -3,6 +3,9 @@
   "devCommand": "next dev",
   "installCommand": "npm install",
   "framework": "nextjs",
+  "regions": [
+    "ap-south-1"
+  ],
   "crons": [
     {
       "path": "/api/cron/daily-games",
