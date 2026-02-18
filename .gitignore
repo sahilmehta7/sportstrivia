@@ -56,3 +56,4 @@ next-env.d.ts
 /lighthouse-*.html
 .cursor/
 .specstory/
+test_output.log

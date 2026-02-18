@@ -113,7 +113,7 @@ export async function getDescendantTopicIdsForMultiple(
  * Temporarily showing all root topics for debugging
  */
 export async function getRootTopics() {
-  return await prisma.topic.findMany({
+  const roots = await prisma.topic.findMany({
     where: {
       parentId: null
     },
@@ -124,9 +124,45 @@ export async function getRootTopics() {
           quizTopicConfigs: true,
           children: true
         }
+      },
+      children: {
+        include: {
+          _count: {
+            select: {
+              quizTopicConfigs: true,
+              children: true
+            }
+          },
+          children: {
+            select: {
+              _count: {
+                select: { quizTopicConfigs: true }
+              }
+            }
+          }
+        },
+        orderBy: { name: "asc" }
       }
     }
   });
+
+  if (roots.length === 1) {
+    // We know children are included because we requested them in the query above
+    const l1Topics = roots[0].children as Array<typeof roots[0]['children'][0] & {
+      _count: { quizTopicConfigs: number; children: number };
+      children: Array<{ _count: { quizTopicConfigs: number } }>;
+    }>;
+
+    return l1Topics.map(topic => ({
+      ...topic,
+      _count: {
+        ...topic._count,
+        quizTopicConfigs: topic._count.quizTopicConfigs + topic.children.reduce((acc, child) => acc + child._count.quizTopicConfigs, 0)
+      }
+    }));
+  }
+
+  return roots;
 }
 
 /**
@@ -135,6 +171,56 @@ export async function getRootTopics() {
  */
 export async function getFeaturedTopics(limit = 6) {
   const popularSports = ['Cricket', 'Football (Soccer)', 'Tennis', 'Basketball', 'Baseball', 'Golf', 'Rugby', 'American Football', 'Boxing', 'MMA'];
+
+  // Check if we have a single root
+  const rootCount = await prisma.topic.count({ where: { parentId: null } });
+
+  if (rootCount === 1) {
+    // If single root, we want to feature its children (Level 1 topics)
+    const topics = await prisma.topic.findMany({
+      where: {
+        parent: { parentId: null }, // Level 1 topics
+        OR: [
+          { quizTopicConfigs: { some: {} } },
+          { children: { some: { quizTopicConfigs: { some: {} } } } }, // Quizzes in Level 2
+          { name: { in: popularSports } }
+        ]
+      },
+      include: {
+        _count: {
+          select: {
+            quizTopicConfigs: true,
+            children: true
+          }
+        },
+        children: {
+          include: {
+            _count: {
+              select: { quizTopicConfigs: true }
+            }
+          }
+        }
+      }
+    });
+
+    // Manually sort by aggregated quiz count
+    type TopicWithChildren = typeof topics[0] & {
+      children: Array<{ _count: { quizTopicConfigs: number } }>;
+    };
+
+    return (topics as TopicWithChildren[]).map(topic => ({
+      ...topic,
+      _count: {
+        ...topic._count,
+        quizTopicConfigs: topic._count.quizTopicConfigs + topic.children.reduce((acc, child) => acc + child._count.quizTopicConfigs, 0)
+      }
+    })).sort((a, b) => {
+      const countA = a._count.quizTopicConfigs;
+      const countB = b._count.quizTopicConfigs;
+      if (countB !== countA) return countB - countA;
+      return a.name.localeCompare(b.name);
+    }).slice(0, limit);
+  }
 
   return await prisma.topic.findMany({
     where: {
@@ -525,21 +611,33 @@ export async function mergeTopics(sourceId: string, destinationId: string) {
     }
 
     // 5. Move child topics and update levels
-    const sourceChildren = await tx.topic.findMany({
-      where: { parentId: sourceId },
-    });
+    // Calculate level shift: destination.level - source.level
+    // Example: Moving S (L2) to D (L1). S children were L3. New parent D is L1. Children become L2.
+    // Shift = 1 - 2 = -1. Old L3 + (-1) = L2. Correct.
+    // Example: Moving S (L1) to D (L3). S children were L2. New parent D is L3. Children become L4.
+    // Shift = 3 - 1 = +2. Old L2 + (+2) = L4. Correct.
+    const levelShift = destination.level - source.level;
 
-    for (const child of sourceChildren) {
-      await tx.topic.update({
-        where: { id: child.id },
+    // Get all descendants to update their levels in one go
+    // We use the service function which might use cache, but for IDs structure it should be fine
+    // or we could fetch them fresh. To be safe in transaction, we might want fresh,
+    // but getDescendantTopicIds is efficient. Let's use it.
+    const descendantIds = await getDescendantTopicIds(sourceId);
+
+    if (descendantIds.length > 0) {
+      await tx.topic.updateMany({
+        where: { id: { in: descendantIds } },
         data: {
-          parentId: destinationId,
-          level: destination.level + 1
+          level: { increment: levelShift },
         },
       });
-      // Recursively update levels for this child's descendants
-      await updateDescendantLevelsInTx(tx, child.id, destination.level + 1);
     }
+
+    // now reparent the direct children
+    await tx.topic.updateMany({
+      where: { parentId: sourceId },
+      data: { parentId: destinationId },
+    });
 
     // 6. Delete source topic
     await tx.topic.delete({
@@ -550,23 +648,8 @@ export async function mergeTopics(sourceId: string, destinationId: string) {
     invalidateTopicCache();
 
     return { success: true };
+  }, {
+    timeout: 60000, // Increase timeout to 60s for large merges
+    maxWait: 10000,
   });
-}
-
-/**
- * Helper to update descendant levels within a transaction
- */
-async function updateDescendantLevelsInTx(tx: any, parentId: string, parentLevel: number) {
-  const children = await tx.topic.findMany({
-    where: { parentId },
-  });
-
-  for (const child of children) {
-    const newLevel = parentLevel + 1;
-    await tx.topic.update({
-      where: { id: child.id },
-      data: { level: newLevel },
-    });
-    await updateDescendantLevelsInTx(tx, child.id, newLevel);
-  }
 }

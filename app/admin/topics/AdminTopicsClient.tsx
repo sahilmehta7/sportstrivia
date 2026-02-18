@@ -334,7 +334,7 @@ export function AdminTopicsClient({ topics }: AdminTopicsClientProps) {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Delete Topic</DialogTitle>
-            <DialogDescription>
+            <div className="text-sm text-muted-foreground">
               Are you sure you want to delete &quot;{topicToDelete?.name}&quot;?
 
               {topicToDelete && (
@@ -363,7 +363,7 @@ export function AdminTopicsClient({ topics }: AdminTopicsClientProps) {
                     )}
                 </div>
               )}
-            </DialogDescription>
+            </div>
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDeleteDialogOpen(false)} disabled={deleting}>
@@ -380,10 +380,10 @@ export function AdminTopicsClient({ topics }: AdminTopicsClientProps) {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Merge Topic</DialogTitle>
-            <DialogDescription>
+            <div className="text-sm text-muted-foreground">
               Merge &quot;{topicToMerge?.name}&quot; into another topic.
               All questions, sub-topics, and stats will be moved.
-            </DialogDescription>
+            </div>
           </DialogHeader>
 
           <div className="py-4 space-y-4">

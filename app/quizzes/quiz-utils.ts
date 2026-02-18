@@ -123,9 +123,13 @@ export function parsePublicFilters(searchParams: SearchParams): PublicQuizFilter
 
 export const loadTopicsWithQuizCounts = unstable_cache(
     async () => {
-        // Fetch level 0 topics and their descendants (just IDs to keep it light)
-        const rootTopics = await prisma.topic.findMany({
-            where: { parentId: null },
+        // Check for single root
+        const rootCount = await prisma.topic.count({ where: { parentId: null } });
+        const isSingleRoot = rootCount === 1;
+
+        // Fetch level 0 topics (or level 1 if single root)
+        const topics = await prisma.topic.findMany({
+            where: isSingleRoot ? { parent: { parentId: null } } : { parentId: null },
             select: {
                 id: true,
                 name: true,
@@ -161,18 +165,18 @@ export const loadTopicsWithQuizCounts = unstable_cache(
             },
         });
 
-        return rootTopics
+        return topics
             .map((topic) => {
                 const quizIds = new Set<string>();
 
-                // Level 0
+                // Level 0/1
                 topic.quizTopicConfigs.forEach((c) => quizIds.add(c.quizId));
 
-                // Level 1
+                // Level 1/2
                 topic.children.forEach((child) => {
                     child.quizTopicConfigs.forEach((c) => quizIds.add(c.quizId));
 
-                    // Level 2
+                    // Level 2/3
                     child.children.forEach((grandchild) => {
                         grandchild.quizTopicConfigs.forEach((c) => quizIds.add(c.quizId));
                     });

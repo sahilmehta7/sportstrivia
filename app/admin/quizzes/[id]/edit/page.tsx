@@ -65,6 +65,7 @@ export default function EditQuizPage({ params }: EditQuizPageProps) {
   const [aiMetadataSuggestion, setAiMetadataSuggestion] = useState<{ title: string; description: string } | null>(null);
   const [aiCoverLoading, setAiCoverLoading] = useState(false);
   const [seoRegenerating, setSeoRegenerating] = useState(false);
+  const [recomputingTopics, setRecomputingTopics] = useState(false);
   const [attemptLimitEnabled, setAttemptLimitEnabled] = useState(false);
   const attemptResetOptions = ATTEMPT_RESET_PERIOD_OPTIONS;
 
@@ -633,6 +634,48 @@ export default function EditQuizPage({ params }: EditQuizPageProps) {
     }
   };
 
+  const handleRecomputeTopics = async () => {
+    if (!quizId) return;
+    setRecomputingTopics(true);
+
+    try {
+      const response = await fetch(`/api/admin/quizzes/${quizId}/topics/recompute`, {
+        method: "POST",
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || "Failed to recompute topics");
+      }
+
+      toast({
+        title: "Topics Recomputed",
+        description: `Successfully updated topic configurations based on ${result.data?.totalQuestions || 0} questions.`,
+      });
+
+      // Refresh topic configs if we're in that mode
+      if (formData.questionSelectionMode === "TOPIC_RANDOM") {
+        const topicResponse = await fetch(`/api/admin/quizzes/${quizId}/topics`);
+        const topicResult = await topicResponse.json();
+        if (topicResponse.ok) {
+          setTopicConfigs(topicResult.data.topicConfigs || []);
+        }
+      }
+
+      router.refresh();
+
+    } catch (error: any) {
+      toast({
+        title: "Recompute failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setRecomputingTopics(false);
+    }
+  };
+
   const updateField = (field: string, value: any) => {
     setFormData(prev => {
       const updates: any = { [field]: value };
@@ -746,6 +789,17 @@ export default function EditQuizPage({ params }: EditQuizPageProps) {
                 Manage Questions
               </Button>
             </Link>
+
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={handleRecomputeTopics}
+              disabled={recomputingTopics}
+              title="Re-calculate topic distribution based on current questions"
+            >
+              {recomputingTopics ? <LoadingSpinner size="sm" /> : <Wand2 className="mr-2 h-4 w-4" />}
+              Recompute Topics
+            </Button>
 
             <Button
               variant="destructive"

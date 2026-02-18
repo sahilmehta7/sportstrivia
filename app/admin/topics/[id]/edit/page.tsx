@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Save, Trash2, Wand2, Loader2, Upload, Check, ChevronsUpDown } from "lucide-react";
+import { ArrowLeft, Save, Trash2, Wand2, Loader2, Upload, Check, ChevronsUpDown, List } from "lucide-react";
 import Link from "next/link";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { Badge } from "@/components/ui/badge";
@@ -324,6 +324,12 @@ export default function EditTopicPage({ params }: EditTopicPageProps) {
               <Trash2 className="mr-2 h-4 w-4" />
               Delete
             </Button>
+            <Link href={`/admin/questions?topicId=${topicId}`}>
+              <Button variant="outline">
+                <List className="mr-2 h-4 w-4" />
+                View Questions
+              </Button>
+            </Link>
             <Link href="/admin/topics">
               <Button variant="outline">
                 <ArrowLeft className="mr-2 h-4 w-4" />

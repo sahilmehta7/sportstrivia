@@ -2,7 +2,7 @@ import { cache } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Prisma, Difficulty, SearchContext } from "@prisma/client";
+import { Prisma, Difficulty } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth-helpers";
 import { getTopicIdsWithDescendants } from "@/lib/services/topic.service";
@@ -25,12 +25,6 @@ import { QuizCard } from "@/components/quizzes/quiz-card";
 import { QuizPagination } from "@/components/quizzes/quiz-pagination";
 import { StreakIndicator } from "@/components/shared/StreakIndicator";
 
-import { TopicQuizSearchBar } from "@/components/topics/topic-search-bar";
-import {
-  getRecentSearchQueriesForUser,
-  getTrendingSearchQueries,
-} from "@/lib/services/search-query.service";
-import { ShowcaseThemeProvider } from "@/components/showcase/ShowcaseThemeProvider";
 import { ChevronRight } from "lucide-react";
 import { PageContainer } from "@/components/shared/PageContainer";
 
@@ -231,45 +225,6 @@ export default async function TopicDetailPage({
     getPublicQuizList({ topic: slug, sortBy: "rating", sortOrder: "desc", page: 1, limit: 10 }),
   ]);
 
-  let quizSearchSuggestions: { value: string; label: string }[] = [];
-  try {
-    const [trendingQuizSearches, recentQuizSearches] = await Promise.all([
-      getTrendingSearchQueries(SearchContext.QUIZ, { limit: 6 }),
-      user?.id
-        ? getRecentSearchQueriesForUser(user.id, SearchContext.QUIZ, { limit: 4 })
-        : Promise.resolve([]),
-    ]);
-
-    const formatChipLabel = (value: string) =>
-      value
-        .split(" ")
-        .map((word) => (word ? word[0].toUpperCase() + word.slice(1) : word))
-        .join(" ");
-
-    const suggestionMap = new Map<string, { value: string; label: string }>();
-
-    trendingQuizSearches.forEach((entry) => {
-      const label = formatChipLabel(entry.query);
-      suggestionMap.set(entry.query, { value: entry.query, label });
-    });
-
-    recentQuizSearches.forEach((entry) => {
-      if (!suggestionMap.has(entry.query)) {
-        const label = formatChipLabel(entry.query);
-        suggestionMap.set(entry.query, { value: entry.query, label });
-      }
-    });
-
-    const topicKey = topic.name.toLowerCase();
-    if (!suggestionMap.has(topicKey)) {
-      suggestionMap.set(topicKey, { value: topic.name, label: topic.name });
-    }
-
-    quizSearchSuggestions = Array.from(suggestionMap.values()).slice(0, 6);
-  } catch {
-    quizSearchSuggestions = [{ value: topic.name, label: topic.name }];
-  }
-
   const appliedFilters = {
     ...listing.filters,
     topic: slug,
@@ -375,12 +330,6 @@ export default async function TopicDetailPage({
           secondaryCta={listing.pagination.total > 0 ? { label: "View all quizzes", href: "#topic-quizzes" } : undefined}
         />
 
-        <ShowcaseThemeProvider>
-          <TopicQuizSearchBar
-            initialQuery={searchTerm ?? ""}
-            suggestions={quizSearchSuggestions}
-          />
-        </ShowcaseThemeProvider>
 
         {heroFeaturedQuizzes.length > 0 && (
           <FeaturedQuizzesHero featuredQuizzes={heroFeaturedQuizzes} />

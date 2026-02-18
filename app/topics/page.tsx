@@ -64,7 +64,10 @@ async function FeaturedTopicsData() {
     href: `/topics/${topic.slug}`,
     accentDark: colorPairs[index % colorPairs.length].dark,
     accentLight: colorPairs[index % colorPairs.length].light,
+    quizCount: topic._count.quizTopicConfigs,
   }));
+
+  console.log("Featured Items Debug:", JSON.stringify(featuredItems.slice(0, 2), null, 2));
 
   return featuredItems;
 }
@@ -90,7 +93,7 @@ async function AllTopicsData() {
     href: `/topics/${topic.slug}`,
     accentDark: colorPairs[index % colorPairs.length].dark,
     accentLight: colorPairs[index % colorPairs.length].light,
-    quizCount: topic._count.quizTopicConfigs,
+    quizCount: topic._count.quizTopicConfigs + (topic.children?.reduce((acc: number, child: any) => acc + (child._count?.quizTopicConfigs || 0), 0) || 0),
   }));
 
   // Map L2 topics grouped by parent
