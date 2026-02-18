@@ -4,7 +4,7 @@
   "installCommand": "npm install",
   "framework": "nextjs",
   "regions": [
-    "ap-south-1"
+    "bom1"
   ],
   "crons": [
     {
