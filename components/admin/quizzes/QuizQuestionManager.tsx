@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Plus, Trash2, GripVertical, Save, Search } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, GripVertical, Save, Search, FileJson } from "lucide-react";
 import Link from "next/link";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -38,6 +38,8 @@ import {
 } from "@/components/ui/dialog";
 import { getAvailableQuestions } from "@/app/admin/quizzes/actions";
 import { TopicSelector } from "@/components/admin/TopicSelector";
+import { QuizQuestionImportDialog } from "./QuizQuestionImportDialog";
+import { useRouter } from "next/navigation";
 
 interface TopicOption {
   id: string;
@@ -157,6 +159,8 @@ export function QuizQuestionManager({
   const [difficultyFilter, setDifficultyFilter] = useState("");
   const [saving, setSaving] = useState(false);
   const [isLoadingAvailable, startTransition] = useTransition();
+  const [importDialogOpen, setImportDialogOpen] = useState(false);
+  const router = useRouter();
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -342,6 +346,11 @@ export function QuizQuestionManager({
     }
   };
 
+  const handleImportSuccess = () => {
+    // Force a full page refresh to get the updated question pool and topic configs
+    router.refresh();
+  };
+
   return (
     <div>
       <PageHeader
@@ -349,6 +358,10 @@ export function QuizQuestionManager({
         description="Add, remove, and reorder questions in this quiz"
         action={
           <div className="flex gap-2">
+            <Button variant="outline" onClick={() => setImportDialogOpen(true)}>
+              <FileJson className="mr-2 h-4 w-4" />
+              Import JSON
+            </Button>
             <Button onClick={handleSaveOrder} disabled={saving}>
               <Save className="mr-2 h-4 w-4" />
               {saving ? "Saving..." : "Save Order & Points"}
@@ -367,10 +380,16 @@ export function QuizQuestionManager({
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12">
             <p className="mb-4 text-muted-foreground">No questions in this quiz yet.</p>
-            <Button onClick={() => setAddDialogOpen(true)}>
-              <Plus className="mr-2 h-4 w-4" />
-              Add Questions
-            </Button>
+            <div className="flex gap-2">
+              <Button onClick={() => setAddDialogOpen(true)}>
+                <Plus className="mr-2 h-4 w-4" />
+                Add Questions
+              </Button>
+              <Button variant="outline" onClick={() => setImportDialogOpen(true)}>
+                <FileJson className="mr-2 h-4 w-4" />
+                Import JSON
+              </Button>
+            </div>
           </CardContent>
         </Card>
       ) : (
@@ -498,6 +517,13 @@ export function QuizQuestionManager({
           </div>
         </DialogContent>
       </Dialog>
+
+      <QuizQuestionImportDialog
+        quizId={quiz.id}
+        open={importDialogOpen}
+        onOpenChange={setImportDialogOpen}
+        onImportSuccess={handleImportSuccess}
+      />
     </div>
   );
 }

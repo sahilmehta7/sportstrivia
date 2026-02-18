@@ -11,6 +11,11 @@ import {
   type AttemptResetPeriodValue,
 } from "@/constants/attempts";
 
+const difficultySchema = z.preprocess(
+  (val) => (typeof val === "string" ? val.toUpperCase() : val),
+  z.nativeEnum(Difficulty)
+);
+
 const baseQuizSchema = z.object({
   title: z.string().min(3, "Title must be at least 3 characters").max(200),
   slug: z.string().optional(),
@@ -18,7 +23,7 @@ const baseQuizSchema = z.object({
   descriptionImageUrl: z.string().url().optional().or(z.literal("")),
   descriptionVideoUrl: z.string().url().optional().or(z.literal("")),
   sport: z.string().optional(),
-  difficulty: z.nativeEnum(Difficulty).optional(),
+  difficulty: difficultySchema.optional(),
   status: z.nativeEnum(QuizStatus).optional(),
 
   // Quiz configuration
@@ -124,7 +129,7 @@ export const quizImportSchema = z.object({
   slug: z.string().optional(),
   description: z.string().optional(),
   sport: z.string().optional(),
-  difficulty: z.nativeEnum(Difficulty).default(Difficulty.MEDIUM),
+  difficulty: difficultySchema.default(Difficulty.MEDIUM),
   duration: z.number().int().min(1).optional(),
   timePerQuestion: z.number().int().min(1).optional().default(60),
   maxAttemptsPerUser: z.number().int().min(1).optional().default(1),
@@ -140,8 +145,28 @@ export const quizImportSchema = z.object({
   questions: z.array(z.object({
     text: z.string().min(1),
     type: z.string().optional(),
-    difficulty: z.nativeEnum(Difficulty).default(Difficulty.MEDIUM),
+    difficulty: difficultySchema.default(Difficulty.MEDIUM),
     topic: z.string().min(1).optional(), // Optional topic name, defaults to General if missing
+    hint: z.string().optional(),
+    explanation: z.string().optional(),
+    order: z.number().int().optional(),
+    answers: z.array(z.object({
+      text: z.string().min(1),
+      isCorrect: z.boolean(),
+      imageUrl: z.string().url().optional(),
+    })).min(2).refine(
+      (answers) => answers.filter((a) => a.isCorrect).length === 1,
+      "Exactly one answer must be correct"
+    ),
+  })).min(1),
+});
+
+export const questionsImportSchema = z.object({
+  questions: z.array(z.object({
+    text: z.string().min(1),
+    type: z.string().optional(),
+    difficulty: difficultySchema.default(Difficulty.MEDIUM),
+    topic: z.string().min(1).optional(),
     hint: z.string().optional(),
     explanation: z.string().optional(),
     order: z.number().int().optional(),
@@ -160,4 +185,5 @@ export type QuizInput = z.infer<typeof quizSchema>;
 export type QuizUpdateInput = z.infer<typeof quizUpdateSchema>;
 export type QuizTopicConfigInput = z.infer<typeof quizTopicConfigSchema>;
 export type QuizImportInput = z.infer<typeof quizImportSchema>;
+export type QuestionsImportInput = z.infer<typeof questionsImportSchema>;
 export type QuizAttemptResetPeriod = AttemptResetPeriodValue;
