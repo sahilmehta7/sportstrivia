@@ -1,5 +1,5 @@
 
-import { questionsImportSchema } from './lib/validations/quiz.schema';
+import { questionsImportSchema } from '@/lib/validations/quiz.schema';
 import { Difficulty } from '@prisma/client';
 
 async function main() {
