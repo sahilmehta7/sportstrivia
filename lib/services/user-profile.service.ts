@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/db";
 import { getUserBadgeProgress } from "@/lib/services/badge.service";
 import type { UserRole } from "@prisma/client";
+import { unstable_cache } from "next/cache";
 
 export interface UserProfileInfo {
   id: string;
@@ -120,121 +121,126 @@ export async function getUserProfileInfo(userId: string): Promise<UserProfileInf
   }
 }
 
-export async function getUserProfileStats(userId: string): Promise<UserProfileStats> {
-  const [
-    attemptStats,
-    passedCount,
-    topTopicsRaw,
-    recentAttemptsRaw,
-    leaderboardPositions,
-    userData,
-    perfectScores,
-  ] = await Promise.all([
-    prisma.quizAttempt.aggregate({
-      where: {
-        userId,
-        completedAt: { not: null },
-      },
-      _avg: { score: true },
-      _count: true,
-    }),
-    prisma.quizAttempt.count({
-      where: {
-        userId,
-        passed: true,
-      },
-    }),
-    (async () => {
-      try {
-        return (await prisma.userTopicStats.findMany({
+export const getUserProfileStats = async (userId: string): Promise<UserProfileStats> => {
+  return unstable_cache(
+    async () => {
+      const [
+        attemptStats,
+        passedCount,
+        topTopicsRaw,
+        recentAttemptsRaw,
+        leaderboardPositions,
+        userData,
+        perfectScores,
+      ] = await Promise.all([
+        prisma.quizAttempt.aggregate({
+          where: {
+            userId,
+            completedAt: { not: null },
+          },
+          _avg: { score: true },
+          _count: true,
+        }),
+        prisma.quizAttempt.count({
+          where: {
+            userId,
+            passed: true,
+          },
+        }),
+        (async () => {
+          try {
+            return (await prisma.userTopicStats.findMany({
+              where: { userId },
+              orderBy: { successRate: "desc" },
+              take: 5,
+              include: {
+                topic: { select: { id: true, name: true, slug: true, displayEmoji: true } as any } as any,
+              },
+            })) as any;
+          } catch {
+            return prisma.userTopicStats.findMany({
+              where: { userId },
+              orderBy: { successRate: "desc" },
+              take: 5,
+              include: {
+                topic: { select: { id: true, name: true, slug: true } },
+              },
+            }) as any;
+          }
+        })(),
+        prisma.quizAttempt.findMany({
+          where: {
+            userId,
+            completedAt: { not: null },
+          },
+          orderBy: { completedAt: "desc" },
+          take: 10,
+          include: {
+            quiz: {
+              select: {
+                id: true,
+                title: true,
+                slug: true,
+                recurringType: true,
+              },
+            },
+          },
+        }),
+        prisma.quizLeaderboard.findMany({
           where: { userId },
-          orderBy: { successRate: "desc" },
+          orderBy: { rank: "asc" },
           take: 5,
           include: {
-            topic: { select: { id: true, name: true, slug: true, displayEmoji: true } as any } as any,
+            quiz: {
+              select: {
+                id: true,
+                title: true,
+                slug: true,
+              },
+            },
           },
-        })) as any;
-      } catch {
-        // Fallback without displayEmoji if Prisma client doesn't have the field yet
-        return prisma.userTopicStats.findMany({
-          where: { userId },
-          orderBy: { successRate: "desc" },
-          take: 5,
-          include: {
-            topic: { select: { id: true, name: true, slug: true } },
-          },
-        }) as any;
-      }
-    })(),
-    prisma.quizAttempt.findMany({
-      where: {
-        userId,
-        completedAt: { not: null },
-      },
-      orderBy: { completedAt: "desc" },
-      take: 10,
-      include: {
-        quiz: {
+        }),
+        prisma.user.findUnique({
+          where: { id: userId },
           select: {
-            id: true,
-            title: true,
-            slug: true,
-            recurringType: true,
+            currentStreak: true,
+            longestStreak: true,
           },
-        },
-      },
-    }),
-    prisma.quizLeaderboard.findMany({
-      where: { userId },
-      orderBy: { rank: "asc" },
-      take: 5,
-      include: {
-        quiz: {
-          select: {
-            id: true,
-            title: true,
-            slug: true,
+        }),
+        prisma.quizAttempt.count({
+          where: {
+            userId,
+            score: 100,
+            completedAt: { not: null },
           },
+        }),
+      ]);
+
+      const totalAttempts = attemptStats._count;
+      const averageScore = attemptStats._avg.score || 0;
+
+      const topTopics = topTopicsRaw as UserProfileStats["topTopics"];
+      const recentAttempts = recentAttemptsRaw as UserProfileStats["recentAttempts"];
+
+      return {
+        stats: {
+          totalAttempts,
+          averageScore,
+          passedQuizzes: passedCount,
+          passRate: totalAttempts > 0 ? (passedCount / totalAttempts) * 100 : 0,
+          currentStreak: userData?.currentStreak || 0,
+          longestStreak: userData?.longestStreak || 0,
         },
-      },
-    }),
-    prisma.user.findUnique({
-      where: { id: userId },
-      select: {
-        currentStreak: true,
-        longestStreak: true,
-      },
-    }),
-    prisma.quizAttempt.count({
-      where: {
-        userId,
-        score: 100,
-        completedAt: { not: null },
-      },
-    }),
-  ]);
-
-  const totalAttempts = attemptStats._count;
-  const averageScore = attemptStats._avg.score || 0;
-
-  const topTopics = topTopicsRaw as UserProfileStats["topTopics"];
-  const recentAttempts = recentAttemptsRaw as UserProfileStats["recentAttempts"];
-
-  return {
-    stats: {
-      totalAttempts,
-      averageScore,
-      passedQuizzes: passedCount,
-      passRate: totalAttempts > 0 ? (passedCount / totalAttempts) * 100 : 0,
-      currentStreak: userData?.currentStreak || 0,
-      longestStreak: userData?.longestStreak || 0,
+        topTopics,
+        recentAttempts,
+        leaderboardPositions,
+        perfectScores,
+      };
     },
-    topTopics,
-    recentAttempts,
-    leaderboardPositions,
-    perfectScores,
-  };
-}
+    [`user-profile-stats-${userId}`],
+    { revalidate: 60, tags: [`user-stats-${userId}`] }
+  )();
+};
 
 export async function getUserBadgeProgressData(userId: string) {
   return getUserBadgeProgress(userId);

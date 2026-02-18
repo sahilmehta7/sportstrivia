@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/db";
 import { createNotification } from "./notification.service";
+import { unstable_cache } from "next/cache";
 
 /**
  * Badge types and their award criteria
@@ -687,7 +688,13 @@ async function fetchComebackData(userId: string): Promise<boolean> {
  * Get user's badge progress
  */
 export async function getUserBadgeProgress(userId: string) {
-  const allBadges = await prisma.badge.findMany();
+  const getAllBadges = unstable_cache(
+    async () => prisma.badge.findMany(),
+    ["all-badges"],
+    { revalidate: 3600, tags: ["all-badges"] }
+  );
+
+  const allBadges = await getAllBadges();
   const userBadges = await prisma.userBadge.findMany({
     where: { userId },
     include: { badge: true },

@@ -1,4 +1,5 @@
 import { prisma } from "../db";
+import { unstable_cache } from "next/cache";
 import {
   LEVELS_MAX,
   TIERS_MAX,
@@ -49,9 +50,13 @@ export async function ensureSeededDefaults(): Promise<void> {
   }
 }
 
-export async function listLevels() {
-  return prisma.level.findMany({ orderBy: { level: "asc" } });
-}
+export const listLevels = unstable_cache(
+  async () => {
+    return prisma.level.findMany({ orderBy: { level: "asc" } });
+  },
+  ["gamification-levels"],
+  { revalidate: 3600, tags: ["gamification-levels"] }
+);
 
 export async function getLevel(levelNumber: number) {
   return prisma.level.findUnique({ where: { level: levelNumber } });
