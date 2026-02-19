@@ -37,11 +37,10 @@ export function MobileBottomNav() {
     };
 
     return (
-        <nav className="fixed bottom-0 left-0 z-40 w-full px-4 pb-4 lg:hidden pointer-events-none">
+        <nav className="fixed bottom-0 left-0 z-40 w-full px-4 pb-4 lg:hidden pointer-events-none safe-area-bottom box-border overflow-hidden">
             <div className={cn(
                 "flex h-16 w-full items-center justify-around rounded-2xl",
-                "glass shadow-glass-lg border-primary/20 pointer-events-auto",
-                "safe-area-bottom"
+                "glass border-primary/20 pointer-events-auto",
             )}>
                 {navLinks.map((link) => {
                     const Icon = link.icon;
@@ -68,8 +67,7 @@ export function MobileBottomNav() {
                     );
                 })}
             </div>
-            {/* Added spacer for safe area inset on physical mobile devices */}
-            <div className="h-safe-bottom" />
+
         </nav>
     );
 }

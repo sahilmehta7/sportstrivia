@@ -25,7 +25,7 @@ export function LayoutWrapper({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <MainNavigation />
-      <main className={cn("flex-1", !isQuizPlayRoute && "pb-16 lg:pb-0")}>
+      <main className={cn("flex-1", !isQuizPlayRoute && "pb-24 lg:pb-0")}>
         {children}
       </main>
       <Footer />
