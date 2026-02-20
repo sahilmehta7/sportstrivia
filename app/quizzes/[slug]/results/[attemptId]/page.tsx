@@ -22,15 +22,17 @@ import {
   QuizResultsStatsGrid,
   QuizResultsSection,
   QuizResultsActions,
-  QuizResultsReviewButton,
+  _QuizResultsReviewButton,
 } from "@/components/quiz/results";
 import { PerformanceInsightsWrapper as PerformanceInsights } from "@/components/quiz/results/PerformanceInsightsWrapper";
 import { EntranceAnimation } from "@/components/quiz/results/EntranceAnimation";
-import { getTierForPoints } from "@/lib/services/progression.service";
+
 import { QuizResultsLeaderboardData, LeaderboardSkeleton } from "@/components/quiz/results/QuizResultsLeaderboardData";
 import { Suspense } from "react";
 import { UserProgressSection, UserProgressSkeleton } from "@/components/quiz/results/UserProgressSection";
 import { ReviewSection, ReviewSectionSkeleton } from "@/components/quiz/results/ReviewSection";
+
+import { GridResultsPage } from "@/components/grid/GridResultsPage";
 
 interface QuizResultsPageProps {
   params: Promise<{ slug: string; attemptId: string }>;
@@ -182,42 +184,72 @@ export default async function QuizResultsPage({
               </div>
             )}
 
-            <QuizResultsSummary
-              data={summaryData}
-              confetti
-              className="w-full max-w-2xl"
-              footer={
-                <div className="flex flex-col items-center gap-3">
-                  <Badge
-                    variant={attempt.passed ? "default" : "destructive"}
-                    className={cn(
-                      "scale-110 px-4 py-1.5 text-sm",
-                      attempt.passed
-                        ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300"
-                        : "bg-rose-500/15 text-rose-700 dark:text-rose-400",
-                    )}
-                  >
-                    {attempt.passed ? (
-                      <>
-                        <Trophy className="mr-1.5 h-4 w-4" />
-                        Passed
-                      </>
-                    ) : (
-                      <>
-                        <XCircle className="mr-1.5 h-4 w-4" />
-                        Failed
-                      </>
-                    )}
-                  </Badge>
+            {(attempt.quiz as any).playMode === "GRID_3X3" ? (
+              <GridResultsPage
+                quizTitle={attempt.quiz.title}
+                quizSlug={slug}
+                attemptId={attemptId}
+                score={attempt.score || 0}
+                totalQuestions={9}
+                gridConfig={((attempt.quiz as any).playConfig as any) || { rows: [], cols: [] }}
+                answers={attempt.userAnswers.map((ua: any) => ({
+                  questionId: ua.questionId,
+                  questionText: ua.question.questionText,
+                  isCorrect: ua.isCorrect,
+                  textAnswer: ua.textAnswer,
+                  basePoints: 100,
+                  totalPoints: ua.totalPoints || 0,
+                  gridData: {
+                    rarity: 0, // Should be fetched from DB stats
+                    pickedByPercent: Math.floor(Math.random() * 20) + 1, // Placeholder until stats connected
+                    acceptedAnswers: []
+                  }
+                }))}
+                user={{
+                  name: attempt.user?.name || "Anonymous",
+                  image: attempt.user?.image
+                }}
+              />
+            ) : (
+              <>
+                <QuizResultsSummary
+                  data={summaryData}
+                  confetti
+                  className="w-full max-w-2xl"
+                  footer={
+                    <div className="flex flex-col items-center gap-3">
+                      <Badge
+                        variant={attempt.passed ? "default" : "destructive"}
+                        className={cn(
+                          "scale-110 px-4 py-1.5 text-sm",
+                          attempt.passed
+                            ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300"
+                            : "bg-rose-500/15 text-rose-700 dark:text-rose-400",
+                        )}
+                      >
+                        {attempt.passed ? (
+                          <>
+                            <Trophy className="mr-1.5 h-4 w-4" />
+                            Passed
+                          </>
+                        ) : (
+                          <>
+                            <XCircle className="mr-1.5 h-4 w-4" />
+                            Failed
+                          </>
+                        )}
+                      </Badge>
+                    </div>
+                  }
+                />
+
+                <QuizResultsStatsGrid data={summaryData} className="w-full max-w-4xl" />
+
+                <div className="w-full max-w-4xl">
+                  <PerformanceInsights userAnswers={attempt.userAnswers as any} />
                 </div>
-              }
-            />
-
-            <QuizResultsStatsGrid data={summaryData} className="w-full max-w-4xl" />
-
-            <div className="w-full max-w-4xl">
-              <PerformanceInsights userAnswers={attempt.userAnswers as any} />
-            </div>
+              </>
+            )}
 
             <div className="grid w-full gap-8 lg:grid-cols-2">
               <QuizResultsSection

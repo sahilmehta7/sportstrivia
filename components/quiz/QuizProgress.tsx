@@ -1,6 +1,6 @@
 import { memo } from "react";
 import { m } from "framer-motion";
-import { cn } from "@/lib/utils";
+
 import { variantStyles } from "./quiz-theme";
 
 type QuizStyles = typeof variantStyles["light"];
@@ -11,7 +11,7 @@ interface QuizProgressProps {
     styles: QuizStyles;
 }
 
-export const QuizProgress = memo(function QuizProgress({ currentIndex, totalQuestions, styles }: QuizProgressProps) {
+export const QuizProgress = memo(function QuizProgress({ currentIndex, totalQuestions, _styles }: QuizProgressProps) {
     const rawProgress = totalQuestions > 0 ? (currentIndex / totalQuestions) * 100 : 0;
     const progressPercent = totalQuestions > 0 ? Math.max(rawProgress, 0) : 0;
 

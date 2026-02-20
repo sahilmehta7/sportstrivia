@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { auth } from "@/lib/auth";
 import { QuizPlayClient } from "@/components/quiz/QuizPlayClient";
+import { ImmaculateGrid } from "@/components/grid/ImmaculateGrid";
 import { getAttemptLimitStatus } from "@/lib/services/attempt-limit.service";
 
 interface QuizPlayPageProps {
@@ -13,7 +14,7 @@ export default async function QuizPlayPage({ params }: QuizPlayPageProps) {
   const session = await auth();
 
   // Middleware ensures session exists, so we can safely use it
-  const quiz = await prisma.quiz.findUnique({
+  const quiz = (await prisma.quiz.findUnique({
     where: { slug },
     select: {
       id: true,
@@ -22,37 +23,51 @@ export default async function QuizPlayPage({ params }: QuizPlayPageProps) {
       isPublished: true,
       maxAttemptsPerUser: true,
       attemptResetPeriod: true,
-    },
-  });
+      playMode: true,
+    } as any,
+  })) as any;
 
   if (!quiz || !quiz.isPublished || quiz.status !== "PUBLISHED") {
     notFound();
+  }
+
+  // Branch on play mode - early exit for Grid to avoid attempt limit logic
+  if (quiz.playMode === "GRID_3X3") {
+    return (
+      <div className="min-h-screen bg-background px-4 pb-12 pt-8">
+        <ImmaculateGrid
+          quizId={quiz.id}
+          quizTitle={quiz.title}
+          quizSlug={slug}
+        />
+      </div>
+    );
   }
 
   const now = new Date();
   const userId = session!.user!.id;
   const attemptLimitStatus = quiz.maxAttemptsPerUser
     ? await getAttemptLimitStatus(prisma, {
-        userId,
-        quiz: {
-          id: quiz.id,
-          maxAttemptsPerUser: quiz.maxAttemptsPerUser,
-          attemptResetPeriod: quiz.attemptResetPeriod,
-        },
-        referenceDate: now,
-      })
+      userId,
+      quiz: {
+        id: quiz.id,
+        maxAttemptsPerUser: quiz.maxAttemptsPerUser,
+        attemptResetPeriod: quiz.attemptResetPeriod,
+      },
+      referenceDate: now,
+    })
     : null;
 
   const initialAttemptLimit = quiz.maxAttemptsPerUser
     ? {
-        max: quiz.maxAttemptsPerUser,
-        remaining: attemptLimitStatus?.remainingBeforeStart ?? quiz.maxAttemptsPerUser,
-        period: quiz.attemptResetPeriod,
-        resetAt: attemptLimitStatus?.resetAt
-          ? attemptLimitStatus.resetAt.toISOString()
-          : null,
-        isLocked: attemptLimitStatus?.isLimitReached ?? false,
-      }
+      max: quiz.maxAttemptsPerUser,
+      remaining: attemptLimitStatus?.remainingBeforeStart ?? quiz.maxAttemptsPerUser,
+      period: quiz.attemptResetPeriod,
+      resetAt: attemptLimitStatus?.resetAt
+        ? attemptLimitStatus.resetAt.toISOString()
+        : null,
+      isLocked: attemptLimitStatus?.isLimitReached ?? false,
+    }
     : null;
 
   return (
@@ -66,3 +81,4 @@ export default async function QuizPlayPage({ params }: QuizPlayPageProps) {
     </div>
   );
 }
+

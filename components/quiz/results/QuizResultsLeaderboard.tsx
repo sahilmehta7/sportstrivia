@@ -3,12 +3,12 @@
 import Image from "next/image";
 import type { QuizResultsLeaderboardProps } from "./types";
 import { cn } from "@/lib/utils";
-import { Coins, Trophy, Medal } from "lucide-react";
+import { Coins, Trophy } from "lucide-react";
 import { motion } from "framer-motion";
 
 export function QuizResultsLeaderboard({
   entries,
-  theme,
+  _theme,
 }: QuizResultsLeaderboardProps) {
   if (!entries.length) {
     return (

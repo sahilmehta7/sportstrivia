@@ -28,11 +28,12 @@ import {
   FormMessage,
   FormDescription,
 } from "@/components/ui/form";
-import { QuizInput, quizSchema } from "@/lib/validations/quiz.schema";
+import { QuizInput, quizSchema, PlayMode } from "@/lib/validations/quiz.schema";
 import { Difficulty, QuizStatus } from "@prisma/client";
 import { generateSlug } from "@/lib/slug-utils";
 import { CollapsibleSection } from "@/components/admin/quiz/StreamlinedQuizForm";
 import { TopicSelector } from "@/components/admin/TopicSelector";
+import { cn } from "@/lib/utils";
 
 interface RootTopic {
   id: string;
@@ -74,6 +75,7 @@ export default function NewQuizPage() {
       sport: "",
       difficulty: Difficulty.MEDIUM,
       status: QuizStatus.DRAFT,
+      playMode: PlayMode.STANDARD,
       duration: 600,
       passingScore: 70,
       completionBonus: 0,
@@ -129,6 +131,7 @@ export default function NewQuizPage() {
       sport: values.sport,
       difficulty: values.difficulty,
       status: values.status,
+      playMode: values.playMode,
       duration: values.duration ?? 600,
       passingScore: values.passingScore ?? 70,
       completionBonus: values.completionBonus ?? 0,
@@ -152,7 +155,7 @@ export default function NewQuizPage() {
       endTime: values.endTime || undefined,
       seoTitle: values.seoTitle || undefined,
       seoDescription: values.seoDescription || undefined,
-      seoKeywords: values.seoKeywords?.filter((k: string) => k.trim().length > 0) || undefined,
+      seoKeywords: (values.seoKeywords as string[])?.filter((k: string) => k.trim().length > 0) || undefined,
     };
 
     try {
@@ -343,8 +346,47 @@ export default function NewQuizPage() {
               </CardContent>
             </Card>
 
+            {/* Play Mode */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Play Mode</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="playMode"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Mode</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select a play mode" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value={PlayMode.STANDARD}>Standard - Multiple Choice</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormDescription className="text-xs">
+                        Players will see a standard sequence of multiple-choice questions.
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <div className="p-3 rounded-md bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 text-xs text-blue-800 dark:text-blue-300">
+                  💡 Looking for <strong>Immaculate Grid</strong>? Grids now have their own dedicated section.{" "}
+                  <a href="/admin/grids/create" className="underline font-medium">Create a Grid →</a>
+                </div>
+              </CardContent>
+            </Card>
+
             {/* Quick Settings - Always Visible */}
-            <div className="grid gap-4 md:grid-cols-3">
+            <div className={cn("grid gap-4 md:grid-cols-3", form.watch("playMode") === PlayMode.GRID_3X3 && "opacity-50 pointer-events-none grayscale")}>
               <Card>
                 <CardHeader>
                   <CardTitle className="text-base">Duration</CardTitle>
@@ -429,85 +471,87 @@ export default function NewQuizPage() {
             </div>
 
             {/* Advanced Sections - Collapsible */}
-            <CollapsibleSection title="Question Selection" description="How questions are added to attempts">
-              <div className="grid gap-4 md:grid-cols-2">
-                <FormField
-                  control={form.control}
-                  name="questionSelectionMode"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Selection Mode</FormLabel>
-                      <Select value={field.value} onValueChange={field.onChange}>
+            <div className={form.watch("playMode") === PlayMode.GRID_3X3 ? "hidden" : ""}>
+              <CollapsibleSection title="Question Selection" description="How questions are added to attempts">
+                <div className="grid gap-4 md:grid-cols-2">
+                  <FormField
+                    control={form.control}
+                    name="questionSelectionMode"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Selection Mode</FormLabel>
+                        <Select value={field.value} onValueChange={field.onChange}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="FIXED">Fixed Order</SelectItem>
+                            <SelectItem value="TOPIC_RANDOM">Topic Random</SelectItem>
+                            <SelectItem value="POOL_RANDOM">Pool Random</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="questionCount"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Question Count (Optional)</FormLabel>
                         <FormControl>
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
+                          <Input
+                            type="number"
+                            min={1}
+                            value={field.value ?? ""}
+                            onChange={(event) =>
+                              field.onChange(
+                                event.target.value === "" ? undefined : Number(event.target.value)
+                              )
+                            }
+                          />
                         </FormControl>
-                        <SelectContent>
-                          <SelectItem value="FIXED">Fixed Order</SelectItem>
-                          <SelectItem value="TOPIC_RANDOM">Topic Random</SelectItem>
-                          <SelectItem value="POOL_RANDOM">Pool Random</SelectItem>
-                        </SelectContent>
-                      </Select>
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <FormField
+                  control={form.control}
+                  name="randomizeQuestionOrder"
+                  render={({ field }) => (
+                    <FormItem className="flex items-center justify-between rounded-lg border p-4">
+                      <div>
+                        <FormLabel>Randomize Order</FormLabel>
+                        <FormDescription className="text-xs">
+                          Shuffle questions each time
+                        </FormDescription>
+                      </div>
+                      <Switch checked={field.value} onCheckedChange={field.onChange} />
                     </FormItem>
                   )}
                 />
 
                 <FormField
                   control={form.control}
-                  name="questionCount"
+                  name="showHints"
                   render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Question Count (Optional)</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          min={1}
-                          value={field.value ?? ""}
-                          onChange={(event) =>
-                            field.onChange(
-                              event.target.value === "" ? undefined : Number(event.target.value)
-                            )
-                          }
-                        />
-                      </FormControl>
+                    <FormItem className="flex items-center justify-between rounded-lg border p-4">
+                      <div>
+                        <FormLabel>Show Hints</FormLabel>
+                        <FormDescription className="text-xs">
+                          Reveal hints on questions
+                        </FormDescription>
+                      </div>
+                      <Switch checked={field.value} onCheckedChange={field.onChange} />
                     </FormItem>
                   )}
                 />
-              </div>
-
-              <FormField
-                control={form.control}
-                name="randomizeQuestionOrder"
-                render={({ field }) => (
-                  <FormItem className="flex items-center justify-between rounded-lg border p-4">
-                    <div>
-                      <FormLabel>Randomize Order</FormLabel>
-                      <FormDescription className="text-xs">
-                        Shuffle questions each time
-                      </FormDescription>
-                    </div>
-                    <Switch checked={field.value} onCheckedChange={field.onChange} />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="showHints"
-                render={({ field }) => (
-                  <FormItem className="flex items-center justify-between rounded-lg border p-4">
-                    <div>
-                      <FormLabel>Show Hints</FormLabel>
-                      <FormDescription className="text-xs">
-                        Reveal hints on questions
-                      </FormDescription>
-                    </div>
-                    <Switch checked={field.value} onCheckedChange={field.onChange} />
-                  </FormItem>
-                )}
-              />
-            </CollapsibleSection>
+              </CollapsibleSection>
+            </div>
 
             <CollapsibleSection title="Scoring" description="Configure scoring rules">
               <div className="space-y-2">

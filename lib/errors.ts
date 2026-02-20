@@ -160,21 +160,21 @@ export function handleError(error: unknown) {
           status: 400,
           headers: { 'Content-Type': 'application/json' }
         });
-      } catch (e) {
+      } catch {
         // Absolute fallback if even NextResponse fails (e.g. environment issue)
         return {
           json: async () => responseBody,
           status: 400
         } as any;
       }
-    } catch (e) {
+    } catch {
       // Fallback to simple error
       try {
         return new NextResponse(JSON.stringify({ error: "Validation failed (fallback)" }), {
           status: 400,
           headers: { 'Content-Type': 'application/json' }
         });
-      } catch (e2) {
+      } catch {
         return {
           json: async () => ({ error: "Validation failed (fallback)" }),
           status: 400
@@ -214,7 +214,7 @@ export function successResponse<T>(data: T, status = 200, headers: Record<string
       );
     }
     throw new Error('NextResponse not available');
-  } catch (e) {
+  } catch {
     // Fallback for test environment
     return {
       json: async () => ({ success: true, data }),
@@ -237,7 +237,7 @@ export function errorResponse(message: string, status = 400, code?: string) {
       );
     }
     throw new Error('NextResponse not available');
-  } catch (e) {
+  } catch {
     // Fallback for test environment
     return {
       json: async () => ({ success: false, error: message, code }),

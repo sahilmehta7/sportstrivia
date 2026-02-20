@@ -32,7 +32,7 @@ export function AthleteGuessGame({
     gameId,
     maxGuesses,
     clues,
-    initialGuesses = [],
+    _initialGuesses = [],
     isCompleted = false,
     targetValue,
     gameNumber,

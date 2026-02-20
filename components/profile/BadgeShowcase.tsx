@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Award, Lock, Sparkles, ChevronRight, Trophy, Zap, MapPin, Grid, Flame } from "lucide-react";
+import { Award, Lock, Sparkles, ChevronRight, Trophy,  MapPin, Grid, Flame } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";

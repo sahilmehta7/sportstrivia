@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { Star, Users, Clock, Trophy, Zap, PlayCircle, Activity, ChevronRight } from "lucide-react";
+import { Star, Users, Clock,  Zap, PlayCircle, Activity, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { getGradientText } from "@/lib/showcase-theme";
@@ -31,7 +31,7 @@ export function ShowcaseFeaturedQuizCard({
   playersLabel,
   ratingLabel,
   coverImageUrl,
-  accent = "rgba(34,211,238,0.2)",
+  _accent = "rgba(34,211,238,0.2)",
   className,
   ctaHref,
   ctaLabel = "INITIALIZE MISSION",

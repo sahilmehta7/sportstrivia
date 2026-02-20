@@ -1,12 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { Card, CardContent } from "@/components/ui/card";
+
 import { Button } from "@/components/ui/button";
 import { UserAvatar } from "@/components/shared/UserAvatar";
 import { StreakIndicator } from "@/components/shared/StreakIndicator";
 import { CreateChallengeModal } from "@/components/challenges/CreateChallengeModal";
-import { Eye, Swords, UserMinus, ShieldCheck, Zap } from "lucide-react";
+import { Eye, Swords, UserMinus, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 

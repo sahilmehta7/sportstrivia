@@ -11,7 +11,6 @@ function runBenchmark() {
     let completed = 0;
 
     for (let i = 0; i < iterations; i++) {
-        const start = Date.now();
         exec(`curl -o /dev/null -s -w "%{time_total}\n" ${url}`, (error, stdout) => {
             if (error) {
                 console.error(`Error: ${error.message}`);

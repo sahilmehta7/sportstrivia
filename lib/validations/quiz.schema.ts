@@ -5,6 +5,12 @@ import {
   QuestionSelectionMode,
   RecurringType,
 } from "@prisma/client";
+
+export enum PlayMode {
+  STANDARD = "STANDARD",
+  GRID_3X3 = "GRID_3X3",
+}
+
 import {
   AttemptResetPeriod,
   ATTEMPT_RESET_PERIODS,
@@ -16,6 +22,12 @@ const difficultySchema = z.preprocess(
   z.nativeEnum(Difficulty)
 );
 
+const gridQuizConfigSchema = z.object({
+  rows: z.array(z.string()).length(3),
+  cols: z.array(z.string()).length(3),
+  cells: z.array(z.array(z.string())).length(3),
+});
+
 const baseQuizSchema = z.object({
   title: z.string().min(3, "Title must be at least 3 characters").max(200),
   slug: z.string().optional(),
@@ -25,6 +37,8 @@ const baseQuizSchema = z.object({
   sport: z.string().optional(),
   difficulty: difficultySchema.optional(),
   status: z.nativeEnum(QuizStatus).optional(),
+  playMode: z.nativeEnum(PlayMode).optional(),
+  playConfig: gridQuizConfigSchema.nullish(),
 
   // Quiz configuration
   duration: z.number().int().min(1).nullish(),
@@ -114,6 +128,7 @@ export const quizSchema = baseQuizSchema.extend({
   recurringType: z.nativeEnum(RecurringType).optional().default(RecurringType.NONE),
   isFeatured: z.boolean().optional().default(false),
   isPublished: z.boolean().optional().default(false),
+  playMode: z.nativeEnum(PlayMode).optional().default(PlayMode.STANDARD),
 });
 
 export const quizUpdateSchema = baseQuizSchema.partial();
@@ -130,6 +145,8 @@ export const quizImportSchema = z.object({
   description: z.string().optional(),
   sport: z.string().optional(),
   difficulty: difficultySchema.default(Difficulty.MEDIUM),
+  playMode: z.nativeEnum(PlayMode).optional().default(PlayMode.STANDARD),
+  playConfig: gridQuizConfigSchema.optional(),
   duration: z.number().int().min(1).optional(),
   timePerQuestion: z.number().int().min(1).optional().default(60),
   maxAttemptsPerUser: z.number().int().min(1).optional().default(1),
@@ -158,7 +175,26 @@ export const quizImportSchema = z.object({
       (answers) => answers.filter((a) => a.isCorrect).length === 1,
       "Exactly one answer must be correct"
     ),
-  })).min(1),
+  })).optional(),
+}).superRefine((data, ctx) => {
+  if (data.playMode === PlayMode.GRID_3X3) {
+    if (!data.playConfig) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "playConfig is required for GRID_3X3 mode",
+        path: ["playConfig"],
+      });
+    }
+  } else {
+    // STANDARD mode requires questions
+    if (!data.questions || data.questions.length === 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "questions array is required for STANDARD mode",
+        path: ["questions"],
+      });
+    }
+  }
 });
 
 export const questionsImportSchema = z.object({
@@ -187,3 +223,8 @@ export type QuizTopicConfigInput = z.infer<typeof quizTopicConfigSchema>;
 export type QuizImportInput = z.infer<typeof quizImportSchema>;
 export type QuestionsImportInput = z.infer<typeof questionsImportSchema>;
 export type QuizAttemptResetPeriod = AttemptResetPeriodValue;
+
+// Extract internal types from the schema for use in API routes
+type QuizImportInputQuestions = NonNullable<QuizImportInput['questions']>;
+export type QuizImportQuestion = QuizImportInputQuestions[number];
+export type QuizImportAnswer = QuizImportQuestion['answers'][number];

@@ -7,7 +7,7 @@ import { generateQuizMetaTags } from "@/lib/seo-utils";
 import { formatPlayerCount, formatQuizDuration } from "@/lib/quiz-formatters";
 import { ShowcaseButton } from "@/components/showcase/ui/buttons/Button";
 import { ShowcaseReviewsPanel } from "@/components/showcase/ui";
-import { Star, Clock, Trophy, Users, ShieldCheck, Zap, ArrowRight, Calendar, Info } from "lucide-react";
+import { Star, Clock, Trophy, Users, ShieldCheck, Zap, ArrowRight, Calendar, Info, Instagram } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth-helpers";
 import { getAttemptLimitStatus } from "@/lib/services/attempt-limit.service";
 import { ArticleJsonLd, AggregateRatingJsonLd } from "next-seo";
@@ -17,6 +17,7 @@ import { getBlurCircles, getGradientText } from "@/lib/showcase-theme";
 import { PageContainer } from "@/components/shared/PageContainer";
 import { ShareQuizButton } from "./share-quiz-button";
 import { getCachedQuiz, getCachedQuizStats, getCachedLeaderboard } from "@/lib/quiz-cache";
+import { InstagramStoryTeaserMenu } from "@/components/shared/InstagramStoryTeaserMenu";
 
 interface QuizDetailPageProps {
   params: Promise<{ slug: string }>;
@@ -280,6 +281,23 @@ export default async function QuizDetailPage({ params }: QuizDetailPageProps) {
                       </Link>
                     )}
                     <ShareQuizButton title={quiz.title} url={quizUrl} />
+                    {isAdmin && (
+                      <InstagramStoryTeaserMenu
+                        id={quiz.id}
+                        slug={quiz.slug}
+                        quizTitle={quiz.title}
+                        trigger={
+                          <ShowcaseButton
+                            variant="glass"
+                            size="xl"
+                            className="w-full sm:w-auto"
+                            icon={<Instagram className="h-5 w-5" />}
+                          >
+                            IG STORY
+                          </ShowcaseButton>
+                        }
+                      />
+                    )}
                   </div>
                 </div>
               </div>
@@ -386,4 +404,3 @@ export default async function QuizDetailPage({ params }: QuizDetailPageProps) {
     </>
   );
 }
-

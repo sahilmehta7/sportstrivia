@@ -1,6 +1,6 @@
 "use client";
 
-import { getTextColor, getGradientText } from "@/lib/showcase-theme";
+import {  getGradientText } from "@/lib/showcase-theme";
 import { cn } from "@/lib/utils";
 import { Search, Play, Trophy, ArrowRight } from "lucide-react";
 

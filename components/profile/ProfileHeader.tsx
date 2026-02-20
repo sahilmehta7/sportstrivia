@@ -2,7 +2,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { UserAvatar } from "@/components/shared/UserAvatar";
 import { StreakIndicator } from "@/components/shared/StreakIndicator";
-import { Edit, UserPlus, UserMinus, Swords, Sparkles, MapPin, Calendar, Verified } from "lucide-react";
+import { Edit, UserPlus, UserMinus, Swords, Sparkles,  Calendar, Verified } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { getGradientText } from "@/lib/showcase-theme";

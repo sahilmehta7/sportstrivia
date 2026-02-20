@@ -10,6 +10,7 @@ import { PopularTopics } from "./PopularTopics";
 import { FeaturedQuizzesSkeleton } from "./FeaturedQuizzesSkeleton";
 import { PopularTopicsSkeleton } from "./PopularTopicsSkeleton";
 import { QuickStartArena } from "./QuickStartArena";
+import { GridDailyWidgetWrapper } from "@/components/grid/GridDailyWidgetWrapper";
 
 interface LandingPageProps {
   stats: {
@@ -28,6 +29,11 @@ export function LandingPage({ stats }: LandingPageProps) {
 
       {/* Quick Start Arena - High Engagement */}
       <QuickStartArena />
+
+      {/* Daily Tactical Grid Spotlight */}
+      <Suspense fallback={null}>
+        <GridDailyWidgetWrapper />
+      </Suspense>
 
       {/* Featured Content Sections */}
       <section className="py-24 bg-muted/30">

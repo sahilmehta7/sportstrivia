@@ -26,7 +26,7 @@ export default async function MyProfilePage() {
   const profile = {
     ...profileInfo,
     favoriteTeams: profileInfo.favoriteTeams ?? [],
-    createdAt: profileInfo.createdAt.toISOString(),
+    createdAt: new Date(profileInfo.createdAt).toISOString(),
   };
 
   const stats = statsData
@@ -41,7 +41,7 @@ export default async function MyProfilePage() {
       recentAttempts: statsData.recentAttempts.map((attempt) => ({
         ...attempt,
         score: attempt.score === null ? null : Number(attempt.score),
-        completedAt: attempt.completedAt ? attempt.completedAt.toISOString() : new Date().toISOString(),
+        completedAt: attempt.completedAt ? new Date(attempt.completedAt).toISOString() : new Date().toISOString(),
       })),
       leaderboardPositions: statsData.leaderboardPositions.map((entry) => ({
         ...entry,
@@ -60,7 +60,7 @@ export default async function MyProfilePage() {
       imageUrl: progress.badge.imageUrl,
     },
     earned: progress.earned,
-    earnedAt: progress.earnedAt ? progress.earnedAt.toISOString() : null,
+    earnedAt: progress.earnedAt ? new Date(progress.earnedAt).toISOString() : null,
   }));
 
   return (

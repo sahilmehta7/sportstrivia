@@ -6,7 +6,7 @@ jest.mock("next/server", () => ({
       ...init,
     }),
   },
-  NextRequest: class {},
+  NextRequest: class { },
 }));
 
 import { GET } from "@/app/api/cron/daily-games/route";
@@ -17,18 +17,18 @@ jest.mock("@/lib/services/daily-game.service", () => ({
 }));
 
 const buildRequest = (authorization: string | null) =>
-  ({
-    headers: {
-      get: (key: string) => (key === "authorization" ? authorization : null),
-    },
-  } as any);
+({
+  headers: {
+    get: (key: string) => (key === "authorization" ? authorization : null),
+  },
+} as any);
 
 const buildSpoofedVercelRequest = () =>
-  ({
-    headers: {
-      get: (key: string) => (key === "x-vercel-cron" ? "1" : null),
-    },
-  } as any);
+({
+  headers: {
+    get: (key: string) => (key === "x-vercel-cron" ? "1" : null),
+  },
+} as any);
 
 describe("/api/cron/daily-games auth", () => {
   const originalEnv = process.env;
@@ -37,7 +37,10 @@ describe("/api/cron/daily-games auth", () => {
     jest.clearAllMocks();
     process.env = { ...originalEnv };
     process.env.CRON_SECRET = "secret_123";
-    process.env.NODE_ENV = "production";
+    Object.defineProperty(process.env, 'NODE_ENV', {
+      value: 'production',
+      configurable: true
+    });
   });
 
   afterAll(() => {

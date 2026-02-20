@@ -1,18 +1,18 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { Card, CardContent } from "@/components/ui/card";
+import { useCallback, useEffect,  useState } from "react";
+
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Mail, RefreshCw, Calendar, Clock, Database } from "lucide-react";
+import { Loader2, Mail, RefreshCw,   Database } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type DigestFrequency = "OFF" | "DAILY" | "WEEKLY";
 
-interface PreferencesResponse {
+interface _PreferencesResponse {
   preferences: {
     digestFrequency: DigestFrequency;
     digestTimeOfDay: number;
@@ -33,7 +33,7 @@ export function DigestPreferencesCard() {
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [refreshing, setRefreshing] = useState(false);
+  const [refreshing, _setRefreshing] = useState(false);
   const [digestFrequency, setDigestFrequency] = useState<DigestFrequency>("OFF");
   const [emailOptIn, setEmailOptIn] = useState(true);
   const [pushOptIn, setPushOptIn] = useState(true);
@@ -64,7 +64,7 @@ export function DigestPreferencesCard() {
       });
       if (!response.ok) throw new Error("Save failed");
       toast({ title: "Preferences saved", description: "Protocol updated successfully." });
-    } catch (e) {
+    } catch {
       toast({ title: "Save failed", variant: "destructive" });
     } finally { setSaving(false); }
   };

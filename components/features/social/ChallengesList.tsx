@@ -5,11 +5,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { UserAvatar } from "@/components/shared/UserAvatar";
-import { Swords, Trophy, Check, X, Loader2 } from "lucide-react";
+import { Swords, Trophy, X, Loader2 } from "lucide-react";
 import { respondToChallenge } from "@/app/actions/challenge-actions";
 import { useToast } from "@/hooks/use-toast";
 import { EmptyState } from "@/components/shared/EmptyState";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 interface Challenge {
@@ -69,7 +68,7 @@ export function ChallengesList({ challenges }: ChallengesListProps) {
                     router.refresh();
                 }
             }
-        } catch (error) {
+        } catch {
             toast({
                 title: "Error",
                 description: "Failed to respond to challenge",

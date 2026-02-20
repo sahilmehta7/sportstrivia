@@ -4,7 +4,7 @@ import { requireAdmin } from "@/lib/auth-helpers";
 import { questionsImportSchema } from "@/lib/validations/question.schema";
 import { handleError, successResponse } from "@/lib/errors";
 import { generateUniqueSlug } from "@/lib/services/slug.service";
-import { Prisma, QuestionType, Difficulty } from "@prisma/client";
+import {  QuestionType, Difficulty } from "@prisma/client";
 
 export const runtime = 'nodejs';
 export const maxDuration = 60; // seconds

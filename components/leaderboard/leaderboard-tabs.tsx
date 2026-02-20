@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { useState } from "react";
 import { Medal } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+
 
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";

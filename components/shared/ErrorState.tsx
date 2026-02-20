@@ -1,6 +1,6 @@
 "use client";
 
-import { ShieldAlert, RefreshCw, Home, ArrowLeft } from "lucide-react";
+import { ShieldAlert, RefreshCw, Home } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import Link from "next/link";

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import {  useRef, useState } from "react";
 import { ShowcaseQuizCard } from "./ShowcaseQuizCard";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";

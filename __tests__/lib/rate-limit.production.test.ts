@@ -1,6 +1,6 @@
 jest.mock("@upstash/ratelimit", () => {
   class MockRatelimit {
-    constructor(_config: unknown) {}
+    constructor(_config: unknown) { }
     static slidingWindow(_requests: number, _window: string) {
       return {};
     }
@@ -30,7 +30,10 @@ describe("rate-limit production behavior", () => {
     process.env = { ...originalEnv };
     delete process.env.UPSTASH_REDIS_REST_URL;
     delete process.env.UPSTASH_REDIS_REST_TOKEN;
-    process.env.NODE_ENV = "production";
+    Object.defineProperty(process.env, 'NODE_ENV', {
+      value: 'production',
+      configurable: true
+    });
   });
 
   afterAll(() => {

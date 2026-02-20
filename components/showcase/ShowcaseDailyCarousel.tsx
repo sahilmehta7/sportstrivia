@@ -1,12 +1,12 @@
 "use client";
 
-import { useRef, useState, type PointerEvent, useEffect } from "react";
+import { useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Calendar, Trophy, Clock, ArrowRight, ShieldCheck, Play } from "lucide-react";
+import { Calendar, Trophy, Clock, ArrowRight, Play } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { DailyQuizItem } from "@/lib/services/public-quiz.service";
-import { getGradientText } from "@/lib/showcase-theme";
+
 
 interface ShowcaseDailyCarouselProps {
   dailyQuizzes: DailyQuizItem[];

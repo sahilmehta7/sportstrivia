@@ -100,7 +100,6 @@ Mention relevant colors, action, and setting. Reply with description only.`;
 
     // Generate Image using Gemini 2.5 Flash Image (Nano Banana)
     let imageBuffer: Buffer | null = null;
-    let lastError: any = null;
 
     try {
       console.log(`Attempting image generation with ${IMAGE_MODEL} for prompt: ${generatedInstruction}...`);
@@ -129,7 +128,6 @@ Mention relevant colors, action, and setting. Reply with description only.`;
 
     } catch (error: any) {
       console.error(`${IMAGE_MODEL} failed:`, error);
-      lastError = error;
 
       // Improve error message for known issues
       if (error.message?.includes("429") || error.message?.includes("quota")) {

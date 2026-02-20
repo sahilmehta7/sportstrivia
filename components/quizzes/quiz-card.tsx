@@ -5,8 +5,8 @@ import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
-  CardHeader,
+  _CardFooter,
+  _CardHeader,
   CardTitle,
 } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
@@ -14,7 +14,7 @@ import { Difficulty } from "@prisma/client";
 import { Clock, Star, Users } from "lucide-react";
 import type { PublicQuizListItem } from "@/lib/services/public-quiz.service";
 
-const difficultyColors: Record<Difficulty, string> = {
+const _difficultyColors: Record<Difficulty, string> = {
   EASY: "bg-emerald-500/10 text-emerald-600 border border-emerald-500/30",
   MEDIUM: "bg-amber-500/10 text-amber-600 border border-amber-500/30",
   HARD: "bg-rose-500/10 text-rose-600 border border-rose-500/30",

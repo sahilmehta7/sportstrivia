@@ -2,14 +2,14 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { Card, CardContent, CardFooter } from "@/components/ui/card";
+
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Difficulty } from "@prisma/client";
-import { Clock, Star, Users, Zap, PlayCircle, Trophy } from "lucide-react";
+import { Clock,  Users, Zap, PlayCircle, Trophy } from "lucide-react";
 import type { PublicQuizListItem } from "@/lib/services/public-quiz.service";
-import { getGradientText } from "@/lib/showcase-theme";
+
 
 const difficultyColors: Record<Difficulty, string> = {
   EASY: "text-emerald-400 border-emerald-500/20 shadow-neon-lime/10",

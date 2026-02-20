@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { generateShareableGrid, type LetterResult } from '@/lib/utils/daily-game-logic';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
-import { getGradientText, getChipStyles } from '@/lib/showcase-theme';
+import { getGradientText } from '@/lib/showcase-theme';
 
 interface DailyGameResultProps {
     won: boolean;

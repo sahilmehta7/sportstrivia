@@ -1,14 +1,14 @@
 "use client";
 
-import { Card, CardContent } from "@/components/ui/card";
+
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Calendar, Clock, Star, Trophy, Flame, ChevronRight, Zap, Activity, Sparkles } from "lucide-react";
+import {  Clock, Star, Trophy, Flame, ChevronRight, Zap, Activity } from "lucide-react";
 import { Difficulty } from "@prisma/client";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import Image from "next/image";
-import { getGradientText } from "@/lib/showcase-theme";
+
 
 const difficultyColors: Record<Difficulty, string> = {
   EASY: "text-emerald-400 border-emerald-500/20 shadow-neon-lime/10",

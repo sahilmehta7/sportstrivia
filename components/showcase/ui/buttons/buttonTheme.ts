@@ -40,7 +40,7 @@ export const sizeClasses: Record<ButtonSize, string> = {
   xl: "h-16 px-10 text-base gap-4 rounded-full font-black tracking-widest",
 };
 
-const textBase = "text-foreground font-black uppercase tracking-widest";
+const _textBase = "text-foreground font-black uppercase tracking-widest";
 
 export const variantClasses: Record<ButtonVariant, string> = {
   primary: [

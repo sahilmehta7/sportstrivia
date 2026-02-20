@@ -10,7 +10,7 @@ import {
     CarouselPrevious,
 } from "@/components/ui/carousel";
 import type { PublicQuizListItem } from "@/lib/services/public-quiz.service";
-import { cn } from "@/lib/utils";
+
 
 interface FeaturedTradingCardsCarouselProps {
     quizzes: PublicQuizListItem[];

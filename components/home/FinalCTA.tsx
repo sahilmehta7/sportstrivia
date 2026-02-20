@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { getGradientText } from "@/lib/showcase-theme";
+
 import { cn } from "@/lib/utils";
 import { ArrowRight, Trophy, Target } from "lucide-react";
 

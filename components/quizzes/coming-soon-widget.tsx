@@ -1,9 +1,9 @@
 "use client";
 
-import { Clock, Calendar, Sparkles, Plus, Binary, Database, Zap, ShieldAlert, Cpu } from "lucide-react";
+import {  Calendar,   Binary, Database,   Cpu } from "lucide-react";
 import { Difficulty } from "@prisma/client";
 import { cn } from "@/lib/utils";
-import { getGradientText } from "@/lib/showcase-theme";
+
 
 const difficultyColors: Record<Difficulty, string> = {
   EASY: "text-blue-500 border-blue-500/20 bg-blue-500/5",

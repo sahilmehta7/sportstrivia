@@ -1,8 +1,8 @@
 "use client";
 
 import { FriendCard } from "./FriendCard";
-import { EmptyState } from "@/components/shared/EmptyState";
-import { Users, UserSearch } from "lucide-react";
+
+import { Users } from "lucide-react";
 
 interface Friend {
   id: string;

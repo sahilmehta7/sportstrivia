@@ -46,7 +46,7 @@ export default function NotificationsPage() {
         setNotifications(result.data.notifications || []);
         setUnreadCount(result.data.unreadCount || 0);
       }
-    } catch (error: any) {
+    } catch {
       toast({ title: "Error", description: "Transmission failure.", variant: "destructive" });
     } finally {
       setLoading(false);
@@ -60,7 +60,7 @@ export default function NotificationsPage() {
       await fetch(`/api/notifications/${notificationId}`, { method: "PATCH" });
       setNotifications(notifications.map((n) => n.id === notificationId ? { ...n, read: true } : n));
       setUnreadCount(Math.max(0, unreadCount - 1));
-    } catch (e) { toast({ title: "Error", variant: "destructive" }); }
+    } catch { toast({ title: "Error", variant: "destructive" }); }
   };
 
   const markAllAsRead = async () => {
@@ -69,14 +69,14 @@ export default function NotificationsPage() {
       setNotifications(notifications.map((n) => ({ ...n, read: true })));
       setUnreadCount(0);
       toast({ title: "Success", description: "All signals cleared." });
-    } catch (e) { toast({ title: "Error", variant: "destructive" }); }
+    } catch { toast({ title: "Error", variant: "destructive" }); }
   };
 
   const deleteNotification = async (notificationId: string) => {
     try {
       await fetch(`/api/notifications/${notificationId}`, { method: "DELETE" });
       setNotifications(notifications.filter((n) => n.id !== notificationId));
-    } catch (e) { toast({ title: "Error", variant: "destructive" }); }
+    } catch { toast({ title: "Error", variant: "destructive" }); }
   };
 
   const getNotificationIcon = (type: string) => {

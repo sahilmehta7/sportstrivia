@@ -26,6 +26,7 @@ import {
   Sparkles,
   Wand2,
   ImageIcon,
+  LayoutGrid,
 } from "lucide-react";
 import Link from "next/link";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
@@ -36,6 +37,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  _DialogTrigger,
 } from "@/components/ui/dialog";
 import {
   AttemptResetPeriod,
@@ -46,6 +48,7 @@ import {
 import type { AttemptResetPeriodValue } from "@/constants/attempts";
 import { regenerateQuizSEOAction } from "../../actions";
 import { TopicSelector } from "@/components/admin/TopicSelector";
+import { GridBuilder, type GridBuilderData } from "@/components/admin/GridBuilder";
 
 interface EditQuizPageProps {
   params: Promise<{ id: string }>;
@@ -126,6 +129,8 @@ export default function EditQuizPage({ params }: EditQuizPageProps) {
     seoTitle: "",
     seoDescription: "",
     seoKeywords: "",
+    playMode: "STANDARD",
+    playConfig: null as (GridBuilderData | null),
   });
 
   const maxAttemptsValue = formData.maxAttemptsPerUser
@@ -195,6 +200,8 @@ export default function EditQuizPage({ params }: EditQuizPageProps) {
           seoTitle: quiz.seoTitle || "",
           seoDescription: quiz.seoDescription || "",
           seoKeywords: quiz.seoKeywords?.join(", ") || "",
+          playMode: quiz.playMode || "STANDARD",
+          playConfig: quiz.playConfig || null,
         });
         setAttemptLimitEnabled(Boolean(quiz.maxAttemptsPerUser));
 
@@ -1199,11 +1206,66 @@ export default function EditQuizPage({ params }: EditQuizPageProps) {
             </CardContent>
           </Card>
 
-          {/* Quiz Configuration */}
+
+          {/* Play Mode & Grid Configuration */}
           <Card>
             <CardHeader>
-              <CardTitle>Quiz Configuration</CardTitle>
-              <CardDescription>Time limits and passing criteria</CardDescription>
+              <CardTitle>Play Mode</CardTitle>
+              <CardDescription>Select how users play this quiz</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="space-y-2">
+                <Label htmlFor="playMode">Play Mode</Label>
+                <Select
+                  value={formData.playMode}
+                  onValueChange={(value) => updateField("playMode", value)}
+                >
+                  <SelectTrigger id="playMode">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="STANDARD">Standard - Multiple Choice</SelectItem>
+                    <SelectItem value="GRID_3X3" disabled>Immaculate Grid (Deprecated — use /admin/grids)</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  {formData.playMode === "GRID_3X3"
+                    ? "⚠️ This quiz uses the legacy Grid mode. Consider migrating to the new Grids system."
+                    : "Players will see a standard sequence of multiple-choice questions."}
+                </p>
+              </div>
+
+              {formData.playMode === "GRID_3X3" && (
+                <div className="p-3 rounded-md bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 text-xs text-amber-800 dark:text-amber-300">
+                  ⚠️ <strong>Deprecated:</strong> Grid quizzes now have their own dedicated section.{" "}
+                  <a href="/admin/grids" className="underline font-medium">Manage Grids →</a>
+                </div>
+              )}
+
+              {formData.playMode === "GRID_3X3" && (
+                <div className="space-y-4 pt-4 border-t">
+                  <div className="flex items-center gap-2 text-primary font-semibold">
+                    <LayoutGrid className="h-5 w-5" />
+                    Grid Configuration (Legacy)
+                  </div>
+                  <GridBuilder
+                    initialData={formData.playConfig || undefined}
+                    onChange={(data) => updateField("playConfig", data)}
+                  />
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Quiz Configuration (hide question selection if grid) */}
+          <Card className={formData.playMode === "GRID_3X3" ? "opacity-50 pointer-events-none grayscale" : ""}>
+            <CardHeader>
+              <CardTitle>Question Settings</CardTitle>
+              <CardDescription>
+                {formData.playMode === "GRID_3X3"
+                  ? "Standard question settings are disabled for Grid mode"
+                  : "How questions are selected and displayed"}
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid gap-4 md:grid-cols-3">

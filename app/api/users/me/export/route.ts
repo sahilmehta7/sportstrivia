@@ -9,7 +9,7 @@ import { handleError } from "@/lib/errors";
  * GDPR-compliant endpoint for users to export all their personal data.
  * Returns a JSON file containing all data associated with the user.
  */
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
     try {
         const user = await requireAuth();
 

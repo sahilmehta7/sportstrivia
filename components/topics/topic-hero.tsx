@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Zap, ArrowRight, Sparkles, Trophy, Users, Star } from "lucide-react";
+import {  ArrowRight, Sparkles, Trophy, Users, Star } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getGradientText } from "@/lib/showcase-theme";
 

@@ -576,7 +576,7 @@ export function QuizPlayClient({ quizId, quizTitle, quizSlug, initialAttemptLimi
       if (!isLastQuestion) {
         reviewTimeoutRef.current = setTimeout(() => {
           const nextIndex = currentIndex + 1;
-          const nextQuestion = questions[nextIndex];
+          const nextQuestion = questions[nextIndex, completeAttempt];
           if (nextQuestion) {
             setCurrentIndex(nextIndex);
             setCurrentQuestion(nextQuestion);
@@ -603,9 +603,10 @@ export function QuizPlayClient({ quizId, quizTitle, quizSlug, initialAttemptLimi
     handleAnswer,
     currentIndex,
     totalQuestions,
-    questions,
-    resetTimerForQuestion,
     clearTimer,
+    completeAttempt,
+    resetTimerForQuestion,
+    questions,
   ]);
 
   useEffect(() => {

@@ -43,3 +43,5 @@ export const prisma = prismaClient;
 if (process.env.NODE_ENV !== "production") {
   globalForPrisma.prisma = prismaClient;
 }
+
+export const db = prisma;

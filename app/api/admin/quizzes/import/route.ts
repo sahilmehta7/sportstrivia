@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/auth-helpers";
-import { quizImportSchema } from "@/lib/validations/quiz.schema";
+import { quizImportSchema, type QuizImportInput, type QuizImportQuestion } from "@/lib/validations/quiz.schema";
 import { handleError, successResponse, BadRequestError } from "@/lib/errors";
 import { generateUniqueSlug } from "@/lib/services/slug.service";
 import { Prisma, Difficulty, QuestionType } from "@prisma/client";
@@ -12,43 +12,9 @@ export const runtime = 'nodejs';
 // Increase route timeout for large quiz imports (100+ questions can take 30-60 seconds)
 export const maxDuration = 60; // seconds
 
-interface QuizImportAnswer {
-  text: string;
-  isCorrect: boolean;
-  imageUrl?: string;
-}
-
-interface QuizImportQuestion {
-  text: string;
-  type?: string;
-  difficulty: Difficulty;
-  topic?: string;
-  hint?: string;
-  explanation?: string;
-  order?: number;
-  answers: QuizImportAnswer[];
-}
-
-interface QuizImportInput {
-  title: string;
-  slug?: string;
-  description?: string;
-  sport?: string;
-  difficulty: Difficulty;
-  duration?: number;
-  timePerQuestion?: number;
-  maxAttemptsPerUser?: number;
-  showHints?: boolean;
-  randomizeQuestionOrder?: boolean;
-  completionBonus?: number;
-  passingScore: number;
-  seo?: {
-    title?: string;
-    description?: string;
-    keywords?: string[];
-  };
-  questions: QuizImportQuestion[];
-}
+/**
+ * Normalize difficulty values to uppercase for case-insensitive input
+ */
 
 /**
  * Normalize difficulty values to uppercase for case-insensitive input
@@ -106,8 +72,51 @@ export async function POST(request: NextRequest) {
       completionBonus,
       passingScore,
       seo,
-      questions
+      playMode,
+      playConfig
     } = validatedData;
+
+    // Determine questions: if Grid mode, auto-generate them
+    let questions: QuizImportQuestion[] = validatedData.questions || [];
+
+    if (playMode === "GRID_3X3" && playConfig) {
+      questions = [];
+      const { rows, cols, cells } = playConfig as any; // Cast to any to bypass strict checks if types are stale
+
+      // Generate 9 questions from grid
+      for (let r = 0; r < 3; r++) {
+        for (let c = 0; c < 3; c++) {
+          const rowLabel = rows[r];
+          const colLabel = cols[c];
+
+          // Get accepted answers for this cell (split by newline if string, or use array)
+          const cellContent = cells[r][c];
+          let acceptedAnswers: string[] = [];
+
+          if (Array.isArray(cellContent)) {
+            acceptedAnswers = cellContent;
+          } else if (typeof cellContent === 'string') {
+            acceptedAnswers = (cellContent as string).split('\n').map((s: string) => s.trim()).filter(Boolean);
+          }
+
+          if (acceptedAnswers.length === 0) {
+            throw new BadRequestError(`Grid cell [${r},${c}] has no accepted answers`);
+          }
+
+          questions.push({
+            text: `Row: ${rowLabel}, Col: ${colLabel}`,
+            type: "FILL_BLANK",
+            difficulty: difficulty,
+            topic: "Grid Cell", // Internal topic
+            order: r * 3 + c,
+            answers: acceptedAnswers.map(ans => ({
+              text: ans,
+              isCorrect: true // All provided answers are correct for this cell
+            }))
+          });
+        }
+      }
+    }
 
     // Calculate completion bonus if not provided
     const finalCompletionBonus = completionBonus ?? (questions.length * 100);
@@ -260,12 +269,15 @@ export async function POST(request: NextRequest) {
           seoKeywords: seo?.keywords || [],
           questionSelectionMode: "FIXED",
           status: "DRAFT",
-        },
+          playMode: playMode || "STANDARD",
+          playConfig: playConfig as any, // Prisma Json handling
+        } as any,
       });
 
       // Create Topic Configurations automatically
+      // ... (existing logic for topic configs)
       const topicConfigsToCreate = [];
-      for (const [normalizedName, usage] of topicUsageMap.entries()) {
+      for (const [normalizedName, _usage] of topicUsageMap.entries()) {
         const topicId = topicNameMap.get(normalizedName)?.id;
         if (!topicId) continue;
 
@@ -337,7 +349,7 @@ export async function POST(request: NextRequest) {
       const poolEntries = createdQuestions.map((question, i) => ({
         quizId: newQuiz.id,
         questionId: question.id,
-        order: questions[i].order || i + 1,
+        order: questions[i].order !== undefined ? questions[i].order : i + 1, // Respect 0-based indexing for Grid if provided
         points: 1,
       }));
 
@@ -345,11 +357,11 @@ export async function POST(request: NextRequest) {
       const orderValues = poolEntries.map(e => e.order).filter(o => o !== null);
       const uniqueOrders = new Set(orderValues);
       if (orderValues.length !== uniqueOrders.size) {
-        throw new BadRequestError("Duplicate order values detected in question pool. Each question must have a unique order for FIXED mode quizzes.");
+        throw new BadRequestError("Duplicate order values detected in question pool.");
       }
 
       await tx.quizQuestionPool.createMany({
-        data: poolEntries,
+        data: poolEntries as any, // Cast to any to avoid strict type checks if order is optional in schema but required in DB
       });
 
       // Return the complete quiz with questions

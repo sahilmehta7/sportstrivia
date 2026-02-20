@@ -28,7 +28,7 @@ export function StatGuessGame({
     gameId,
     maxGuesses,
     clues,
-    initialGuesses = [],
+    _initialGuesses = [],
     isCompleted = false,
     targetValue,
     gameNumber,

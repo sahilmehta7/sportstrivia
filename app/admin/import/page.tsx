@@ -27,30 +27,35 @@ export default function ImportPage() {
 
     try {
       const parsed = JSON.parse(jsonInput);
-      
+
       // Basic validation
       const errors: string[] = [];
-      
-      if (!parsed.title) errors.push("Title is required");
-      if (!parsed.questions || !Array.isArray(parsed.questions)) {
-        errors.push("Questions array is required");
-      }
-      if (parsed.questions && parsed.questions.length === 0) {
-        errors.push("At least one question is required");
-      }
 
-      // Validate each question
-      parsed.questions?.forEach((q: any, idx: number) => {
-        if (!q.text) errors.push(`Question ${idx + 1}: text is required`);
-        if (!q.answers || q.answers.length < 2) {
-          errors.push(`Question ${idx + 1}: at least 2 answers required`);
+      if (!parsed.title) errors.push("Title is required");
+
+      if (parsed.playMode === "GRID_3X3") {
+        errors.push("Grid import is no longer supported here. Use the dedicated Import Grid page at /admin/grids/import");
+      } else {
+        if (!parsed.questions || !Array.isArray(parsed.questions)) {
+          errors.push("Questions array is required");
         }
-        
-        const correctAnswers = q.answers?.filter((a: any) => a.isCorrect);
-        if (correctAnswers?.length !== 1) {
-          errors.push(`Question ${idx + 1}: exactly one correct answer required`);
+        if (parsed.questions && parsed.questions.length === 0) {
+          errors.push("At least one question is required");
         }
-      });
+
+        // Validate each question
+        parsed.questions?.forEach((q: any, idx: number) => {
+          if (!q.text) errors.push(`Question ${idx + 1}: text is required`);
+          if (!q.answers || q.answers.length < 2) {
+            errors.push(`Question ${idx + 1}: at least 2 answers required`);
+          }
+
+          const correctAnswers = q.answers?.filter((a: any) => a.isCorrect);
+          if (correctAnswers?.length !== 1) {
+            errors.push(`Question ${idx + 1}: exactly one correct answer required`);
+          }
+        });
+      }
 
       if (errors.length > 0) {
         setValidationResult({ valid: false, errors });
@@ -100,6 +105,27 @@ export default function ImportPage() {
       });
     } finally {
       setImporting(false);
+    }
+  };
+
+  const exampleGridJSON = {
+    title: "NBA Grid: MVP x Team",
+    playMode: "GRID_3X3",
+    description: "Fill in the grid with players who match the row and column criteria",
+    sport: "Basketball",
+    difficulty: "HARD",
+    playConfig: {
+      rows: ["Lakers", "Celtics", "Bulls"],
+      cols: ["MVP Winner", ">30 PPG Season", "Hall of Fame"],
+      cells: [
+        ["Kobe Bryant\nMagic Johnson\nShaquille O'Neal", "Kobe Bryant\nJerry West\nElgin Baylor", "Kobe Bryant\nMagic Johnson\nKareem Abdul-Jabbar"],
+        ["Larry Bird\nBill Russell\nBob Cousy", "Larry Bird\nJohn Havlicek", "Larry Bird\nBill Russell\nKevin McHale"],
+        ["Michael Jordan\nDerrick Rose", "Michael Jordan", "Michael Jordan\nScottie Pippen\nDennis Rodman"]
+      ]
+    },
+    seo: {
+      title: "NBA All-Time Greats Grid",
+      keywords: ["nba", "basketball", "immaculate grid", "trivia"]
     }
   };
 
@@ -171,12 +197,12 @@ export default function ImportPage() {
               className="font-mono text-sm"
             />
 
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-wrap">
               <Button
                 type="button"
                 onClick={validateJSON}
                 disabled={!jsonInput || validating}
-                className="flex-1"
+                className="flex-1 min-w-[120px]"
               >
                 <FileJson className="mr-2 h-4 w-4" />
                 {validating ? "Validating..." : "Validate JSON"}
@@ -186,17 +212,23 @@ export default function ImportPage() {
                 variant="outline"
                 onClick={() => setJsonInput(JSON.stringify(exampleJSON, null, 2))}
               >
-                Load Example
+                Standard Example
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setJsonInput(JSON.stringify(exampleGridJSON, null, 2))}
+              >
+                Grid Example
               </Button>
             </div>
 
             {/* Validation Result */}
             {validationResult && (
-              <div className={`rounded-lg border p-4 ${
-                validationResult.valid 
-                  ? "border-green-500 bg-green-50 dark:bg-green-950" 
-                  : "border-red-500 bg-red-50 dark:bg-red-950"
-              }`}>
+              <div className={`rounded-lg border p-4 ${validationResult.valid
+                ? "border-green-500 bg-green-50 dark:bg-green-950"
+                : "border-red-500 bg-red-50 dark:bg-red-950"
+                }`}>
                 <div className="flex items-start gap-2">
                   {validationResult.valid ? (
                     <CheckCircle className="h-5 w-5 text-green-600 mt-0.5" />
@@ -252,6 +284,9 @@ export default function ImportPage() {
                   <p className="text-sm text-muted-foreground mt-1">
                     {preview.description || "No description"}
                   </p>
+                  {preview.playMode === "GRID_3X3" && (
+                    <Badge variant="secondary" className="mt-2">Immaculate Grid Mode</Badge>
+                  )}
                 </div>
 
                 <Separator />
@@ -277,23 +312,36 @@ export default function ImportPage() {
 
                 <Separator />
 
-                <div>
-                  <h4 className="font-semibold mb-2">
-                    Questions ({preview.questions.length})
-                  </h4>
-                  <div className="space-y-2">
-                    {preview.questions.map((q: any, idx: number) => (
-                      <div key={idx} className="text-sm border rounded p-2">
-                        <div className="font-medium">
-                          {idx + 1}. {q.text}
-                        </div>
-                        <div className="text-muted-foreground text-xs mt-1">
-                          {q.answers.length} answers • Difficulty: {q.difficulty || "MEDIUM"}
-                        </div>
-                      </div>
-                    ))}
+                {preview.playMode === "GRID_3X3" && preview.playConfig ? (
+                  <div>
+                    <h4 className="font-semibold mb-2">
+                      Grid Configuration
+                    </h4>
+                    <div className="text-sm text-muted-foreground">
+                      <p>Rows: {preview.playConfig.rows.join(", ")}</p>
+                      <p>Cols: {preview.playConfig.cols.join(", ")}</p>
+                      <p className="mt-1">{preview.playConfig.cells?.flat().filter((c: any) => c && c.length > 0).length || 9} cells configured</p>
+                    </div>
                   </div>
-                </div>
+                ) : (
+                  <div>
+                    <h4 className="font-semibold mb-2">
+                      Questions ({preview.questions?.length || 0})
+                    </h4>
+                    <div className="space-y-2 max-h-[400px] overflow-y-auto pr-2">
+                      {preview.questions?.map((q: any, idx: number) => (
+                        <div key={idx} className="text-sm border rounded p-2">
+                          <div className="font-medium">
+                            {idx + 1}. {q.text}
+                          </div>
+                          <div className="text-muted-foreground text-xs mt-1">
+                            {q.answers?.length} answers • Difficulty: {q.difficulty || "MEDIUM"}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 {preview.seo && (
                   <>
@@ -332,10 +380,18 @@ export default function ImportPage() {
                   <h4 className="font-semibold mb-2">Required Fields</h4>
                   <ul className="list-disc list-inside space-y-1 text-muted-foreground">
                     <li><code className="text-xs">title</code> - Quiz title</li>
-                    <li><code className="text-xs">questions[]</code> - Array of questions</li>
-                    <li><code className="text-xs">questions[].text</code> - Question text</li>
-                    <li><code className="text-xs">questions[].answers[]</code> - Min 2 answers</li>
+                    <li><code className="text-xs">playMode</code> - &quot;STANDARD&quot; or &quot;GRID_3X3&quot;</li>
                   </ul>
+                  <div className="mt-2 text-xs text-muted-foreground">
+                    <p className="font-medium">For STANDARD mode:</p>
+                    <ul className="list-disc list-inside ml-2">
+                      <li><code className="text-xs">questions[]</code> - Array of questions</li>
+                    </ul>
+                    <p className="font-medium mt-1">For GRID_3X3 mode:</p>
+                    <ul className="list-disc list-inside ml-2">
+                      <li><code className="text-xs">playConfig</code> - {`{ rows: [], cols: [], cells: [][] }`}</li>
+                    </ul>
+                  </div>
                 </div>
 
                 <div>
@@ -347,59 +403,13 @@ export default function ImportPage() {
                     <li><code className="text-xs">difficulty</code> - easy, medium, or hard (case-insensitive)</li>
                     <li><code className="text-xs">duration</code> - Quiz duration in seconds</li>
                     <li><code className="text-xs">passingScore</code> - Percentage (default: 70)</li>
-                    <li><code className="text-xs">questions[].topic</code> - Topic name (auto-creates if needed)</li>
-                    <li><code className="text-xs">seo</code> - SEO metadata object</li>
                   </ul>
-                </div>
-
-                <div>
-                  <h4 className="font-semibold mb-2">Example Structure</h4>
-                  <pre className="bg-muted p-3 rounded text-xs overflow-x-auto">
-{`{
-  "title": "Quiz Title",
-  "description": "Brief quiz description",
-  "sport": "Basketball",
-  "difficulty": "medium",
-  "duration": 600,
-  "passingScore": 70,
-  "questions": [
-    {
-      "text": "Question?",
-      "difficulty": "easy",
-      "topic": "Topic Name",
-      "hint": "Optional hint",
-      "explanation": "Why correct",
-      "answers": [
-        {
-          "text": "Correct",
-          "isCorrect": true
-        },
-        {
-          "text": "Wrong",
-          "isCorrect": false
-        }
-      ]
-    }
-  ]
-}`}
-                  </pre>
-                </div>
-
-                <div className="bg-yellow-50 dark:bg-yellow-950 border border-yellow-200 dark:border-yellow-800 rounded p-3">
-                  <h4 className="font-semibold mb-1 flex items-center gap-2">
-                    <AlertCircle className="h-4 w-4" />
-                    Important Note
-                  </h4>
-                  <p className="text-xs text-muted-foreground">
-                    Provide the <code>topic</code> name for each question. If the topic exists it will be reused,
-                    otherwise a new topic will be created automatically. Leave it empty to use the default topic.
-                  </p>
                 </div>
               </div>
             </CardContent>
           </Card>
         </div>
       </div>
-    </div>
+    </div >
   );
 }

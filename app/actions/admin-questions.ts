@@ -60,7 +60,7 @@ export async function getDuplicateGroups(): Promise<DuplicateGroup[]> {
 
         const duplicateGroups: DuplicateGroup[] = [];
 
-        for (const [text, questions] of groups.entries()) {
+        for (const [_text, questions] of groups.entries()) {
             if (questions.length <= 1) continue;
 
             // Check for topic conflict
@@ -237,7 +237,7 @@ export async function findAndRemoveDuplicateQuestions(): Promise<DuplicateRemova
         const details: string[] = [];
 
         // 3. Process duplicates
-        for (const [text, questions] of groups.entries()) {
+        for (const [_text, questions] of groups.entries()) {
             if (questions.length <= 1) continue;
 
             // Found duplicates

@@ -1,7 +1,7 @@
 "use client";
 
-import { Badge } from "@/components/ui/badge";
-import { Clock, CheckCircle2, XCircle, Zap, ShieldCheck, ArrowRight } from "lucide-react";
+
+import { Clock,   Zap, ShieldCheck, ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 

@@ -187,7 +187,7 @@ export const getCachedLeaderboard = cache(async (quizId: string, recurringType: 
             // Since we want to cache this independently of the quiz definition (which changes rarely),
             // we should fetch it separately.
 
-            const entries = await prisma.quizAttempt.findMany({
+            const _entries = await prisma.quizAttempt.findMany({
                 where: { quizId, isPracticeMode: false, completedAt: { not: null } },
                 orderBy: [{ totalPoints: "desc" }, { score: "desc" }, { completedAt: "asc" }],
                 distinct: ["userId"], // Getting best attempt per user is tricky with just findMany if we want strict ordering

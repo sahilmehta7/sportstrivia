@@ -2,9 +2,9 @@ import { NextRequest } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/auth-helpers";
 import { questionsImportSchema } from "@/lib/validations/quiz.schema";
-import { handleError, successResponse, NotFoundError, BadRequestError } from "@/lib/errors";
+import { handleError, successResponse, NotFoundError } from "@/lib/errors";
 import { generateUniqueSlug } from "@/lib/services/slug.service";
-import { Prisma, Difficulty, QuestionType } from "@prisma/client";
+import {  Difficulty, QuestionType } from "@prisma/client";
 import { syncTopicsFromQuestionPool } from "@/lib/services/quiz-topic-sync.service";
 
 export const runtime = 'nodejs';

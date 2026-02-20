@@ -2,13 +2,14 @@ import { prisma } from "@/lib/db";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Edit, HelpCircle } from "lucide-react";
+import { Plus, Edit, HelpCircle, Instagram } from "lucide-react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { AdminDataTable } from "@/components/admin/data-table/AdminDataTable";
 import { AdminFilterForm } from "@/components/admin/data-table/AdminFilterForm";
 import { FeaturedToggleButton } from "@/components/admin/FeaturedToggleButton";
 import { TableCell, TableRow } from "@/components/ui/table";
+import { InstagramStoryTeaserMenu } from "@/components/shared/InstagramStoryTeaserMenu";
 import {
   AttemptResetPeriod as AttemptResetPeriodConst,
   ATTEMPT_RESET_PERIOD_LABELS,
@@ -347,8 +348,8 @@ export default async function QuizzesPage({ searchParams }: QuizzesPageProps) {
                     quiz.status === "PUBLISHED"
                       ? "default"
                       : quiz.status === "DRAFT"
-                      ? "secondary"
-                      : "outline"
+                        ? "secondary"
+                        : "outline"
                   }
                 >
                   {quiz.status}
@@ -372,6 +373,16 @@ export default async function QuizzesPage({ searchParams }: QuizzesPageProps) {
               <TableCell className="text-right">
                 <div className="flex justify-end gap-1">
                   <FeaturedToggleButton quizId={quiz.id} isFeatured={quiz.isFeatured} />
+                  <InstagramStoryTeaserMenu
+                    id={quiz.id}
+                    slug={quiz.slug}
+                    quizTitle={quiz.title}
+                    trigger={
+                      <Button variant="ghost" size="sm" title="Generate Instagram Story teaser">
+                        <Instagram className="h-4 w-4" />
+                      </Button>
+                    }
+                  />
                   <Link href={`/admin/quizzes/${quiz.id}/questions`}>
                     <Button variant="ghost" size="sm" title={`Manage Questions (${quiz._count.questionPool})`}>
                       <HelpCircle className="h-4 w-4" />

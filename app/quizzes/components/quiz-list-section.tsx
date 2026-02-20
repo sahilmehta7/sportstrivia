@@ -4,7 +4,7 @@ import { getPublicQuizList } from "@/lib/services/public-quiz.service";
 import { QuizzesContent } from "@/app/quizzes/QuizzesContent";
 import { parsePublicFilters, getFilterGroups, SearchParams } from "@/app/quizzes/quiz-utils";
 import { ItemListStructuredData } from "@/components/seo/ItemListStructuredData";
-import { QuizListSkeleton } from "@/components/shared/skeletons";
+
 
 export async function QuizListSection({
     searchParams,

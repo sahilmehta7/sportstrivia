@@ -61,44 +61,45 @@ model UserTierHistory {
 }
 
 model User {
-  id                 String                     @id @default(cuid())
-  email              String                     @unique
-  emailVerified      DateTime?
-  name               String?
-  image              String?
-  bio                String?
-  favoriteTeams      String[]
-  role               UserRole                   @default(USER)
-  currentStreak      Int                        @default(0)
-  longestStreak      Int                        @default(0)
-  lastActiveDate     DateTime?
-  createdAt          DateTime                   @default(now())
-  updatedAt          DateTime                   @updatedAt
-  experienceTier     ExperienceTier             @default(ROOKIE)
-  totalPoints        Int                        @default(0)
-  accounts           Account[]
-  challengesReceived Challenge[]                @relation("Challenged")
-  challengesSent     Challenge[]                @relation("Challenger")
-  friendOf           Friend[]                   @relation("FriendOf")
-  friends            Friend[]                   @relation("UserFriends")
-  mediaUploads       Media[]
-  notifications      Notification[]
-  reports            QuestionReport[]
-  quizAttempts       QuizAttempt[]
-  leaderboardEntries QuizLeaderboard[]
-  reviews            QuizReview[]
-  sessions           Session[]
-  badges             UserBadge[]
-  searchQueries      UserSearchQuery[]
-  topicStats         UserTopicStats[]
-  completionAwards   QuizCompletionBonusAward[]
+  id                      String                      @id @default(cuid())
+  email                   String                      @unique
+  emailVerified           DateTime?
+  name                    String?
+  image                   String?
+  bio                     String?
+  favoriteTeams           String[]
+  role                    UserRole                    @default(USER)
+  currentStreak           Int                         @default(0)
+  longestStreak           Int                         @default(0)
+  lastActiveDate          DateTime?
+  createdAt               DateTime                    @default(now())
+  updatedAt               DateTime                    @updatedAt
+  experienceTier          ExperienceTier              @default(ROOKIE)
+  totalPoints             Int                         @default(0)
+  accounts                Account[]
+  challengesReceived      Challenge[]                 @relation("Challenged")
+  challengesSent          Challenge[]                 @relation("Challenger")
+  friendOf                Friend[]                    @relation("FriendOf")
+  friends                 Friend[]                    @relation("UserFriends")
+  mediaUploads            Media[]
+  notifications           Notification[]
+  reports                 QuestionReport[]
+  quizAttempts            QuizAttempt[]
+  leaderboardEntries      QuizLeaderboard[]
+  reviews                 QuizReview[]
+  sessions                Session[]
+  badges                  UserBadge[]
+  searchQueries           UserSearchQuery[]
+  topicStats              UserTopicStats[]
+  completionAwards        QuizCompletionBonusAward[]
   // Back relations for gamification
-  levelHistory       UserLevel[]
-  tierHistory        UserTierHistory[]
-  backgroundTasks    AdminBackgroundTask[]
-  pushSubscriptions  PushSubscription[]
+  levelHistory            UserLevel[]
+  tierHistory             UserTierHistory[]
+  backgroundTasks         AdminBackgroundTask[]
+  pushSubscriptions       PushSubscription[]
   notificationPreferences UserNotificationPreference?
-  dailyGameAttempts  DailyGameAttempt[]
+  dailyGameAttempts       DailyGameAttempt[]
+  GridAttempt             GridAttempt[]
 
   @@index([email])
 }
@@ -167,18 +168,18 @@ model Topic {
 }
 
 model PushSubscription {
-  id              String   @id @default(cuid())
-  userId          String
-  endpoint        String   @unique
-  keysP256dh      String
-  keysAuth        String
-  expirationTime  DateTime?
-  userAgent       String?
-  deviceType      String?
-  isActive        Boolean  @default(true)
-  lastUsedAt      DateTime @default(now())
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id             String    @id @default(cuid())
+  userId         String
+  endpoint       String    @unique
+  keysP256dh     String
+  keysAuth       String
+  expirationTime DateTime?
+  userAgent      String?
+  deviceType     String?
+  isActive       Boolean   @default(true)
+  lastUsedAt     DateTime  @default(now())
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -186,15 +187,15 @@ model PushSubscription {
 }
 
 model UserNotificationPreference {
-  userId          String                           @id
-  digestFrequency NotificationDigestFrequency      @default(OFF)
-  digestTimeOfDay Int                              @default(9) // 9 AM local time
-  digestTimeZone  String?                          
+  userId          String                      @id
+  digestFrequency NotificationDigestFrequency @default(OFF)
+  digestTimeOfDay Int                         @default(9) // 9 AM local time
+  digestTimeZone  String?
   lastDigestAt    DateTime?
-  emailOptIn      Boolean                          @default(true)
-  pushOptIn       Boolean                          @default(true)
-  createdAt       DateTime                         @default(now())
-  updatedAt       DateTime                         @updatedAt
+  emailOptIn      Boolean                     @default(true)
+  pushOptIn       Boolean                     @default(true)
+  createdAt       DateTime                    @default(now())
+  updatedAt       DateTime                    @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
@@ -240,6 +241,8 @@ model Quiz {
   seoDescription         String?
   seoKeywords            String[]
   isPublished            Boolean                    @default(false)
+  playMode               PlayMode                   @default(STANDARD)
+  playConfig             Json?
   createdAt              DateTime                   @default(now())
   updatedAt              DateTime                   @updatedAt
   isFeatured             Boolean                    @default(false)
@@ -331,10 +334,10 @@ model QuizQuestionPool {
 }
 
 model Question {
-  id                   String             @id @default(cuid())
-  type                 QuestionType       @default(MULTIPLE_CHOICE)
+  id                   String               @id @default(cuid())
+  type                 QuestionType         @default(MULTIPLE_CHOICE)
   topicId              String
-  difficulty           Difficulty         @default(MEDIUM)
+  difficulty           Difficulty           @default(MEDIUM)
   questionText         String
   questionImageUrl     String?
   questionVideoUrl     String?
@@ -343,17 +346,18 @@ model Question {
   explanation          String?
   explanationImageUrl  String?
   explanationVideoUrl  String?
-  randomizeAnswerOrder Boolean            @default(false)
+  randomizeAnswerOrder Boolean              @default(false)
   timeLimit            Int?
-  timesAnswered        Int                @default(0)
-  timesCorrect         Int                @default(0)
-  createdAt            DateTime           @default(now())
-  updatedAt            DateTime           @updatedAt
+  timesAnswered        Int                  @default(0)
+  timesCorrect         Int                  @default(0)
+  createdAt            DateTime             @default(now())
+  updatedAt            DateTime             @updatedAt
   answers              Answer[]
-  topic                Topic              @relation(fields: [topicId], references: [id])
+  topic                Topic                @relation(fields: [topicId], references: [id])
   reports              QuestionReport[]
   quizPools            QuizQuestionPool[]
   userAnswers          UserAnswer[]
+  answerStats          QuestionAnswerStat[]
 
   @@index([topicId])
   @@index([topicId, difficulty])
@@ -413,6 +417,7 @@ model UserAnswer {
   isCorrect   Boolean     @default(false)
   wasSkipped  Boolean     @default(false)
   timeSpent   Int         @default(0)
+  textAnswer  String?
   createdAt   DateTime    @default(now())
   basePoints  Int         @default(0)
   streakBonus Int         @default(0)
@@ -652,19 +657,19 @@ model UserSearchQuery {
 }
 
 model AdminBackgroundTask {
-  id           String                 @id @default(cuid())
+  id           String               @id @default(cuid())
   userId       String?
   type         BackgroundTaskType
-  status       BackgroundTaskStatus   @default(PENDING)
+  status       BackgroundTaskStatus @default(PENDING)
   label        String
   input        Json?
   result       Json?
   errorMessage String?
   startedAt    DateTime?
   completedAt  DateTime?
-  createdAt    DateTime               @default(now())
-  updatedAt    DateTime               @updatedAt
-  user         User?                  @relation(fields: [userId], references: [id], onDelete: SetNull)
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
+  user         User?                @relation(fields: [userId], references: [id], onDelete: SetNull)
 
   @@index([userId])
   @@index([type])
@@ -775,14 +780,14 @@ model DailyGame {
   id          String        @id @default(cuid())
   date        String        @unique // "YYYY-MM-DD" in IST
   gameType    DailyGameType
-  targetValue String        // The answer (uppercased)
-  clues       Json?         // Metadata for hints/attributes
+  targetValue String // The answer (uppercased)
+  clues       Json? // Metadata for hints/attributes
   quizId      String?       @unique
   quiz        Quiz?         @relation(fields: [quizId], references: [id])
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
 
-  attempts    DailyGameAttempt[]
+  attempts DailyGameAttempt[]
 
   @@index([date])
   @@index([gameType])
@@ -792,15 +797,17 @@ model DailyGameAttempt {
   id          String    @id @default(cuid())
   dailyGameId String
   userId      String
-  guesses     Json      // Array of guess strings
+  guesses     Json // Array of guess strings
   solved      Boolean   @default(false)
+  score       Int       @default(0)
   guessCount  Int       @default(0)
   completedAt DateTime?
+  startedAt   DateTime  @default(now())
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
-  dailyGame   DailyGame @relation(fields: [dailyGameId], references: [id], onDelete: Cascade)
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  dailyGame DailyGame @relation(fields: [dailyGameId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([dailyGameId, userId])
   @@index([userId])
@@ -808,8 +815,84 @@ model DailyGameAttempt {
 }
 
 enum DailyGameType {
-  WORD     // Classic Wordle (5-6 letter sports term)
-  ATHLETE  // Guess the player by attributes
-  TEAM     // Guess the team
-  STAT     // Higher/Lower number guess
+  WORD // Classic Wordle (5-6 letter sports term)
+  ATHLETE // Guess the player by attributes
+  TEAM // Guess the team
+  STAT // Higher/Lower number guess
+}
+
+/// Immaculate Grid - Dedicated Models
+
+model GridQuiz {
+  id          String     @id @default(cuid())
+  title       String
+  slug        String     @unique
+  description String?
+  sport       String?
+  status      QuizStatus @default(DRAFT)
+
+  // Grid Specifics
+  size Int  @default(3) // 3x3
+  rows Json // e.g. ["Lakers", "Celtics", "MVP"]
+  cols Json // e.g. ["Guard", "Forward", ">20 PPG"]
+  cellAnswers Json? // Matrix of accepted answers e.g. [["Kobe", "Shaq"], ...]
+
+  // Configuration
+  timeLimit Int? // Seconds (optional)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  attempts GridAttempt[]
+}
+
+model GridAttempt {
+  id          String    @id @default(cuid())
+  userId      String
+  gridQuizId  String
+  score       Int       @default(0) // 0-9
+  timeSpent   Int       @default(0)
+  completedAt DateTime?
+  startedAt   DateTime  @default(now())
+  isGivenUp   Boolean   @default(false)
+
+  gridQuiz GridQuiz     @relation(fields: [gridQuizId], references: [id], onDelete: Cascade)
+  user     User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  answers  GridAnswer[]
+
+  @@index([userId])
+  @@index([gridQuizId])
+}
+
+model GridAnswer {
+  id          String   @id @default(cuid())
+  attemptId   String
+  cellId      String // "0-0", "0-1", etc. or just index 0-8
+  playerInput String // The text user typed
+  playerId    String? // If we link to a Player DB later
+  isValid     Boolean  @default(false)
+  rarityScore Float? // 0-100%
+  createdAt   DateTime @default(now())
+
+  attempt GridAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+
+  @@unique([attemptId, cellId])
+  @@index([attemptId])
+}
+
+enum PlayMode {
+  STANDARD
+  GRID_3X3
+}
+
+/// Tracks how often each normalized answer is picked correctly per question (for rarity scoring)
+model QuestionAnswerStat {
+  id               String   @id @default(cuid())
+  questionId       String
+  normalizedAnswer String
+  correctCount     Int      @default(0)
+  question         Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@unique([questionId, normalizedAnswer])
+  @@index([questionId])
 }

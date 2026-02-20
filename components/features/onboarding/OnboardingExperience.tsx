@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Trophy, ArrowRight, Sparkles } from "lucide-react";
-import { cn } from "@/lib/utils";
+
 import { ShowcaseButton } from "@/components/showcase/ui/buttons/Button";
 import Link from "next/link";
 

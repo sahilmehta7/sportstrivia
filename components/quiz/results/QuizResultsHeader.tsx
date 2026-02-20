@@ -13,7 +13,7 @@ interface QuizResultsHeaderProps {
 }
 
 export function QuizResultsHeader({
-  theme,
+  _theme,
   title,
   subtitle,
   leading,

@@ -3,14 +3,14 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { CopyX, Loader2 } from "lucide-react";
-import { findAndRemoveDuplicateQuestions } from "@/app/actions/admin-questions";
+
 import { useToast } from "@/hooks/use-toast";
 import { DuplicateResolutionModal } from "./DuplicateResolutionModal";
 
 export function DuplicateQuestionButton() {
-    const [isLoading, setIsLoading] = useState(false);
+    const [isLoading, _setIsLoading] = useState(false);
     const [open, setOpen] = useState(false);
-    const { toast } = useToast();
+    const { _toast } = useToast();
 
     return (
         <>

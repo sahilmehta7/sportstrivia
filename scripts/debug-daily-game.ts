@@ -1,5 +1,5 @@
 
-import { PrismaClient } from '@prisma/client';
+
 import { getTodaysGame } from '@/lib/services/daily-game.service';
 
 async function main() {

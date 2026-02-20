@@ -1,7 +1,7 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+
+
 import { cn } from "@/lib/utils";
 import { Loader2 } from "lucide-react";
 import type { ShowcaseFilterGroup, ShowcaseFilterOption } from "@/components/showcase/ui/FilterBar";

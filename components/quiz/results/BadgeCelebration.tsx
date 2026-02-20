@@ -3,9 +3,9 @@
 import { useEffect, useState } from "react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { Award, X, Sparkles, Trophy, Star } from "lucide-react";
+import {  X,  Trophy, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+
 import confetti from "canvas-confetti";
 
 export function BadgeCelebration() {

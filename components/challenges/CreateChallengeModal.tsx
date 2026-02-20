@@ -86,7 +86,7 @@ export function CreateChallengeModal({
         onSuccess();
         onClose();
       }
-    } catch (error) {
+    } catch {
       toast({
         title: "Error",
         description: "Failed to send challenge",

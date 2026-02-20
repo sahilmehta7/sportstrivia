@@ -6,16 +6,16 @@ import { z } from "zod";
 import { getAIModel, getAIQuizPrompt } from "@/lib/services/settings.service";
 import {
   createBackgroundTask,
-  markBackgroundTaskCompleted,
+  _markBackgroundTaskCompleted,
   markBackgroundTaskFailed,
-  markBackgroundTaskInProgress,
-  updateBackgroundTask,
+  _markBackgroundTaskInProgress,
+  _updateBackgroundTask,
 } from "@/lib/services/background-task.service";
 import { BackgroundTaskType } from "@prisma/client";
 import {
-  callOpenAIWithRetry,
-  extractContentFromCompletion,
-  extractUsageStats,
+  _callOpenAIWithRetry,
+  _extractContentFromCompletion,
+  _extractUsageStats,
 } from "@/lib/services/ai-openai-client.service";
 import { processAIQuestionsTask } from "@/lib/services/ai-questions-processor.service";
 import { after } from "next/server";
@@ -58,7 +58,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     const total = easyCount + mediumCount + hardCount;
     const aiModel = await getAIModel();
-    const baseTemplate = await getAIQuizPrompt();
+    const _baseTemplate = await getAIQuizPrompt();
 
     const backgroundTask = await createBackgroundTask({
       userId: admin.id,

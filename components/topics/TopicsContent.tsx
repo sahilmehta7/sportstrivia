@@ -2,11 +2,11 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
+
 import { Input } from "@/components/ui/input";
 import { PageContainer } from "@/components/shared/PageContainer";
-import { ChallengeCard } from "@/components/challenges/ChallengeCard";
-import { Search, Grid, List, Zap, ShieldCheck, Activity, ChevronRight, Sparkles, Filter, Database, TrendingUp } from "lucide-react";
+
+import { Search, Grid,     ChevronRight, Sparkles,  Database, TrendingUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getBlurCircles, getGradientText } from "@/lib/showcase-theme";
 import { ShowcaseThemeProvider } from "@/components/showcase/ShowcaseThemeProvider";
@@ -29,9 +29,9 @@ interface TopicsContentProps {
   suggestedChips: { value: string; label: string }[];
 }
 
-export function TopicsContent({ featured, topics, l2TopicsByParent, suggestedChips }: TopicsContentProps) {
+export function TopicsContent({ featured, topics, _l2TopicsByParent, _suggestedChips }: TopicsContentProps) {
   const [search, setSearch] = useState("");
-  const [activeTab, setActiveTab] = useState<"all" | "featured">("all");
+  const [_activeTab, _setActiveTab] = useState<"all" | "featured">("all");
 
   const filteredTopics = useMemo(() => {
     if (!search) return topics;

@@ -29,7 +29,7 @@ describe("attempt-limit.service", () => {
   const baseQuiz = {
     id: "quiz_123",
     maxAttemptsPerUser: 3,
-    attemptResetPeriod: AttemptResetPeriod.DAILY as const,
+    attemptResetPeriod: AttemptResetPeriod.DAILY,
   };
 
   describe("getAttemptWindowStart", () => {

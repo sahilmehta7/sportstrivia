@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { getDuplicateGroups, resolveDuplicateGroup, type DuplicateGroup } from "@/app/actions/admin-questions"; // You'll need to export DuplicateGroup
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, AlertTriangle, Check, Trash2, GitMerge } from "lucide-react";
+import { Loader2, Check } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
@@ -28,7 +28,7 @@ export function DuplicateResolutionModal({ open, onOpenChange }: DuplicateResolu
                 try {
                     const data = await getDuplicateGroups();
                     setGroups(data);
-                } catch (error) {
+                } catch {
                     toast({
                         title: "Error",
                         description: "Failed to load duplicates.",
@@ -72,7 +72,7 @@ export function DuplicateResolutionModal({ open, onOpenChange }: DuplicateResolu
                     variant: "destructive",
                 });
             }
-        } catch (error) {
+        } catch {
             toast({
                 title: "Error",
                 description: "Failed to resolve duplicates.",

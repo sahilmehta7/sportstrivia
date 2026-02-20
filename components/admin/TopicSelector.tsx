@@ -78,7 +78,7 @@ export function TopicSelector({
                                 <CommandItem
                                     key={topic.id}
                                     value={topic.name}
-                                    onSelect={(currentValue) => {
+                                    onSelect={(_currentValue) => {
                                         // Check is handled nicely by CommandItem but we want to ensure we emit the correct value
                                         const valToEmit = valueKey === "id" ? topic.id : topic.name;
                                         onChange(valToEmit);

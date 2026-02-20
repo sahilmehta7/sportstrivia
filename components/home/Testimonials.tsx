@@ -1,6 +1,6 @@
 "use client";
 
-import { getGlassCard, getTextColor, getGradientText } from "@/lib/showcase-theme";
+import {   getGradientText } from "@/lib/showcase-theme";
 import { cn } from "@/lib/utils";
 import { Star, Quote } from "lucide-react";
 

@@ -68,7 +68,7 @@ export async function PATCH(request: NextRequest) {
  * GDPR-compliant endpoint for users to delete their own accounts.
  * Uses cascading deletes defined in the Prisma schema to remove all related data.
  */
-export async function DELETE(request: NextRequest) {
+export async function DELETE(_request: NextRequest) {
   try {
     const user = await requireAuth();
 

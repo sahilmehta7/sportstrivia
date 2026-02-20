@@ -1,14 +1,14 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Card, CardContent } from "@/components/ui/card";
+
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Bell, BellOff, Loader2, RefreshCw, Smartphone, ShieldCheck, Zap } from "lucide-react";
+
+import { Bell, BellOff, Loader2, RefreshCw, Smartphone } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { urlBase64ToUint8Array } from "@/lib/utils/push";
-import { trackEvent } from "@/lib/analytics";
+
 import { cn } from "@/lib/utils";
 
 type PermissionState = "default" | "denied" | "granted" | "unsupported";
@@ -24,10 +24,10 @@ function detectDeviceType(userAgent: string): string | undefined {
 export function PushSubscriptionCard() {
   const { toast } = useToast();
   const [isSupported, setIsSupported] = useState<boolean>(false);
-  const [permission, setPermission] = useState<PermissionState>("default");
+  const [_permission, setPermission] = useState<PermissionState>("default");
   const [isSubscribed, setIsSubscribed] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
+  const [isRefreshing, _setIsRefreshing] = useState<boolean>(false);
 
   const vapidPublicKey = useMemo(
     () => process.env.NEXT_PUBLIC_PUSH_PUBLIC_KEY ?? "",
@@ -84,7 +84,7 @@ export function PushSubscriptionCard() {
       void fetch("/api/notifications/preferences", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ pushOptIn: true }) });
       setIsSubscribed(true);
       toast({ title: "Push enabled", description: "Real-time transmissions active." });
-    } catch (e: any) { toast({ title: "Subscription failed", variant: "destructive" }); }
+    } catch { toast({ title: "Subscription failed", variant: "destructive" }); }
     finally { setIsLoading(false); }
   }, [toast, vapidPublicKey]);
 
@@ -101,7 +101,7 @@ export function PushSubscriptionCard() {
       void fetch("/api/notifications/preferences", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ pushOptIn: false }) });
       setIsSubscribed(false);
       toast({ title: "Push disabled", description: "Transmissions severed." });
-    } catch (e: any) { toast({ title: "Unsubscribe failed", variant: "destructive" }); }
+    } catch { toast({ title: "Unsubscribe failed", variant: "destructive" }); }
     finally { setIsLoading(false); }
   }, [toast]);
 

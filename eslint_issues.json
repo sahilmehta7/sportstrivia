@@ -1,0 +1,617 @@
+[
+  {
+    "file": "/Users/sahilmehta/sportstrivia-2/app/actions/admin-questions.ts",
+    "messages": [
+      "'text' is assigned a value but never used. Allowed unused vars must match /^_/u.",
+      "'text' is assigned a value but never used. Allowed unused vars must match /^_/u."
+    ]
+  },
+  {
+    "file": "/Users/sahilmehta/sportstrivia-2/app/admin/daily/DailyGamesAdminClient.tsx",
+    "messages": [
+      "'error' is defined but never used.",
+      "'error' is defined but never used."
+    ]
+  },
+  {
+    "file": "/Users/sahilmehta/sportstrivia-2/app/admin/import/page.tsx",
+    "messages": [
+      "`\"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`.",
+      "`\"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`.",
+      "`\"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`.",
+      "`\"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`."
+    ]
+  },
+  {
+    "file": "/Users/sahilmehta/sportstrivia-2/app/admin/questions/import/page.tsx",
+    "messages": [
+      "'Separator' is defined but never used. Allowed unused vars must match /^_/u."
+    ]
+  },
+  {
+    "file": "/Users/sahilmehta/sportstrivia-2/app/admin/quizzes/[id]/edit/page.tsx",
+    "messages": [
+      "'DialogTrigger' is defined but never used. Allowed unused vars must match /^_/u."
+    ]
+  },
+  {
+    "file": "/Users/sahilmehta/sportstrivia-2/app/admin/topics/AdminTopicsClient.tsx",
+    "messages": [
+      "'DialogDescription' is defined but never used. Allowed unused vars must match /^_/u."
+    ]
+  },
+  {
+    "file": "/Users/sahilmehta/sportstrivia-2/app/api/admin/questions/import/route.ts",
+    "messages": [
+      "'Prisma' is defined but never used. Allowed unused vars must match /^_/u."
+    ]
+  },
+  {
+    "file": "/Users/sahilmehta/sportstrivia-2/app/api/admin/quizzes/[id]/ai/cover/route.ts",
+    "messages": [
+      "'lastError' is assigned a value but never used. Allowed unused vars must match /^_/u."
+    ]
+  },
+  {
+    "file": "/Users/sahilmehta/sportstrivia-2/app/api/admin/quizzes/[id]/import/route.ts",
+    "messages": [
+      "'BadRequestError' is defined but never used. Allowed unused vars must match /^_/u.",
+      "'Prisma' is defined but never used. Allowed unused vars must match /^_/u."
+    ]
+  },
+  {
+    "file": "/Users/sahilmehta/sportstrivia-2/app/api/admin/quizzes/import/route.ts",
+    "messages": [
+      "'usage' is assigned a value but never used. Allowed unused vars must match /^_/u."
+    ]
+  },
+  {
+    "file": "/Users/sahilmehta/sportstrivia-2/app/api/admin/topics/[id]/ai/generate-questions/route.ts",
+    "messages": [
+      "'markBackgroundTaskCompleted' is defined but never used. Allowed unused vars must match /^_/u.",
+      "'markBackgroundTaskInProgress' is defined but never used. Allowed unused vars must match /^_/u.",
+      "'updateBackgroundTask' is defined but never used. Allowed unused vars must match /^_/u.",
+      "'callOpenAIWithRetry' is defined but never used. Allowed unused vars must match /^_/u.",
+      "'extractContentFromCompletion' is defined but never used. Allowed unused vars must match /^_/u.",
+      "'extractUsageStats' is defined but never used. Allowed unused vars must match /^_/u.",
+      "'baseTemplate' is assigned a value but never used. Allowed unused vars must match /^_/u."
+    ]
+  },
+  {
+    "file": "/Users/sahilmehta/sportstrivia-2/app/api/attempts/[id]/route.ts",
+    "messages": [
+      "'AttemptWithDetails' is defined but never used. Allowed unused vars must match /^_/u.",
+      "'totalCorrect' is assigned a value but never used. Allowed unused vars must match /^_/u."
+    ]
+  },
+  {
+    "file": "/Users/sahilmehta/sportstrivia-2/app/api/grids/[id]/submit/route.ts",
+    "messages": [
+      "'gridId' is assigned a value but never used. Allowed unused vars must match /^_/u."
+    ]
+  },
+  {
+    "file": "/Users/sahilmehta/sportstrivia-2/app/api/users/me/export/route.ts",
+    "messages": [
+      "'request' is defined but never used. Allowed unused args must match /^_/u."
+    ]
+  },
+  {
+    "file": "/Users/sahilmehta/sportstrivia-2/app/api/users/me/route.ts",
+    "messages": [
+      "'request' is defined but never used. Allowed unused args must match /^_/u."
+    ]
+  },
+  {
+    "file": "/Users/sahilmehta/sportstrivia-2/app/grids/[slug]/results/[attemptId]/page.tsx",
+    "messages": [
+      "'notFound' is defined but never used. Allowed unused vars must match /^_/u."
+    ]
+  },
+  {
+    "file": "/Users/sahilmehta/sportstrivia-2/app/grids/page.tsx",
+    "messages": [
+      "'ArrowRight' is defined but never used. Allowed unused vars must match /^_/u."
+    ]
+  },
+  {
+    "file": "/Users/sahilmehta/sportstrivia-2/app/notifications/page.tsx",
+    "messages": [
+      "'error' is defined but never used.",
+      "'e' is defined but never used.",
+      "'e' is defined but never used.",
+      "'e' is defined but never used."
+    ]
+  },
+  {
+    "file": "/Users/sahilmehta/sportstrivia-2/app/quizzes/[slug]/play/error.tsx",
+    "messages": [
+      "`'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`."
+    ]
+  },
+  {
+    "file": "/Users/sahilmehta/sportstrivia-2/app/quizzes/[slug]/results/[attemptId]/loading.tsx",
+    "messages": [
+      "'LoadingSpinner' is defined but never used. Allowed unused vars must match /^_/u."
+    ]
+  },
+  {
+    "file": "/Users/sahilmehta/sportstrivia-2/app/quizzes/[slug]/results/[attemptId]/page.tsx",
+    "messages": [
+      "'QuizResultsReviewButton' is defined but never used. Allowed unused vars must match /^_/u.",
+      "'getTierForPoints' is defined but never used. Allowed unused vars must match /^_/u.",
+      "'GridResults' is defined but never used. Allowed unused vars must match /^_/u."
+    ]
+  },
+  {
+    "file": "/Users/sahilmehta/sportstrivia-2/app/quizzes/components/quiz-list-section.tsx",
+    "messages": [
+      "'QuizListSkeleton' is defined but never used. Allowed unused vars must match /^_/u."
+    ]
+  },
+  {
+    "file": "/Users/sahilmehta/sportstrivia-2/components/admin/TopicSelector.tsx",
+    "messages": [
+      "'currentValue' is defined but never used. Allowed unused args must match /^_/u."
+    ]
+  },
+  {
+    "file": "/Users/sahilmehta/sportstrivia-2/components/admin/questions/DuplicateQuestionButton.tsx",
+    "messages": [
+      "'findAndRemoveDuplicateQuestions' is defined but never used. Allowed unused vars must match /^_/u.",
+      "'setIsLoading' is assigned a value but never used. Allowed unused vars must match /^_/u.",
+      "'toast' is assigned a value but never used. Allowed unused vars must match /^_/u."
+    ]
+  },
+  {
+    "file": "/Users/sahilmehta/sportstrivia-2/components/admin/questions/DuplicateResolutionModal.tsx",
+    "messages": [
+      "'AlertTriangle' is defined but never used. Allowed unused vars must match /^_/u.",
+      "'Trash2' is defined but never used. Allowed unused vars must match /^_/u.",
+      "'GitMerge' is defined but never used. Allowed unused vars must match /^_/u.",
+      "'error' is defined but never used.",
+      "'error' is defined but never used."
+    ]
+  },
+  {
+    "file": "/Users/sahilmehta/sportstrivia-2/components/challenges/CreateChallengeModal.tsx",
+    "messages": [
+      "'error' is defined but never used."
+    ]
+  },
+  {
+    "file": "/Users/sahilmehta/sportstrivia-2/components/daily/AthleteGuessGame.tsx",
+    "messages": [
+      "'initialGuesses' is assigned a value but never used. Allowed unused args must match /^_/u."
+    ]
+  },
+  {
+    "file": "/Users/sahilmehta/sportstrivia-2/components/daily/DailyGameResult.tsx",
+    "messages": [
+      "'getChipStyles' is defined but never used. Allowed unused vars must match /^_/u."
+    ]
+  },
+  {
+    "file": "/Users/sahilmehta/sportstrivia-2/components/daily/StatGuessGame.tsx",
+    "messages": [
+      "'initialGuesses' is assigned a value but never used. Allowed unused args must match /^_/u."
+    ]
+  },
+  {
+    "file": "/Users/sahilmehta/sportstrivia-2/components/daily/WordleGame.tsx",
+    "messages": [
+      "'motion' is defined but never used. Allowed unused vars must match /^_/u.",
+      "React Hook useEffect has a missing dependency: 'handleKeyPress'. Either include it or remove the dependency array.",
+      "React Hook useCallback has missing dependencies: 'submitGuess' and 'toast'. Either include them or remove the dependency array."
+    ]
+  },
+  {
+    "file": "/Users/sahilmehta/sportstrivia-2/components/features/onboarding/OnboardingExperience.tsx",
+    "messages": [
+      "'cn' is defined but never used. Allowed unused vars must match /^_/u."
+    ]
+  },
+  {
+    "file": "/Users/sahilmehta/sportstrivia-2/components/features/social/ChallengesList.tsx",
+    "messages": [
+      "'Check' is defined but never used. Allowed unused vars must match /^_/u.",
+      "'Link' is defined but never used. Allowed unused vars must match /^_/u.",
+      "'error' is defined but never used."
+    ]
+  },
+  {
+    "file": "/Users/sahilmehta/sportstrivia-2/components/friends/AddFriendForm.tsx",
+    "messages": [
+      "'Card' is defined but never used. Allowed unused vars must match /^_/u.",
+      "'CardContent' is defined but never used. Allowed unused vars must match /^_/u.",
+      "'CardHeader' is defined but never used. Allowed unused vars must match /^_/u.",
+      "'CardTitle' is defined but never used. Allowed unused vars must match /^_/u.",
+      "'CardDescription' is defined but never used. Allowed unused vars must match /^_/u."
+    ]
+  },
+  {
+    "file": "/Users/sahilmehta/sportstrivia-2/components/friends/FriendCard.tsx",
+    "messages": [
+      "'Card' is defined but never used. Allowed unused vars must match /^_/u.",
+      "'CardContent' is defined but never used. Allowed unused vars must match /^_/u.",
+      "'Zap' is defined but never used. Allowed unused vars must match /^_/u."
+    ]
+  },
+  {
+    "file": "/Users/sahilmehta/sportstrivia-2/components/friends/FriendRequests.tsx",
+    "messages": [
+      "'Card' is defined but never used. Allowed unused vars must match /^_/u.",
+      "'CardContent' is defined but never used. Allowed unused vars must match /^_/u.",
+      "'Badge' is defined but never used. Allowed unused vars must match /^_/u.",
+      "'Activity' is defined but never used. Allowed unused vars must match /^_/u.",
+      "'ShieldAlert' is defined but never used. Allowed unused vars must match /^_/u.",
+      "'ChevronRight' is defined but never used. Allowed unused vars must match /^_/u.",
+      "'cn' is defined but never used. Allowed unused vars must match /^_/u."
+    ]
+  },
+  {
+    "file": "/Users/sahilmehta/sportstrivia-2/components/friends/FriendsList.tsx",
+    "messages": [
+      "'EmptyState' is defined but never used. Allowed unused vars must match /^_/u.",
+      "'UserSearch' is defined but never used. Allowed unused vars must match /^_/u."
+    ]
+  },
+  {
+    "file": "/Users/sahilmehta/sportstrivia-2/components/grid/GridCell.tsx",
+    "messages": [
+      "'row' is defined but never used. Allowed unused args must match /^_/u.",
+      "'col' is defined but never used. Allowed unused args must match /^_/u."
+    ]
+  },
+  {
+    "file": "/Users/sahilmehta/sportstrivia-2/components/grid/GridGame.tsx",
+    "messages": [
+      "'userId' is defined but never used. Allowed unused args must match /^_/u."
+    ]
+  },
+  {
+    "file": "/Users/sahilmehta/sportstrivia-2/components/grid/GridHeader.tsx",
+    "messages": [
+      "'Progress' is defined but never used. Allowed unused vars must match /^_/u.",
+      "'Heart' is defined but never used. Allowed unused vars must match /^_/u.",
+      "'maxScore' is assigned a value but never used. Allowed unused args must match /^_/u."
+    ]
+  },
+  {
+    "file": "/Users/sahilmehta/sportstrivia-2/components/grid/GridResultsClient.tsx",
+    "messages": [
+      "'quizSlug' is defined but never used. Allowed unused args must match /^_/u."
+    ]
+  },
+  {
+    "file": "/Users/sahilmehta/sportstrivia-2/components/grid/GridResultsPage.tsx",
+    "messages": [
+      "'useState' is defined but never used. Allowed unused vars must match /^_/u.",
+      "'score' is defined but never used. Allowed unused args must match /^_/u."
+    ]
+  },
+  {
+    "file": "/Users/sahilmehta/sportstrivia-2/components/grid/ImmaculateGrid.tsx",
+    "messages": [
+      "'useCallback' is defined but never used. Allowed unused vars must match /^_/u.",
+      "'isWin' is assigned a value but never used. Allowed unused vars must match /^_/u."
+    ]
+  },
+  {
+    "file": "/Users/sahilmehta/sportstrivia-2/components/home/DailyChallengeHero.tsx",
+    "messages": [
+      "'gameId' is defined but never used. Allowed unused args must match /^_/u.",
+      "'displayName' is assigned a value but never used. Allowed unused args must match /^_/u."
+    ]
+  },
+  {
+    "file": "/Users/sahilmehta/sportstrivia-2/components/home/FinalCTA.tsx",
+    "messages": [
+      "'getGradientText' is defined but never used. Allowed unused vars must match /^_/u."
+    ]
+  },
+  {
+    "file": "/Users/sahilmehta/sportstrivia-2/components/home/HowItWorks.tsx",
+    "messages": [
+      "'getTextColor' is defined but never used. Allowed unused vars must match /^_/u."
+    ]
+  },
+  {
+    "file": "/Users/sahilmehta/sportstrivia-2/components/home/Testimonials.tsx",
+    "messages": [
+      "'getGlassCard' is defined but never used. Allowed unused vars must match /^_/u.",
+      "'getTextColor' is defined but never used. Allowed unused vars must match /^_/u."
+    ]
+  },
+  {
+    "file": "/Users/sahilmehta/sportstrivia-2/components/leaderboard/leaderboard-tabs.tsx",
+    "messages": [
+      "'motion' is defined but never used. Allowed unused vars must match /^_/u.",
+      "'AnimatePresence' is defined but never used. Allowed unused vars must match /^_/u."
+    ]
+  },
+  {
+    "file": "/Users/sahilmehta/sportstrivia-2/components/notifications/DigestPreferencesCard.tsx",
+    "messages": [
+      "'useMemo' is defined but never used. Allowed unused vars must match /^_/u.",
+      "'Card' is defined but never used. Allowed unused vars must match /^_/u.",
+      "'CardContent' is defined but never used. Allowed unused vars must match /^_/u.",
+      "'Calendar' is defined but never used. Allowed unused vars must match /^_/u.",
+      "'Clock' is defined but never used. Allowed unused vars must match /^_/u.",
+      "'PreferencesResponse' is defined but never used. Allowed unused vars must match /^_/u.",
+      "'setRefreshing' is assigned a value but never used. Allowed unused vars must match /^_/u.",
+      "'e' is defined but never used."
+    ]
+  },
+  {
+    "file": "/Users/sahilmehta/sportstrivia-2/components/notifications/PushSubscriptionCard.tsx",
+    "messages": [
+      "'Card' is defined but never used. Allowed unused vars must match /^_/u.",
+      "'CardContent' is defined but never used. Allowed unused vars must match /^_/u.",
+      "'Alert' is defined but never used. Allowed unused vars must match /^_/u.",
+      "'AlertDescription' is defined but never used. Allowed unused vars must match /^_/u.",
+      "'AlertTitle' is defined but never used. Allowed unused vars must match /^_/u.",
+      "'ShieldCheck' is defined but never used. Allowed unused vars must match /^_/u.",
+      "'Zap' is defined but never used. Allowed unused vars must match /^_/u.",
+      "'trackEvent' is defined but never used. Allowed unused vars must match /^_/u.",
+      "'permission' is assigned a value but never used. Allowed unused vars must match /^_/u.",
+      "'setIsRefreshing' is assigned a value but never used. Allowed unused vars must match /^_/u.",
+      "'e' is defined but never used.",
+      "'e' is defined but never used."
+    ]
+  },
+  {
+    "file": "/Users/sahilmehta/sportstrivia-2/components/profile/ActivityFeed.tsx",
+    "messages": [
+      "'Badge' is defined but never used. Allowed unused vars must match /^_/u.",
+      "'CheckCircle2' is defined but never used. Allowed unused vars must match /^_/u.",
+      "'XCircle' is defined but never used. Allowed unused vars must match /^_/u."
+    ]
+  },
+  {
+    "file": "/Users/sahilmehta/sportstrivia-2/components/profile/BadgeShowcase.tsx",
+    "messages": [
+      "'Zap' is defined but never used. Allowed unused vars must match /^_/u."
+    ]
+  },
+  {
+    "file": "/Users/sahilmehta/sportstrivia-2/components/profile/ProfileHeader.tsx",
+    "messages": [
+      "'MapPin' is defined but never used. Allowed unused vars must match /^_/u."
+    ]
+  },
+  {
+    "file": "/Users/sahilmehta/sportstrivia-2/components/profile/StatsCard.tsx",
+    "messages": [
+      "'Card' is defined but never used. Allowed unused vars must match /^_/u.",
+      "'CardContent' is defined but never used. Allowed unused vars must match /^_/u.",
+      "'CardHeader' is defined but never used. Allowed unused vars must match /^_/u.",
+      "'CardTitle' is defined but never used. Allowed unused vars must match /^_/u."
+    ]
+  },
+  {
+    "file": "/Users/sahilmehta/sportstrivia-2/components/quiz/QuizPlayClient.tsx",
+    "messages": [
+      "React Hook useCallback has a missing dependency: 'completeAttempt'. Either include it or remove the dependency array."
+    ]
+  },
+  {
+    "file": "/Users/sahilmehta/sportstrivia-2/components/quiz/QuizProgress.tsx",
+    "messages": [
+      "'cn' is defined but never used. Allowed unused vars must match /^_/u.",
+      "'styles' is defined but never used. Allowed unused args must match /^_/u."
+    ]
+  },
+  {
+    "file": "/Users/sahilmehta/sportstrivia-2/components/quiz/ShowcaseFeaturedQuizCard.tsx",
+    "messages": [
+      "'Trophy' is defined but never used. Allowed unused vars must match /^_/u.",
+      "'accent' is assigned a value but never used. Allowed unused args must match /^_/u."
+    ]
+  },
+  {
+    "file": "/Users/sahilmehta/sportstrivia-2/components/quiz/ShowcaseLeaderboard.tsx",
+    "messages": [
+      "'Trophy' is defined but never used. Allowed unused vars must match /^_/u."
+    ]
+  },
+  {
+    "file": "/Users/sahilmehta/sportstrivia-2/components/quiz/ShowcaseQuizCarousel.tsx",
+    "messages": [
+      "'useMemo' is defined but never used. Allowed unused vars must match /^_/u."
+    ]
+  },
+  {
+    "file": "/Users/sahilmehta/sportstrivia-2/components/quiz/ShowcaseTopTopics.tsx",
+    "messages": [
+      "'ArrowRight' is defined but never used. Allowed unused vars must match /^_/u."
+    ]
+  },
+  {
+    "file": "/Users/sahilmehta/sportstrivia-2/components/quiz/results/BadgeCelebration.tsx",
+    "messages": [
+      "'Award' is defined but never used. Allowed unused vars must match /^_/u.",
+      "'Sparkles' is defined but never used. Allowed unused vars must match /^_/u.",
+      "'cn' is defined but never used. Allowed unused vars must match /^_/u."
+    ]
+  },
+  {
+    "file": "/Users/sahilmehta/sportstrivia-2/components/quiz/results/QuizResultsCard.tsx",
+    "messages": [
+      "'theme' is defined but never used. Allowed unused args must match /^_/u."
+    ]
+  },
+  {
+    "file": "/Users/sahilmehta/sportstrivia-2/components/quiz/results/QuizResultsHeader.tsx",
+    "messages": [
+      "'theme' is defined but never used. Allowed unused args must match /^_/u."
+    ]
+  },
+  {
+    "file": "/Users/sahilmehta/sportstrivia-2/components/quiz/results/QuizResultsLeaderboard.tsx",
+    "messages": [
+      "'Medal' is defined but never used. Allowed unused vars must match /^_/u.",
+      "'theme' is defined but never used. Allowed unused args must match /^_/u."
+    ]
+  },
+  {
+    "file": "/Users/sahilmehta/sportstrivia-2/components/quiz/results/QuizResultsSummary.tsx",
+    "messages": [
+      "'Trophy' is defined but never used. Allowed unused vars must match /^_/u.",
+      "'Target' is defined but never used. Allowed unused vars must match /^_/u.",
+      "'getTextColor' is defined but never used. Allowed unused vars must match /^_/u.",
+      "'theme' is defined but never used. Allowed unused args must match /^_/u."
+    ]
+  },
+  {
+    "file": "/Users/sahilmehta/sportstrivia-2/components/quizzes/coming-soon-widget.tsx",
+    "messages": [
+      "'Clock' is defined but never used. Allowed unused vars must match /^_/u.",
+      "'Sparkles' is defined but never used. Allowed unused vars must match /^_/u.",
+      "'Plus' is defined but never used. Allowed unused vars must match /^_/u.",
+      "'Zap' is defined but never used. Allowed unused vars must match /^_/u.",
+      "'ShieldAlert' is defined but never used. Allowed unused vars must match /^_/u.",
+      "'getGradientText' is defined but never used. Allowed unused vars must match /^_/u."
+    ]
+  },
+  {
+    "file": "/Users/sahilmehta/sportstrivia-2/components/quizzes/daily-quiz-widget.tsx",
+    "messages": [
+      "'Card' is defined but never used. Allowed unused vars must match /^_/u.",
+      "'CardContent' is defined but never used. Allowed unused vars must match /^_/u.",
+      "'Calendar' is defined but never used. Allowed unused vars must match /^_/u.",
+      "'Sparkles' is defined but never used. Allowed unused vars must match /^_/u.",
+      "'getGradientText' is defined but never used. Allowed unused vars must match /^_/u."
+    ]
+  },
+  {
+    "file": "/Users/sahilmehta/sportstrivia-2/components/quizzes/featured-card.tsx",
+    "messages": [
+      "'Card' is defined but never used. Allowed unused vars must match /^_/u.",
+      "'CardContent' is defined but never used. Allowed unused vars must match /^_/u.",
+      "'CardFooter' is defined but never used. Allowed unused vars must match /^_/u.",
+      "'Star' is defined but never used. Allowed unused vars must match /^_/u.",
+      "'getGradientText' is defined but never used. Allowed unused vars must match /^_/u."
+    ]
+  },
+  {
+    "file": "/Users/sahilmehta/sportstrivia-2/components/quizzes/featured-trading-cards-carousel.tsx",
+    "messages": [
+      "'cn' is defined but never used. Allowed unused vars must match /^_/u."
+    ]
+  },
+  {
+    "file": "/Users/sahilmehta/sportstrivia-2/components/quizzes/filter-bar.tsx",
+    "messages": [
+      "'Button' is defined but never used. Allowed unused vars must match /^_/u.",
+      "'Badge' is defined but never used. Allowed unused vars must match /^_/u."
+    ]
+  },
+  {
+    "file": "/Users/sahilmehta/sportstrivia-2/components/quizzes/quiz-card.tsx",
+    "messages": [
+      "'CardFooter' is defined but never used. Allowed unused vars must match /^_/u.",
+      "'CardHeader' is defined but never used. Allowed unused vars must match /^_/u.",
+      "'difficultyColors' is assigned a value but never used. Allowed unused vars must match /^_/u."
+    ]
+  },
+  {
+    "file": "/Users/sahilmehta/sportstrivia-2/components/shared/ErrorState.tsx",
+    "messages": [
+      "'ArrowLeft' is defined but never used. Allowed unused vars must match /^_/u."
+    ]
+  },
+  {
+    "file": "/Users/sahilmehta/sportstrivia-2/components/shared/InstagramStoryTeaserMenu.tsx",
+    "messages": [
+      "'_e' is defined but never used."
+    ]
+  },
+  {
+    "file": "/Users/sahilmehta/sportstrivia-2/components/showcase/ShowcaseDailyCarousel.tsx",
+    "messages": [
+      "'useState' is defined but never used. Allowed unused vars must match /^_/u.",
+      "'PointerEvent' is defined but never used. Allowed unused vars must match /^_/u.",
+      "'useEffect' is defined but never used. Allowed unused vars must match /^_/u.",
+      "'ShieldCheck' is defined but never used. Allowed unused vars must match /^_/u.",
+      "'getGradientText' is defined but never used. Allowed unused vars must match /^_/u."
+    ]
+  },
+  {
+    "file": "/Users/sahilmehta/sportstrivia-2/components/showcase/cards/FeaturedCardTrading.tsx",
+    "messages": [
+      "'Zap' is defined but never used. Allowed unused vars must match /^_/u.",
+      "'getGradientText' is defined but never used. Allowed unused vars must match /^_/u."
+    ]
+  },
+  {
+    "file": "/Users/sahilmehta/sportstrivia-2/components/showcase/ui/FilterBar.tsx",
+    "messages": [
+      "'getGradientText' is defined but never used. Allowed unused vars must match /^_/u."
+    ]
+  },
+  {
+    "file": "/Users/sahilmehta/sportstrivia-2/components/showcase/ui/buttons/buttonTheme.ts",
+    "messages": [
+      "'textBase' is assigned a value but never used. Allowed unused vars must match /^_/u."
+    ]
+  },
+  {
+    "file": "/Users/sahilmehta/sportstrivia-2/components/topics/TopicsContent.tsx",
+    "messages": [
+      "'Button' is defined but never used. Allowed unused vars must match /^_/u.",
+      "'ChallengeCard' is defined but never used. Allowed unused vars must match /^_/u.",
+      "'List' is defined but never used. Allowed unused vars must match /^_/u.",
+      "'Zap' is defined but never used. Allowed unused vars must match /^_/u.",
+      "'ShieldCheck' is defined but never used. Allowed unused vars must match /^_/u.",
+      "'Activity' is defined but never used. Allowed unused vars must match /^_/u.",
+      "'Filter' is defined but never used. Allowed unused vars must match /^_/u.",
+      "'l2TopicsByParent' is defined but never used. Allowed unused args must match /^_/u.",
+      "'suggestedChips' is defined but never used. Allowed unused args must match /^_/u.",
+      "'activeTab' is assigned a value but never used. Allowed unused vars must match /^_/u.",
+      "'setActiveTab' is assigned a value but never used. Allowed unused vars must match /^_/u."
+    ]
+  },
+  {
+    "file": "/Users/sahilmehta/sportstrivia-2/components/topics/topic-hero.tsx",
+    "messages": [
+      "'Zap' is defined but never used. Allowed unused vars must match /^_/u."
+    ]
+  },
+  {
+    "file": "/Users/sahilmehta/sportstrivia-2/lib/errors.ts",
+    "messages": [
+      "'e' is defined but never used.",
+      "'e' is defined but never used.",
+      "'e2' is defined but never used.",
+      "'e' is defined but never used.",
+      "'e' is defined but never used."
+    ]
+  },
+  {
+    "file": "/Users/sahilmehta/sportstrivia-2/lib/quiz-cache.ts",
+    "messages": [
+      "'entries' is assigned a value but never used. Allowed unused vars must match /^_/u."
+    ]
+  },
+  {
+    "file": "/Users/sahilmehta/sportstrivia-2/lib/services/grid.service.ts",
+    "messages": [
+      "'GridQuiz' is defined but never used. Allowed unused vars must match /^_/u.",
+      "'GridAttempt' is defined but never used. Allowed unused vars must match /^_/u.",
+      "'GridAnswer' is defined but never used. Allowed unused vars must match /^_/u."
+    ]
+  },
+  {
+    "file": "/Users/sahilmehta/sportstrivia-2/scripts/debug-daily-game.ts",
+    "messages": [
+      "'PrismaClient' is defined but never used. Allowed unused vars must match /^_/u."
+    ]
+  },
+  {
+    "file": "/Users/sahilmehta/sportstrivia-2/scripts/reseed-grid.ts",
+    "messages": [
+      "'Difficulty' is defined but never used. Allowed unused vars must match /^_/u."
+    ]
+  }
+]

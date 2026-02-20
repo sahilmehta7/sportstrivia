@@ -1,8 +1,8 @@
 import Image from "next/image";
-import { ShieldCheck, Zap, TrendingUp, ShieldAlert, Play } from "lucide-react";
+import { ShieldCheck,  TrendingUp, ShieldAlert, Play } from "lucide-react";
 import type { PublicQuizListItem } from "@/lib/services/public-quiz.service";
 import { cn } from "@/lib/utils";
-import { getGradientText } from "@/lib/showcase-theme";
+
 
 interface FeaturedCardTradingProps {
     quiz: PublicQuizListItem;

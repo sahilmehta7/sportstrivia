@@ -1,13 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { Card, CardContent } from "@/components/ui/card";
+
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { UserAvatar } from "@/components/shared/UserAvatar";
-import { Check, X, Inbox, Send, Activity, ShieldAlert, ChevronRight } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { Check, X, Inbox, Send } from "lucide-react";
+
 
 interface FriendRequest {
   id: string;

@@ -11,6 +11,7 @@ import { checkAndAwardBadges } from "@/lib/services/badge.service";
 import { recomputeUserProgress } from "@/lib/services/gamification.service";
 import { createNotification } from "@/lib/services/notification.service";
 import { z } from "zod";
+import { normalizeAnswer } from "@/lib/grid/fuzzy-match";
 
 const quizSelection = {
     id: true,
@@ -20,6 +21,8 @@ const quizSelection = {
     completionBonus: true,
     timePerQuestion: true,
     sport: true,
+    playMode: true,
+    playConfig: true,
     topicConfigs: {
         select: {
             topicId: true
@@ -44,7 +47,7 @@ const userAnswerSelection = {
     },
 } as const;
 
-type AttemptWithDetails = Prisma.QuizAttemptGetPayload<{
+type _AttemptWithDetails = Prisma.QuizAttemptGetPayload<{
     include: {
         quiz: {
             select: typeof quizSelection;
@@ -70,7 +73,7 @@ export async function GET(
         const user = await requireAuth();
         const { id } = await params;
 
-        const attempt = await prisma.quizAttempt.findUnique({
+        const attempt = (await prisma.quizAttempt.findUnique({
             where: { id },
             include: {
                 quiz: {
@@ -81,7 +84,9 @@ export async function GET(
                         passingScore: true,
                         answersRevealTime: true,
                         timePerQuestion: true,
-                    },
+                        playMode: true,
+                        playConfig: true,
+                    } as any,
                 },
                 userAnswers: {
                     include: {
@@ -106,7 +111,7 @@ export async function GET(
                     },
                 },
             },
-        });
+        })) as any;
 
         if (!attempt) {
             throw new NotFoundError("Quiz attempt not found");
@@ -127,7 +132,7 @@ export async function GET(
         // Get correct answers if they should be revealed
         const correctAnswersMap = new Map<string, { id: string; answerText: string; answerImageUrl: string | null }>();
         if (revealAnswers) {
-            const questionIds = attempt.userAnswers.map((ua) => ua.questionId);
+            const questionIds = attempt.userAnswers.map((ua: any) => ua.questionId);
             const questions = await prisma.question.findMany({
                 where: { id: { in: questionIds } },
                 include: {
@@ -150,6 +155,50 @@ export async function GET(
             }
         }
 
+        // For grid mode, load rarity data and all accepted answers
+        const isGridMode = attempt.quiz.playMode === "GRID_3X3";
+        let gridRarityMap: Map<string, { rarity: number; pickedByPercent: number; acceptedAnswers: string[] }> = new Map();
+        let statsByQuestion = new Map<string, any[]>();
+
+        if (isGridMode && revealAnswers) {
+            const questionIds = attempt.userAnswers.map((ua: any) => ua.questionId);
+            const [questions, answerStats] = await Promise.all([
+                prisma.question.findMany({
+                    where: { id: { in: questionIds } },
+                    include: {
+                        answers: {
+                            where: { isCorrect: true },
+                            select: { answerText: true },
+                        },
+                    },
+                }),
+                (prisma as any).questionAnswerStat.findMany({
+                    where: { questionId: { in: questionIds } },
+                }),
+            ]);
+
+            const stats = answerStats as any[];
+
+            // Build rarity map per question
+            for (const stat of stats) {
+                const existing = statsByQuestion.get(stat.questionId) ?? [];
+                existing.push(stat);
+                statsByQuestion.set(stat.questionId, existing);
+            }
+
+            for (const question of (questions as any[])) {
+                const qStats = statsByQuestion.get(question.id) ?? [];
+                const _totalCorrect = qStats.reduce((sum: number, s: any) => sum + s.correctCount, 0);
+                const acceptedAnswers = question.answers.map((a: any) => a.answerText);
+
+                gridRarityMap.set(question.id, {
+                    rarity: 0,
+                    pickedByPercent: 0,
+                    acceptedAnswers,
+                });
+            }
+        }
+
         const response = {
             attempt: {
                 id: attempt.id,
@@ -168,7 +217,7 @@ export async function GET(
             },
             quiz: attempt.quiz,
             revealAnswers,
-            answers: attempt.userAnswers.map((ua) => ({
+            answers: attempt.userAnswers.map((ua: any) => ({
                 questionId: ua.questionId,
                 questionText: ua.question.questionText,
                 questionImageUrl: ua.question.questionImageUrl,
@@ -181,6 +230,27 @@ export async function GET(
                 streakBonus: ua.streakBonus,
                 totalPoints: ua.totalPoints,
                 timeLimit: ua.question.timeLimit ?? attempt.quiz.timePerQuestion ?? 60,
+                // Grid-specific fields
+                ...(isGridMode && {
+                    textAnswer: ua.textAnswer,
+                    gridData: (() => {
+                        const qStats = statsByQuestion.get(ua.questionId) ?? [];
+                        const totalCorrect = qStats.reduce((sum: number, s: any) => sum + s.correctCount, 0);
+                        const acceptedAnswers = gridRarityMap.get(ua.questionId)?.acceptedAnswers ?? [];
+
+                        // Find stat for this answer
+                        const normalized = ua.textAnswer ? normalizeAnswer(ua.textAnswer) : "";
+                        const stat = qStats.find((s: any) => s.normalizedAnswer === normalized);
+                        const count = stat?.correctCount ?? 0;
+                        const pickedByPercent = totalCorrect > 0 ? (count / totalCorrect) * 100 : 0;
+
+                        return {
+                            rarity: pickedByPercent, // Rarity score is inverse? Or just percent? Usually it's percent.
+                            pickedByPercent: pickedByPercent,
+                            acceptedAnswers
+                        };
+                    })(),
+                }),
                 ...(revealAnswers && {
                     correctAnswer: correctAnswersMap.get(ua.questionId),
                     explanation: ua.question.explanation,
@@ -188,6 +258,11 @@ export async function GET(
                     explanationVideoUrl: ua.question.explanationVideoUrl,
                 }),
             })),
+            // Grid-specific metadata
+            ...(isGridMode && {
+                playMode: attempt.quiz.playMode,
+                playConfig: attempt.quiz.playConfig,
+            }),
         };
 
         return successResponse(response);
@@ -243,7 +318,10 @@ export async function PATCH(
             });
         }
 
-        if (batchedAnswers && Array.isArray(batchedAnswers) && batchedAnswers.length > 0) {
+        // For grid quizzes, skip batch answer creation — answers are submitted per-cell via /answers/text
+        const isGridCompletion = attempt.quiz.playMode === "GRID_3X3";
+
+        if (!isGridCompletion && batchedAnswers && Array.isArray(batchedAnswers) && batchedAnswers.length > 0) {
             const validQuestions = attempt.selectedQuestionIds;
             const uniqueBatchedAnswers = new Map<string, {
                 questionId: string;

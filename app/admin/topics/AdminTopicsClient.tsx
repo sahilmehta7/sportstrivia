@@ -19,7 +19,7 @@ import { useToast } from "@/hooks/use-toast";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
+  _DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,

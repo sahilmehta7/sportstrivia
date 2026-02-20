@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence } from 'framer-motion';
 import { WordleBoard } from './WordleBoard';
 import { VirtualKeyboard } from './VirtualKeyboard';
 import { DailyGameResult } from './DailyGameResult';
@@ -40,45 +40,7 @@ export function WordleGame({
     const [showResult, setShowResult] = useState(false);
     const { toast } = useToast();
 
-    // Listen for physical keyboard
-    useEffect(() => {
-        const handleKeyDown = (e: KeyboardEvent) => {
-            if (gameOver || isSubmitting) return;
-
-            if (e.key === 'Enter') {
-                handleKeyPress('ENTER');
-            } else if (e.key === 'Backspace') {
-                handleKeyPress('BACKSPACE');
-            } else if (/^[a-zA-Z]$/.test(e.key)) {
-                handleKeyPress(e.key.toUpperCase());
-            }
-        };
-
-        window.addEventListener('keydown', handleKeyDown);
-        return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [currentGuess, gameOver, isSubmitting]);
-
-    const handleKeyPress = useCallback((key: string) => {
-        if (gameOver || isSubmitting) return;
-
-        if (key === 'BACKSPACE') {
-            setCurrentGuess(prev => prev.slice(0, -1));
-        } else if (key === 'ENTER') {
-            if (currentGuess.length === wordLength) {
-                submitGuess();
-            } else {
-                toast({
-                    title: 'Not enough letters',
-                    description: `Word must be ${wordLength} letters`,
-                    variant: 'destructive',
-                });
-            }
-        } else if (currentGuess.length < wordLength && /^[A-Z]$/.test(key)) {
-            setCurrentGuess(prev => prev + key);
-        }
-    }, [currentGuess, wordLength, gameOver, isSubmitting]);
-
-    const submitGuess = async () => {
+    const submitGuess = useCallback(async () => {
         if (currentGuess.length !== wordLength || isSubmitting) return;
 
         setIsSubmitting(true);
@@ -136,7 +98,46 @@ export function WordleGame({
         } finally {
             setIsSubmitting(false);
         }
-    };
+    }, [currentGuess, gameId, letterStatuses, toast, wordLength, isSubmitting]);
+
+    const handleKeyPress = useCallback((key: string) => {
+        if (gameOver || isSubmitting) return;
+
+        if (key === 'BACKSPACE') {
+            setCurrentGuess(prev => prev.slice(0, -1));
+        } else if (key === 'ENTER') {
+            if (currentGuess.length === wordLength) {
+                submitGuess();
+            } else {
+                toast({
+                    title: 'Not enough letters',
+                    description: `Word must be ${wordLength} letters`,
+                    variant: 'destructive',
+                });
+            }
+        } else if (currentGuess.length < wordLength && /^[A-Z]$/.test(key)) {
+            setCurrentGuess(prev => prev + key);
+        }
+    }, [currentGuess, wordLength, gameOver, isSubmitting, submitGuess, toast]);
+
+    // Listen for physical keyboard
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (gameOver || isSubmitting) return;
+
+            if (e.key === 'Enter') {
+                handleKeyPress('ENTER');
+            } else if (e.key === 'Backspace') {
+                handleKeyPress('BACKSPACE');
+            } else if (/^[a-zA-Z]$/.test(e.key)) {
+                handleKeyPress(e.key.toUpperCase());
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [currentGuess, gameOver, isSubmitting, handleKeyPress]);
+
 
     return (
         <div className="flex flex-col items-center gap-6 sm:gap-8 py-4">

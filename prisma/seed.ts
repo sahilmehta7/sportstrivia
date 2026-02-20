@@ -615,6 +615,48 @@ async function main() {
 
   console.log("✓ Created badges");
 
+  // --- GRID QUIZ: Premier League Rivals (using new GridQuiz model) ---
+  const cellAnswers = [
+    // Row 0: Man Utd
+    [
+      "Michael Owen\nPaul Ince\nPeter Beardsley",
+      "Carlos Tevez\nPeter Schmeichel\nAndy Cole\nOwen Hargreaves\nDenis Law\nJadon Sancho\nBrian Kidd",
+      "Cristiano Ronaldo\nWayne Rooney\nRio Ferdinand\nPaul Scholes\nRyan Giggs\nNemanja Vidic\nEdwin van der Sar\nDavid Beckham\nGary Neville\nTeddy Sheringham\nOle Gunnar Solskjaer\nCasemiro\nRaphael Varane\nAngel Di Maria\nGerard Pique",
+    ],
+    // Row 1: Real Madrid
+    [
+      "Michael Owen\nXabi Alonso\nSteve McManaman\nJerzy Dudek\nFernando Morientes\nNicolas Anelka\nAlvaro Arbeloa\nNuri Sahin\nFabinho",
+      "Steve McManaman\nNicolas Anelka\nRobinho\nEmmanuel Adebayor\nJavi Garcia\nBrahim Diaz\nDanilo\nMateo Kovacic\nAymeric Laporte",
+      "Cristiano Ronaldo\nSergio Ramos\nLuka Modric\nKarim Benzema\nMarcelo\nGareth Bale\nToni Kroos\nCasemiro\nRaul\nIker Casillas\nRoberto Carlos\nZinedine Zidane\nLuis Figo\nRonaldo Nazario\nKaka\nPepe\nAngel Di Maria\nSami Khedira\nXabi Alonso",
+    ],
+    // Row 2: England
+    [
+      "Steven Gerrard\nMichael Owen\nJamie Carragher\nRobbie Fowler\nJordan Henderson\nTrent Alexander-Arnold\nPeter Crouch\nEmile Heskey\nJames Milner\nJoe Gomez\nAdam Lallana\nDaniel Sturridge\nRaheem Sterling\nJoe Cole",
+      "Raheem Sterling\nJoe Hart\nKyle Walker\nJohn Stones\nPhil Foden\nJack Grealish\nJames Milner\nGareth Barry\nShaun Wright-Phillips\nMicah Richards\nFrank Lampard\nFabian Delph\nKalvin Phillips\nRico Lewis",
+      "Wayne Rooney\nRio Ferdinand\nPaul Scholes\nSteve McManaman\nSteven Gerrard\nFrank Lampard\nJohn Terry\nAshley Cole\nGary Cahill\nJordan Henderson\nTrent Alexander-Arnold\nMason Mount\nReece James\nBen Chilwell\nAdam Lallana\nDaniel Sturridge\nJoe Gomez\nOwen Hargreaves\nWes Brown\nNicky Butt\nTeddy Sheringham\nDavid Beckham\nGary Neville\nPhil Neville",
+    ],
+  ];
+
+  await prisma.gridQuiz.upsert({
+    where: { slug: "premier-league-rivals-grid" },
+    update: { cellAnswers },
+    create: {
+      title: "Premier League Rivals Grid",
+      slug: "premier-league-rivals-grid",
+      description: "Immaculate Grid: Test your knowledge of Premier League rivalries and superstars.",
+      sport: "Football",
+      status: "PUBLISHED",
+      size: 3,
+      rows: ["Man Utd", "Real Madrid", "England"],
+      cols: ["Liverpool", "Man City", "UCL Winner"],
+      cellAnswers,
+      timeLimit: 300,
+    },
+  });
+
+  console.log("✓ Created Premier League Rivals Grid (GridQuiz)");
+
+
   console.log("\n✅ Database seeding completed successfully!");
   console.log("\nCreated:");
   console.log(`- 2 users (1 admin, 1 sample user)`);

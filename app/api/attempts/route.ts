@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
     const { quizId, isPracticeMode } = startAttemptSchema.parse(body);
 
     // Get quiz with questions
-    const quiz = await prisma.quiz.findUnique({
+    const quiz = (await prisma.quiz.findUnique({
       where: { id: quizId },
       include: {
         questionPool: {
@@ -33,7 +33,9 @@ export async function POST(request: NextRequest) {
         },
         topicConfigs: true,
       },
-    });
+    })) as any;
+
+    const isGridMode = quiz?.playMode === "GRID_3X3";
 
     if (!quiz) {
       throw new NotFoundError("Quiz not found");
@@ -79,10 +81,10 @@ export async function POST(request: NextRequest) {
 
     if (quiz.questionSelectionMode === "FIXED") {
       // Use all questions in order
-      selectedQuestionIds = quiz.questionPool.map((qp) => qp.questionId);
+      selectedQuestionIds = quiz.questionPool.map((qp: any) => qp.questionId);
     } else if (quiz.questionSelectionMode === "TOPIC_RANDOM") {
       const questionsByTopic = await Promise.all(
-        quiz.topicConfigs.map(async (config) => {
+        quiz.topicConfigs.map(async (config: any) => {
           const topicIds = await getTopicIdsWithDescendants(config.topicId);
 
           const allQuestions = await prisma.question.findMany({
@@ -104,12 +106,12 @@ export async function POST(request: NextRequest) {
 
       selectedQuestionIds = shuffleArray(quiz.questionPool)
         .slice(0, selectCount)
-        .map((poolItem) => poolItem.questionId);
+        .map((poolItem: any) => poolItem.questionId);
     }
 
     // Randomize question order if configured
     if (quiz.randomizeQuestionOrder) {
-      selectedQuestionIds = shuffleArray(selectedQuestionIds);
+      selectedQuestionIds = shuffleArray(selectedQuestionIds as string[]);
     }
 
     if (selectedQuestionIds.length === 0) {
@@ -119,7 +121,7 @@ export async function POST(request: NextRequest) {
     // Use transaction to ensure atomicity of attempt creation and question fetching
     const { attempt, questionRecords } = await prisma.$transaction(async (tx) => {
       // Create quiz attempt
-      const attemptResult = await tx.quizAttempt.create({
+      const attemptResult = (await tx.quizAttempt.create({
         data: {
           userId: user.id,
           quizId: quiz.id,
@@ -143,7 +145,7 @@ export async function POST(request: NextRequest) {
             },
           },
         },
-      });
+      })) as any;
 
       const questionResults = await tx.question.findMany({
         where: {
@@ -171,7 +173,7 @@ export async function POST(request: NextRequest) {
       return { attempt: attemptResult, questionRecords: questionResults };
     });
 
-    const questionMap = new Map(questionRecords.map((record) => [record.id, record]));
+    const questionMap = new Map((questionRecords as any[]).map((record) => [record.id, record]));
 
     const serializedQuestions = selectedQuestionIds
       .map((questionId, index) => {
@@ -180,7 +182,7 @@ export async function POST(request: NextRequest) {
           return null;
         }
 
-        const answers = question.answers.map((answer) => ({
+        const answers = (question as any).answers.map((answer: any) => ({
           id: answer.id,
           answerText: answer.answerText,
           answerImageUrl: answer.answerImageUrl,
@@ -188,7 +190,7 @@ export async function POST(request: NextRequest) {
           answerAudioUrl: answer.answerAudioUrl,
         }));
 
-        const randomizedAnswers = shuffleArray(answers);
+        const randomizedAnswers = isGridMode ? [] : shuffleArray(answers);
 
         return {
           order: index,
@@ -216,6 +218,11 @@ export async function POST(request: NextRequest) {
       totalQuestions: attempt.totalQuestions,
       attemptLimit: attemptLimitMetadata,
       questions: serializedQuestions,
+      // Grid-specific data
+      ...(isGridMode && {
+        playMode: "GRID_3X3",
+        playConfig: quiz!.playConfig,
+      }),
     }, 201);
   } catch (error) {
     return handleError(error);

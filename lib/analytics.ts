@@ -10,7 +10,14 @@ type EventName =
     | 'review_submit'
     | 'theme_change'
     | 'push_subscription'
-    | 'ai_generation';
+    | 'ai_generation'
+    | 'grid_start'
+    | 'grid_correct'
+    | 'grid_wrong'
+    | 'grid_cell_opened'
+    | 'grid_cell_submitted'
+    | 'grid_completed'
+    | 'grid_result_shared';
 
 export const trackEvent = (eventName: EventName, params?: Record<string, any>) => {
     sendGAEvent('event', eventName, params || {});

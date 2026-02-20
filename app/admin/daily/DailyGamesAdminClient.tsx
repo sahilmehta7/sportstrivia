@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { Plus, Calendar, Trash2, Edit2, RefreshCw } from 'lucide-react';
+import Link from 'next/link';
+import { Plus, Calendar, Trash2, Edit2, RefreshCw, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -195,7 +196,7 @@ export function DailyGamesAdminClient({ initialGames }: DailyGamesAdminClientPro
                 title: 'Deleted',
                 description: `Game for ${game.date} has been deleted`,
             });
-        } catch (error) {
+        } catch {
             toast({
                 title: 'Error',
                 description: 'Failed to delete game',
@@ -230,7 +231,7 @@ export function DailyGamesAdminClient({ initialGames }: DailyGamesAdminClientPro
                 title: 'Success',
                 description: 'Games have been auto-scheduled',
             });
-        } catch (error) {
+        } catch {
             toast({
                 title: 'Error',
                 description: 'Failed to auto-schedule games',
@@ -245,6 +246,13 @@ export function DailyGamesAdminClient({ initialGames }: DailyGamesAdminClientPro
         <div className="space-y-6">
             {/* Actions */}
             <div className="flex gap-3">
+                <Link href="/admin/daily/import">
+                    <Button variant="outline" disabled={isLoading}>
+                        <Upload className="w-4 h-4 mr-2" />
+                        Import Word Puzzles
+                    </Button>
+                </Link>
+
                 <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                     <DialogTrigger asChild>
                         <Button onClick={() => handleOpenDialog()}>
