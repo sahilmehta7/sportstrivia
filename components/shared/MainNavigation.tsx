@@ -76,7 +76,7 @@ export function MainNavigation() {
       <nav className="sticky top-0 z-50 border-b-2 border-foreground bg-background">
         <div className="mx-auto flex h-20 w-full max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
           <Link href="/" className="flex items-center gap-3 group">
-            <div className="relative h-10 w-10">
+            <div className="relative h-12 w-12">
               <Image
                 src="/logo.png"
                 alt="Sports Trivia Logo"
@@ -92,7 +92,7 @@ export function MainNavigation() {
                 priority
               />
             </div>
-            <span className="text-2xl font-bold tracking-tighter uppercase font-['Barlow_Condensed',sans-serif]">
+            <span className="text-3xl font-black italic tracking-tighter uppercase font-['Barlow_Condensed',sans-serif]">
               SPORTS<span className="text-accent underline decoration-4 underline-offset-4">TRIVIA</span>
             </span>
           </Link>
@@ -121,9 +121,9 @@ export function MainNavigation() {
         className="sr-only"
       />
       <nav className="sticky top-0 z-50 border-b-2 border-foreground/5 bg-background/80 backdrop-blur-md">
-        <div className="mx-auto max-w-7xl px-4 h-20 flex items-center gap-6 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-7xl px-4 h-20 flex items-center justify-between gap-6 sm:px-6 lg:px-8">
           <Link href="/" className="flex items-center gap-3 group shrink-0">
-            <div className="relative h-8 w-8">
+            <div className="relative h-10 w-10 sm:h-12 sm:w-12">
               <Image
                 src="/logo.png"
                 alt="Sports Trivia Logo"
@@ -139,7 +139,7 @@ export function MainNavigation() {
                 priority
               />
             </div>
-            <span className="text-xl font-bold tracking-tighter uppercase font-['Barlow_Condensed',sans-serif] hidden sm:block">
+            <span className="text-2xl sm:text-3xl font-black italic tracking-tighter uppercase font-['Barlow_Condensed',sans-serif]">
               SPORTS<span className="text-accent">TRIVIA</span>
             </span>
           </Link>
@@ -193,6 +193,7 @@ export function MainNavigation() {
                 side="right"
                 id="mobile-menu"
                 className="flex h-full w-full flex-col p-0 bg-background border-l-2 border-foreground"
+                onOpenAutoFocus={(e) => e.preventDefault()}
               >
                 <SheetHeader className="border-b-2 border-foreground px-8 py-8 items-start">
                   <SheetTitle className="text-4xl font-bold tracking-tighter uppercase font-['Barlow_Condensed',sans-serif]">
