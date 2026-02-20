@@ -16,7 +16,7 @@ type AttemptWithDetails = GridAttempt & {
     answers: GridAnswer[];
 };
 
-export default function GridResultsPage({ _quizSlug, attemptId }: GridResultsPageProps) {
+export default function GridResultsPage({ quizSlug: _quizSlug, attemptId }: GridResultsPageProps) {
     const [loading, setLoading] = useState(true);
     const [attempt, setAttempt] = useState<AttemptWithDetails | null>(null);
     const { toast } = useToast();

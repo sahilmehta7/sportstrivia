@@ -5,7 +5,7 @@ import { Clock, Zap, Star } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import {
-  _getTextColor,
+  getTextColor as _getTextColor,
 } from "@/lib/showcase-theme";
 import type { ShowcaseTheme } from "@/components/showcase/ShowcaseThemeProvider";
 import type { QuizResultsSummaryData } from "./types";
@@ -36,7 +36,7 @@ function formatTime(seconds: number) {
   return `${minutes}m ${remainingSeconds}s`;
 }
 
-export function QuizResultsSummary({ data, _theme, confetti = false, footer, className }: QuizResultsSummaryProps) {
+export function QuizResultsSummary({ data, theme: _theme, confetti = false, footer, className }: QuizResultsSummaryProps) {
   const percentage = (data.correctAnswers / data.totalQuestions) * 100;
 
   let performanceLabel = "KEEP PUSHING";
@@ -216,5 +216,4 @@ export function QuizResultsStatsGrid({ data, className }: QuizResultsStatsGridPr
     </div>
   );
 }
-
 

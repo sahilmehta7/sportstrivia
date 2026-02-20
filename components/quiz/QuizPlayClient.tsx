@@ -576,7 +576,7 @@ export function QuizPlayClient({ quizId, quizTitle, quizSlug, initialAttemptLimi
       if (!isLastQuestion) {
         reviewTimeoutRef.current = setTimeout(() => {
           const nextIndex = currentIndex + 1;
-          const nextQuestion = questions[nextIndex, completeAttempt];
+          const nextQuestion = questions[nextIndex];
           if (nextQuestion) {
             setCurrentIndex(nextIndex);
             setCurrentQuestion(nextQuestion);

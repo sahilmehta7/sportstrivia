@@ -17,7 +17,7 @@ interface GridGameProps {
     userId: string;
 }
 
-export function GridGame({ grid, _userId }: GridGameProps) {
+export function GridGame({ grid, userId: _userId }: GridGameProps) {
     const router = useRouter();
     const { toast } = useToast();
     const [initLoading, setInitLoading] = useState(true);

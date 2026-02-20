@@ -22,7 +22,7 @@ import {
   QuizResultsStatsGrid,
   QuizResultsSection,
   QuizResultsActions,
-  _QuizResultsReviewButton,
+  QuizResultsReviewButton as _QuizResultsReviewButton,
 } from "@/components/quiz/results";
 import { PerformanceInsightsWrapper as PerformanceInsights } from "@/components/quiz/results/PerformanceInsightsWrapper";
 import { EntranceAnimation } from "@/components/quiz/results/EntranceAnimation";

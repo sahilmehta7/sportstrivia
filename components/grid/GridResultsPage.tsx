@@ -53,7 +53,7 @@ interface GridResultsPageProps {
 export function GridResultsPage({
     quizTitle,
     quizSlug,
-    _score,
+    score: _score,
     gridConfig,
     answers = [],
 }: GridResultsPageProps) {

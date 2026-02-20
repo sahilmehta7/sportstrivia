@@ -10,7 +10,7 @@ import { DuplicateResolutionModal } from "./DuplicateResolutionModal";
 export function DuplicateQuestionButton() {
     const [isLoading, _setIsLoading] = useState(false);
     const [open, setOpen] = useState(false);
-    const { _toast } = useToast();
+    const { toast: _toast } = useToast();
 
     return (
         <>

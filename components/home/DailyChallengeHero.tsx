@@ -28,9 +28,9 @@ const gameTypeLabels: Record<DailyGameType, string> = {
 };
 
 export function DailyChallengeHero({
-    _gameId,
+    gameId: _gameId,
     gameType = 'WORD',
-    _displayName = 'Daily Challenge',
+    displayName: _displayName = 'Daily Challenge',
     gameNumber = 1,
     isCompleted = false,
     solved = false,

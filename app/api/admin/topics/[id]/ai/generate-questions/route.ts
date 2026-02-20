@@ -6,16 +6,16 @@ import { z } from "zod";
 import { getAIModel, getAIQuizPrompt } from "@/lib/services/settings.service";
 import {
   createBackgroundTask,
-  _markBackgroundTaskCompleted,
+  markBackgroundTaskCompleted as _markBackgroundTaskCompleted,
   markBackgroundTaskFailed,
-  _markBackgroundTaskInProgress,
-  _updateBackgroundTask,
+  markBackgroundTaskInProgress as _markBackgroundTaskInProgress,
+  updateBackgroundTask as _updateBackgroundTask,
 } from "@/lib/services/background-task.service";
 import { BackgroundTaskType } from "@prisma/client";
 import {
-  _callOpenAIWithRetry,
-  _extractContentFromCompletion,
-  _extractUsageStats,
+  callOpenAIWithRetry as _callOpenAIWithRetry,
+  extractContentFromCompletion as _extractContentFromCompletion,
+  extractUsageStats as _extractUsageStats,
 } from "@/lib/services/ai-openai-client.service";
 import { processAIQuestionsTask } from "@/lib/services/ai-questions-processor.service";
 import { after } from "next/server";
@@ -97,5 +97,4 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     return handleError(error);
   }
 }
-
 

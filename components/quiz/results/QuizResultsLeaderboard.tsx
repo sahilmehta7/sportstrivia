@@ -8,7 +8,7 @@ import { motion } from "framer-motion";
 
 export function QuizResultsLeaderboard({
   entries,
-  _theme,
+  theme: _theme,
 }: QuizResultsLeaderboardProps) {
   if (!entries.length) {
     return (

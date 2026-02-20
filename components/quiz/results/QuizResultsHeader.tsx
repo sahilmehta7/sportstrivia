@@ -13,7 +13,7 @@ interface QuizResultsHeaderProps {
 }
 
 export function QuizResultsHeader({
-  _theme,
+  theme: _theme,
   title,
   subtitle,
   leading,
@@ -49,5 +49,4 @@ export function QuizResultsHeader({
     </div>
   );
 }
-
 

@@ -29,7 +29,7 @@ interface TopicsContentProps {
   suggestedChips: { value: string; label: string }[];
 }
 
-export function TopicsContent({ featured, topics, _l2TopicsByParent, _suggestedChips }: TopicsContentProps) {
+export function TopicsContent({ featured, topics, l2TopicsByParent: _l2TopicsByParent, suggestedChips: _suggestedChips }: TopicsContentProps) {
   const [search, setSearch] = useState("");
   const [_activeTab, _setActiveTab] = useState<"all" | "featured">("all");
 

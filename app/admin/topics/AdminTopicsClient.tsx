@@ -19,7 +19,7 @@ import { useToast } from "@/hooks/use-toast";
 import {
   Dialog,
   DialogContent,
-  _DialogDescription,
+  DialogDescription as _DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -468,4 +468,3 @@ export function AdminTopicsClient({ topics }: AdminTopicsClientProps) {
     </div>
   );
 }
-

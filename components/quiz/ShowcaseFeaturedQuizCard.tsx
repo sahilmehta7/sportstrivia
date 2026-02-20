@@ -31,7 +31,7 @@ export function ShowcaseFeaturedQuizCard({
   playersLabel,
   ratingLabel,
   coverImageUrl,
-  _accent = "rgba(34,211,238,0.2)",
+  accent: _accent = "rgba(34,211,238,0.2)",
   className,
   ctaHref,
   ctaLabel = "INITIALIZE MISSION",

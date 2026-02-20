@@ -32,7 +32,7 @@ export function AthleteGuessGame({
     gameId,
     maxGuesses,
     clues,
-    _initialGuesses = [],
+    initialGuesses: _initialGuesses = [],
     isCompleted = false,
     targetValue,
     gameNumber,
@@ -237,4 +237,3 @@ export function AthleteGuessGame({
         </div>
     );
 }
-

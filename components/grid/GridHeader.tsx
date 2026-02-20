@@ -16,7 +16,7 @@ interface GridHeaderProps {
 export function GridHeader({
     quizTitle,
     score,
-    _maxScore = 0,
+    maxScore: _maxScore = 0,
     lives,
     maxLives = 9,
     className

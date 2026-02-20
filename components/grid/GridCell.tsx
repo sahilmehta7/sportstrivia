@@ -27,8 +27,8 @@ interface GridCellProps {
 }
 
 export function GridCell({
-    _row,
-    _col,
+    row: _row,
+    col: _col,
     state,
     playerName,
     playerImageUrl,

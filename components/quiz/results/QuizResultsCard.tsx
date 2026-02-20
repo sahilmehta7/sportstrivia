@@ -9,7 +9,7 @@ interface QuizResultsCardProps {
   children: ReactNode;
 }
 
-export function QuizResultsCard({ _theme, className, children }: QuizResultsCardProps) {
+export function QuizResultsCard({ theme: _theme, className, children }: QuizResultsCardProps) {
   return (
     <div
       className={cn(
@@ -22,5 +22,4 @@ export function QuizResultsCard({ _theme, className, children }: QuizResultsCard
     </div>
   );
 }
-
 

@@ -5,8 +5,8 @@ import {
   Card,
   CardContent,
   CardDescription,
-  _CardFooter,
-  _CardHeader,
+  CardFooter as _CardFooter,
+  CardHeader as _CardHeader,
   CardTitle,
 } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
