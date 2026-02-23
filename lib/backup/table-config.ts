@@ -1,0 +1,50 @@
+export type TableConfig = {
+  model: string;
+  delegate: string;
+  orderBy?: Record<string, "asc" | "desc">;
+};
+
+export const BACKUP_TABLES: TableConfig[] = [
+  { model: "Level", delegate: "level" },
+  { model: "Tier", delegate: "tier" },
+  { model: "User", delegate: "user" },
+  { model: "Account", delegate: "account" },
+  { model: "Session", delegate: "session" },
+  { model: "VerificationToken", delegate: "verificationToken" },
+  { model: "Topic", delegate: "topic" },
+  { model: "PushSubscription", delegate: "pushSubscription" },
+  { model: "UserNotificationPreference", delegate: "userNotificationPreference", orderBy: { userId: "asc" } },
+  { model: "Quiz", delegate: "quiz" },
+  { model: "QuizCompletionBonusAward", delegate: "quizCompletionBonusAward" },
+  { model: "QuizTag", delegate: "quizTag" },
+  { model: "QuizTagRelation", delegate: "quizTagRelation" },
+  { model: "QuizTopicConfig", delegate: "quizTopicConfig" },
+  { model: "Question", delegate: "question" },
+  { model: "Answer", delegate: "answer" },
+  { model: "QuizQuestionPool", delegate: "quizQuestionPool" },
+  { model: "QuizAttempt", delegate: "quizAttempt" },
+  { model: "UserAnswer", delegate: "userAnswer" },
+  { model: "UserTopicStats", delegate: "userTopicStats" },
+  { model: "QuizLeaderboard", delegate: "quizLeaderboard" },
+  { model: "Friend", delegate: "friend" },
+  { model: "Challenge", delegate: "challenge" },
+  { model: "Badge", delegate: "badge" },
+  { model: "UserBadge", delegate: "userBadge" },
+  { model: "Notification", delegate: "notification" },
+  { model: "QuizReview", delegate: "quizReview" },
+  { model: "QuestionReport", delegate: "questionReport" },
+  { model: "Media", delegate: "media" },
+  { model: "AppSettings", delegate: "appSettings" },
+  { model: "SearchQuery", delegate: "searchQuery" },
+  { model: "UserSearchQuery", delegate: "userSearchQuery" },
+  { model: "AdminBackgroundTask", delegate: "adminBackgroundTask" },
+  { model: "UserLevel", delegate: "userLevel" },
+  { model: "UserTierHistory", delegate: "userTierHistory" },
+  { model: "DailyGame", delegate: "dailyGame" },
+  { model: "DailyGameAttempt", delegate: "dailyGameAttempt" },
+  { model: "GridQuiz", delegate: "gridQuiz" },
+  { model: "GridAttempt", delegate: "gridAttempt" },
+  { model: "GridAnswer", delegate: "gridAnswer" },
+  { model: "QuestionAnswerStat", delegate: "questionAnswerStat" },
+];
+

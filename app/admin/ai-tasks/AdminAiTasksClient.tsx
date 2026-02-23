@@ -22,6 +22,10 @@ function formatTaskType(type: BackgroundTaskType): string {
             return "AI Quiz Import";
         case BackgroundTaskType.AI_TOPIC_QUESTION_IMPORT:
             return "AI Question Import";
+        case BackgroundTaskType.BACKUP_CREATE:
+            return "Backup Create";
+        case BackgroundTaskType.BACKUP_RESTORE:
+            return "Backup Restore";
         default:
             return (type as string).replace(/_/g, " ");
     }

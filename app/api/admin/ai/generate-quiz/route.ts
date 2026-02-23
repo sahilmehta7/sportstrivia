@@ -10,6 +10,7 @@ import {
 import { processAIQuizTask } from "@/lib/services/ai-quiz-processor.service";
 import { determineSportFromTopic, fetchSourceMaterial } from "@/lib/services/ai-quiz-processor.service";
 import { BackgroundTaskType } from "@prisma/client";
+import { assertRestoreUnlocked } from "@/lib/services/restore-lock.service";
 
 
 // Use Node.js runtime for long-running AI operations
@@ -41,6 +42,7 @@ export async function POST(request: NextRequest) {
   let taskId: string | null = null;
   try {
     const admin = await requireAdmin();
+    await assertRestoreUnlocked();
 
     // Check if OpenAI API key is configured
     if (!process.env.OPENAI_API_KEY) {

@@ -43,6 +43,7 @@ export default async function AdminLayout({
       href: "/admin/utilities",
       icon: "Wrench" as const,
       children: [
+        { name: "Backups", href: "/admin/backups", icon: "DatabaseBackup" as const },
         { name: "AI Tasks", href: "/admin/ai-tasks", icon: "History" as const },
         { name: "AI Quiz Generator", href: "/admin/ai-quiz", icon: "Sparkles" as const },
         { name: "Import Quiz", href: "/admin/import", icon: "Upload" as const },

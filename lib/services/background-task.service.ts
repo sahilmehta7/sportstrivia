@@ -13,6 +13,58 @@ export interface CreateBackgroundTaskInput {
   status?: BackgroundTaskStatus;
 }
 
+let cachedEnumValues: Set<string> | null = null;
+let enumCacheAt = 0;
+const ENUM_CACHE_TTL_MS = 60_000;
+
+async function getDbBackgroundTaskEnumValues(): Promise<Set<string>> {
+  const now = Date.now();
+  if (cachedEnumValues && now - enumCacheAt < ENUM_CACHE_TTL_MS) {
+    return cachedEnumValues;
+  }
+
+  type EnumRow = { value: string };
+  const rows = (await prisma.$queryRawUnsafe(
+    `SELECT unnest(enum_range(NULL::"BackgroundTaskType"))::text AS value`
+  )) as EnumRow[];
+  cachedEnumValues = new Set(rows.map((row) => row.value));
+  enumCacheAt = now;
+  return cachedEnumValues;
+}
+
+function getFallbackTaskType(type: BackgroundTaskType): BackgroundTaskType {
+  if (type === BackgroundTaskType.BACKUP_CREATE || type === BackgroundTaskType.BACKUP_RESTORE) {
+    return BackgroundTaskType.AI_QUIZ_IMPORT;
+  }
+  return type;
+}
+
+async function normalizeTaskTypeForDatabase(type: BackgroundTaskType): Promise<BackgroundTaskType> {
+  try {
+    const values = await getDbBackgroundTaskEnumValues();
+    if (values.has(type)) {
+      return type;
+    }
+
+    const fallback = getFallbackTaskType(type);
+    if (values.has(fallback)) {
+      console.warn(
+        `[BackgroundTask] DB enum missing "${type}". Using fallback "${fallback}". Run migrations to add missing enum values.`
+      );
+      return fallback;
+    }
+  } catch (error) {
+    const fallback = getFallbackTaskType(type);
+    console.warn(
+      `[BackgroundTask] Could not verify DB enum values for "${type}". Falling back to "${fallback}".`,
+      error
+    );
+    return fallback;
+  }
+
+  return type;
+}
+
 export async function createBackgroundTask({
   userId,
   type,
@@ -20,10 +72,11 @@ export async function createBackgroundTask({
   input,
   status = BackgroundTaskStatus.PENDING,
 }: CreateBackgroundTaskInput): Promise<AdminBackgroundTask> {
+  const normalizedType = await normalizeTaskTypeForDatabase(type);
   return prisma.adminBackgroundTask.create({
     data: {
       userId: userId ?? null,
-      type,
+      type: normalizedType,
       status,
       label,
       input: input ?? undefined,

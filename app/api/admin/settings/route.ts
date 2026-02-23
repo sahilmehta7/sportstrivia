@@ -13,6 +13,7 @@ import {
   DEFAULT_AI_MODEL,
   AVAILABLE_AI_MODELS,
 } from "@/lib/services/settings.service";
+import { assertRestoreUnlocked } from "@/lib/services/restore-lock.service";
 
 const updateSettingSchema = z.object({
   key: z.enum(["ai_quiz_prompt", "ai_model"]),
@@ -107,6 +108,7 @@ export async function GET(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     const user = await requireAdmin();
+    await assertRestoreUnlocked();
 
     const body = await request.json();
     const { key, value } = updateSettingSchema.parse(body);
@@ -130,6 +132,7 @@ export async function PUT(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   try {
     await requireAdmin();
+    await assertRestoreUnlocked();
 
     const { searchParams } = new URL(request.url);
     const key = searchParams.get("key");
@@ -150,4 +153,3 @@ export async function DELETE(request: NextRequest) {
     return handleError(error);
   }
 }
-

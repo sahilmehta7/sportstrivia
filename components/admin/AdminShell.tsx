@@ -26,7 +26,8 @@ import {
   Wrench,
   Activity,
   ShieldCheck,
-  Globe
+  Globe,
+  DatabaseBackup,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -50,6 +51,7 @@ const iconComponents = {
   Medal,
   FileText,
   Wrench,
+  DatabaseBackup,
 };
 
 interface NavigationItem {

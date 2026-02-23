@@ -3,6 +3,7 @@ import { requireAuth } from "@/lib/auth-helpers";
 import { handleError, successResponse } from "@/lib/errors";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
+import { assertRestoreUnlocked } from "@/lib/services/restore-lock.service";
 
 const updateProfileSchema = z.object({
   name: z.string().min(1).max(100).optional(),
@@ -45,6 +46,7 @@ export async function GET() {
 export async function PATCH(request: NextRequest) {
   try {
     const authUser = await requireAuth();
+    await assertRestoreUnlocked();
     const body = await request.json();
     const validatedData = updateProfileSchema.parse(body);
 
@@ -71,6 +73,7 @@ export async function PATCH(request: NextRequest) {
 export async function DELETE(_request: NextRequest) {
   try {
     const user = await requireAuth();
+    await assertRestoreUnlocked();
 
     // Use transaction to ensure atomicity
     await prisma.$transaction(async (tx) => {

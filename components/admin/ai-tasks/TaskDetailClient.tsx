@@ -15,7 +15,9 @@ type BackgroundTaskType =
   | "AI_QUIZ_GENERATION"
   | "AI_TOPIC_QUESTION_GENERATION"
   | "AI_QUIZ_IMPORT"
-  | "AI_TOPIC_QUESTION_IMPORT";
+  | "AI_TOPIC_QUESTION_IMPORT"
+  | "BACKUP_CREATE"
+  | "BACKUP_RESTORE";
 
 interface PreviewAnswer {
   text: string;
@@ -105,6 +107,10 @@ function formatType(type: BackgroundTaskType): string {
       return "AI Quiz Import";
     case "AI_TOPIC_QUESTION_IMPORT":
       return "AI Question Import";
+    case "BACKUP_CREATE":
+      return "Backup Create";
+    case "BACKUP_RESTORE":
+      return "Backup Restore";
     default:
       return (type as string).replace(/_/g, " ");
   }
