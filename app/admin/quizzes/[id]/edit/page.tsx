@@ -74,19 +74,23 @@ export default function EditQuizPage({ params }: EditQuizPageProps) {
   interface RootTopic {
     id: string;
     name: string;
+    level?: number;
+    parentId?: string | null;
   }
   const [sports, setSports] = useState<RootTopic[]>([]);
   const [loadingSports, setLoadingSports] = useState(true);
 
-  // Fetch root topics (level 0) to use as sports list
+  // Fetch topics for sports list (prefer level 1, fallback to roots)
   useEffect(() => {
     async function fetchSports() {
       try {
         const response = await fetch("/api/topics");
         if (response.ok) {
           const result = await response.json();
-          const rootTopics = result.data?.topics?.filter((t: any) => t.parentId === null) || [];
-          setSports(rootTopics);
+          const topics: RootTopic[] = result.data?.topics || [];
+          const levelOneTopics = topics.filter((t) => t.level === 1);
+          const fallbackRootTopics = topics.filter((t) => t.parentId === null);
+          setSports(levelOneTopics.length > 0 ? levelOneTopics : fallbackRootTopics);
         }
       } catch (error) {
         console.error("Failed to fetch sports:", error);
@@ -1167,7 +1171,7 @@ export default function EditQuizPage({ params }: EditQuizPageProps) {
                     })()}
                     value={formData.sport || undefined}
                     onChange={(value) => updateField("sport", value)}
-                    placeholder={loadingSports ? "Loading..." : "Select sport (root topic)"}
+                    placeholder={loadingSports ? "Loading..." : "Select sport"}
                     disabled={loadingSports}
                     valueKey="name"
                   />
