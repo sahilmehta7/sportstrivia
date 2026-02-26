@@ -38,10 +38,10 @@ export function QuizCard({ quiz }: QuizCardProps) {
   const difficultyDisplay = quiz.difficulty;
 
   return (
-    <Card className="group relative overflow-hidden rounded-lg border-white/10 bg-zinc-950 transition-all duration-300 hover:border-white/20 hover:shadow-2xl hover:shadow-black/50">
+    <Card className="group relative overflow-hidden rounded-[1.5rem] border border-border/60 bg-card transition-all duration-300 hover:-translate-y-0.5 hover:border-foreground/20 hover:shadow-athletic">
       <Link href={`/quizzes/${quiz.slug}`} className="flex h-full flex-col">
         {/* Cover Image */}
-        <div className="relative aspect-[16/9] w-full overflow-hidden bg-zinc-900">
+        <div className="relative aspect-[16/9] w-full overflow-hidden bg-muted">
           {coverImage ? (
             <Image
               src={coverImage}
@@ -53,8 +53,8 @@ export function QuizCard({ quiz }: QuizCardProps) {
             />
           ) : (
             // Fallback pattern
-            <div className="flex h-full w-full items-center justify-center bg-zinc-900 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-zinc-800 to-zinc-950">
-              <span className="text-xs font-bold uppercase tracking-widest text-zinc-700">
+            <div className="flex h-full w-full items-center justify-center bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-muted to-background">
+              <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground/70">
                 No Cover
               </span>
             </div>
@@ -79,9 +79,9 @@ export function QuizCard({ quiz }: QuizCardProps) {
               variant="outline"
               className={cn(
                 "rounded-sm border-0 px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest backdrop-blur-md",
-                quiz.difficulty === 'EASY' && "bg-emerald-500/20 text-emerald-300",
-                quiz.difficulty === 'MEDIUM' && "bg-amber-500/20 text-amber-300",
-                quiz.difficulty === 'HARD' && "bg-rose-500/20 text-rose-300"
+                quiz.difficulty === "EASY" && "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300",
+                quiz.difficulty === "MEDIUM" && "bg-amber-500/15 text-amber-700 dark:text-amber-300",
+                quiz.difficulty === "HARD" && "bg-rose-500/15 text-rose-700 dark:text-rose-300"
               )}
             >
               {difficultyDisplay}
@@ -92,23 +92,23 @@ export function QuizCard({ quiz }: QuizCardProps) {
         <CardContent className="flex flex-1 flex-col justify-between space-y-4 p-5">
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
                 {quiz.sport ?? "Multi-sport"}
               </span>
             </div>
-            <CardTitle className="line-clamp-2 text-lg font-bold uppercase leading-tight tracking-tight text-white group-hover:text-emerald-400 transition-colors">
+            <CardTitle className="line-clamp-2 text-lg font-bold uppercase leading-tight tracking-tight text-foreground transition-colors group-hover:text-primary">
               {quiz.title}
             </CardTitle>
 
             {quiz.description && (
-              <CardDescription className="line-clamp-2 text-xs font-medium text-zinc-400">
+              <CardDescription className="line-clamp-2 text-xs font-medium text-muted-foreground">
                 {quiz.description}
               </CardDescription>
             )}
           </div>
 
-          <div className="flex items-center justify-between border-t border-white/5 pt-4">
-            <div className="flex items-center gap-4 text-xs font-medium text-zinc-400">
+          <div className="flex items-center justify-between border-t border-border/60 pt-4">
+            <div className="flex items-center gap-4 text-xs font-medium text-muted-foreground">
               <div className="flex items-center gap-1.5">
                 <Clock className="h-3.5 w-3.5" />
                 <span>{formatDuration(quiz.duration)}</span>
@@ -120,9 +120,9 @@ export function QuizCard({ quiz }: QuizCardProps) {
             </div>
 
             {/* Rating */}
-            <div className="flex items-center gap-1 text-xs font-bold text-amber-400">
-              <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
-              {hasRating ? <span>{rating.toFixed(1)}</span> : <span className="text-zinc-600">--</span>}
+            <div className="flex items-center gap-1 text-xs font-bold text-accent">
+              <Star className="h-3.5 w-3.5 fill-accent text-accent" />
+              {hasRating ? <span>{rating.toFixed(1)}</span> : <span className="text-muted-foreground">--</span>}
             </div>
           </div>
         </CardContent>

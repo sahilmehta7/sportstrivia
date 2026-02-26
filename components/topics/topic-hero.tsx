@@ -34,10 +34,10 @@ export function TopicHero({
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, ease: "easeOut" }}
-        className="relative overflow-hidden rounded-[2.5rem] border border-white/10 bg-black/40 backdrop-blur-md shadow-2xl"
+        className="relative overflow-hidden rounded-[2.5rem] glass-elevated border-border/40 shadow-glass-lg"
       >
         {/* Animated Mesh Gradient Overlay */}
-        <div className="absolute inset-0 opacity-20 pointer-events-none bg-[radial-gradient(circle_at_50%_50%,rgba(var(--primary-rgb),0.15),transparent_50%)]" />
+        <div className="pointer-events-none absolute inset-0 opacity-30 [background:radial-gradient(circle_at_50%_50%,hsl(var(--primary)/0.16),transparent_55%)]" />
 
         {backgroundImageUrl && (
           <div className="absolute inset-0 z-0">
@@ -48,7 +48,7 @@ export function TopicHero({
               className="object-cover opacity-20 transition-transform duration-700 hover:scale-105"
               priority
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-background/35 to-transparent" />
           </div>
         )}
 
@@ -96,7 +96,7 @@ export function TopicHero({
                 </Button>
               )}
               {secondaryCta && (
-                <Button asChild variant="glass" size="xl" className="rounded-full px-12 h-14 text-lg font-bold border-white/10 hover:bg-white/5">
+                <Button asChild variant="glass" size="xl" className="h-14 rounded-full border-border/60 px-12 text-lg font-bold hover:bg-muted/30">
                   <a href={secondaryCta.href}>{secondaryCta.label}</a>
                 </Button>
               )}
@@ -114,12 +114,12 @@ export function TopicHero({
               {stats.map((stat, i) => (
                 <div
                   key={stat.label}
-                  className="group relative flex flex-col p-6 rounded-3xl bg-white/5 border border-white/10 transition-all hover:bg-white/10 hover:border-primary/30"
+                  className="group relative flex flex-col rounded-3xl border border-border/60 bg-card/60 p-6 transition-all hover:border-primary/30 hover:bg-card"
                 >
                   <dt className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60 mb-1">
                     {stat.label}
                   </dt>
-                  <dd className="text-3xl font-black tracking-tighter text-white">
+                  <dd className="text-3xl font-black tracking-tighter text-foreground">
                     {typeof stat.value === "number" ? stat.value.toLocaleString() : stat.value}
                   </dd>
                   <div className="absolute bottom-4 right-4 opacity-10 group-hover:opacity-30 transition-opacity">

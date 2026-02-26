@@ -12,9 +12,9 @@ import type { PublicQuizListItem } from "@/lib/services/public-quiz.service";
 
 
 const difficultyColors: Record<Difficulty, string> = {
-  EASY: "text-emerald-400 border-emerald-500/20 shadow-neon-lime/10",
-  MEDIUM: "text-cyan-400 border-cyan-500/20 shadow-neon-cyan/10",
-  HARD: "text-magenta-400 border-magenta-500/20 shadow-neon-magenta/10",
+  EASY: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/30",
+  MEDIUM: "bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/30",
+  HARD: "bg-rose-500/10 text-rose-700 dark:text-rose-300 border-rose-500/30",
 };
 
 function formatDuration(duration?: number | null) {
@@ -37,7 +37,7 @@ export function FeaturedCard({ quiz, className }: FeaturedCardProps) {
     <div className={cn("group relative", className)}>
       <div className="absolute -inset-1 bg-gradient-to-r from-primary/20 via-primary/5 to-secondary/20 blur-2xl opacity-0 group-hover:opacity-100 transition-opacity rounded-[3rem]" />
 
-      <div className="relative h-full overflow-hidden rounded-[3rem] glass-elevated border border-white/5 transition-all duration-500 group-hover:border-primary/20 hover:scale-[1.01] hover:bg-white/5">
+      <div className="relative h-full overflow-hidden rounded-[3rem] glass-elevated border border-border/60 transition-all duration-500 group-hover:border-primary/20 hover:scale-[1.01] hover:bg-card/60">
         <div className="relative aspect-[16/8] w-full overflow-hidden">
           {quiz.descriptionImageUrl ? (
             <Image
@@ -51,7 +51,7 @@ export function FeaturedCard({ quiz, className }: FeaturedCardProps) {
             <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-secondary/10" />
           )}
 
-          <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-background/15 to-transparent" />
 
           <div className="absolute top-6 left-6 flex items-center gap-3">
             <div className={cn(
@@ -61,14 +61,14 @@ export function FeaturedCard({ quiz, className }: FeaturedCardProps) {
               {quiz.difficulty}
             </div>
             {quiz.sport && (
-              <Badge variant="glass" className="bg-white/5 border-white/5 text-[8px] font-black tracking-widest uppercase shadow-lg">
+              <Badge variant="glass" className="border-border/50 bg-muted/70 text-[8px] font-black tracking-widest uppercase text-foreground shadow-sm">
                 {quiz.sport}
               </Badge>
             )}
           </div>
 
           <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-500 scale-90 group-hover:scale-100">
-            <div className="h-14 w-14 rounded-full glass border border-white/20 flex items-center justify-center text-primary shadow-neon-cyan/40 backdrop-blur-md">
+            <div className="flex h-14 w-14 items-center justify-center rounded-full glass border border-border/70 text-primary shadow-athletic backdrop-blur-md">
               <PlayCircle className="h-7 w-7 fill-primary/10" />
             </div>
           </div>
@@ -84,25 +84,25 @@ export function FeaturedCard({ quiz, className }: FeaturedCardProps) {
               {quiz.title}
             </h3>
             {quiz.description && (
-              <p className="line-clamp-2 text-xs font-bold tracking-widest text-muted-foreground/60 uppercase leading-relaxed">
+              <p className="line-clamp-2 text-xs font-bold leading-relaxed tracking-widest text-muted-foreground uppercase">
                 {quiz.description}
               </p>
             )}
           </div>
 
-          <div className="flex flex-wrap items-center justify-between gap-6 pt-6 border-t border-white/5">
+          <div className="flex flex-wrap items-center justify-between gap-6 border-t border-border/60 pt-6">
             <div className="flex items-center gap-6">
               <div className="flex items-center gap-2.5">
-                <Clock className="h-4 w-4 text-primary/40 group-hover:text-primary transition-colors" />
+                <Clock className="h-4 w-4 text-primary/60 transition-colors group-hover:text-primary" />
                 <span className="text-[10px] font-black tracking-widest uppercase">{duration}</span>
               </div>
               <div className="flex items-center gap-2.5">
-                <Users className="h-4 w-4 text-secondary/40 group-hover:text-secondary transition-colors" />
+                <Users className="h-4 w-4 text-secondary/60 transition-colors group-hover:text-secondary" />
                 <span className="text-[10px] font-black tracking-widest uppercase">{quiz._count.attempts.toLocaleString()} ENTRIES</span>
               </div>
               <div className="flex items-center gap-2.5">
-                <Trophy className="h-4 w-4 text-primary/40 group-hover:text-primary transition-colors" />
-                <span className="text-[10px] font-black tracking-widest uppercase text-emerald-400">
+                <Trophy className="h-4 w-4 text-primary/60 transition-colors group-hover:text-primary" />
+                <span className="text-[10px] font-black tracking-widest uppercase text-emerald-600 dark:text-emerald-400">
                   {hasRating ? rating.toFixed(1) : "NEW"}
                 </span>
               </div>
