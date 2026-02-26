@@ -71,7 +71,7 @@ export default async function QuizPlayPage({ params }: QuizPlayPageProps) {
     : null;
 
   return (
-    <div className="min-h-screen bg-background px-4 pb-12 pt-8">
+    <div className="min-h-screen bg-background px-0 pb-12 pt-8 sm:px-4">
       <QuizPlayClient
         quizId={quiz.id}
         quizTitle={quiz.title}
@@ -81,4 +81,3 @@ export default async function QuizPlayPage({ params }: QuizPlayPageProps) {
     </div>
   );
 }
-

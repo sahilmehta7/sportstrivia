@@ -110,7 +110,7 @@ export function QuizPlayUI({
     <LazyMotion features={domAnimation}>
       <m.div
         className={cn(
-          "relative flex min-h-[500px] w-full flex-col overflow-hidden rounded-[40px] border px-4 py-4 sm:px-8 sm:py-8 lg:min-h-[600px]",
+          "relative flex min-h-[500px] w-full flex-col overflow-hidden rounded-[40px] border px-0 py-4 sm:px-8 sm:py-8 lg:min-h-[600px]",
           styles.wrapper,
           className
         )}
@@ -118,30 +118,6 @@ export function QuizPlayUI({
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, ease: "easeOut" }}
       >
-        {/* Ambient Backgrounds */}
-        <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
-          <m.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 1.5 }}
-            className={cn("absolute -left-20 -top-24 h-96 w-96 rounded-full opacity-60", styles.overlayA)}
-          />
-          <m.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 1.5, delay: 0.2 }}
-            className={cn("absolute bottom-0 -right-20 h-[500px] w-[500px] rounded-full opacity-50", styles.overlayB)}
-          />
-          <m.div
-            animate={{
-              opacity: [0.3, 0.6, 0.3],
-              scale: [1, 1.1, 1],
-            }}
-            transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-            className={cn("absolute left-1/2 top-1/2 h-[600px] w-[600px] -translate-x-1/2 -translate-y-1/2 rounded-full opacity-30", styles.overlayC)}
-          />
-        </div>
-
         <div className="relative z-10 flex flex-1 flex-col gap-4 sm:gap-6">
           {/* Header: Progress & Timer */}
           <div className="grid w-full grid-cols-[1fr_auto] gap-4 items-end">

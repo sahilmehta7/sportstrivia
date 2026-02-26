@@ -726,7 +726,7 @@ export function QuizPlayClient({ quizId, quizTitle, quizSlug, initialAttemptLimi
   // Render new UI if feature flag is enabled
   if (ENABLE_NEW_QUIZ_UI) {
     return (
-      <div className="mx-auto w-full max-w-4xl px-4 py-8">
+      <div className="mx-auto w-full max-w-4xl px-0 py-8 sm:px-4">
         <QuizPlayUI
           question={currentQuestion}
           currentIndex={currentIndex}

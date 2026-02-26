@@ -42,12 +42,12 @@ export const variantStyles: Record<ThemeVariant, {
 }> = {
     light: {
         wrapper:
-            "bg-gradient-to-br from-amber-50 via-orange-50/50 to-rose-50 text-slate-900 shadow-2xl ring-1 ring-slate-900/5",
+            "bg-background text-foreground shadow-sm ring-1 ring-border",
         overlayA: "bg-amber-300/40 mix-blend-multiply filter blur-3xl",
         overlayB: "bg-orange-300/40 mix-blend-multiply filter blur-3xl",
         overlayC: "bg-rose-300/40 mix-blend-multiply filter blur-3xl",
         card:
-            "bg-white/60 backdrop-blur-2xl text-slate-900 shadow-[0_8px_32px_-12px_rgba(0,0,0,0.1)] ring-1 ring-white/60",
+            "bg-card text-card-foreground shadow-sm ring-1 ring-border",
         helper: "text-slate-500 font-bold",
         question: "text-slate-900 tracking-tight",
         progressTrack: "bg-slate-200/50",
@@ -75,13 +75,13 @@ export const variantStyles: Record<ThemeVariant, {
     },
     dark: {
         wrapper:
-            "bg-black text-white ring-1 ring-white/10",
+            "bg-background text-foreground ring-1 ring-border shadow-sm",
         // More localized, intense glows for 'Pro Max' dark feel
         overlayA: "bg-emerald-500/10 blur-[100px]",
         overlayB: "bg-indigo-500/10 blur-[100px]",
         overlayC: "bg-rose-500/10 blur-[100px]",
         card:
-            "bg-[#0A0A0A]/60 backdrop-blur-3xl text-white shadow-2xl ring-1 ring-white/10",
+            "bg-card text-card-foreground shadow-sm ring-1 ring-border",
         helper: "text-white/40 font-bold",
         question: "text-white tracking-tight drop-shadow-sm",
         progressTrack: "bg-white/5",
