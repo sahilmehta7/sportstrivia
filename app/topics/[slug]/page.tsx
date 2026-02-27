@@ -351,7 +351,7 @@ export default async function TopicDetailPage({
                 Discover more angles connected to {topic.name}.
               </p>
             </div>
-            <div className="-mx-4 overflow-x-auto px-4">
+            <div className="overflow-x-auto">
               <div className="flex gap-4">
                 {topic.children.map((child) => (
                   <Link key={child.id} href={`/topics/${child.slug}`} className="flex-none">
