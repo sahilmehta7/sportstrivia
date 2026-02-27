@@ -10,7 +10,7 @@ import { ShowcaseReviewsPanel } from "@/components/showcase/ui";
 import { Star, Clock, Trophy, Users, ShieldCheck, Zap, ArrowRight, Calendar, Info, Instagram } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth-helpers";
 import { getAttemptLimitStatus } from "@/lib/services/attempt-limit.service";
-import { ArticleJsonLd, AggregateRatingJsonLd } from "next-seo";
+import { JsonLdScript } from "next-seo";
 import { getCanonicalUrl } from "@/lib/next-seo-config";
 import { cn } from "@/lib/utils";
 import { getBlurCircles, getGradientText } from "@/lib/showcase-theme";
@@ -18,6 +18,7 @@ import { PageContainer } from "@/components/shared/PageContainer";
 import { ShareQuizButton } from "./share-quiz-button";
 import { getCachedQuiz, getCachedQuizStats, getCachedLeaderboard } from "@/lib/quiz-cache";
 import { InstagramStoryTeaserMenu } from "@/components/shared/InstagramStoryTeaserMenu";
+import { getQuizSchema } from "@/lib/schema-utils";
 
 interface QuizDetailPageProps {
   params: Promise<{ slug: string }>;
@@ -86,7 +87,7 @@ export async function generateMetadata({ params }: QuizDetailPageProps): Promise
     openGraph: {
       title: meta.ogTitle,
       description: meta.ogDescription,
-      type: "article",
+      type: "website",
       ...(canonicalUrl ? { url: canonicalUrl } : {}),
       ...(heroImageUrl ? { images: [{ url: heroImageUrl }] } : {}),
     },
@@ -165,39 +166,31 @@ export default async function QuizDetailPage({ params }: QuizDetailPageProps) {
   const averageRating = typeof quiz.averageRating === "number" ? quiz.averageRating : 0;
   const totalReviews = typeof quiz.totalReviews === "number" ? quiz.totalReviews : quiz._count?.reviews ?? 0;
   const quizUrl = getCanonicalUrl(`/quizzes/${quiz.slug}`) || `/quizzes/${quiz.slug}`;
-  const articleImages = heroImageUrl ? [heroImageUrl] : [];
+  const quizSchema = getQuizSchema({
+    id: quiz.id,
+    title: quiz.title,
+    slug: quiz.slug,
+    description: quiz.description,
+    sport: quiz.sport,
+    difficulty: quiz.difficulty,
+    duration: quiz.duration,
+    passingScore: 0,
+    descriptionImageUrl: heroImageUrl,
+    averageRating,
+    totalReviews,
+    createdAt: quiz.createdAt,
+    updatedAt: quiz.updatedAt,
+    topicConfigs: topicConfigs.map((config: any) => ({
+      topic: {
+        name: config?.topic?.name ?? "",
+      },
+    })),
+  });
   const { circle1, circle2, circle3 } = getBlurCircles();
 
   return (
     <>
-      <ArticleJsonLd
-        url={quizUrl}
-        headline={quiz.title}
-        image={articleImages}
-        datePublished={new Date(quiz.createdAt ?? new Date()).toISOString()}
-        dateModified={new Date(quiz.updatedAt ?? new Date()).toISOString()}
-        author={{
-          name: "Sports Trivia Team",
-        }}
-        publisher={{
-          name: "Sports Trivia",
-          logo: getCanonicalUrl("/logo.png") || "",
-        }}
-        description={quiz.description || ""}
-      />
-      {totalReviews > 0 && averageRating > 0 && (
-        <AggregateRatingJsonLd
-          itemReviewed={{
-            "@type": "Product",
-            name: quiz.title,
-            url: quizUrl
-          }}
-          ratingValue={averageRating}
-          reviewCount={totalReviews}
-          bestRating={5}
-          worstRating={1}
-        />
-      )}
+      <JsonLdScript scriptKey={`quiz-jsonld-${quiz.id}`} data={quizSchema} />
 
       <main className="relative min-h-screen overflow-hidden pt-12 pb-24 lg:pt-20">
         <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none">

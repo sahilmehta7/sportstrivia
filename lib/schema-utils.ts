@@ -64,7 +64,7 @@ export function getQuizSchema(quiz: {
   topicConfigs?: Array<{
     topic: {
       name: string;
-      slug: string;
+      slug?: string;
     };
   }>;
 }) {
@@ -82,7 +82,7 @@ export function getQuizSchema(quiz: {
     about: topics.length > 0 ? topics.map(topic => ({
       "@type": "Thing",
       name: topic.name,
-      url: `${BASE_URL}/topics/${topic.slug}`,
+      ...(topic.slug ? { url: `${BASE_URL}/topics/${topic.slug}` } : {}),
     })) : {
       "@type": "Thing",
       name: quiz.sport || "Sports",
@@ -342,4 +342,3 @@ export function getItemListSchema(quizzes: Array<{
 export function stringifyJsonLd(data: object): string {
   return JSON.stringify(data);
 }
-
