@@ -3,6 +3,13 @@ import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/auth-helpers";
 import { handleError, successResponse, NotFoundError, BadRequestError } from "@/lib/errors";
 import { z } from "zod";
+import { Prisma } from "@prisma/client";
+import {
+  parseTopicEntityData,
+  requiresCanonicalUrl,
+  sanitizeUrlList,
+} from "@/lib/topic-schema";
+import { TOPIC_SCHEMA_TYPES, type TopicSchemaTypeValue } from "@/lib/topic-schema-options";
 
 const topicSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
@@ -11,6 +18,10 @@ const topicSchema = z.object({
   parentId: z.string().cuid().optional().nullable(),
   displayEmoji: z.string().max(8).optional().nullable(),
   displayImageUrl: z.string().url().optional().nullable(),
+  schemaType: z.enum(TOPIC_SCHEMA_TYPES).optional().default("NONE"),
+  schemaCanonicalUrl: z.string().url().optional().nullable(),
+  schemaSameAs: z.array(z.string().url()).optional().default([]),
+  schemaEntityData: z.record(z.any()).optional().nullable(),
 });
 
 // GET /api/admin/topics - List all topics with advanced options
@@ -58,6 +69,13 @@ export async function GET(request: NextRequest) {
           children: {
             orderBy: { name: "asc" },
             include: {
+              parent: {
+                select: {
+                  id: true,
+                  name: true,
+                  slug: true,
+                },
+              },
               _count: {
                 select: {
                   questions: true,
@@ -89,6 +107,16 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
     const validatedData = topicSchema.parse(body);
+    const schemaType = (validatedData.schemaType ?? "NONE") as TopicSchemaTypeValue;
+    const schemaSameAs = sanitizeUrlList(validatedData.schemaSameAs);
+    const schemaEntityData = parseTopicEntityData(schemaType, validatedData.schemaEntityData);
+    const schemaEntityDataValue =
+      schemaEntityData === null ? Prisma.JsonNull : (schemaEntityData as Prisma.InputJsonValue);
+    const schemaCanonicalUrl = validatedData.schemaCanonicalUrl?.trim() || null;
+
+    if (requiresCanonicalUrl(schemaType) && !schemaCanonicalUrl) {
+      throw new BadRequestError("schemaCanonicalUrl is required when schemaType is not NONE");
+    }
 
     // Check if slug already exists
     const slugExists = await prisma.topic.findUnique({
@@ -130,6 +158,10 @@ export async function POST(request: NextRequest) {
         displayImageUrl: validatedData.displayImageUrl ?? null,
         parentId: validatedData.parentId,
         level,
+        schemaType,
+        schemaCanonicalUrl,
+        schemaSameAs,
+        schemaEntityData: schemaEntityDataValue,
       },
       include: {
         parent: {
@@ -139,10 +171,21 @@ export async function POST(request: NextRequest) {
             slug: true,
           },
         },
+        children: {
+          orderBy: { name: "asc" },
+          include: {
+            _count: {
+              select: {
+                questions: true,
+              },
+            },
+          },
+        },
         _count: {
           select: {
             questions: true,
             children: true,
+            quizTopicConfigs: true,
           },
         },
       },

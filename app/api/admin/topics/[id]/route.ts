@@ -3,6 +3,13 @@ import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/auth-helpers";
 import { handleError, successResponse, NotFoundError } from "@/lib/errors";
 import { z } from "zod";
+import { Prisma } from "@prisma/client";
+import {
+  parseTopicEntityData,
+  requiresCanonicalUrl,
+  sanitizeUrlList,
+} from "@/lib/topic-schema";
+import { TOPIC_SCHEMA_TYPES, type TopicSchemaTypeValue } from "@/lib/topic-schema-options";
 
 const topicUpdateSchema = z.object({
   name: z.string().min(2).optional(),
@@ -11,6 +18,10 @@ const topicUpdateSchema = z.object({
   parentId: z.string().cuid().optional().nullable(),
   displayEmoji: z.string().max(8).optional().nullable(),
   displayImageUrl: z.string().url().optional().nullable(),
+  schemaType: z.enum(TOPIC_SCHEMA_TYPES).optional(),
+  schemaCanonicalUrl: z.string().url().optional().nullable(),
+  schemaSameAs: z.array(z.string().url()).optional(),
+  schemaEntityData: z.record(z.any()).optional().nullable(),
 });
 
 // GET /api/admin/topics/[id] - Get single topic
@@ -39,6 +50,10 @@ export async function GET(
             name: true,
             slug: true,
             level: true,
+            schemaType: true,
+            schemaCanonicalUrl: true,
+            schemaSameAs: true,
+            schemaEntityData: true,
           },
         },
         _count: {
@@ -118,13 +133,47 @@ export async function PATCH(
       }
     }
 
+    const nextSchemaType = (validatedData.schemaType ?? existingTopic.schemaType) as TopicSchemaTypeValue;
+    const schemaCanonicalUrl =
+      validatedData.schemaCanonicalUrl !== undefined
+        ? validatedData.schemaCanonicalUrl?.trim() || null
+        : existingTopic.schemaCanonicalUrl;
+    const schemaSameAs =
+      validatedData.schemaSameAs !== undefined
+        ? sanitizeUrlList(validatedData.schemaSameAs)
+        : existingTopic.schemaSameAs;
+    const rawEntityData =
+      validatedData.schemaEntityData !== undefined
+        ? validatedData.schemaEntityData
+        : existingTopic.schemaEntityData;
+    const schemaEntityData = parseTopicEntityData(nextSchemaType, rawEntityData);
+    const schemaEntityDataValue =
+      schemaEntityData === null ? Prisma.JsonNull : (schemaEntityData as Prisma.InputJsonValue);
+
+    if (requiresCanonicalUrl(nextSchemaType) && !schemaCanonicalUrl) {
+      throw new Error("schemaCanonicalUrl is required when schemaType is not NONE");
+    }
+
     // Update topic
+    const updateData: Prisma.TopicUpdateInput = {
+      ...(validatedData.name !== undefined ? { name: validatedData.name } : {}),
+      ...(validatedData.slug !== undefined ? { slug: validatedData.slug } : {}),
+      ...(validatedData.description !== undefined ? { description: validatedData.description } : {}),
+      ...(validatedData.parentId !== undefined ? { parentId: validatedData.parentId } : {}),
+      ...(validatedData.displayEmoji !== undefined ? { displayEmoji: validatedData.displayEmoji } : {}),
+      ...(validatedData.displayImageUrl !== undefined ? { displayImageUrl: validatedData.displayImageUrl } : {}),
+      ...(validatedData.schemaType !== undefined ? { schemaType: validatedData.schemaType } : {}),
+      ...(validatedData.schemaCanonicalUrl !== undefined ? { schemaCanonicalUrl } : {}),
+      ...(validatedData.schemaSameAs !== undefined ? { schemaSameAs } : {}),
+      ...(validatedData.schemaEntityData !== undefined || validatedData.schemaType !== undefined
+        ? { schemaEntityData: schemaEntityDataValue }
+        : {}),
+      ...(validatedData.parentId !== undefined ? { level } : {}),
+    };
+
     const topic = await prisma.topic.update({
       where: { id },
-      data: {
-        ...validatedData,
-        ...(validatedData.parentId !== undefined && { level }),
-      },
+      data: updateData,
       include: {
         parent: true,
         children: {
@@ -134,6 +183,7 @@ export async function PATCH(
           select: {
             questions: true,
             children: true,
+            quizTopicConfigs: true,
           },
         },
       },
@@ -261,4 +311,3 @@ async function updateDescendantLevels(parentId: string, parentLevel: number) {
     await updateDescendantLevels(child.id, newLevel);
   }
 }
-

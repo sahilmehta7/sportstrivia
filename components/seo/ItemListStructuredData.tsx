@@ -13,6 +13,7 @@ interface ItemListStructuredDataProps {
   name: string;
   itemListElements: StructuredListItem[];
   id?: string;
+  listId?: string;
 }
 
 function toListItem(element: StructuredListItem) {
@@ -31,7 +32,7 @@ function toListItem(element: StructuredListItem) {
   };
 }
 
-export function ItemListStructuredData({ name, itemListElements, id }: ItemListStructuredDataProps) {
+export function ItemListStructuredData({ name, itemListElements, id, listId }: ItemListStructuredDataProps) {
   const listItems = itemListElements.map(toListItem).filter(Boolean);
 
   if (listItems.length === 0) {
@@ -51,10 +52,10 @@ export function ItemListStructuredData({ name, itemListElements, id }: ItemListS
       data={{
         "@context": "https://schema.org",
         "@type": "ItemList",
+        ...(listId ? { "@id": listId } : {}),
         name,
         itemListElement: listItems,
       }}
     />
   );
 }
-

@@ -3,12 +3,19 @@ import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/auth-helpers";
 import { handleError, successResponse } from "@/lib/errors";
 import { generateUniqueSlug } from "@/lib/services/slug.service";
+import { Prisma } from "@prisma/client";
 import {
   topicImportSchema,
   type TopicImportItem,
   type TopicImportConflict,
   type TopicImportResult,
 } from "@/lib/validations/topic-import.schema";
+import {
+  parseTopicEntityData,
+  requiresCanonicalUrl,
+  sanitizeUrlList,
+} from "@/lib/topic-schema";
+import { type TopicSchemaTypeValue } from "@/lib/topic-schema-options";
 
 // POST /api/admin/topics/import - Bulk import topics from JSON
 export async function POST(request: NextRequest) {
@@ -27,7 +34,12 @@ export async function POST(request: NextRequest) {
         id: true,
         name: true,
         slug: true,
+        description: true,
         parentId: true,
+        schemaType: true,
+        schemaCanonicalUrl: true,
+        schemaSameAs: true,
+        schemaEntityData: true,
         parent: {
           select: {
             name: true,
@@ -51,6 +63,8 @@ export async function POST(request: NextRequest) {
     for (const topic of topics) {
       const normalizedName = topic.name.toLowerCase();
       const existing = existingTopicMap.get(normalizedName);
+      const schemaType = (topic.schemaType ?? "NONE") as TopicSchemaTypeValue;
+      const schemaCanonicalUrl = topic.schemaCanonicalUrl?.trim() || null;
 
       if (existing) {
         // Topic exists - check for parent conflicts
@@ -75,6 +89,16 @@ export async function POST(request: NextRequest) {
           });
         }
       } else {
+        if (requiresCanonicalUrl(schemaType) && !schemaCanonicalUrl) {
+          conflicts.push({
+            name: topic.name,
+            slug: topic.slug || "",
+            existingParent: null,
+            newParent: topic.parentName || topic.parentSlug || null,
+            action: "skip",
+          });
+          continue;
+        }
         // New topic - will be created
         conflicts.push({
           name: topic.name,
@@ -140,6 +164,20 @@ async function importTopics(
     try {
       const normalizedName = topicData.name.toLowerCase();
       const existing = existingTopicMap.get(normalizedName);
+      const schemaType = (topicData.schemaType ?? existing?.schemaType ?? "NONE") as TopicSchemaTypeValue;
+      const schemaCanonicalUrl = topicData.schemaCanonicalUrl?.trim() || null;
+      const schemaSameAs = sanitizeUrlList(topicData.schemaSameAs ?? existing?.schemaSameAs ?? []);
+      const schemaEntityData = parseTopicEntityData(
+        schemaType,
+        topicData.schemaEntityData ?? existing?.schemaEntityData ?? null
+      );
+      const schemaEntityDataValue =
+        schemaEntityData === null ? Prisma.JsonNull : (schemaEntityData as Prisma.InputJsonValue);
+
+      if (requiresCanonicalUrl(schemaType) && !schemaCanonicalUrl && !existing?.schemaCanonicalUrl) {
+        errors.push(`Topic "${topicData.name}": schemaCanonicalUrl is required for schemaType ${schemaType}`);
+        continue;
+      }
 
       // Resolve parent ID
       let parentId: string | null = null;
@@ -182,6 +220,10 @@ async function importTopics(
               level,
               description: topicData.description || existing.description,
               displayImageUrl: topicData.imageUrl || undefined,
+              schemaType,
+              schemaCanonicalUrl: schemaCanonicalUrl ?? existing.schemaCanonicalUrl,
+              schemaSameAs,
+              schemaEntityData: schemaEntityDataValue,
             },
           });
           updated++;
@@ -203,6 +245,10 @@ async function importTopics(
             displayImageUrl: topicData.imageUrl,
             parentId,
             level,
+            schemaType,
+            schemaCanonicalUrl: schemaCanonicalUrl,
+            schemaSameAs,
+            schemaEntityData: schemaEntityDataValue,
           },
         });
 
@@ -251,4 +297,3 @@ function topologicalSort(topics: TopicImportItem[]): TopicImportItem[] {
 
   return result;
 }
-

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { TOPIC_SCHEMA_TYPES } from "@/lib/topic-schema-options";
 
 export const topicImportItemSchema = z.object({
   name: z.string().min(1).max(100),
@@ -7,6 +8,10 @@ export const topicImportItemSchema = z.object({
   parentName: z.string().optional(), // Reference parent by name
   parentSlug: z.string().optional(), // Or by slug
   imageUrl: z.string().url().optional(),
+  schemaType: z.enum(TOPIC_SCHEMA_TYPES).optional(),
+  schemaCanonicalUrl: z.string().url().optional(),
+  schemaSameAs: z.array(z.string().url()).optional(),
+  schemaEntityData: z.record(z.any()).optional(),
 });
 
 export const topicImportSchema = z.object({
@@ -34,4 +39,3 @@ export interface TopicImportResult {
   conflicts: TopicImportConflict[];
   errors: string[];
 }
-

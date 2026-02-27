@@ -77,6 +77,7 @@ export function ShowcaseQuizResults({ attempt, leaderboardData }: ShowcaseQuizRe
         longestStreak: 5,
         averageResponseTime: 2.1,
         quizTitle: "Sample Quiz",
+        quizSlug: "sample-quiz",
         userName: "Demo User",
         userImage: null,
         userId: "demo",
@@ -93,6 +94,7 @@ export function ShowcaseQuizResults({ attempt, leaderboardData }: ShowcaseQuizRe
       longestStreak: attempt.longestStreak || 0,
       averageResponseTime: attempt.averageResponseTime || 0,
       quizTitle: attempt.quiz.title,
+      quizSlug: attempt.quiz.slug,
       userName: attempt.user.name || "Anonymous",
       userImage: attempt.user.image,
       userId: attempt.user.id,
@@ -139,6 +141,7 @@ export function ShowcaseQuizResults({ attempt, leaderboardData }: ShowcaseQuizRe
 
   const { shareResults, isGenerating } = useShareResults({
     quizTitle: results.quizTitle,
+    quizSlug: results.quizSlug,
     userName: results.userName,
     score: results.score,
     correctAnswers: results.correctAnswers,

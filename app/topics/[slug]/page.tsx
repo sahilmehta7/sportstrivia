@@ -13,7 +13,7 @@ import {
   type PublicQuizListItem,
 } from "@/lib/services/public-quiz.service";
 import { buildTopicLeaderboard, type LeaderboardPeriod } from "@/lib/services/leaderboard.service";
-import { BreadcrumbJsonLd } from "next-seo";
+import { BreadcrumbJsonLd, JsonLdScript } from "next-seo";
 import { ItemListStructuredData } from "@/components/seo/ItemListStructuredData";
 import { getCanonicalUrl } from "@/lib/next-seo-config";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -27,11 +27,21 @@ import { StreakIndicator } from "@/components/shared/StreakIndicator";
 
 import { ChevronRight } from "lucide-react";
 import { PageContainer } from "@/components/shared/PageContainer";
+import { getTopicGraphSchema } from "@/lib/schema-utils";
+import type { TopicSchemaTypeValue } from "@/lib/topic-schema-options";
 
 const topicWithRelations = {
   include: {
     parent: {
-      select: { id: true, name: true, slug: true },
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        schemaType: true,
+        schemaCanonicalUrl: true,
+        schemaSameAs: true,
+        schemaEntityData: true,
+      },
     },
     children: {
       orderBy: { name: "asc" as const },
@@ -135,7 +145,7 @@ export async function generateMetadata({
     openGraph: {
       title,
       description,
-      type: "article",
+      type: "website",
       url: `${baseUrl}/topics/${topic.slug}`,
     },
     twitter: {
@@ -294,6 +304,30 @@ export default async function TopicDetailPage({
       ...(q.description ? { description: q.description } : {}),
     }))
     : [];
+
+  const topicGraphSchema = getTopicGraphSchema({
+    topic: {
+      id: topic.id,
+      name: topic.name,
+      slug: topic.slug,
+      description: topic.description,
+      parentId: topic.parentId,
+      schemaType: topic.schemaType as TopicSchemaTypeValue,
+      schemaCanonicalUrl: topic.schemaCanonicalUrl,
+      schemaSameAs: topic.schemaSameAs,
+      schemaEntityData: (topic.schemaEntityData as Record<string, unknown> | null) ?? null,
+      parent: topic.parent
+        ? {
+            name: topic.parent.name,
+            slug: topic.parent.slug,
+            schemaType: topic.parent.schemaType as TopicSchemaTypeValue,
+            schemaCanonicalUrl: topic.parent.schemaCanonicalUrl,
+            schemaSameAs: topic.parent.schemaSameAs,
+          }
+        : null,
+    },
+    quizUrls: itemListElements.slice(0, 10).map((item) => item.item),
+  });
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-background via-background to-muted">
@@ -461,8 +495,14 @@ export default async function TopicDetailPage({
       </PageContainer>
 
       {/* Structured Data */}
+      <JsonLdScript scriptKey={`topic-graph-${topic.id}`} data={topicGraphSchema} />
       <BreadcrumbJsonLd items={breadcrumbItems} />
-      <ItemListStructuredData itemListElements={itemListElements} name={`${topic.name} Quizzes`} />
+      <ItemListStructuredData
+        id={`topic-item-list-${topic.id}`}
+        listId={`${getCanonicalUrl(`/topics/${topic.slug}`)}#quiz-list`}
+        itemListElements={itemListElements}
+        name={`${topic.name} Quizzes`}
+      />
     </main>
   );
 }

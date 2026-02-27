@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Save, Trash2, Wand2, Loader2, Upload, Check, ChevronsUpDown, List } from "lucide-react";
 import Link from "next/link";
@@ -27,6 +28,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
+import { TOPIC_SCHEMA_TYPE_LABELS, type TopicSchemaTypeValue } from "@/lib/topic-schema-options";
 import {
   Dialog,
   DialogContent,
@@ -68,6 +70,20 @@ export default function EditTopicPage({ params }: EditTopicPageProps) {
     parentId: "",
     displayEmoji: "",
     displayImageUrl: "",
+    schemaType: "NONE" as TopicSchemaTypeValue,
+    schemaCanonicalUrl: "",
+    schemaSameAsText: "",
+    sportName: "",
+    leagueName: "",
+    organizationName: "",
+    teamName: "",
+    nationality: "",
+    birthDate: "",
+    startDate: "",
+    endDate: "",
+    locationName: "",
+    organizerName: "",
+    aliases: "",
   });
 
   useEffect(() => {
@@ -107,6 +123,26 @@ export default function EditTopicPage({ params }: EditTopicPageProps) {
           parentId: topic.parentId || "",
           displayEmoji: topic.displayEmoji || "",
           displayImageUrl: topic.displayImageUrl || "",
+          schemaType: (topic.schemaType || "NONE") as TopicSchemaTypeValue,
+          schemaCanonicalUrl: topic.schemaCanonicalUrl || "",
+          schemaSameAsText: Array.isArray(topic.schemaSameAs) ? topic.schemaSameAs.join("\n") : "",
+          sportName: topic.schemaEntityData?.sportName || "",
+          leagueName: topic.schemaEntityData?.leagueName || "",
+          organizationName: topic.schemaEntityData?.organizationName || "",
+          teamName: topic.schemaEntityData?.teamName || "",
+          nationality: topic.schemaEntityData?.nationality || "",
+          birthDate: topic.schemaEntityData?.birthDate
+            ? new Date(topic.schemaEntityData.birthDate).toISOString().slice(0, 10)
+            : "",
+          startDate: topic.schemaEntityData?.startDate
+            ? new Date(topic.schemaEntityData.startDate).toISOString().slice(0, 16)
+            : "",
+          endDate: topic.schemaEntityData?.endDate
+            ? new Date(topic.schemaEntityData.endDate).toISOString().slice(0, 16)
+            : "",
+          locationName: topic.schemaEntityData?.locationName || "",
+          organizerName: topic.schemaEntityData?.organizerName || "",
+          aliases: Array.isArray(topic.schemaEntityData?.aliases) ? topic.schemaEntityData.aliases.join(", ") : "",
         });
       } catch (error: any) {
         toast({
@@ -128,6 +164,10 @@ export default function EditTopicPage({ params }: EditTopicPageProps) {
     setSaving(true);
 
     try {
+      if (formData.schemaType !== "NONE" && !formData.schemaCanonicalUrl.trim()) {
+        throw new Error("Schema Canonical URL is required when schema type is not None");
+      }
+
       const data = {
         name: formData.name,
         slug: formData.slug,
@@ -135,6 +175,50 @@ export default function EditTopicPage({ params }: EditTopicPageProps) {
         parentId: formData.parentId || null,
         displayEmoji: formData.displayEmoji || null,
         displayImageUrl: formData.displayImageUrl || null,
+        schemaType: formData.schemaType,
+        schemaCanonicalUrl: formData.schemaCanonicalUrl || null,
+        schemaSameAs: formData.schemaSameAsText
+          .split("\n")
+          .map((value) => value.trim())
+          .filter(Boolean),
+        schemaEntityData:
+          formData.schemaType === "SPORT"
+            ? {
+                ...(formData.aliases
+                  ? {
+                      aliases: formData.aliases
+                        .split(",")
+                        .map((value) => value.trim())
+                        .filter(Boolean),
+                    }
+                  : {}),
+              }
+            : formData.schemaType === "SPORTS_TEAM"
+              ? {
+                  ...(formData.sportName ? { sportName: formData.sportName } : {}),
+                  ...(formData.leagueName ? { leagueName: formData.leagueName } : {}),
+                  ...(formData.organizationName ? { organizationName: formData.organizationName } : {}),
+                }
+              : formData.schemaType === "ATHLETE"
+                ? {
+                    ...(formData.sportName ? { sportName: formData.sportName } : {}),
+                    ...(formData.teamName ? { teamName: formData.teamName } : {}),
+                    ...(formData.nationality ? { nationality: formData.nationality } : {}),
+                    ...(formData.birthDate ? { birthDate: new Date(formData.birthDate).toISOString() } : {}),
+                  }
+                : formData.schemaType === "SPORTS_ORGANIZATION"
+                  ? {
+                      ...(formData.sportName ? { sportName: formData.sportName } : {}),
+                    }
+                  : formData.schemaType === "SPORTS_EVENT"
+                    ? {
+                        ...(formData.sportName ? { sportName: formData.sportName } : {}),
+                        ...(formData.startDate ? { startDate: new Date(formData.startDate).toISOString() } : {}),
+                        ...(formData.endDate ? { endDate: new Date(formData.endDate).toISOString() } : {}),
+                        ...(formData.locationName ? { locationName: formData.locationName } : {}),
+                        ...(formData.organizerName ? { organizerName: formData.organizerName } : {}),
+                      }
+                    : null,
       };
 
       const response = await fetch(`/api/admin/topics/${topicId}`, {
@@ -423,6 +507,174 @@ export default function EditTopicPage({ params }: EditTopicPageProps) {
                 rows={3}
               />
             </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="schemaType">Schema Type</Label>
+              <Select
+                value={formData.schemaType}
+                onValueChange={(value) => updateField("schemaType", value as TopicSchemaTypeValue)}
+              >
+                <SelectTrigger id="schemaType">
+                  <SelectValue placeholder="Select schema type" />
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.entries(TOPIC_SCHEMA_TYPE_LABELS).map(([value, label]) => (
+                    <SelectItem key={value} value={value}>
+                      {label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="schemaCanonicalUrl">Schema Canonical URL</Label>
+              <Input
+                id="schemaCanonicalUrl"
+                placeholder="https://en.wikipedia.org/wiki/..."
+                value={formData.schemaCanonicalUrl}
+                onChange={(e) => updateField("schemaCanonicalUrl", e.target.value)}
+                type="url"
+              />
+              <p className="text-xs text-muted-foreground">
+                Required when schema type is not &quot;None&quot;.
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="schemaSameAsText">sameAs URLs</Label>
+              <Textarea
+                id="schemaSameAsText"
+                rows={3}
+                placeholder={"https://www.wikidata.org/wiki/...\nhttps://www.official-site.com/..."}
+                value={formData.schemaSameAsText}
+                onChange={(e) => updateField("schemaSameAsText", e.target.value)}
+              />
+              <p className="text-xs text-muted-foreground">One URL per line.</p>
+            </div>
+
+            {formData.schemaType === "SPORT" && (
+              <div className="space-y-2">
+                <Label htmlFor="aliases">Sport aliases</Label>
+                <Input
+                  id="aliases"
+                  placeholder="Soccer, Association Football"
+                  value={formData.aliases}
+                  onChange={(e) => updateField("aliases", e.target.value)}
+                />
+              </div>
+            )}
+
+            {(formData.schemaType === "SPORTS_TEAM" ||
+              formData.schemaType === "ATHLETE" ||
+              formData.schemaType === "SPORTS_ORGANIZATION" ||
+              formData.schemaType === "SPORTS_EVENT") && (
+              <div className="space-y-2">
+                <Label htmlFor="sportName">Sport Name</Label>
+                <Input
+                  id="sportName"
+                  placeholder="Cricket"
+                  value={formData.sportName}
+                  onChange={(e) => updateField("sportName", e.target.value)}
+                />
+              </div>
+            )}
+
+            {formData.schemaType === "SPORTS_TEAM" && (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="leagueName">League Name</Label>
+                  <Input
+                    id="leagueName"
+                    placeholder="Indian Premier League"
+                    value={formData.leagueName}
+                    onChange={(e) => updateField("leagueName", e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="organizationName">Organization Name</Label>
+                  <Input
+                    id="organizationName"
+                    placeholder="Board of Control for Cricket in India"
+                    value={formData.organizationName}
+                    onChange={(e) => updateField("organizationName", e.target.value)}
+                  />
+                </div>
+              </>
+            )}
+
+            {formData.schemaType === "ATHLETE" && (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="teamName">Team Name</Label>
+                  <Input
+                    id="teamName"
+                    placeholder="India National Cricket Team"
+                    value={formData.teamName}
+                    onChange={(e) => updateField("teamName", e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="nationality">Nationality</Label>
+                  <Input
+                    id="nationality"
+                    placeholder="Indian"
+                    value={formData.nationality}
+                    onChange={(e) => updateField("nationality", e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="birthDate">Birth Date</Label>
+                  <Input
+                    id="birthDate"
+                    type="date"
+                    value={formData.birthDate}
+                    onChange={(e) => updateField("birthDate", e.target.value)}
+                  />
+                </div>
+              </>
+            )}
+
+            {formData.schemaType === "SPORTS_EVENT" && (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="startDate">Start Date</Label>
+                  <Input
+                    id="startDate"
+                    type="datetime-local"
+                    value={formData.startDate}
+                    onChange={(e) => updateField("startDate", e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="endDate">End Date</Label>
+                  <Input
+                    id="endDate"
+                    type="datetime-local"
+                    value={formData.endDate}
+                    onChange={(e) => updateField("endDate", e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="locationName">Location Name</Label>
+                  <Input
+                    id="locationName"
+                    placeholder="Wankhede Stadium"
+                    value={formData.locationName}
+                    onChange={(e) => updateField("locationName", e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="organizerName">Organizer Name</Label>
+                  <Input
+                    id="organizerName"
+                    placeholder="ICC"
+                    value={formData.organizerName}
+                    onChange={(e) => updateField("organizerName", e.target.value)}
+                  />
+                </div>
+              </>
+            )}
 
             <div className="space-y-2">
               <Label htmlFor="parentId">Parent Topic</Label>

@@ -2,6 +2,7 @@
  * Schema.org structured data utility functions
  * Generates JSON-LD markup for SEO and rich snippets
  */
+import type { TopicSchemaTypeValue } from "@/lib/topic-schema-options";
 
 const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || "https://www.sportstrivia.in";
 
@@ -194,7 +195,6 @@ export function getTopicSchema(topic: {
   parentId?: string | null;
 }, quizCount: number) {
   const topicUrl = `${BASE_URL}/topics/${topic.slug}`;
-  
   return {
     "@context": "https://schema.org",
     "@type": "CollectionPage",
@@ -207,12 +207,261 @@ export function getTopicSchema(topic: {
       name: topic.name,
     },
     numberOfItems: quizCount,
-    ...(topic.parentId ? {
-      isPartOf: {
-        "@type": "CollectionPage",
-        name: "Sports Topics",
-      },
-    } : {}),
+    ...(topic.parentId
+      ? {
+          isPartOf: {
+            "@type": "CollectionPage",
+            name: "Sports Topics",
+          },
+        }
+      : {}),
+  };
+}
+
+type TopicSchemaEntityData = Record<string, unknown>;
+
+type TopicSchemaGraphInput = {
+  topic: {
+    id: string;
+    name: string;
+    slug: string;
+    description?: string | null;
+    parentId?: string | null;
+    schemaType: TopicSchemaTypeValue;
+    schemaCanonicalUrl?: string | null;
+    schemaSameAs?: string[] | null;
+    schemaEntityData?: TopicSchemaEntityData | null;
+    parent?: {
+      name: string;
+      slug: string;
+      schemaType?: TopicSchemaTypeValue | null;
+      schemaCanonicalUrl?: string | null;
+      schemaSameAs?: string[] | null;
+    } | null;
+  };
+  quizUrls: string[];
+};
+
+function topicUrl(slug: string): string {
+  return `${BASE_URL}/topics/${slug}`;
+}
+
+function topicCollectionId(slug: string): string {
+  return `${topicUrl(slug)}#collection`;
+}
+
+function topicEntityId(slug: string): string {
+  return `${topicUrl(slug)}#entity`;
+}
+
+function uniqueUrls(values: string[] | null | undefined): string[] {
+  if (!Array.isArray(values)) return [];
+  return Array.from(new Set(values.map((value) => value.trim()).filter(Boolean)));
+}
+
+function asNonEmptyString(value: unknown): string | undefined {
+  if (typeof value !== "string") return undefined;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : undefined;
+}
+
+function asStringArray(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((entry) => (typeof entry === "string" ? entry.trim() : ""))
+    .filter(Boolean);
+}
+
+function asIsoDate(value: unknown): string | undefined {
+  if (typeof value !== "string") return undefined;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return undefined;
+  return date.toISOString();
+}
+
+export function getTopicCollectionSchema(
+  topic: {
+    name: string;
+    slug: string;
+    description?: string | null;
+    parentSlug?: string;
+  },
+  options: {
+    quizCount?: number;
+    quizUrls?: string[];
+    mainEntityId?: string;
+  } = {}
+) {
+  const topicUrl = `${BASE_URL}/topics/${topic.slug}`;
+  const collectionId = `${topicUrl}#collection`;
+  const parentCollectionId = topic.parentSlug ? `${BASE_URL}/topics/${topic.parentSlug}#collection` : undefined;
+  const hasPart = (options.quizUrls ?? []).slice(0, 10).map((url) => ({ "@id": url }));
+  
+  return {
+    "@type": "CollectionPage",
+    "@id": collectionId,
+    name: topic.name,
+    description: topic.description || `Explore quizzes about ${topic.name}`,
+    url: topicUrl,
+    ...(options.mainEntityId
+      ? {
+          mainEntity: { "@id": options.mainEntityId },
+          about: { "@id": options.mainEntityId },
+        }
+      : {
+          about: {
+            "@type": "Thing",
+            name: topic.name,
+          },
+        }),
+    ...(typeof options.quizCount === "number" ? { numberOfItems: options.quizCount } : {}),
+    ...(parentCollectionId ? { isPartOf: { "@id": parentCollectionId } } : {}),
+    ...(hasPart.length > 0 ? { hasPart } : {}),
+  };
+}
+
+export function getTopicPrimaryEntitySchema(input: TopicSchemaGraphInput["topic"]) {
+  const schemaType = input.schemaType;
+  const canonicalUrl = asNonEmptyString(input.schemaCanonicalUrl);
+  if (schemaType === "NONE" || !canonicalUrl) {
+    return null;
+  }
+
+  const url = topicUrl(input.slug);
+  const entityId = topicEntityId(input.slug);
+  const collectionId = topicCollectionId(input.slug);
+  const sameAs = uniqueUrls(input.schemaSameAs);
+  const data = (input.schemaEntityData ?? {}) as TopicSchemaEntityData;
+  const sportName = asNonEmptyString(data.sportName);
+
+  const baseEntity = {
+    "@id": entityId,
+    name: input.name,
+    url: canonicalUrl,
+    ...(input.description ? { description: input.description } : {}),
+    ...(sameAs.length > 0 ? { sameAs } : {}),
+    mainEntityOfPage: { "@id": collectionId },
+    subjectOf: { "@id": url },
+  };
+
+  if (schemaType === "SPORT") {
+    const aliases = asStringArray(data.aliases);
+    const broader =
+      input.parent && input.parent.schemaType && input.parent.schemaType !== "NONE"
+        ? { "@id": topicEntityId(input.parent.slug) }
+        : undefined;
+
+    return {
+      "@type": "DefinedTerm",
+      inDefinedTermSet: { "@id": `${BASE_URL}/topics#taxonomy` },
+      ...(aliases.length > 0 ? { alternateName: aliases } : {}),
+      ...(broader ? { broader } : {}),
+      ...baseEntity,
+    };
+  }
+
+  if (schemaType === "SPORTS_TEAM") {
+    return {
+      "@type": "SportsTeam",
+      ...(sportName ? { sport: sportName } : {}),
+      ...(asNonEmptyString(data.leagueName)
+        ? {
+            memberOf: {
+              "@type": "SportsOrganization",
+              name: asNonEmptyString(data.leagueName),
+              ...(asNonEmptyString(data.leagueUrl) ? { url: asNonEmptyString(data.leagueUrl) } : {}),
+            },
+          }
+        : {}),
+      ...(asNonEmptyString(data.organizationName)
+        ? {
+            parentOrganization: {
+              "@type": "SportsOrganization",
+              name: asNonEmptyString(data.organizationName),
+              ...(asNonEmptyString(data.organizationUrl) ? { url: asNonEmptyString(data.organizationUrl) } : {}),
+            },
+          }
+        : {}),
+      ...baseEntity,
+    };
+  }
+
+  if (schemaType === "ATHLETE") {
+    return {
+      "@type": "Person",
+      jobTitle: "Athlete",
+      ...(asNonEmptyString(data.nationality) ? { nationality: asNonEmptyString(data.nationality) } : {}),
+      ...(asIsoDate(data.birthDate) ? { birthDate: asIsoDate(data.birthDate) } : {}),
+      ...(sportName ? { knowsAbout: [sportName] } : {}),
+      ...(asNonEmptyString(data.teamName)
+        ? {
+            affiliation: {
+              "@type": "SportsTeam",
+              name: asNonEmptyString(data.teamName),
+            },
+          }
+        : {}),
+      ...baseEntity,
+    };
+  }
+
+  if (schemaType === "SPORTS_ORGANIZATION") {
+    return {
+      "@type": "SportsOrganization",
+      ...(sportName ? { sport: sportName } : {}),
+      ...baseEntity,
+    };
+  }
+
+  if (schemaType === "SPORTS_EVENT") {
+    return {
+      "@type": "SportsEvent",
+      ...(sportName ? { sport: sportName } : {}),
+      ...(asIsoDate(data.startDate) ? { startDate: asIsoDate(data.startDate) } : {}),
+      ...(asIsoDate(data.endDate) ? { endDate: asIsoDate(data.endDate) } : {}),
+      ...(asNonEmptyString(data.locationName)
+        ? {
+            location: {
+              "@type": "Place",
+              name: asNonEmptyString(data.locationName),
+              ...(asNonEmptyString(data.locationUrl) ? { url: asNonEmptyString(data.locationUrl) } : {}),
+            },
+          }
+        : {}),
+      ...(asNonEmptyString(data.organizerName)
+        ? {
+            organizer: {
+              "@type": "SportsOrganization",
+              name: asNonEmptyString(data.organizerName),
+              ...(asNonEmptyString(data.organizerUrl) ? { url: asNonEmptyString(data.organizerUrl) } : {}),
+            },
+          }
+        : {}),
+      ...baseEntity,
+    };
+  }
+
+  return null;
+}
+
+export function getTopicGraphSchema(input: TopicSchemaGraphInput) {
+  const primaryEntity = getTopicPrimaryEntitySchema(input.topic);
+  const collection = getTopicCollectionSchema(
+    {
+      name: input.topic.name,
+      slug: input.topic.slug,
+      description: input.topic.description,
+      parentSlug: input.topic.parent?.slug,
+    },
+    {
+      quizUrls: input.quizUrls,
+      mainEntityId: primaryEntity ? topicEntityId(input.topic.slug) : undefined,
+    }
+  );
+
+  return {
+    "@context": "https://schema.org",
+    "@graph": [collection, ...(primaryEntity ? [primaryEntity] : [])],
   };
 }
 

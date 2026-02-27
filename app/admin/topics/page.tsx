@@ -8,6 +8,10 @@ type TopicWithChildren = {
   slug: string;
   description: string | null;
   level: number;
+  schemaType: string;
+  schemaCanonicalUrl: string | null;
+  schemaSameAs: string[];
+  schemaEntityData: unknown;
   parent: { name: string } | null;
   parentId: string | null;
   _count: {

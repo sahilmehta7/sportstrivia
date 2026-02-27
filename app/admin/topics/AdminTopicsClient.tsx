@@ -45,6 +45,10 @@ interface TopicNode {
   slug: string;
   description?: string | null;
   level: number;
+  schemaType?: string;
+  schemaCanonicalUrl?: string | null;
+  schemaSameAs?: string[];
+  schemaEntityData?: unknown;
   parent?: { name: string } | null;
   children?: TopicNode[];
   _count: {
@@ -70,8 +74,34 @@ export function AdminTopicsClient({ topics }: AdminTopicsClientProps) {
   const [destinationTopicId, setDestinationTopicId] = useState<string>("");
   const [merging, setMerging] = useState(false);
   const [comboboxOpen, setComboboxOpen] = useState(false);
+  const [showNeedsSchemaConfigOnly, setShowNeedsSchemaConfigOnly] = useState(false);
 
   const totalTopics = useMemo(() => topics.length, [topics]);
+  const filteredTopics = topics.filter((topic) => shouldIncludeNode(topic));
+
+  const getSchemaTypeLabel = (schemaType?: string) => {
+    switch (schemaType) {
+      case "SPORT":
+        return "Sport";
+      case "SPORTS_TEAM":
+        return "Sports Team";
+      case "ATHLETE":
+        return "Athlete";
+      case "SPORTS_ORGANIZATION":
+        return "Sports Org";
+      case "SPORTS_EVENT":
+        return "Sports Event";
+      case "NONE":
+      default:
+        return "None";
+    }
+  };
+
+  function shouldIncludeNode(topic: TopicNode): boolean {
+    if (!showNeedsSchemaConfigOnly) return true;
+    if (!topic.schemaType || topic.schemaType === "NONE") return true;
+    return Boolean(topic.children?.some((child) => shouldIncludeNode(child)));
+  }
 
   const toggleExpand = (topicId: string) => {
     setExpandedTopics((prev) => {
@@ -234,6 +264,11 @@ export function AdminTopicsClient({ topics }: AdminTopicsClientProps) {
             <code className="text-xs bg-muted px-2 py-1 rounded">{topic.slug}</code>
           </TableCell>
           <TableCell>
+            <Badge variant={topic.schemaType && topic.schemaType !== "NONE" ? "default" : "outline"}>
+              {getSchemaTypeLabel(topic.schemaType)}
+            </Badge>
+          </TableCell>
+          <TableCell>
             {topic.parent ? (
               <Badge variant="outline">{topic.parent.name}</Badge>
             ) : (
@@ -298,9 +333,19 @@ export function AdminTopicsClient({ topics }: AdminTopicsClientProps) {
           Topics are organized in a tree hierarchy. Click the arrows to expand/collapse sub-topics.
           Child topics automatically include parent topic when filtering.
         </p>
-        <span className="text-sm font-medium text-muted-foreground">
-          {totalTopics} top-level topic{totalTopics === 1 ? "" : "s"}
-        </span>
+        <div className="flex items-center gap-3">
+          <Button
+            type="button"
+            size="sm"
+            variant={showNeedsSchemaConfigOnly ? "default" : "outline"}
+            onClick={() => setShowNeedsSchemaConfigOnly((prev) => !prev)}
+          >
+            Needs schema config
+          </Button>
+          <span className="text-sm font-medium text-muted-foreground">
+            {totalTopics} top-level topic{totalTopics === 1 ? "" : "s"}
+          </span>
+        </div>
       </div>
 
       <div className="rounded-md border">
@@ -309,6 +354,7 @@ export function AdminTopicsClient({ topics }: AdminTopicsClientProps) {
             <TableRow>
               <TableHead>Name</TableHead>
               <TableHead>Slug</TableHead>
+              <TableHead>Schema Type</TableHead>
               <TableHead>Parent</TableHead>
               <TableHead className="text-center">Level</TableHead>
               <TableHead className="text-right">Questions</TableHead>
@@ -318,11 +364,11 @@ export function AdminTopicsClient({ topics }: AdminTopicsClientProps) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {topics.map((topic) => renderTopicRow(topic))}
-            {topics.length === 0 && (
+            {filteredTopics.map((topic) => renderTopicRow(topic))}
+            {filteredTopics.length === 0 && (
               <TableRow>
-                <TableCell colSpan={8} className="py-8 text-center text-muted-foreground">
-                  No topics found. Create your first topic to get started.
+                <TableCell colSpan={9} className="py-8 text-center text-muted-foreground">
+                  No topics match the current filters.
                 </TableCell>
               </TableRow>
             )}

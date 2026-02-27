@@ -150,6 +150,10 @@ model Topic {
   seoTitle         String?
   seoDescription   String?
   seoKeywords      String[]
+  schemaType       TopicSchemaType   @default(NONE)
+  schemaCanonicalUrl String?
+  schemaSameAs     String[]
+  schemaEntityData Json?
   displayEmoji     String?
   displayImageUrl  String?
   parentId         String?
@@ -204,6 +208,15 @@ enum NotificationDigestFrequency {
   OFF
   DAILY
   WEEKLY
+}
+
+enum TopicSchemaType {
+  NONE
+  SPORT
+  SPORTS_TEAM
+  ATHLETE
+  SPORTS_ORGANIZATION
+  SPORTS_EVENT
 }
 
 model Quiz {

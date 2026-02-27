@@ -26,6 +26,26 @@ ALTER TABLE "QuizCompletionBonusAward" ADD CONSTRAINT "QuizCompletionBonusAward_
 -- AddForeignKey
 ALTER TABLE "QuizCompletionBonusAward" ADD CONSTRAINT "QuizCompletionBonusAward_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
+-- === Topic schema typing (2026-02-27) ===
+DO $$ BEGIN
+    CREATE TYPE "TopicSchemaType" AS ENUM (
+        'NONE',
+        'SPORT',
+        'SPORTS_TEAM',
+        'ATHLETE',
+        'SPORTS_ORGANIZATION',
+        'SPORTS_EVENT'
+    );
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
+
+ALTER TABLE "Topic"
+    ADD COLUMN IF NOT EXISTS "schemaType" "TopicSchemaType" NOT NULL DEFAULT 'NONE',
+    ADD COLUMN IF NOT EXISTS "schemaCanonicalUrl" TEXT,
+    ADD COLUMN IF NOT EXISTS "schemaSameAs" TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[],
+    ADD COLUMN IF NOT EXISTS "schemaEntityData" JSONB;
+
 
 -- Create enum NotificationDigestFrequency
 DO $$ BEGIN
