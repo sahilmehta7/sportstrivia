@@ -1,4 +1,3 @@
-import { cache } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -71,12 +70,12 @@ const topicWithRelations = {
 
 type _TopicWithRelations = Prisma.TopicGetPayload<typeof topicWithRelations>;
 
-const fetchTopicBySlug = cache(async (slug: string) => {
+const fetchTopicBySlug = async (slug: string) => {
   return prisma.topic.findUnique({
     where: { slug },
     ...topicWithRelations,
   });
-});
+};
 
 async function fetchFeaturedQuizzesForTopic(topicIds: string[]): Promise<PublicQuizListItem[]> {
   if (topicIds.length === 0) {

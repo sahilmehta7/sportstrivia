@@ -1,10 +1,21 @@
 "use client";
 
-import { Fragment, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { Fragment, useEffect, useMemo, useState, type FormEvent } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { Button } from "@/components/ui/button";
-import { Plus, Edit, Trash2, ChevronRight, ChevronDown, GitMerge, Check, ChevronsUpDown } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import {
+  Plus,
+  Edit,
+  Trash2,
+  ChevronRight,
+  ChevronDown,
+  GitMerge,
+  Check,
+  ChevronsUpDown,
+  Search,
+} from "lucide-react";
 import Link from "next/link";
 import {
   Table,
@@ -19,7 +30,6 @@ import { useToast } from "@/hooks/use-toast";
 import {
   Dialog,
   DialogContent,
-  DialogDescription as _DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -49,7 +59,8 @@ interface TopicNode {
   schemaCanonicalUrl?: string | null;
   schemaSameAs?: string[];
   schemaEntityData?: unknown;
-  parent?: { name: string } | null;
+  parentId?: string | null;
+  parent?: { id?: string; name: string } | null;
   children?: TopicNode[];
   _count: {
     questions: number;
@@ -58,13 +69,59 @@ interface TopicNode {
   };
 }
 
-interface AdminTopicsClientProps {
-  topics: TopicNode[];
+interface FlatTopicOption {
+  id: string;
+  name: string;
+  level: number;
+  parentId: string | null;
 }
 
-export function AdminTopicsClient({ topics }: AdminTopicsClientProps) {
+interface AdminTopicsClientProps {
+  topics: TopicNode[];
+  allTopics: FlatTopicOption[];
+  filters: {
+    search: string;
+    schema: string;
+    level: string;
+  };
+  filterOptions: {
+    levels: number[];
+  };
+  counts: {
+    total: number;
+    matched: number;
+    directMatches: number;
+  };
+}
+
+function collectExpandableNodeIds(nodes: TopicNode[]): Set<string> {
+  const ids = new Set<string>();
+
+  const walk = (entries: TopicNode[]) => {
+    for (const node of entries) {
+      if ((node.children?.length ?? 0) > 0) {
+        ids.add(node.id);
+        walk(node.children ?? []);
+      }
+    }
+  };
+
+  walk(nodes);
+  return ids;
+}
+
+export function AdminTopicsClient({
+  topics,
+  allTopics,
+  filters,
+  filterOptions,
+  counts,
+}: AdminTopicsClientProps) {
   const { toast } = useToast();
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
   const [expandedTopics, setExpandedTopics] = useState<Set<string>>(new Set());
   const [deleting, setDeleting] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -74,10 +131,38 @@ export function AdminTopicsClient({ topics }: AdminTopicsClientProps) {
   const [destinationTopicId, setDestinationTopicId] = useState<string>("");
   const [merging, setMerging] = useState(false);
   const [comboboxOpen, setComboboxOpen] = useState(false);
-  const [showNeedsSchemaConfigOnly, setShowNeedsSchemaConfigOnly] = useState(false);
 
-  const totalTopics = useMemo(() => topics.length, [topics]);
-  const filteredTopics = topics.filter((topic) => shouldIncludeNode(topic));
+  const [search, setSearch] = useState(filters.search);
+  const [schema, setSchema] = useState(filters.schema || "all");
+  const [level, setLevel] = useState(filters.level || "all");
+
+  const hasActiveFilters =
+    Boolean(filters.search) ||
+    (filters.schema.length > 0 && filters.schema !== "all") ||
+    Boolean(filters.level);
+
+  useEffect(() => {
+    setSearch(filters.search);
+    setSchema(filters.schema || "all");
+    setLevel(filters.level || "all");
+  }, [filters.level, filters.schema, filters.search]);
+
+  useEffect(() => {
+    if (hasActiveFilters) {
+      setExpandedTopics(collectExpandableNodeIds(topics));
+    }
+  }, [hasActiveFilters, topics]);
+
+  const childrenByParent = useMemo(() => {
+    const map = new Map<string, string[]>();
+    for (const topic of allTopics) {
+      if (!topic.parentId) continue;
+      const existing = map.get(topic.parentId) ?? [];
+      existing.push(topic.id);
+      map.set(topic.parentId, existing);
+    }
+    return map;
+  }, [allTopics]);
 
   const getSchemaTypeLabel = (schemaType?: string) => {
     switch (schemaType) {
@@ -97,12 +182,6 @@ export function AdminTopicsClient({ topics }: AdminTopicsClientProps) {
     }
   };
 
-  function shouldIncludeNode(topic: TopicNode): boolean {
-    if (!showNeedsSchemaConfigOnly) return true;
-    if (!topic.schemaType || topic.schemaType === "NONE") return true;
-    return Boolean(topic.children?.some((child) => shouldIncludeNode(child)));
-  }
-
   const toggleExpand = (topicId: string) => {
     setExpandedTopics((prev) => {
       const next = new Set(prev);
@@ -113,6 +192,47 @@ export function AdminTopicsClient({ topics }: AdminTopicsClientProps) {
       }
       return next;
     });
+  };
+
+  const updateQueryFromFormState = () => {
+    const params = new URLSearchParams(searchParams.toString());
+
+    const normalizedSearch = search.trim();
+    if (normalizedSearch) {
+      params.set("search", normalizedSearch);
+    } else {
+      params.delete("search");
+    }
+
+    if (schema && schema !== "all") {
+      params.set("schema", schema);
+    } else {
+      params.delete("schema");
+    }
+
+    if (level && level !== "all") {
+      params.set("level", level);
+    } else {
+      params.delete("level");
+    }
+
+    // Forward-compatible with potential server pagination.
+    params.delete("page");
+
+    const queryString = params.toString();
+    router.push(queryString ? `${pathname}?${queryString}` : pathname);
+  };
+
+  const handleFilterSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    updateQueryFromFormState();
+  };
+
+  const resetFilters = () => {
+    setSearch("");
+    setSchema("all");
+    setLevel("all");
+    router.push(pathname);
   };
 
   const handleDelete = async () => {
@@ -202,37 +322,26 @@ export function AdminTopicsClient({ topics }: AdminTopicsClientProps) {
     }
   };
 
-  // Flattened topics for merge selection, excluding the source topic and its descendants
-  const getMergeableTopics = (sourceTopicId: string) => {
-    // Simple recursive function to find descendants
-    const getDescendantIds = (topic: TopicNode): string[] => {
-      const ids = [topic.id];
-      topic.children?.forEach(child => {
-        ids.push(...getDescendantIds(child));
-      });
-      return ids;
-    };
+  const getMergeableTopics = (sourceTopicId: string): FlatTopicOption[] => {
+    const excludedIds = new Set<string>([sourceTopicId]);
+    const queue = [sourceTopicId];
 
+    while (queue.length > 0) {
+      const current = queue.shift();
+      if (!current) continue;
+      const childIds = childrenByParent.get(current) ?? [];
+      for (const childId of childIds) {
+        if (!excludedIds.has(childId)) {
+          excludedIds.add(childId);
+          queue.push(childId);
+        }
+      }
+    }
 
-    // Better to just filter from the full flattened list if we had one. 
-    // For now, let's just do a basic filter on top-level topics for simplicity or assume user knows
-    // In a real app we'd have a flattened list or searchable select.
-
-    const flatten = (nodes: TopicNode[]): TopicNode[] => {
-      return nodes.reduce((acc: TopicNode[], node) => {
-        return acc.concat([node], flatten(node.children || []));
-      }, []);
-    };
-
-    const allFlattened = flatten(topics);
-    const sourceNode = allFlattened.find(n => n.id === sourceTopicId);
-    if (!sourceNode) return allFlattened;
-
-    const sourceAndDescendantIds = getDescendantIds(sourceNode);
-    return allFlattened.filter(t => !sourceAndDescendantIds.includes(t.id));
+    return allTopics.filter((topic) => !excludedIds.has(topic.id));
   };
 
-  const renderTopicRow = (topic: TopicNode, depth: number = 0) => {
+  const renderTopicRow = (topic: TopicNode, depth = 0) => {
     const hasChildren = (topic.children?.length ?? 0) > 0;
     const isExpanded = expandedTopics.has(topic.id);
 
@@ -261,7 +370,7 @@ export function AdminTopicsClient({ topics }: AdminTopicsClientProps) {
             </div>
           </TableCell>
           <TableCell>
-            <code className="text-xs bg-muted px-2 py-1 rounded">{topic.slug}</code>
+            <code className="rounded bg-muted px-2 py-1 text-xs">{topic.slug}</code>
           </TableCell>
           <TableCell>
             <Badge variant={topic.schemaType && topic.schemaType !== "NONE" ? "default" : "outline"}>
@@ -328,24 +437,90 @@ export function AdminTopicsClient({ topics }: AdminTopicsClientProps) {
         }
       />
 
-      <div className="mb-4 flex items-center justify-between rounded-lg bg-muted p-4">
+      <div className="mb-4 rounded-lg bg-muted p-4">
         <p className="text-sm text-muted-foreground">
-          Topics are organized in a tree hierarchy. Click the arrows to expand/collapse sub-topics.
-          Child topics automatically include parent topic when filtering.
+          Topics are organized in a tree hierarchy. Click arrows to expand/collapse sub-topics.
+          Search and filters preserve tree context by showing matching topics with ancestor paths.
         </p>
-        <div className="flex items-center gap-3">
-          <Button
-            type="button"
-            size="sm"
-            variant={showNeedsSchemaConfigOnly ? "default" : "outline"}
-            onClick={() => setShowNeedsSchemaConfigOnly((prev) => !prev)}
-          >
-            Needs schema config
-          </Button>
-          <span className="text-sm font-medium text-muted-foreground">
-            {totalTopics} top-level topic{totalTopics === 1 ? "" : "s"}
-          </span>
+      </div>
+
+      <form
+        onSubmit={handleFilterSubmit}
+        className="mb-4 grid gap-3 rounded-md border bg-card p-4 md:grid-cols-5"
+      >
+        <div className="md:col-span-2">
+          <label htmlFor="topic-search" className="mb-1 block text-sm font-medium">
+            Search
+          </label>
+          <div className="relative">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              id="topic-search"
+              placeholder="Search by name, slug, or description..."
+              className="pl-9"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+            />
+          </div>
         </div>
+
+        <div>
+          <label htmlFor="topic-schema" className="mb-1 block text-sm font-medium">
+            Schema
+          </label>
+          <select
+            id="topic-schema"
+            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            value={schema}
+            onChange={(event) => setSchema(event.target.value)}
+          >
+            <option value="all">All schema types</option>
+            <option value="needs-config">Needs schema config</option>
+            <option value="NONE">None</option>
+            <option value="SPORT">Sport</option>
+            <option value="SPORTS_TEAM">Sports Team</option>
+            <option value="ATHLETE">Athlete</option>
+            <option value="SPORTS_ORGANIZATION">Sports Organization</option>
+            <option value="SPORTS_EVENT">Sports Event</option>
+          </select>
+        </div>
+
+        <div>
+          <label htmlFor="topic-level" className="mb-1 block text-sm font-medium">
+            Level
+          </label>
+          <select
+            id="topic-level"
+            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            value={level}
+            onChange={(event) => setLevel(event.target.value)}
+          >
+            <option value="all">All levels</option>
+            {filterOptions.levels.map((levelOption) => (
+              <option key={levelOption} value={String(levelOption)}>
+                Level {levelOption}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="flex items-end gap-2">
+          <Button type="submit">Apply</Button>
+          <Button type="button" variant="outline" onClick={resetFilters}>
+            Reset
+          </Button>
+        </div>
+      </form>
+
+      <div className="mb-4 text-sm text-muted-foreground">
+        Showing <span className="font-medium text-foreground">{counts.matched}</span> of{" "}
+        <span className="font-medium text-foreground">{counts.total}</span> topic
+        {counts.total === 1 ? "" : "s"}
+        {hasActiveFilters ? (
+          <span>
+            {" "}(direct matches: <span className="font-medium text-foreground">{counts.directMatches}</span>)
+          </span>
+        ) : null}
       </div>
 
       <div className="rounded-md border">
@@ -364,8 +539,8 @@ export function AdminTopicsClient({ topics }: AdminTopicsClientProps) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredTopics.map((topic) => renderTopicRow(topic))}
-            {filteredTopics.length === 0 && (
+            {topics.map((topic) => renderTopicRow(topic))}
+            {topics.length === 0 && (
               <TableRow>
                 <TableCell colSpan={9} className="py-8 text-center text-muted-foreground">
                   No topics match the current filters.
@@ -403,10 +578,10 @@ export function AdminTopicsClient({ topics }: AdminTopicsClientProps) {
                   {(topicToDelete._count.questions > 0 ||
                     topicToDelete._count.children > 0 ||
                     topicToDelete._count.quizTopicConfigs > 0) && (
-                      <p className="mt-2 text-sm">
-                        You must remove/reassign all dependencies before deleting this topic.
-                      </p>
-                    )}
+                    <p className="mt-2 text-sm">
+                      You must remove/reassign all dependencies before deleting this topic.
+                    </p>
+                  )}
                 </div>
               )}
             </div>
@@ -432,7 +607,7 @@ export function AdminTopicsClient({ topics }: AdminTopicsClientProps) {
             </div>
           </DialogHeader>
 
-          <div className="py-4 space-y-4">
+          <div className="space-y-4 py-4">
             <div className="space-y-2">
               <label className="text-sm font-medium">Destination Topic</label>
               <Popover open={comboboxOpen} onOpenChange={setComboboxOpen}>
@@ -445,9 +620,13 @@ export function AdminTopicsClient({ topics }: AdminTopicsClientProps) {
                   >
                     {destinationTopicId
                       ? (() => {
-                        const selected = topicToMerge && getMergeableTopics(topicToMerge.id).find((t) => t.id === destinationTopicId);
-                        return selected ? `${selected.name} ${selected.level > 0 ? `(Level ${selected.level})` : "(Root)"}` : "Select destination topic...";
-                      })()
+                          const selected =
+                            topicToMerge &&
+                            getMergeableTopics(topicToMerge.id).find((topic) => topic.id === destinationTopicId);
+                          return selected
+                            ? `${selected.name} ${selected.level > 0 ? `(Level ${selected.level})` : "(Root)"}`
+                            : "Select destination topic...";
+                        })()
                       : "Select destination topic..."}
                     <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                   </Button>
@@ -458,24 +637,25 @@ export function AdminTopicsClient({ topics }: AdminTopicsClientProps) {
                     <CommandList>
                       <CommandEmpty>No topic found.</CommandEmpty>
                       <CommandGroup>
-                        {topicToMerge && getMergeableTopics(topicToMerge.id).map((t) => (
-                          <CommandItem
-                            key={t.id}
-                            value={t.name}
-                            onSelect={() => {
-                              setDestinationTopicId(t.id);
-                              setComboboxOpen(false);
-                            }}
-                          >
-                            <Check
-                              className={cn(
-                                "mr-2 h-4 w-4",
-                                destinationTopicId === t.id ? "opacity-100" : "opacity-0"
-                              )}
-                            />
-                            {t.name} {t.level > 0 ? `(Level ${t.level})` : "(Root)"}
-                          </CommandItem>
-                        ))}
+                        {topicToMerge &&
+                          getMergeableTopics(topicToMerge.id).map((topic) => (
+                            <CommandItem
+                              key={topic.id}
+                              value={`${topic.name} ${topic.id}`}
+                              onSelect={() => {
+                                setDestinationTopicId(topic.id);
+                                setComboboxOpen(false);
+                              }}
+                            >
+                              <Check
+                                className={cn(
+                                  "mr-2 h-4 w-4",
+                                  destinationTopicId === topic.id ? "opacity-100" : "opacity-0"
+                                )}
+                              />
+                              {topic.name} {topic.level > 0 ? `(Level ${topic.level})` : "(Root)"}
+                            </CommandItem>
+                          ))}
                       </CommandGroup>
                     </CommandList>
                   </Command>
@@ -484,12 +664,12 @@ export function AdminTopicsClient({ topics }: AdminTopicsClientProps) {
             </div>
 
             {topicToMerge && (
-              <div className="rounded-md bg-muted p-3 text-sm space-y-1">
-                <div className="font-medium mb-1 text-blue-600 dark:text-blue-400">Resources to be moved:</div>
+              <div className="space-y-1 rounded-md bg-muted p-3 text-sm">
+                <div className="mb-1 font-medium text-blue-600 dark:text-blue-400">Resources to be moved:</div>
                 <div>• {topicToMerge._count.questions} Question(s)</div>
                 <div>• {topicToMerge._count.children} Sub-topic(s)</div>
                 <div>• {topicToMerge._count.quizTopicConfigs} Quiz Config(s)</div>
-                <div className="mt-2 text-xs text-muted-foreground italic">
+                <div className="mt-2 text-xs italic text-muted-foreground">
                   Note: The source topic &quot;{topicToMerge.name}&quot; will be deleted.
                 </div>
               </div>
