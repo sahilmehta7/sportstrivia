@@ -166,12 +166,18 @@ export default async function QuizDetailPage({ params }: QuizDetailPageProps) {
   const averageRating = typeof quiz.averageRating === "number" ? quiz.averageRating : 0;
   const totalReviews = typeof quiz.totalReviews === "number" ? quiz.totalReviews : quiz._count?.reviews ?? 0;
   const quizUrl = getCanonicalUrl(`/quizzes/${quiz.slug}`) || `/quizzes/${quiz.slug}`;
+  const sportName = quiz.sport?.trim().toLowerCase();
+  const matchedSportTopic = sportName
+    ? topicConfigs.find((config: any) => config?.topic?.name?.trim()?.toLowerCase() === sportName)
+    : null;
+  const sportUrl = matchedSportTopic?.topic?.slug ? getCanonicalUrl(`/topics/${matchedSportTopic.topic.slug}`) : undefined;
   const quizSchema = getQuizSchema({
     id: quiz.id,
     title: quiz.title,
     slug: quiz.slug,
     description: quiz.description,
     sport: quiz.sport,
+    sportUrl,
     difficulty: quiz.difficulty,
     duration: quiz.duration,
     passingScore: 0,
@@ -183,6 +189,7 @@ export default async function QuizDetailPage({ params }: QuizDetailPageProps) {
     topicConfigs: topicConfigs.map((config: any) => ({
       topic: {
         name: config?.topic?.name ?? "",
+        slug: config?.topic?.slug,
       },
     })),
   });

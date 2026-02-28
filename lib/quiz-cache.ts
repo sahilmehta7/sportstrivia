@@ -51,9 +51,8 @@ export const getCachedQuiz = cache(async (slug: string) => {
                     status: true,
                     _count: { select: { attempts: true, reviews: true } },
                     topicConfigs: {
-                        include: { topic: { select: { name: true } } },
+                        include: { topic: { select: { name: true, slug: true, level: true } } },
                         orderBy: { createdAt: "asc" },
-                        take: 1,
                     },
                     // Note: We don't fetch leaderboard here anymore as it changes too frequently
                 },

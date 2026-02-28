@@ -54,6 +54,7 @@ export function getQuizSchema(quiz: {
   slug: string;
   description?: string | null;
   sport?: string | null;
+  sportUrl?: string | null;
   difficulty: string;
   duration?: number | null;
   passingScore: number;
@@ -73,6 +74,7 @@ export function getQuizSchema(quiz: {
   const topics = quiz.topicConfigs?.map(config => config.topic) || [];
   const datePublished = toIsoDateString(quiz.createdAt);
   const dateModified = toIsoDateString(quiz.updatedAt);
+  const sportName = quiz.sport?.trim() || "Sports";
   
   return {
     "@context": "https://schema.org",
@@ -82,13 +84,10 @@ export function getQuizSchema(quiz: {
     description: quiz.description || `Test your knowledge about ${quiz.sport || "sports"} with this ${quiz.difficulty.toLowerCase()} difficulty quiz`,
     url: quizUrl,
     ...(quiz.descriptionImageUrl ? { image: quiz.descriptionImageUrl } : {}),
-    about: topics.length > 0 ? topics.map(topic => ({
+    about: {
       "@type": "Thing",
-      name: topic.name,
-      ...(topic.slug ? { url: `${BASE_URL}/topics/${topic.slug}` } : {}),
-    })) : {
-      "@type": "Thing",
-      name: quiz.sport || "Sports",
+      name: sportName,
+      ...(quiz.sportUrl ? { url: quiz.sportUrl } : {}),
     },
     educationalLevel: quiz.difficulty,
     typicalAgeRange: "13-",
