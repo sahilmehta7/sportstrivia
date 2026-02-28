@@ -15,6 +15,8 @@ import {
   Check,
   ChevronsUpDown,
   Search,
+  Loader2,
+  Wand2,
 } from "lucide-react";
 import Link from "next/link";
 import {
@@ -131,6 +133,7 @@ export function AdminTopicsClient({
   const [destinationTopicId, setDestinationTopicId] = useState<string>("");
   const [merging, setMerging] = useState(false);
   const [comboboxOpen, setComboboxOpen] = useState(false);
+  const [bulkUpdating, setBulkUpdating] = useState(false);
 
   const [search, setSearch] = useState(filters.search);
   const [schema, setSchema] = useState(filters.schema || "all");
@@ -341,6 +344,41 @@ export function AdminTopicsClient({
     return allTopics.filter((topic) => !excludedIds.has(topic.id));
   };
 
+  const handleBulkWikipediaAutofill = async () => {
+    const shouldProceed = window.confirm(
+      "Run Wikipedia autofill for topics with missing schema information? This may take up to a minute."
+    );
+    if (!shouldProceed) return;
+
+    setBulkUpdating(true);
+    try {
+      const response = await fetch("/api/admin/topics/wiki-search/bulk", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ limit: 100 }),
+      });
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(result.error || "Bulk update failed");
+      }
+
+      const summary = result.data;
+      toast({
+        title: "Bulk update complete",
+        description: `Updated ${summary.updated}, failed ${summary.failed}, skipped ${summary.skipped} (candidates: ${summary.candidates}).`,
+      });
+      router.refresh();
+    } catch (error: any) {
+      toast({
+        title: "Bulk update failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setBulkUpdating(false);
+    }
+  };
+
   const renderTopicRow = (topic: TopicNode, depth = 0) => {
     const hasChildren = (topic.children?.length ?? 0) > 0;
     const isExpanded = expandedTopics.has(topic.id);
@@ -428,12 +466,32 @@ export function AdminTopicsClient({
         title="Topics"
         description="Manage topic hierarchy for categorizing questions"
         action={
-          <Link href="/admin/topics/new">
-            <Button>
-              <Plus className="mr-2 h-4 w-4" />
-              Create Topic
+          <div className="flex gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleBulkWikipediaAutofill}
+              disabled={bulkUpdating}
+            >
+              {bulkUpdating ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Updating...
+                </>
+              ) : (
+                <>
+                  <Wand2 className="mr-2 h-4 w-4" />
+                  Bulk Wikipedia Autofill
+                </>
+              )}
             </Button>
-          </Link>
+            <Link href="/admin/topics/new">
+              <Button>
+                <Plus className="mr-2 h-4 w-4" />
+                Create Topic
+              </Button>
+            </Link>
+          </div>
         }
       />
 
