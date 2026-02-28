@@ -6,6 +6,7 @@ import { ShowcaseButton } from "@/components/showcase/ui/buttons/Button";
 
 interface ResultsShareButtonProps {
   quizTitle: string;
+  quizSlug: string;
   userName: string;
   score: number; // percentage 0-100
   correctAnswers: number;
@@ -34,5 +35,4 @@ export function ResultsShareButton(props: ResultsShareButtonProps) {
     </div>
   );
 }
-
 

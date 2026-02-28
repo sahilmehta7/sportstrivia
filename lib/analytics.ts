@@ -17,7 +17,8 @@ type EventName =
     | 'grid_cell_opened'
     | 'grid_cell_submitted'
     | 'grid_completed'
-    | 'grid_result_shared';
+    | 'grid_result_shared'
+    | 'share_click_copy';
 
 export const trackEvent = (eventName: EventName, params?: Record<string, any>) => {
     sendGAEvent('event', eventName, params || {});

@@ -276,6 +276,7 @@ export default async function QuizResultsPage({
                   primaryAction={
                     <ResultsShareButton
                       quizTitle={attempt.quiz.title}
+                      quizSlug={slug}
                       userName={attempt.user?.name || "Anonymous"}
                       score={attempt.score || 0}
                       correctAnswers={attempt.correctAnswers || 0}
@@ -283,7 +284,7 @@ export default async function QuizResultsPage({
                       totalPoints={attempt.totalPoints || 0}
                       timeSpent={attempt.totalTimeSpent || 0}
                     >
-                      <span className="w-full">Share Results</span>
+                      <span className="w-full">Challenge Friends</span>
                     </ResultsShareButton>
                   }
                   secondaryAction={

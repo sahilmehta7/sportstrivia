@@ -1,9 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import { trackEvent } from "@/lib/analytics";
 
 interface ShareResultsProps {
   quizTitle: string;
+  quizSlug: string;
   userName: string;
   score: number;
   correctAnswers: number;
@@ -14,6 +16,7 @@ interface ShareResultsProps {
 
 export function useShareResults({
   quizTitle,
+  quizSlug,
   userName,
   score,
   correctAnswers,
@@ -180,6 +183,10 @@ export function useShareResults({
     try {
       const blob = await generateShareImage();
       const url = URL.createObjectURL(blob);
+      const quizUrl =
+        typeof window !== "undefined"
+          ? `${window.location.origin}/quizzes/${quizSlug}`
+          : `/quizzes/${quizSlug}`;
       
       // Create WhatsApp message
       const message = `🎯 I just scored ${score.toFixed(1)}% on "${quizTitle}"! 
@@ -190,15 +197,24 @@ export function useShareResults({
 • Completed in ${formatTime(timeSpent)}
 
 Think you can beat my score? Take the quiz and challenge me! 🏆
+🔗 ${quizUrl}
 
 #QuizChallenge #Sportstrivia`;
 
       // Create a temporary link to share the image
       const shareUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
-      
-      // Open WhatsApp with message
-      window.open(shareUrl, '_blank');
-      
+
+      // Open WhatsApp with message. If blocked/fails, copy link to clipboard as fallback.
+      const popup = window.open(shareUrl, "_blank");
+      if (!popup && navigator.clipboard) {
+        await navigator.clipboard.writeText(quizUrl);
+        trackEvent("share_click_copy", {
+          quizSlug,
+          quizTitle,
+          source: "quiz_results",
+        });
+      }
+
       // Clean up
       setTimeout(() => URL.revokeObjectURL(url), 1000);
     } catch (error) {

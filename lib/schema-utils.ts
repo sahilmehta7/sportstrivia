@@ -60,8 +60,8 @@ export function getQuizSchema(quiz: {
   descriptionImageUrl?: string | null;
   averageRating: number;
   totalReviews: number;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: Date | string | number;
+  updatedAt: Date | string | number;
   topicConfigs?: Array<{
     topic: {
       name: string;
@@ -71,6 +71,8 @@ export function getQuizSchema(quiz: {
 }) {
   const quizUrl = `${BASE_URL}/quizzes/${quiz.slug}`;
   const topics = quiz.topicConfigs?.map(config => config.topic) || [];
+  const datePublished = toIsoDateString(quiz.createdAt);
+  const dateModified = toIsoDateString(quiz.updatedAt);
   
   return {
     "@context": "https://schema.org",
@@ -98,8 +100,8 @@ export function getQuizSchema(quiz: {
     assesses: topics.length > 0 
       ? `Knowledge of ${topics.map(t => t.name).join(", ")}`
       : `Knowledge of ${quiz.sport || "sports"}`,
-    datePublished: quiz.createdAt.toISOString(),
-    dateModified: quiz.updatedAt.toISOString(),
+    ...(datePublished ? { datePublished } : {}),
+    ...(dateModified ? { dateModified } : {}),
     ...(quiz.totalReviews > 0 ? {
       aggregateRating: {
         "@type": "AggregateRating",
@@ -275,6 +277,13 @@ function asStringArray(value: unknown): string[] {
 function asIsoDate(value: unknown): string | undefined {
   if (typeof value !== "string") return undefined;
   const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return undefined;
+  return date.toISOString();
+}
+
+function toIsoDateString(value: Date | string | number | null | undefined): string | undefined {
+  if (value == null) return undefined;
+  const date = value instanceof Date ? value : new Date(value);
   if (Number.isNaN(date.getTime())) return undefined;
   return date.toISOString();
 }
@@ -510,12 +519,14 @@ export function getReviewSchema(review: {
   id: string;
   rating: number;
   comment?: string | null;
-  createdAt: Date;
+  createdAt: Date | string | number;
   user: {
     name?: string | null;
     image?: string | null;
   };
 }, quizTitle: string) {
+  const datePublished = toIsoDateString(review.createdAt);
+
   return {
     "@context": "https://schema.org",
     "@type": "Review",
@@ -531,7 +542,7 @@ export function getReviewSchema(review: {
       ...(review.user.image ? { image: review.user.image } : {}),
     },
     ...(review.comment ? { reviewBody: review.comment } : {}),
-    datePublished: review.createdAt.toISOString(),
+    ...(datePublished ? { datePublished } : {}),
     itemReviewed: {
       "@type": "Quiz",
       name: quizTitle,
