@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Save, Trash2, Wand2, Loader2, Upload, Check, ChevronsUpDown, List } from "lucide-react";
+import { ArrowLeft, Save, Trash2, Wand2, Loader2, Upload, Check, ChevronsUpDown, List, Search } from "lucide-react";
 import Link from "next/link";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { Badge } from "@/components/ui/badge";
@@ -52,6 +52,7 @@ export default function EditTopicPage({ params }: EditTopicPageProps) {
   const [currentTopic, setCurrentTopic] = useState<any>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [wikiLoading, setWikiLoading] = useState(false);
 
   // AI generation state
   const [easyCount, setEasyCount] = useState(3);
@@ -292,6 +293,75 @@ export default function EditTopicPage({ params }: EditTopicPageProps) {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
+  const handleWikipediaAutofill = async () => {
+    const query = formData.name.trim();
+    if (!query) {
+      toast({
+        title: "Topic name required",
+        description: "Enter a topic name before running Wikipedia autofill.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setWikiLoading(true);
+    try {
+      const response = await fetch("/api/admin/topics/wiki-search", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query }),
+      });
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(result.error || "Failed to fetch Wikipedia metadata");
+      }
+
+      const meta = result.data || {};
+      const existingSameAs = formData.schemaSameAsText
+        .split("\n")
+        .map((value) => value.trim())
+        .filter(Boolean);
+      const incomingSameAs = Array.isArray(meta.schemaSameAs)
+        ? meta.schemaSameAs.map((value: string) => value.trim()).filter(Boolean)
+        : [];
+      const mergedSameAs = Array.from(new Set([...existingSameAs, ...incomingSameAs]));
+
+      setFormData((prev) => ({
+        ...prev,
+        schemaType: (meta.schemaType || prev.schemaType) as TopicSchemaTypeValue,
+        schemaCanonicalUrl: meta.schemaCanonicalUrl || prev.schemaCanonicalUrl,
+        schemaSameAsText: mergedSameAs.join("\n"),
+        description: prev.description || meta.extract || meta.description || "",
+        sportName: meta.sportName || prev.sportName,
+        leagueName: meta.leagueName || prev.leagueName,
+        organizationName: meta.organizationName || prev.organizationName,
+        teamName: meta.teamName || prev.teamName,
+        nationality: meta.nationality || prev.nationality,
+        birthDate: meta.birthDate || prev.birthDate,
+        startDate: meta.startDate || prev.startDate,
+        endDate: meta.endDate || prev.endDate,
+        locationName: meta.locationName || prev.locationName,
+        organizerName: meta.organizerName || prev.organizerName,
+        aliases:
+          prev.aliases ||
+          (Array.isArray(meta.aliases) ? meta.aliases.join(", ") : ""),
+      }));
+
+      toast({
+        title: "Wikipedia metadata loaded",
+        description: "Schema fields were auto-filled. Review before saving.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Wikipedia lookup failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setWikiLoading(false);
+    }
+  };
+
   const handleGenerateQuestions = async () => {
     if (!topicId) return;
     const total = (easyCount || 0) + (mediumCount || 0) + (hardCount || 0);
@@ -510,6 +580,27 @@ export default function EditTopicPage({ params }: EditTopicPageProps) {
 
             <div className="space-y-2">
               <Label htmlFor="schemaType">Schema Type</Label>
+              <div className="flex items-center justify-end">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleWikipediaAutofill}
+                  disabled={wikiLoading}
+                >
+                  {wikiLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Loading...
+                    </>
+                  ) : (
+                    <>
+                      <Search className="mr-2 h-4 w-4" />
+                      Wikipedia Autofill
+                    </>
+                  )}
+                </Button>
+              </div>
               <Select
                 value={formData.schemaType}
                 onValueChange={(value) => updateField("schemaType", value as TopicSchemaTypeValue)}
