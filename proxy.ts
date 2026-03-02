@@ -23,7 +23,8 @@ const rateLimitStore = new Map<string, { count: number; resetAt: number }>();
 const RATE_LIMIT_CONFIG = {
   api: { maxRequests: 200, windowMs: 60000 }, // 200 req/min for general API
   admin: { maxRequests: 100, windowMs: 60000 }, // 100 req/min for admin
-  auth: { maxRequests: 20, windowMs: 60000 }, // 20 req/min for auth
+  auth: { maxRequests: 40, windowMs: 60000 }, // 40 req/min for sensitive auth actions
+  authRead: { maxRequests: 300, windowMs: 60000 }, // 300 req/min for /api/auth/session, /csrf, /providers
 };
 
 // Cleanup old entries periodically
@@ -76,6 +77,31 @@ function getClientIP(request: NextRequest): string {
   }
 
   return "unknown";
+}
+
+function getRateLimitProfile(pathname: string, method: string): {
+  config: { maxRequests: number; windowMs: number };
+  prefix: string;
+} {
+  if (pathname.startsWith("/api/admin")) {
+    return { config: RATE_LIMIT_CONFIG.admin, prefix: "admin" };
+  }
+
+  if (pathname.startsWith("/api/auth")) {
+    const isHighFrequencyReadEndpoint =
+      method === "GET" &&
+      (pathname === "/api/auth/session" ||
+        pathname === "/api/auth/csrf" ||
+        pathname === "/api/auth/providers");
+
+    if (isHighFrequencyReadEndpoint) {
+      return { config: RATE_LIMIT_CONFIG.authRead, prefix: "auth-read" };
+    }
+
+    return { config: RATE_LIMIT_CONFIG.auth, prefix: "auth" };
+  }
+
+  return { config: RATE_LIMIT_CONFIG.api, prefix: "api" };
 }
 
 // ============================================================================
@@ -149,18 +175,7 @@ export default auth(async function proxy(req: NextAuthRequest) {
 
   if (pathname.startsWith("/api")) {
     const clientIP = getClientIP(req);
-
-    // Determine rate limit config based on route
-    let config = RATE_LIMIT_CONFIG.api;
-    let prefix = "api";
-
-    if (pathname.startsWith("/api/admin")) {
-      config = RATE_LIMIT_CONFIG.admin;
-      prefix = "admin";
-    } else if (pathname.startsWith("/api/auth")) {
-      config = RATE_LIMIT_CONFIG.auth;
-      prefix = "auth";
-    }
+    const { config, prefix } = getRateLimitProfile(pathname, req.method);
 
     const rateLimitKey = `${prefix}:${clientIP}`;
     const { allowed, remaining: _remaining, resetAt } = checkRateLimit(rateLimitKey, config);
@@ -263,15 +278,8 @@ export default auth(async function proxy(req: NextAuthRequest) {
   // Add rate limit headers to API responses
   if (pathname.startsWith("/api")) {
     const clientIP = getClientIP(req);
-    let config = RATE_LIMIT_CONFIG.api;
-
-    if (pathname.startsWith("/api/admin")) {
-      config = RATE_LIMIT_CONFIG.admin;
-    } else if (pathname.startsWith("/api/auth")) {
-      config = RATE_LIMIT_CONFIG.auth;
-    }
-
-    const entry = rateLimitStore.get(`api:${clientIP}`);
+    const { config, prefix } = getRateLimitProfile(pathname, req.method);
+    const entry = rateLimitStore.get(`${prefix}:${clientIP}`);
     if (entry) {
       response.headers.set("X-RateLimit-Limit", String(config.maxRequests));
       response.headers.set("X-RateLimit-Remaining", String(Math.max(0, config.maxRequests - entry.count)));
