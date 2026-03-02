@@ -13,16 +13,130 @@ type GeneratedSections = {
   sourcesMd: string;
 };
 
+const MIN_KEY_FACTS = 10;
+const MIN_FAQ_PAIRS = 4;
+const MIN_SOURCE_LINKS = 2;
+const MIN_TOTAL_WORDS = 160;
+
+type SectionValidation = {
+  ok: boolean;
+  reasons: string[];
+};
+
+function countWords(text: string): number {
+  return text
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean).length;
+}
+
+function countBulletLines(md: string): number {
+  return (md.match(/(?:^|\n)-\s+/g) ?? []).length;
+}
+
+function countFaqPairs(md: string): number {
+  const compactPairs = (md.match(/(?:^|\n)-\s*Q:/g) ?? []).length;
+  const headingPairs = (md.match(/(?:^|\n)###\s+/g) ?? []).length;
+  return Math.max(compactPairs, headingPairs);
+}
+
+function countUniqueLinks(text: string): number {
+  const matches = text.match(/https?:\/\/[^\s)]+/g) ?? [];
+  return new Set(matches.map((item) => item.toLowerCase())).size;
+}
+
+function validateGeneratedSections(sections: GeneratedSections): SectionValidation {
+  const reasons: string[] = [];
+  const keyFactsCount = countBulletLines(sections.keyFactsMd);
+  const faqCount = countFaqPairs(sections.faqMd);
+  const sourceLinkCount = countUniqueLinks(sections.sourcesMd);
+  const totalWords = countWords(
+    [
+      sections.introMd,
+      sections.keyFactsMd,
+      sections.timelineMd ?? "",
+      sections.analysisMd,
+      sections.faqMd,
+    ].join("\n\n")
+  );
+
+  if (keyFactsCount < MIN_KEY_FACTS) {
+    reasons.push(`keyFactsMd must include at least ${MIN_KEY_FACTS} bullet facts (found ${keyFactsCount})`);
+  }
+  if (faqCount < MIN_FAQ_PAIRS) {
+    reasons.push(`faqMd must include at least ${MIN_FAQ_PAIRS} Q/A pairs (found ${faqCount})`);
+  }
+  if (sourceLinkCount < MIN_SOURCE_LINKS) {
+    reasons.push(`sourcesMd must include at least ${MIN_SOURCE_LINKS} unique source links (found ${sourceLinkCount})`);
+  }
+  if (totalWords < MIN_TOTAL_WORDS) {
+    reasons.push(`content is too short; minimum ${MIN_TOTAL_WORDS} words required (found ${totalWords})`);
+  }
+
+  return {
+    ok: reasons.length === 0,
+    reasons,
+  };
+}
+
+function buildGenerationPrompt(input: {
+  topicName: string;
+  claimTexts: string[];
+  sources: Array<{ sourceName: string; sourceUrl: string }>;
+  strictFeedback?: string[];
+}) {
+  const feedback = input.strictFeedback?.length
+    ? [
+        "Previous draft failed these checks. Fix all of them:",
+        ...input.strictFeedback.map((reason, index) => `${index + 1}. ${reason}`),
+        "",
+      ]
+    : [];
+
+  return [
+    "You are a sports-trivia content writer.",
+    "Return ONLY valid JSON with keys:",
+    "title, metaDescription, introMd, keyFactsMd, timelineMd, analysisMd, faqMd, sourcesMd",
+    "",
+    "Non-negotiable requirements:",
+    `- keyFactsMd: ${MIN_KEY_FACTS}-14 markdown bullets, each a concrete fact.`,
+    "- At least 3 key facts should include numeric specificity when available (dates, counts, records).",
+    "- Avoid generic statements like 'is important' unless tied to a verifiable fact.",
+    `- faqMd: at least ${MIN_FAQ_PAIRS} Q/A pairs in markdown using '- Q:' and 'A:' format.`,
+    "- sourcesMd: include at least 2 unique full URLs in markdown bullet list, no placeholders.",
+    "- Ground ONLY in provided claims and sources. Do not invent facts.",
+    "- Keep copy original, concise, and high-signal for search answers.",
+    "",
+    ...feedback,
+    `Topic: ${input.topicName}`,
+    `Claims: ${JSON.stringify(input.claimTexts)}`,
+    `Sources: ${JSON.stringify(input.sources)}`,
+  ].join("\n");
+}
+
 function buildFallbackSections(topicName: string, claimTexts: string[], sources: Array<{ sourceName: string; sourceUrl: string }>): GeneratedSections {
-  const topClaims = claimTexts.slice(0, 12);
+  const topClaims = claimTexts.slice(0, 20);
   const keyFacts = topClaims.map((c) => `- ${c}`).join("\n");
   const timeline = topClaims.filter((c) => /\b\d{4}\b/.test(c)).slice(0, 6).map((c) => `- ${c}`).join("\n");
   const sourceLines = sources.map((s) => `- [${s.sourceName}](${s.sourceUrl})`).join("\n");
   return {
     title: `${topicName}: Facts, Timeline & Trivia Insights`,
     metaDescription: `Explore key facts, context, and frequently asked questions about ${topicName}.`,
-    introMd: `This page summarizes verified facts and context about **${topicName}** using source-grounded records.`,
-    keyFactsMd: keyFacts || "- No verified facts yet.",
+    introMd: `This page summarizes verified facts and context about **${topicName}** using source-grounded records for trivia discovery.`,
+    keyFactsMd:
+      keyFacts ||
+      [
+        "- No verified facts extracted yet.",
+        "- Add more source-backed claims through ingestion.",
+        "- Ensure source URLs are valid and accessible.",
+        "- Verify claims are selected for publish.",
+        "- Re-run generation after new claims are available.",
+        "- Check topic aliases and identifiers.",
+        "- Ensure at least two sources are linked.",
+        "- Include date-based claims where possible.",
+        "- Include record or achievement claims where possible.",
+        "- Include role/nationality claims where possible.",
+      ].join("\n"),
     timelineMd: timeline || undefined,
     analysisMd: `The dataset indicates how ${topicName} connects to quizzes and broader sports knowledge graphs.`,
     faqMd: [
@@ -62,7 +176,7 @@ export async function generateTopicContentSnapshot(topicId: string) {
   });
 
   const docs = await prisma.topicSourceDocument.findMany({
-    where: { topicId, isCommercialSafe: true },
+    where: { topicId },
     orderBy: { retrievedAt: "desc" },
     take: 25,
     select: { sourceName: true, sourceUrl: true },
@@ -74,46 +188,57 @@ export async function generateTopicContentSnapshot(topicId: string) {
   if (claimTexts.length > 0) {
     try {
       const aiModel = await getAIModel();
-      const prompt = [
-        "Generate JSON with keys:",
-        "title, metaDescription, introMd, keyFactsMd, timelineMd, analysisMd, faqMd, sourcesMd",
-        "Rules:",
-        "- Ground ONLY in provided claims",
-        "- Keep markdown concise and original",
-        "- keyFactsMd should be markdown bullets",
-        "- faqMd should include 4 Q&A sections",
-        "- sourcesMd must preserve URLs",
-        "",
-        `Topic: ${topic.name}`,
-        `Claims: ${JSON.stringify(claimTexts)}`,
-        `Sources: ${JSON.stringify(docs)}`,
-      ].join("\n");
+      let strictFeedback: string[] | undefined;
+      for (let attempt = 1; attempt <= 2; attempt++) {
+        const prompt = buildGenerationPrompt({
+          topicName: topic.name,
+          claimTexts,
+          sources: docs,
+          strictFeedback,
+        });
 
-      const completion = await callOpenAIWithRetry(
-        aiModel,
-        prompt,
-        "You produce valid JSON only.",
-        {
-          temperature: 0.3,
-          maxTokens: 1800,
-          responseFormat: aiModel.startsWith("o1") ? null : { type: "json_object" },
-          cacheable: true,
-          cacheKeyContext: { type: "topic_content_snapshot", topicId },
+        const completion = await callOpenAIWithRetry(
+          aiModel,
+          prompt,
+          "You produce valid JSON only.",
+          {
+            temperature: 0.2,
+            maxTokens: 2200,
+            responseFormat: aiModel.startsWith("o1") ? null : { type: "json_object" },
+            cacheable: true,
+            cacheKeyContext: { type: "topic_content_snapshot", topicId, attempt },
+          }
+        );
+        const content = extractContentFromCompletion(completion, aiModel);
+        const parsed = parseJsonSafely<Partial<GeneratedSections>>(content);
+        if (
+          parsed?.title &&
+          parsed.metaDescription &&
+          parsed.introMd &&
+          parsed.keyFactsMd &&
+          parsed.analysisMd &&
+          parsed.faqMd &&
+          parsed.sourcesMd
+        ) {
+          const candidate: GeneratedSections = {
+            title: parsed.title,
+            metaDescription: parsed.metaDescription,
+            introMd: parsed.introMd,
+            keyFactsMd: parsed.keyFactsMd,
+            timelineMd: parsed.timelineMd,
+            analysisMd: parsed.analysisMd,
+            faqMd: parsed.faqMd,
+            sourcesMd: parsed.sourcesMd,
+          };
+          const validation = validateGeneratedSections(candidate);
+          if (validation.ok) {
+            sections = candidate;
+            break;
+          }
+          strictFeedback = validation.reasons;
+        } else {
+          strictFeedback = ["JSON shape invalid or missing required keys."];
         }
-      );
-      const content = extractContentFromCompletion(completion, aiModel);
-      const parsed = parseJsonSafely<Partial<GeneratedSections>>(content);
-      if (parsed?.title && parsed.metaDescription && parsed.introMd && parsed.keyFactsMd && parsed.analysisMd && parsed.faqMd && parsed.sourcesMd) {
-        sections = {
-          title: parsed.title,
-          metaDescription: parsed.metaDescription,
-          introMd: parsed.introMd,
-          keyFactsMd: parsed.keyFactsMd,
-          timelineMd: parsed.timelineMd,
-          analysisMd: parsed.analysisMd,
-          faqMd: parsed.faqMd,
-          sourcesMd: parsed.sourcesMd,
-        };
       }
     } catch {
       // fallback already prepared
