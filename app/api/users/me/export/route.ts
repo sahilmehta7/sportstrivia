@@ -177,12 +177,7 @@ export async function GET(_request: NextRequest) {
             prisma.userTopicStats.findMany({
                 where: { userId: user.id },
                 include: {
-                    topic: {
-                        select: {
-                            name: true,
-                            slug: true,
-                        },
-                    },
+                    topic: true,
                 },
             }),
 

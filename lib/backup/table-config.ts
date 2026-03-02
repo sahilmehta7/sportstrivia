@@ -12,6 +12,10 @@ export const BACKUP_TABLES: TableConfig[] = [
   { model: "Session", delegate: "session" },
   { model: "VerificationToken", delegate: "verificationToken" },
   { model: "Topic", delegate: "topic" },
+  { model: "TopicSourceDocument", delegate: "topicSourceDocument" },
+  { model: "TopicClaim", delegate: "topicClaim" },
+  { model: "TopicContentSnapshot", delegate: "topicContentSnapshot" },
+  { model: "TopicIngestionRun", delegate: "topicIngestionRun" },
   { model: "PushSubscription", delegate: "pushSubscription" },
   { model: "UserNotificationPreference", delegate: "userNotificationPreference", orderBy: { userId: "asc" } },
   { model: "Quiz", delegate: "quiz" },
@@ -47,4 +51,3 @@ export const BACKUP_TABLES: TableConfig[] = [
   { model: "GridAnswer", delegate: "gridAnswer" },
   { model: "QuestionAnswerStat", delegate: "questionAnswerStat" },
 ];
-

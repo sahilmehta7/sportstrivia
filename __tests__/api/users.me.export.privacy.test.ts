@@ -90,4 +90,17 @@ describe("GET /api/users/me/export privacy", () => {
     expect(json.friends[0].friend.email).toBeUndefined();
     expect(json.friendOf[0].user.email).toBeUndefined();
   });
+
+  it("exports full topic objects for topic stats", async () => {
+    prismaMock.friend.findMany
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([]);
+
+    await GET({} as any);
+
+    expect(prismaMock.userTopicStats.findMany).toHaveBeenCalledWith({
+      where: { userId: "user_1" },
+      include: { topic: true },
+    });
+  });
 });
