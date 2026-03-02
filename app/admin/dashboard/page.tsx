@@ -4,9 +4,10 @@ import { cn } from "@/lib/utils";
 import { getGradientText } from "@/lib/showcase-theme";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { TopicQuestionInsights } from "./TopicQuestionInsights";
 
 export default async function AdminDashboard() {
-  const [totalUsers, totalQuizzes, totalQuestions, totalAttempts, recentQuizzes] =
+  const [totalUsers, totalQuizzes, totalQuestions, totalAttempts, recentQuizzes, topTopics] =
     await Promise.all([
       prisma.user.count(),
       prisma.quiz.count({ where: { isPublished: true } }),
@@ -24,6 +25,28 @@ export default async function AdminDashboard() {
           },
         },
       }),
+      prisma.topic.findMany({
+        take: 25,
+        where: {
+          questions: {
+            some: {},
+          },
+        },
+        orderBy: {
+          questions: {
+            _count: "desc",
+          },
+        },
+        select: {
+          id: true,
+          name: true,
+          _count: {
+            select: {
+              questions: true,
+            },
+          },
+        },
+      }),
     ]);
 
   const totalStarted = await prisma.quizAttempt.count();
@@ -35,6 +58,36 @@ export default async function AdminDashboard() {
     { title: "DATA POOL", value: totalQuestions.toLocaleString(), icon: Database, desc: "COMPILED QUERIES", color: "primary" },
     { title: "SYNC RADIUS", value: `${completionRate.toFixed(1)}%`, icon: Activity, desc: "SUCCESS VECTORS", color: "secondary" },
   ];
+
+  const previewQuestions = await prisma.question.findMany({
+    where: {
+      topicId: {
+        in: topTopics.map((topic) => topic.id),
+      },
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+    select: {
+      id: true,
+      topicId: true,
+      questionText: true,
+      difficulty: true,
+    },
+    take: 400,
+  });
+
+  const questionsByTopic = topTopics.reduce<Record<string, typeof previewQuestions>>((acc, topic) => {
+    acc[topic.id] = [];
+    return acc;
+  }, {});
+
+  for (const question of previewQuestions) {
+    const topicQuestions = questionsByTopic[question.topicId];
+    if (!topicQuestions) continue;
+    if (topicQuestions.length >= 20) continue;
+    topicQuestions.push(question);
+  }
 
   return (
     <div className="space-y-16">
@@ -159,6 +212,15 @@ export default async function AdminDashboard() {
           </div>
         </div>
       </div>
+
+      <TopicQuestionInsights
+        topics={topTopics.map((topic) => ({
+          id: topic.id,
+          name: topic.name,
+          questionCount: topic._count.questions,
+        }))}
+        questionsByTopic={questionsByTopic}
+      />
     </div>
   );
 }

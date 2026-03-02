@@ -29,6 +29,7 @@ import {
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { TOPIC_SCHEMA_TYPE_LABELS, type TopicSchemaTypeValue } from "@/lib/topic-schema-options";
+import { DEFAULT_QUALITY_GATE } from "@/lib/services/topic-content/types";
 import {
   Dialog,
   DialogContent,
@@ -53,6 +54,41 @@ export default function EditTopicPage({ params }: EditTopicPageProps) {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [wikiLoading, setWikiLoading] = useState(false);
+  const [contentLoading, setContentLoading] = useState(false);
+  const [contentActionLoading, setContentActionLoading] = useState<null | "ingest" | "generate" | "publish">(null);
+  const [contentPreviewLoading, setContentPreviewLoading] = useState(false);
+  const [contentStatus, setContentStatus] = useState<{
+    contentStatus?: string;
+    contentQualityScore?: number | null;
+    indexEligible?: boolean;
+    hasReadySnapshot?: boolean;
+    sourceDocumentCount?: number;
+    claimCount?: number;
+    latestRun?: {
+      stage?: string;
+      status?: string;
+      error?: string | null;
+      metrics?: Record<string, unknown> | null;
+      updatedAt?: string;
+    } | null;
+    latestSnapshot?: { status: string; qualityScore: number; citationCoverage: number; wordCount: number } | null;
+  } | null>(null);
+  const [contentPreview, setContentPreview] = useState<{
+    snapshot: {
+      id: string;
+      version: number;
+      status: string;
+      title: string;
+      metaDescription: string;
+      introMd: string;
+      keyFactsMd: string;
+      analysisMd: string;
+      faqMd: string;
+      sourcesMd: string;
+      wordCount: number;
+    };
+    citationCount: number;
+  } | null>(null);
 
   // AI generation state
   const [easyCount, setEasyCount] = useState(3);
@@ -116,6 +152,8 @@ export default function EditTopicPage({ params }: EditTopicPageProps) {
 
         const topic = topicResult.data;
         setCurrentTopic(topic);
+        await loadContentStatus(resolvedParams.id);
+        await loadContentPreview(resolvedParams.id);
 
         setFormData({
           name: topic.name || "",
@@ -159,6 +197,167 @@ export default function EditTopicPage({ params }: EditTopicPageProps) {
 
     loadData();
   }, [params, router, toast]);
+
+  const loadContentStatus = async (id: string) => {
+    try {
+      setContentLoading(true);
+      const response = await fetch(`/api/admin/topics/${id}/content/status`);
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(result.error || "Failed to load content status");
+      }
+      setContentStatus({
+        contentStatus: result.data.topic?.contentStatus,
+        contentQualityScore: result.data.topic?.contentQualityScore,
+        indexEligible: result.data.topic?.indexEligible,
+        hasReadySnapshot: Boolean(result.data.hasReadySnapshot),
+        sourceDocumentCount: result.data.sourceDocumentCount,
+        claimCount: result.data.claimCount,
+        latestRun: result.data.latestRun
+          ? {
+              stage: result.data.latestRun.stage,
+              status: result.data.latestRun.status,
+              error: result.data.latestRun.error,
+              metrics: result.data.latestRun.metrics ?? null,
+              updatedAt: result.data.latestRun.updatedAt,
+            }
+          : null,
+        latestSnapshot: result.data.latestSnapshot
+          ? {
+              status: result.data.latestSnapshot.status,
+              qualityScore: result.data.latestSnapshot.qualityScore,
+              citationCoverage: result.data.latestSnapshot.citationCoverage,
+              wordCount: result.data.latestSnapshot.wordCount,
+            }
+          : null,
+      });
+    } catch {
+      setContentStatus(null);
+    } finally {
+      setContentLoading(false);
+    }
+  };
+
+  const loadContentPreview = async (id: string) => {
+    try {
+      setContentPreviewLoading(true);
+      const response = await fetch(`/api/admin/topics/${id}/content/preview`);
+      const result = await response.json();
+      if (!response.ok) {
+        setContentPreview(null);
+        return;
+      }
+      const snapshot = result.data?.snapshot;
+      if (!snapshot) {
+        setContentPreview(null);
+        return;
+      }
+      setContentPreview({
+        snapshot: {
+          id: snapshot.id,
+          version: snapshot.version,
+          status: snapshot.status,
+          title: snapshot.title,
+          metaDescription: snapshot.metaDescription,
+          introMd: snapshot.introMd,
+          keyFactsMd: snapshot.keyFactsMd,
+          analysisMd: snapshot.analysisMd,
+          faqMd: snapshot.faqMd,
+          sourcesMd: snapshot.sourcesMd,
+          wordCount: snapshot.wordCount,
+        },
+        citationCount: Array.isArray(result.data?.citationMap) ? result.data.citationMap.length : 0,
+      });
+    } finally {
+      setContentPreviewLoading(false);
+    }
+  };
+
+  const summarizeContentAction = (
+    action: "ingest" | "generate" | "publish",
+    data: any
+  ): string => {
+    if (action === "ingest") {
+      const collect = data?.result?.collect;
+      const normalize = data?.result?.normalize;
+      const verify = data?.result?.verify;
+      if (collect || normalize || verify) {
+        return [
+          collect ? `collect inserted=${collect.inserted ?? 0}, skipped=${collect.skipped ?? 0}` : null,
+          normalize ? `normalize inserted=${normalize.inserted ?? 0}, skipped=${normalize.skipped ?? 0}` : null,
+          verify ? `verify selected=${verify.selected ?? 0}, contradicted=${verify.contradicted ?? 0}` : null,
+        ]
+          .filter(Boolean)
+          .join(" | ");
+      }
+      return "Ingest completed.";
+    }
+
+    if (action === "generate") {
+      const snapshot = data?.snapshot;
+      const score = data?.score;
+      if (snapshot || score) {
+        return [
+          snapshot ? `snapshot v${snapshot.version} (${snapshot.status})` : null,
+          score?.passed !== undefined ? `quality=${score.metrics?.qualityScore ?? "n/a"} (${score.passed ? "READY" : "REJECTED"})` : null,
+        ]
+          .filter(Boolean)
+          .join(" | ");
+      }
+      return "Draft generation completed.";
+    }
+
+    if (action === "publish") {
+      if (data?.snapshotId) {
+        return `Published snapshot ${data.snapshotId}.`;
+      }
+      return "Publish completed.";
+    }
+
+    return "Action completed.";
+  };
+
+  const formatMetricValue = (value: unknown): string => {
+    if (value === null || value === undefined) return String(value);
+    if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") {
+      return String(value);
+    }
+    try {
+      return JSON.stringify(value);
+    } catch {
+      return "[unserializable]";
+    }
+  };
+
+  const runContentAction = async (action: "ingest" | "generate" | "publish") => {
+    if (!topicId) return;
+    try {
+      setContentActionLoading(action);
+      const response = await fetch(`/api/admin/topics/${topicId}/content/${action}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        ...(action === "ingest" ? { body: JSON.stringify({ mode: "full" }) } : {}),
+      });
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(result.error || `Failed to ${action} topic content`);
+      }
+      toast({
+        title: `Content ${action} complete`,
+        description: summarizeContentAction(action, result?.data),
+      });
+      await loadContentStatus(topicId);
+      await loadContentPreview(topicId);
+    } catch (error: any) {
+      toast({
+        title: "Content pipeline error",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setContentActionLoading(null);
+    }
+  };
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -292,6 +491,36 @@ export default function EditTopicPage({ params }: EditTopicPageProps) {
   const updateField = (field: string, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
+
+  const latestSnapshot = contentStatus?.latestSnapshot ?? null;
+  const qualityFailures: string[] = [];
+  if (latestSnapshot) {
+    if (latestSnapshot.wordCount < DEFAULT_QUALITY_GATE.minWordCount) {
+      qualityFailures.push(
+        `Word count too low (${latestSnapshot.wordCount}/${DEFAULT_QUALITY_GATE.minWordCount})`
+      );
+    }
+    if (latestSnapshot.citationCoverage < DEFAULT_QUALITY_GATE.minCitationCoverage) {
+      qualityFailures.push(
+        `Citation coverage too low (${(latestSnapshot.citationCoverage * 100).toFixed(1)}%/${(DEFAULT_QUALITY_GATE.minCitationCoverage * 100).toFixed(1)}%)`
+      );
+    }
+    if ((contentStatus?.sourceDocumentCount ?? 0) < DEFAULT_QUALITY_GATE.minDistinctSources) {
+      qualityFailures.push(
+        `Distinct sources too low (${contentStatus?.sourceDocumentCount ?? 0}/${DEFAULT_QUALITY_GATE.minDistinctSources})`
+      );
+    }
+    if ((contentPreview?.citationCount ?? 0) < DEFAULT_QUALITY_GATE.minSelectedClaims) {
+      qualityFailures.push(
+        `Selected claims too low (${contentPreview?.citationCount ?? 0}/${DEFAULT_QUALITY_GATE.minSelectedClaims})`
+      );
+    }
+    if (latestSnapshot.qualityScore < DEFAULT_QUALITY_GATE.minQualityScore) {
+      qualityFailures.push(
+        `Quality score too low (${latestSnapshot.qualityScore.toFixed(1)}/${DEFAULT_QUALITY_GATE.minQualityScore})`
+      );
+    }
+  }
 
   const handleWikipediaAutofill = async () => {
     const query = formData.name.trim();
@@ -944,6 +1173,149 @@ export default function EditTopicPage({ params }: EditTopicPageProps) {
                 </div>
               </div>
             )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Content Pipeline</CardTitle>
+            <CardDescription>Run source-grounded SEO/AEO enrichment for this topic</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex flex-wrap gap-2">
+              <Badge variant="outline">Status: {contentStatus?.contentStatus || "UNKNOWN"}</Badge>
+              <Badge variant={contentStatus?.indexEligible ? "default" : "secondary"}>
+                Index Eligible: {contentStatus?.indexEligible ? "Yes" : "No"}
+              </Badge>
+              <Badge variant="outline">
+                Quality: {typeof contentStatus?.contentQualityScore === "number" ? contentStatus.contentQualityScore.toFixed(1) : "N/A"}
+              </Badge>
+              <Badge variant="outline">
+                Sources: {contentStatus?.sourceDocumentCount ?? 0}
+              </Badge>
+              <Badge variant="outline">
+                Claims: {contentStatus?.claimCount ?? 0}
+              </Badge>
+            </div>
+
+            {contentStatus?.latestSnapshot && (
+              <div className="rounded-md border p-3 text-sm text-muted-foreground space-y-1">
+                <div>Snapshot: {contentStatus.latestSnapshot.status}</div>
+                <div>Word count: {contentStatus.latestSnapshot.wordCount}</div>
+                <div>Citation coverage: {(contentStatus.latestSnapshot.citationCoverage * 100).toFixed(1)}%</div>
+                <div>Snapshot quality: {contentStatus.latestSnapshot.qualityScore.toFixed(1)}</div>
+              </div>
+            )}
+
+            {contentPreviewLoading && (
+              <div className="rounded-md border p-3 text-sm text-muted-foreground">
+                Loading content preview...
+              </div>
+            )}
+
+            {contentPreview && !contentPreviewLoading && (
+              <div className="rounded-md border p-3 text-sm space-y-2">
+                <div className="font-medium">
+                  Draft Preview: v{contentPreview.snapshot.version} ({contentPreview.snapshot.status})
+                </div>
+                <div className="text-muted-foreground">
+                  <span className="font-medium text-foreground">Title:</span> {contentPreview.snapshot.title}
+                </div>
+                <div className="text-muted-foreground">
+                  <span className="font-medium text-foreground">Meta:</span> {contentPreview.snapshot.metaDescription}
+                </div>
+                <div className="text-muted-foreground">
+                  <span className="font-medium text-foreground">Intro:</span>{" "}
+                  {contentPreview.snapshot.introMd.replace(/[[\]#*_`>()]/g, "").slice(0, 200)}
+                  {contentPreview.snapshot.introMd.length > 200 ? "..." : ""}
+                </div>
+                <div className="text-muted-foreground">
+                  Selected claims for publish: {contentPreview.citationCount}
+                </div>
+                {qualityFailures.length > 0 && (
+                  <div className="rounded-md border border-amber-500/40 bg-amber-500/10 p-2 text-amber-100">
+                    <div className="font-medium mb-1">Auto-rejected because:</div>
+                    <ul className="list-disc pl-5 space-y-1">
+                      {qualityFailures.map((reason) => (
+                        <li key={reason}>{reason}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                <details className="rounded-md border border-white/10 p-2">
+                  <summary className="cursor-pointer font-medium">View full generated content</summary>
+                  <div className="mt-2 space-y-2 text-muted-foreground">
+                    <div>
+                      <div className="font-medium text-foreground">Intro</div>
+                      <pre className="whitespace-pre-wrap break-words text-xs">{contentPreview.snapshot.introMd}</pre>
+                    </div>
+                    <div>
+                      <div className="font-medium text-foreground">Key Facts</div>
+                      <pre className="whitespace-pre-wrap break-words text-xs">{contentPreview.snapshot.keyFactsMd}</pre>
+                    </div>
+                    <div>
+                      <div className="font-medium text-foreground">Analysis</div>
+                      <pre className="whitespace-pre-wrap break-words text-xs">{contentPreview.snapshot.analysisMd}</pre>
+                    </div>
+                    <div>
+                      <div className="font-medium text-foreground">FAQ</div>
+                      <pre className="whitespace-pre-wrap break-words text-xs">{contentPreview.snapshot.faqMd}</pre>
+                    </div>
+                    <div>
+                      <div className="font-medium text-foreground">Sources</div>
+                      <pre className="whitespace-pre-wrap break-words text-xs">{contentPreview.snapshot.sourcesMd}</pre>
+                    </div>
+                  </div>
+                </details>
+              </div>
+            )}
+
+            {contentStatus?.latestRun && (
+              <div className="rounded-md border p-3 text-sm text-muted-foreground space-y-1">
+                <div>
+                  Last run: {contentStatus.latestRun.stage} / {contentStatus.latestRun.status}
+                </div>
+                {contentStatus.latestRun.updatedAt && (
+                  <div>Updated: {new Date(contentStatus.latestRun.updatedAt).toLocaleString()}</div>
+                )}
+                {contentStatus.latestRun.metrics && (
+                  <div className="break-words">
+                    Metrics:{" "}
+                    {Object.entries(contentStatus.latestRun.metrics)
+                      .map(([k, v]) => `${k}=${formatMetricValue(v)}`)
+                      .join(", ")}
+                  </div>
+                )}
+                {contentStatus.latestRun.error && (
+                  <div className="text-destructive">Error: {contentStatus.latestRun.error}</div>
+                )}
+              </div>
+            )}
+
+            {contentStatus && !contentStatus.hasReadySnapshot && (
+              <div className="rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-sm text-amber-100">
+                No READY snapshot is available yet. Run Ingest and Generate first, then publish.
+              </div>
+            )}
+
+            <div className="flex flex-wrap gap-2">
+              <Button type="button" variant="outline" disabled={Boolean(contentActionLoading)} onClick={() => runContentAction("ingest")}>
+                {(contentActionLoading === "ingest" || contentLoading) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Run Ingest
+              </Button>
+              <Button type="button" variant="outline" disabled={Boolean(contentActionLoading)} onClick={() => runContentAction("generate")}>
+                {contentActionLoading === "generate" && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Generate Draft
+              </Button>
+              <Button
+                type="button"
+                disabled={Boolean(contentActionLoading) || !contentStatus?.hasReadySnapshot}
+                onClick={() => runContentAction("publish")}
+              >
+                {contentActionLoading === "publish" && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Publish Snapshot
+              </Button>
+            </div>
           </CardContent>
         </Card>
 

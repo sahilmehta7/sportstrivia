@@ -17,6 +17,7 @@ import { ItemListStructuredData } from "@/components/seo/ItemListStructuredData"
 import { getCanonicalUrl } from "@/lib/next-seo-config";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { TopicHero } from "@/components/topics/topic-hero";
+import { TopicAuthoritySection } from "@/components/topics/topic-authority-section";
 import { FeaturedRow } from "@/components/quizzes/featured-row";
 import { FeaturedQuizzesHero } from "@/components/quizzes/featured-quizzes-hero";
 import { ModernFilterBar } from "@/components/quizzes/modern-filter-bar";
@@ -26,7 +27,7 @@ import { StreakIndicator } from "@/components/shared/StreakIndicator";
 
 import { ChevronRight } from "lucide-react";
 import { PageContainer } from "@/components/shared/PageContainer";
-import { getTopicGraphSchema } from "@/lib/schema-utils";
+import { getFAQSchema, getTopicGraphSchema } from "@/lib/schema-utils";
 import type { TopicSchemaTypeValue } from "@/lib/topic-schema-options";
 
 const topicWithRelations = {
@@ -77,6 +78,12 @@ const fetchTopicBySlug = async (slug: string) => {
   });
 };
 
+const fetchPublishedSnapshot = async (topicId: string) =>
+  prisma.topicContentSnapshot.findFirst({
+    where: { topicId, status: "PUBLISHED" },
+    orderBy: [{ version: "desc" }],
+  });
+
 async function fetchFeaturedQuizzesForTopic(topicIds: string[]): Promise<PublicQuizListItem[]> {
   if (topicIds.length === 0) {
     return [];
@@ -126,9 +133,11 @@ export async function generateMetadata({
     return {};
   }
 
+  const publishedSnapshot = await fetchPublishedSnapshot(topic.id);
+
   // Use stored SEO metadata or fallback to templates
-  const title = topic.seoTitle || `${topic.name} Trivia Quizzes | Sports Trivia`;
-  const description = topic.seoDescription || (topic.description
+  const title = publishedSnapshot?.title || topic.seoTitle || `${topic.name} Trivia Quizzes | Sports Trivia`;
+  const description = publishedSnapshot?.metaDescription || topic.seoDescription || (topic.description
     ? topic.description.length > 160
       ? `${topic.description.slice(0, 157)}...`
       : topic.description
@@ -141,6 +150,7 @@ export async function generateMetadata({
     title,
     description,
     keywords,
+    robots: topic.indexEligible ? undefined : { index: false, follow: true },
     openGraph: {
       title,
       description,
@@ -270,6 +280,8 @@ export default async function TopicDetailPage({
   }
 
   const leaderboards = await buildTopicDatasets(topic.id);
+  const publishedSnapshot = await fetchPublishedSnapshot(topic.id);
+  const showAuthority = Boolean(topic.contentStatus === "PUBLISHED" && topic.indexEligible && publishedSnapshot);
 
   const heroPrimaryQuiz =
     heroFeaturedQuizzes[0] ??
@@ -327,6 +339,22 @@ export default async function TopicDetailPage({
     },
     quizUrls: itemListElements.slice(0, 10).map((item) => item.item),
   });
+  const faqSchema = showAuthority && publishedSnapshot
+    ? getFAQSchema(
+        publishedSnapshot.faqMd
+          .split(/\n(?=###\s+)/g)
+          .map((section) => {
+            const lines = section.split("\n").map((value) => value.trim()).filter(Boolean);
+            if (!lines[0]?.startsWith("### ")) return null;
+            const question = lines[0].replace(/^###\s+/, "").trim();
+            const answer = lines.slice(1).join(" ").trim();
+            if (!question || !answer) return null;
+            return { question, answer };
+          })
+          .filter((item): item is { question: string; answer: string } => Boolean(item))
+          .slice(0, 8)
+      )
+    : null;
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-background via-background to-muted">
@@ -362,6 +390,19 @@ export default async function TopicDetailPage({
           }
           secondaryCta={listing.pagination.total > 0 ? { label: "View all quizzes", href: "#topic-quizzes" } : undefined}
         />
+
+        {showAuthority && publishedSnapshot && (
+          <TopicAuthoritySection
+            topicName={topic.name}
+            introMd={publishedSnapshot.introMd}
+            keyFactsMd={publishedSnapshot.keyFactsMd}
+            timelineMd={publishedSnapshot.timelineMd}
+            analysisMd={publishedSnapshot.analysisMd}
+            faqMd={publishedSnapshot.faqMd}
+            sourcesMd={publishedSnapshot.sourcesMd}
+            lastReviewedAt={publishedSnapshot.lastReviewedAt}
+          />
+        )}
 
 
         {heroFeaturedQuizzes.length > 0 && (
@@ -495,6 +536,7 @@ export default async function TopicDetailPage({
 
       {/* Structured Data */}
       <JsonLdScript scriptKey={`topic-graph-${topic.id}`} data={topicGraphSchema} />
+      {faqSchema ? <JsonLdScript scriptKey={`topic-faq-${topic.id}`} data={faqSchema} /> : null}
       <BreadcrumbJsonLd items={breadcrumbItems} />
       <ItemListStructuredData
         id={`topic-item-list-${topic.id}`}

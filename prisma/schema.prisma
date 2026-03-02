@@ -154,6 +154,11 @@ model Topic {
   schemaCanonicalUrl String?
   schemaSameAs     String[]
   schemaEntityData Json?
+  contentStatus    String            @default("NONE")
+  contentQualityScore Float?
+  contentLastReviewedAt DateTime?
+  indexEligible    Boolean           @default(false)
+  canonicalSourceSummary String?
   displayEmoji     String?
   displayImageUrl  String?
   parentId         String?
@@ -166,9 +171,103 @@ model Topic {
   parent           Topic?            @relation("TopicHierarchy", fields: [parentId], references: [id])
   children         Topic[]           @relation("TopicHierarchy")
   userStats        UserTopicStats[]
+  sourceDocuments  TopicSourceDocument[]
+  claims           TopicClaim[]
+  contentSnapshots TopicContentSnapshot[]
+  ingestionRuns    TopicIngestionRun[]
 
   @@index([parentId])
   @@index([slug])
+  @@index([indexEligible])
+}
+
+model TopicSourceDocument {
+  id               String   @id @default(cuid())
+  topicId          String
+  sourceName       String
+  sourceUrl        String
+  licenseType      String
+  isCommercialSafe Boolean
+  retrievedAt      DateTime @default(now())
+  rawPayload       Json
+  hash             String
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  topic Topic @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  claims TopicClaim[]
+
+  @@index([topicId])
+  @@index([sourceName])
+  @@index([retrievedAt])
+  @@unique([topicId, sourceUrl, hash])
+}
+
+model TopicClaim {
+  id                  String   @id @default(cuid())
+  topicId             String
+  claimText           String
+  claimType           String
+  confidence          Float
+  sourceDocumentId    String
+  sourceSnippet       String?
+  isContradicted      Boolean  @default(false)
+  isSelectedForPublish Boolean @default(false)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  topic          Topic               @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  sourceDocument TopicSourceDocument @relation(fields: [sourceDocumentId], references: [id], onDelete: Cascade)
+
+  @@index([topicId])
+  @@index([sourceDocumentId])
+  @@index([isSelectedForPublish])
+}
+
+model TopicContentSnapshot {
+  id               String   @id @default(cuid())
+  topicId          String
+  version          Int
+  status           String
+  title            String
+  metaDescription  String
+  introMd          String
+  keyFactsMd       String
+  timelineMd       String?
+  analysisMd       String
+  faqMd            String
+  sourcesMd        String
+  wordCount        Int      @default(0)
+  citationCoverage Float    @default(0)
+  qualityScore     Float    @default(0)
+  thinRiskScore    Float    @default(100)
+  lastReviewedAt   DateTime?
+  publishedAt      DateTime?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  topic Topic @relation(fields: [topicId], references: [id], onDelete: Cascade)
+
+  @@index([topicId, status])
+  @@unique([topicId, version])
+}
+
+model TopicIngestionRun {
+  id        String   @id @default(cuid())
+  topicId   String
+  stage     String
+  status    String
+  startedAt DateTime?
+  endedAt   DateTime?
+  error     String?
+  metrics   Json?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  topic Topic @relation(fields: [topicId], references: [id], onDelete: Cascade)
+
+  @@index([topicId, status])
+  @@index([startedAt])
 }
 
 model PushSubscription {

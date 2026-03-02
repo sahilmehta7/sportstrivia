@@ -20,6 +20,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     });
 
     topics = await prisma.topic.findMany({
+      where: {
+        indexEligible: true,
+      },
       select: {
         slug: true,
         updatedAt: true,
