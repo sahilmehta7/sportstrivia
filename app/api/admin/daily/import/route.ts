@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/auth-helpers";
 import { handleError, successResponse } from "@/lib/errors";
@@ -11,6 +12,18 @@ function addDaysToDateString(dateString: string, daysToAdd: number): string {
   const date = new Date(`${dateString}T00:00:00Z`);
   date.setUTCDate(date.getUTCDate() + daysToAdd);
   return date.toISOString().slice(0, 10);
+}
+
+function toInputJsonValue(value: Record<string, unknown> | undefined): Prisma.InputJsonValue | undefined {
+  if (value === undefined) {
+    return undefined;
+  }
+
+  try {
+    return JSON.parse(JSON.stringify(value)) as Prisma.InputJsonValue;
+  } catch {
+    return undefined;
+  }
 }
 
 /**
@@ -31,12 +44,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { startDate, words, overwriteExisting, allowOverwriteWithAttempts } = parseResult.data;
+    const { startDate, words, items, overwriteExisting, allowOverwriteWithAttempts } = parseResult.data;
+    const importItems: Array<{ word: string; clues?: Record<string, unknown> }> =
+      items ?? (words ?? []).map((word) => ({ word }));
 
-    const planned = words.map((word, idx) => ({
+    const planned = importItems.map((item, idx) => ({
       date: addDaysToDateString(startDate, idx),
-      targetValue: word,
-      clues: { length: word.length, hint: "Sports-related term" },
+      targetValue: item.word,
+      clues: item.clues ?? { length: item.word.length, hint: "Sports-related term" },
     }));
 
     const dates = planned.map((p) => p.date);
@@ -96,7 +111,7 @@ export async function POST(request: NextRequest) {
             data: {
               gameType: "WORD",
               targetValue: item.targetValue,
-              clues: item.clues,
+              clues: toInputJsonValue(item.clues),
             },
           });
           updatedCount++;
@@ -108,7 +123,7 @@ export async function POST(request: NextRequest) {
             date: item.date,
             gameType: "WORD",
             targetValue: item.targetValue,
-            clues: item.clues,
+            clues: toInputJsonValue(item.clues),
           },
         });
         createdCount++;

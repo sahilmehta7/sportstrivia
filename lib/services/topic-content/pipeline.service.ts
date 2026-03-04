@@ -7,7 +7,20 @@ import { createIngestionRun, markRunFinished, markRunRunning } from "@/lib/servi
 import { scoreTopicContentSnapshot } from "@/lib/services/topic-content/score.service";
 import { verifyTopicClaims } from "@/lib/services/topic-content/verify.service";
 import type { TopicContentStage } from "@/lib/services/topic-content/types";
+import type { Prisma } from "@prisma/client";
 import { NotFoundError } from "@/lib/errors";
+
+function toInputJsonValue(value: unknown): Prisma.InputJsonValue | null {
+  if (value === undefined) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(JSON.stringify(value)) as Prisma.InputJsonValue;
+  } catch {
+    return null;
+  }
+}
 
 async function executeStage<T>(
   topicId: string,
@@ -18,7 +31,7 @@ async function executeStage<T>(
   await markRunRunning(run.id);
   try {
     const result = await fn();
-    await markRunFinished(run.id, "SUCCEEDED", { metrics: (result as unknown as Record<string, unknown>) ?? null });
+    await markRunFinished(run.id, "SUCCEEDED", { metrics: toInputJsonValue(result) });
     return result;
   } catch (error: any) {
     await markRunFinished(run.id, "FAILED", { error: error?.message ?? "Unknown stage failure" });
