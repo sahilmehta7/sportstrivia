@@ -94,6 +94,47 @@ describe("POST /api/admin/daily/import", () => {
     );
   });
 
+  it("imports custom clues when items payload is provided", async () => {
+    (prisma.dailyGame.findMany as jest.Mock).mockResolvedValue([]);
+
+    const response = await POST(
+      createRequest({
+        startDate: "2026-02-19",
+        items: [
+          { word: "score", clues: { hint: "Points in a match", category: "stats" } },
+          { word: "title" },
+        ],
+      })
+    );
+
+    expect(response.status).toBe(201);
+    const json = await (response as any).json();
+    expect(json.success).toBe(true);
+    expect(json.data.createdCount).toBe(2);
+
+    expect(prisma.dailyGame.create).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        data: expect.objectContaining({
+          date: "2026-02-19",
+          targetValue: "SCORE",
+          clues: { hint: "Points in a match", category: "stats" },
+        }),
+      })
+    );
+
+    expect(prisma.dailyGame.create).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        data: expect.objectContaining({
+          date: "2026-02-20",
+          targetValue: "TITLE",
+          clues: { length: 5, hint: "Sports-related term" },
+        }),
+      })
+    );
+  });
+
   it("skips existing dates by default", async () => {
     (prisma.dailyGame.findMany as jest.Mock).mockResolvedValue([
       { id: "dg_existing", date: "2026-02-20", gameType: "WORD" },
@@ -172,4 +213,3 @@ describe("POST /api/admin/daily/import", () => {
     expect(json.error).toBe("Invalid input");
   });
 });
-

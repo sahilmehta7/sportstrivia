@@ -12,7 +12,8 @@ import { useToast } from "@/hooks/use-toast";
 import { AlertCircle, ArrowLeft, CheckCircle, FileText, Upload } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
-type PreviewRow = { date: string; word: string; length: number };
+type DailyImportItem = { word: string; clues?: Record<string, unknown> };
+type PreviewRow = { date: string; word: string; length: number; hasCustomClues: boolean };
 
 function addDaysToDateString(dateString: string, daysToAdd: number): string {
   const date = new Date(`${dateString}T00:00:00Z`);
@@ -20,19 +21,20 @@ function addDaysToDateString(dateString: string, daysToAdd: number): string {
   return date.toISOString().slice(0, 10);
 }
 
-function normalizeWordsFromTextarea(input: string): string[] {
-  return input
+function parseImportItemsFromTextarea(input: string): { items: DailyImportItem[]; errors: string[] } {
+  const lines = input
     .split(/\r?\n/g)
     .map((line) => line.trim())
-    .filter(Boolean)
-    .map((value) => value.toUpperCase());
-}
+    .filter(Boolean);
 
-function validateWords(words: string[]): string[] {
   const errors: string[] = [];
+  const items: DailyImportItem[] = [];
   const seen = new Set<string>();
 
-  words.forEach((word, idx) => {
+  lines.forEach((line, idx) => {
+    const [rawWord, rawClues] = line.split("|", 2);
+    const word = rawWord.trim().toUpperCase();
+
     if (!/^[A-Z]+$/.test(word)) {
       errors.push(`Line ${idx + 1}: "${word}" must contain only letters A-Z (no spaces or punctuation)`);
       return;
@@ -44,9 +46,25 @@ function validateWords(words: string[]): string[] {
       errors.push(`Line ${idx + 1}: duplicate word "${word}"`);
     }
     seen.add(word);
+
+    if (!rawClues?.trim()) {
+      items.push({ word });
+      return;
+    }
+
+    try {
+      const parsedClues = JSON.parse(rawClues.trim());
+      if (!parsedClues || Array.isArray(parsedClues) || typeof parsedClues !== "object") {
+        errors.push(`Line ${idx + 1}: clues must be a JSON object`);
+        return;
+      }
+      items.push({ word, clues: parsedClues as Record<string, unknown> });
+    } catch {
+      errors.push(`Line ${idx + 1}: clues must be valid JSON after "|"`);
+    }
   });
 
-  return errors;
+  return { items, errors };
 }
 
 export default function DailyWordleImportPage() {
@@ -62,15 +80,18 @@ export default function DailyWordleImportPage() {
   const [importing, setImporting] = useState(false);
   const [validationResult, setValidationResult] = useState<{ valid: boolean; errors: string[] } | null>(null);
 
-  const words = useMemo(() => normalizeWordsFromTextarea(wordsInput), [wordsInput]);
+  const parsedInput = useMemo(() => parseImportItemsFromTextarea(wordsInput), [wordsInput]);
+  const items = parsedInput.items;
+
   const preview: PreviewRow[] = useMemo(() => {
     if (!startDate) return [];
-    return words.map((word, idx) => ({
+    return items.map((item, idx) => ({
       date: addDaysToDateString(startDate, idx),
-      word,
-      length: word.length,
+      word: item.word,
+      length: item.word.length,
+      hasCustomClues: Boolean(item.clues),
     }));
-  }, [startDate, words]);
+  }, [startDate, items]);
 
   const validate = async () => {
     setValidating(true);
@@ -83,11 +104,10 @@ export default function DailyWordleImportPage() {
         errors.push("Start date is required (YYYY-MM-DD)");
       }
 
-      if (words.length === 0) {
+      if (items.length === 0) {
         errors.push("At least one word is required");
-      } else {
-        errors.push(...validateWords(words));
       }
+      errors.push(...parsedInput.errors);
 
       setValidationResult({ valid: errors.length === 0, errors });
     } finally {
@@ -105,7 +125,7 @@ export default function DailyWordleImportPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           startDate,
-          words,
+          items,
           overwriteExisting,
           allowOverwriteWithAttempts,
         }),
@@ -134,16 +154,16 @@ export default function DailyWordleImportPage() {
   };
 
   const example = `SCORE
-TITLE
+TITLE|{"hint":"Current champion is known for this title"}
 DRIVE
-COACH
+COACH|{"category":"Sports role","difficulty":"medium"}
 FIELD`;
 
   return (
     <div>
       <PageHeader
         title="Import Word Puzzle Answers"
-        description="Bulk schedule WORD daily games from a start date and one answer per line"
+        description="Bulk schedule WORD daily games from a start date with optional per-word clues"
         action={
           <Link href="/admin/daily">
             <Button variant="outline">
@@ -158,7 +178,9 @@ FIELD`;
         <Card>
           <CardHeader>
             <CardTitle>Import Settings</CardTitle>
-            <CardDescription>Words must be letters only (A-Z). Dates are assigned consecutively.</CardDescription>
+            <CardDescription>
+              Words must be letters only (A-Z). Optional clues format: <span className="font-mono">WORD|{"{"}"hint":"...{"}"}</span>.
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
@@ -175,18 +197,18 @@ FIELD`;
 
             <div className="space-y-2">
               <label htmlFor="words" className="text-sm font-medium">
-                Answers (one per line)
+                Answers (one per line, optional clues)
               </label>
               <Textarea
                 id="words"
                 value={wordsInput}
                 onChange={(e) => setWordsInput(e.target.value)}
-                placeholder="SCORE&#10;TITLE&#10;DRIVE"
+                placeholder='SCORE&#10;TITLE|{"hint":"Current champion nickname"}&#10;DRIVE'
                 rows={16}
                 className="font-mono text-sm"
               />
               <div className="text-xs text-muted-foreground">
-                Parsed: <span className="font-mono">{words.length}</span> words
+                Parsed: <span className="font-mono">{items.length}</span> words
               </div>
             </div>
 
@@ -310,6 +332,11 @@ FIELD`;
                           {row.date}
                         </Badge>
                         <span className="font-mono text-sm">{row.word}</span>
+                        {row.hasCustomClues && (
+                          <Badge variant="secondary" className="text-[10px]">
+                            custom clues
+                          </Badge>
+                        )}
                       </div>
                       <Badge variant="secondary" className="font-mono text-xs">
                         {row.length}
@@ -348,4 +375,3 @@ FIELD`;
     </div>
   );
 }
-
