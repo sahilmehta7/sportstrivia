@@ -52,7 +52,7 @@ export function PushSubscriptionCard() {
 
   useEffect(() => {
     if (!("serviceWorker" in navigator)) return;
-    navigator.serviceWorker.register("/sw-push.js").finally(() => void loadStatus());
+    navigator.serviceWorker.register("/sw.js").finally(() => void loadStatus());
   }, [loadStatus]);
 
   const subscribe = useCallback(async () => {

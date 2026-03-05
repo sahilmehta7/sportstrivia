@@ -2,6 +2,7 @@ import { MetadataRoute } from 'next';
 
 export default function manifest(): MetadataRoute.Manifest {
     return {
+        id: '/',
         name: 'Sports Trivia',
         short_name: 'Sports Trivia',
         description: 'Compete with friends, climb the leaderboards, and become a sports trivia champion',
@@ -12,21 +13,32 @@ export default function manifest(): MetadataRoute.Manifest {
         orientation: 'portrait',
         icons: [
             {
-                src: '/icon.svg',
-                sizes: 'any',
-                type: 'image/svg+xml',
+                src: '/pwa-192x192.png',
+                sizes: '192x192',
+                type: 'image/png',
             },
             {
-                src: '/logo-dark.png',
-                sizes: 'any',
+                src: '/pwa-512x512.png',
+                sizes: '512x512',
                 type: 'image/png',
+            },
+            {
+                src: '/pwa-maskable-512x512.png',
+                sizes: '512x512',
+                type: 'image/png',
+                purpose: 'maskable',
             },
         ],
         screenshots: [
             {
-                src: '/og-image.jpg',
-                sizes: '1200x630',
-                type: 'image/jpeg',
+                src: '/screenshot-desktop.png',
+                sizes: '1280x720',
+                type: 'image/png',
+            },
+            {
+                src: '/screenshot-mobile.png',
+                sizes: '750x1334',
+                type: 'image/png',
             },
         ],
         categories: ['sports', 'education', 'games', 'trivia'],
