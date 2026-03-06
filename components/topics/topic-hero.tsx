@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import {  ArrowRight, Sparkles, Trophy, Users, Star } from "lucide-react";
@@ -24,6 +25,9 @@ export function TopicHero({
   secondaryCta,
   stats,
 }: TopicHeroProps) {
+  const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
+  const shouldTruncateDescription = Boolean(subtitle && subtitle.trim().length > 220);
+
   return (
     <section className="relative mb-20">
       {/* Dynamic Background Glows */}
@@ -75,9 +79,26 @@ export function TopicHero({
               </h1>
 
               {subtitle && (
-                <p className="max-w-2xl text-lg lg:text-xl font-medium text-muted-foreground/90 leading-relaxed">
-                  {subtitle}
-                </p>
+                <div className="max-w-2xl space-y-3">
+                  <p
+                    className={cn(
+                      "text-lg lg:text-xl font-medium text-muted-foreground/90 leading-relaxed",
+                      shouldTruncateDescription && !isDescriptionExpanded && "line-clamp-3"
+                    )}
+                  >
+                    {subtitle}
+                  </p>
+                  {shouldTruncateDescription && (
+                    <button
+                      type="button"
+                      onClick={() => setIsDescriptionExpanded((current) => !current)}
+                      aria-expanded={isDescriptionExpanded}
+                      className="inline-flex items-center text-[11px] font-black uppercase tracking-[0.24em] text-primary transition-colors hover:text-primary/80"
+                    >
+                      {isDescriptionExpanded ? "Read less" : "Read more"}
+                    </button>
+                  )}
+                </div>
               )}
             </motion.div>
 
