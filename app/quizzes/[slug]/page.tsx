@@ -6,8 +6,7 @@ import { prisma } from "@/lib/db";
 import { generateQuizMetaTags } from "@/lib/seo-utils";
 import { formatPlayerCount, formatQuizDuration } from "@/lib/quiz-formatters";
 import { ShowcaseButton } from "@/components/showcase/ui/buttons/Button";
-import { ShowcaseReviewsPanel } from "@/components/showcase/ui";
-import { Star, Clock, Trophy, Users, ShieldCheck, Zap, ArrowRight, Calendar, Info, Instagram } from "lucide-react";
+import { Star, Clock, Trophy, Users, ShieldCheck, ArrowRight, Info } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth-helpers";
 import { getAttemptLimitStatus } from "@/lib/services/attempt-limit.service";
 import { JsonLdScript } from "next-seo";
@@ -16,8 +15,8 @@ import { cn } from "@/lib/utils";
 import { getBlurCircles, getGradientText } from "@/lib/showcase-theme";
 import { PageContainer } from "@/components/shared/PageContainer";
 import { ShareQuizButton } from "./share-quiz-button";
+import { QuizCommentsSection } from "./QuizCommentsSection";
 import { getCachedQuiz, getCachedQuizStats, getCachedLeaderboard } from "@/lib/quiz-cache";
-import { InstagramStoryTeaserMenu } from "@/components/shared/InstagramStoryTeaserMenu";
 import { getQuizSchema } from "@/lib/schema-utils";
 
 interface QuizDetailPageProps {
@@ -147,10 +146,6 @@ export default async function QuizDetailPage({ params }: QuizDetailPageProps) {
   const maxAttempts = quiz.maxAttemptsPerUser ?? null;
   const remainingAttempts = attemptLimitStatus?.remainingBeforeStart ?? maxAttempts;
   const isLimitReached = attemptLimitStatus?.isLimitReached ?? (quiz.maxAttemptsPerUser != null && (remainingAttempts ?? 0) <= 0);
-  const resetAt = attemptLimitStatus?.resetAt;
-  const attemptProgressPercent = maxAttempts !== null && maxAttempts > 0
-    ? Math.max(0, Math.min(100, ((remainingAttempts ?? 0) / maxAttempts) * 100))
-    : 0;
 
   // 3. Conditional Fetch: Only fetch best attempt if limit is reached (Dynamic)
   let bestAttemptId: string | null = null;
@@ -247,28 +242,28 @@ export default async function QuizDetailPage({ params }: QuizDetailPageProps) {
                     {quiz.description || "Blitz through fresh trivia curated for diehard fans. Battle against the clock and climb your league leaderboard."}
                   </p>
 
-                  <div className="pt-4 flex flex-wrap gap-4">
-                    <div className="flex flex-col gap-1 p-6 rounded-[2rem] glass-elevated border border-white/5 min-w-[140px]">
-                      <Clock className="h-5 w-5 text-secondary mb-2" />
+                  <div className="grid grid-cols-3 gap-3 pt-4 sm:flex sm:flex-wrap sm:gap-4">
+                    <div className="flex min-w-0 flex-col gap-1 rounded-[1.6rem] border border-white/5 p-4 glass-elevated sm:min-w-[140px] sm:rounded-[2rem] sm:p-6">
+                      <Clock className="mb-1 h-4 w-4 text-secondary sm:mb-2 sm:h-5 sm:w-5" />
                       <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Time</p>
-                      <p className="text-2xl font-black tracking-tighter">{durationLabel}</p>
+                      <p className="text-xl font-black tracking-tighter sm:text-2xl">{durationLabel}</p>
                     </div>
-                    <div className="flex flex-col gap-1 p-6 rounded-[2rem] glass-elevated border border-white/5 min-w-[140px]">
-                      <ShieldCheck className="h-5 w-5 text-primary mb-2" />
+                    <div className="flex min-w-0 flex-col gap-1 rounded-[1.6rem] border border-white/5 p-4 glass-elevated sm:min-w-[140px] sm:rounded-[2rem] sm:p-6">
+                      <ShieldCheck className="mb-1 h-4 w-4 text-primary sm:mb-2 sm:h-5 sm:w-5" />
                       <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Tier</p>
-                      <p className="text-2xl font-black tracking-tighter uppercase">{quiz.difficulty}</p>
+                      <p className="text-xl font-black tracking-tighter uppercase sm:text-2xl">{quiz.difficulty}</p>
                     </div>
-                    <div className="flex flex-col gap-1 p-6 rounded-[2rem] glass-elevated border border-white/5 min-w-[140px]">
-                      <Users className="h-5 w-5 text-accent mb-2" />
+                    <div className="flex min-w-0 flex-col gap-1 rounded-[1.6rem] border border-white/5 p-4 glass-elevated sm:min-w-[140px] sm:rounded-[2rem] sm:p-6">
+                      <Users className="mb-1 h-4 w-4 text-accent sm:mb-2 sm:h-5 sm:w-5" />
                       <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Contenders</p>
-                      <p className="text-2xl font-black tracking-tighter">{playersLabel}</p>
+                      <p className="text-xl font-black tracking-tighter sm:text-2xl">{playersLabel}</p>
                     </div>
                   </div>
 
                   <div className="pt-8 flex flex-wrap gap-4">
                     {isLimitReached && bestAttemptId ? (
                       <Link href={`/quizzes/${quiz.slug}/results/${bestAttemptId}`} className="w-full sm:w-auto">
-                        <ShowcaseButton variant="neon" size="xl" className="w-full">VIEW MISSION REPORT</ShowcaseButton>
+                        <ShowcaseButton variant="neon" size="xl" className="w-full">VIEW RESULTS</ShowcaseButton>
                       </Link>
                     ) : isLimitReached ? (
                       <ShowcaseButton variant="glass" size="xl" className="w-full sm:w-auto cursor-not-allowed opacity-50" disabled>LOCKED: LIMIT REACHED</ShowcaseButton>
@@ -281,31 +276,10 @@ export default async function QuizDetailPage({ params }: QuizDetailPageProps) {
                       </Link>
                     )}
                     <ShareQuizButton title={quiz.title} url={quizUrl} />
-                    {isAdmin && (
-                      <InstagramStoryTeaserMenu
-                        id={quiz.id}
-                        slug={quiz.slug}
-                        quizTitle={quiz.title}
-                        trigger={
-                          <ShowcaseButton
-                            variant="glass"
-                            size="xl"
-                            className="w-full sm:w-auto"
-                            icon={<Instagram className="h-5 w-5" />}
-                          >
-                            IG STORY
-                          </ShowcaseButton>
-                        }
-                      />
-                    )}
                   </div>
                 </div>
               </div>
 
-              {/* Transmission Feed (Reviews) */}
-              <div className="pt-12">
-                <ShowcaseReviewsPanel reviews={recentReviews} className="bg-transparent" />
-              </div>
             </div>
 
             {/* Sidebar Controls */}
@@ -321,57 +295,13 @@ export default async function QuizDetailPage({ params }: QuizDetailPageProps) {
                 </div>
               )}
 
-              {/* Attempt Status Card */}
-              <div className="rounded-[2.5rem] p-8 glass-elevated border border-white/10 space-y-6">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <Zap className="h-5 w-5 text-secondary" />
-                    <h3 className="text-sm font-black uppercase tracking-[0.2em]">Deployment Status</h3>
-                  </div>
-                  <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse shadow-neon-lime" />
-                </div>
-
-                {maxAttempts !== null ? (
-                  <div className="space-y-4">
-                    <div className="flex items-end justify-between">
-                      <div className="space-y-1">
-                        <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Attempts Available</p>
-                        <p className="text-4xl font-black">{remainingAttempts}</p>
-                      </div>
-                      <p className="text-xl font-black text-muted-foreground/20">/ {maxAttempts}</p>
-                    </div>
-                    <div className="h-3 w-full rounded-full bg-white/5 overflow-hidden">
-                      <div
-                        className={cn(
-                          "h-full transition-all duration-700 shadow-neon-cyan",
-                          isLimitReached ? "bg-red-500" : "bg-primary"
-                        )}
-                        style={{ width: `${attemptProgressPercent}%` }}
-                      />
-                    </div>
-                    {resetAt && (
-                      <div className="flex items-center gap-2 p-3 rounded-xl bg-white/5 border border-white/5">
-                        <Calendar className="h-4 w-4 text-muted-foreground" />
-                        <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">RESETS: {new Date(resetAt).toLocaleDateString()}</p>
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <div className="p-6 rounded-[2rem] bg-white/5 border border-white/5 text-center space-y-2">
-                    <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">INFINITE ACCESS ENABLED</p>
-                    <div className="text-4xl font-black tracking-tighter">UNLIMITED</div>
-                  </div>
-                )}
-              </div>
-
               {/* Sidebar Leaderboard */}
               <div className="rounded-[2.5rem] p-8 glass-elevated border border-white/10 space-y-6">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <Trophy className="h-5 w-5 text-primary" />
-                    <h3 className="text-sm font-black uppercase tracking-[0.2em]">Sector Leaders</h3>
+                    <h3 className="text-sm font-black uppercase tracking-[0.2em]">Quiz Leaders</h3>
                   </div>
-                  <Link href="/leaderboard" className="text-[10px] font-black uppercase tracking-widest text-primary hover:underline">FULL LOGS</Link>
                 </div>
 
                 <div className="space-y-3">
@@ -398,6 +328,14 @@ export default async function QuizDetailPage({ params }: QuizDetailPageProps) {
                 </p>
               </div>
             </aside>
+          </div>
+
+          <div className="pt-12">
+            <QuizCommentsSection
+              quizSlug={quiz.slug}
+              quizTitle={quiz.title}
+              reviews={recentReviews}
+            />
           </div>
         </PageContainer>
       </main>
