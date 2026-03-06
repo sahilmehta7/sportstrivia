@@ -80,7 +80,7 @@ export function DailyQuizWidget({ dailyQuizzes }: DailyQuizWidgetProps) {
                       src={quiz.descriptionImageUrl}
                       alt={quiz.title}
                       fill
-                      className="object-cover transition-transform duration-700 group-hover:scale-110 grayscale-[0.5] group-hover:grayscale-0"
+                      className="object-cover grayscale transition-transform duration-700 group-hover:scale-110 group-hover:grayscale-0"
                     />
                     <div className="absolute inset-0 bg-gradient-to-r from-transparent via-background/40 to-background hidden md:block" />
                     <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent md:hidden" />

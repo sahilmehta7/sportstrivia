@@ -51,7 +51,7 @@ export function ShowcaseQuizSummaryCard({
             alt={title}
             width={640}
             height={360}
-            className="h-44 w-full object-cover"
+            className="h-44 w-full object-cover grayscale transition-all duration-700 group-hover:grayscale-0 group-hover:scale-105"
           />
         ) : (
           <div className="flex h-44 w-full items-center justify-center bg-gradient-to-br from-muted to-card text-3xl text-muted-foreground/70">

@@ -44,7 +44,7 @@ export function FeaturedCard({ quiz, className }: FeaturedCardProps) {
               src={quiz.descriptionImageUrl}
               alt={quiz.title}
               fill
-              className="object-cover grayscale-[0.4] group-hover:grayscale-0 group-hover:scale-110 transition-all duration-700"
+              className="object-cover grayscale group-hover:grayscale-0 group-hover:scale-110 transition-all duration-700"
               sizes="(min-width: 1024px) 50vw, 100vw"
             />
           ) : (

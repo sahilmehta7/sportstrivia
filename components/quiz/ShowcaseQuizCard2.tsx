@@ -47,7 +47,7 @@ export function ShowcaseQuizCard2({
               src={coverImageUrl}
               alt={title}
               fill
-              className="object-cover"
+              className="object-cover grayscale transition-all duration-700 group-hover:grayscale-0 group-hover:scale-105"
               sizes="(min-width: 1024px) 280px, 80vw"
               priority
             />
