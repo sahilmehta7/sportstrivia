@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { ArrowRight, ShieldAlert, Play } from "lucide-react";
+import { ArrowRight, Play } from "lucide-react";
 import type { PublicQuizListItem } from "@/lib/services/public-quiz.service";
 import { cn } from "@/lib/utils";
 
@@ -11,29 +11,6 @@ interface FeaturedCardTradingProps {
 export function FeaturedCardTrading({ quiz }: FeaturedCardTradingProps) {
     const year = new Date(quiz.createdAt).getFullYear();
 
-    const difficultyMap = {
-        EASY: {
-            label: "LEVEL 01 / AMATEUR",
-            color: "text-blue-500",
-            bg: "bg-blue-500/5",
-            border: "border-blue-500/20"
-        },
-        MEDIUM: {
-            label: "LEVEL 02 / PROFESSIONAL",
-            color: "text-accent",
-            bg: "bg-accent/5",
-            border: "border-accent/20"
-        },
-        HARD: {
-            label: "LEVEL 03 / ELITE",
-            color: "text-primary",
-            bg: "bg-primary/5",
-            border: "border-primary/20"
-        },
-    };
-
-    const level = difficultyMap[quiz.difficulty] || difficultyMap.MEDIUM;
-
     return (
         <div className="relative w-full group overflow-hidden">
             <div className={cn(
@@ -42,10 +19,6 @@ export function FeaturedCardTrading({ quiz }: FeaturedCardTradingProps) {
             )}>
                 {/* Header Information */}
                 <div className="absolute top-0 left-0 right-0 z-20 flex justify-between items-start pointer-events-none p-6">
-                    <div className="flex items-center gap-2 bg-foreground px-4 py-2 text-background text-[10px] font-bold uppercase tracking-[0.2em]">
-                        <ShieldAlert className="h-3 w-3 text-accent" />
-                        {level.label}
-                    </div>
                     <div className="text-[10px] font-bold tracking-widest text-foreground/40 uppercase bg-background px-3 py-1">
                         EST. {year}
                     </div>

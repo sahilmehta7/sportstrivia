@@ -5,7 +5,7 @@ import Image from "next/image";
 import { useMemo } from "react";
 import { cn } from "@/lib/utils";
 import { generatePattern } from "@/lib/pattern-generator";
-import { Clock, Users, Play, ShieldAlert } from "lucide-react";
+import { Clock, Users, Play, ShieldAlert, Zap } from "lucide-react";
 
 interface ShowcaseQuizCardProps {
   id: string;
@@ -13,6 +13,7 @@ interface ShowcaseQuizCardProps {
   badgeLabel?: string;
   durationLabel: string;
   playersLabel: string;
+  difficultyLabel?: string;
   accent?: string;
   coverImageUrl?: string | null;
   className?: string;
@@ -26,6 +27,7 @@ export function ShowcaseQuizCard({
   badgeLabel,
   durationLabel,
   playersLabel,
+  difficultyLabel,
   accent,
   coverImageUrl,
   className,
@@ -104,18 +106,13 @@ export function ShowcaseQuizCard({
                 <Users className="h-3.5 w-3.5 text-muted-foreground" />
                 <span className="text-[10px] font-bold tracking-widest uppercase text-muted-foreground">{playersLabel}</span>
               </div>
+              {difficultyLabel && (
+                <div className="flex items-center gap-2">
+                  <Zap className="h-3.5 w-3.5 text-muted-foreground" />
+                  <span className="text-[10px] font-bold tracking-widest uppercase text-muted-foreground">{difficultyLabel}</span>
+                </div>
+              )}
             </div>
-          </div>
-
-          <div className="mt-8 flex items-center justify-between border-t border-foreground/5 pt-6">
-            <div className="flex items-center gap-1.5">
-              {[1, 2, 3, 4, 5].map((i) => (
-                <div key={i} className="h-1 w-4 bg-foreground/10 group-hover:first:bg-accent group-hover:[&:nth-child(2)]:bg-accent group-hover:[&:nth-child(3)]:bg-accent transition-colors" />
-              ))}
-            </div>
-            <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-muted-foreground/40 group-hover:text-foreground transition-colors">
-              Enter Quiz
-            </span>
           </div>
         </div>
       </div>

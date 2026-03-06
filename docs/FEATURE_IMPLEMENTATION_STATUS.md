@@ -1,6 +1,6 @@
 # Feature Implementation Status - Sports Trivia Platform
 
-**Last Updated**: February 2025  
+**Last Updated**: March 2026  
 **Status**: Backend, admin, and player surfaces are production-ready
 
 ---
@@ -21,6 +21,7 @@
 | Leaderboards | ✅ Global, quiz, topic | ✅ Data via admin dashboards | ✅ Leaderboard page, quiz sidebars | Daily & all-time aggregation, recurring modes |
 | Notifications | ✅ CRUD, read-all, delete | ✅ Admin triggers via events | ✅ Notification center | Badge, challenge, friend, attempt events |
 | Gamification (Levels, Tiers, Badges) | ✅ Models, progression, recompute | ✅ Level/tier config, badge admin | ✅ Badge progress, streaks, tiers | Completion bonuses, user topic stats |
+| Account Deletion (Self-Serve) | ✅ `DELETE /api/users/me` + guards | ➖ Not admin-mediated | ✅ Profile Settings -> Danger Zone | Typed `DELETE` confirmation, sign-out redirect, analytics events |
 | AI Assistants | ✅ Task orchestration | ✅ Generate quiz/topic, metadata | ✅ AI suggestions modal | Tracks job history, background tasks |
 | Media & SEO | ✅ Upload pipeline, structured data | ✅ SEO fields per quiz | ✅ Rich previews, social share | JSON-LD, OpenGraph, canonical URLs |
 | Analytics & Reporting | ✅ Prisma aggregations | ✅ Dashboard KPIs, reports | ✅ Player stats cards | Advanced exports slated for roadmap |

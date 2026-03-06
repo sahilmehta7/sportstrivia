@@ -1,0 +1,104 @@
+{
+  "version": "1.0",
+  "capture": {
+    "viewport": { "width": 360, "height": 640 },
+    "deviceScaleFactor": 3,
+    "isMobile": true,
+    "hasTouch": true,
+    "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
+    "safeArea": { "top": 72, "bottom": 108 }
+  },
+  "shots": [
+    {
+      "name": "01-discover-quizzes.png",
+      "route": "/quizzes",
+      "waitFor": "text=DAILY CHALLENGE",
+      "focusSelector": "text=DAILY CHALLENGE",
+      "scrollStrategy": { "type": "y", "value": 120 },
+      "fallbackScrollY": 120,
+      "actions": [
+        { "type": "dismissOnboarding" },
+        { "type": "wait", "ms": 500 }
+      ]
+    },
+    {
+      "name": "02-gameplay-question.png",
+      "route": "/quizzes/{{randomQuizSlug}}/play",
+      "waitFor": "text=/Question\\s+1\\s+of/i",
+      "focusSelector": "text=Keep the streak going",
+      "scrollStrategy": { "type": "none" },
+      "fallbackScrollY": 0,
+      "actions": [
+        { "type": "waitForSelector", "selector": "text=Keep the streak going", "timeoutMs": 30000 },
+        { "type": "wait", "ms": 800 }
+      ]
+    },
+    {
+      "name": "03-results-summary.png",
+      "route": "/quizzes/{{quizSlug}}/results/{{resultsAttemptId}}?fresh=1",
+      "waitFor": "text=Points & Progress",
+      "focusSelector": "text=Points & Progress",
+      "scrollStrategy": { "type": "y", "value": 0 },
+      "fallbackScrollY": 0,
+      "actions": [
+        { "type": "wait", "ms": 1200 }
+      ]
+    },
+    {
+      "name": "04-social-challenges.png",
+      "route": "/challenges",
+      "waitFor": "text=CHALLENGES",
+      "focusSelector": "text=INITIATE CHALLENGE",
+      "scrollStrategy": { "type": "y", "value": 120 },
+      "fallbackScrollY": 120,
+      "actions": [
+        { "type": "wait", "ms": 500 }
+      ]
+    },
+    {
+      "name": "05-leaderboard.png",
+      "route": "/leaderboard",
+      "waitFor": "text=GLOBAL RANKINGS",
+      "focusSelector": "text=GLOBAL RANKINGS",
+      "scrollStrategy": { "type": "selector", "selector": "text=GLOBAL RANKINGS", "align": "start" },
+      "fallbackScrollY": 260,
+      "actions": [
+        { "type": "wait", "ms": 500 }
+      ]
+    },
+    {
+      "name": "06-profile-progress.png",
+      "route": "/profile/me",
+      "waitFor": "text=Sector Insights",
+      "focusSelector": "text=Sector Insights",
+      "scrollStrategy": { "type": "selector", "selector": "text=Sector Insights", "align": "start" },
+      "fallbackScrollY": 620,
+      "actions": [
+        { "type": "wait", "ms": 700 }
+      ]
+    },
+    {
+      "name": "07-notifications.png",
+      "route": "/notifications",
+      "waitFor": "text=Transmission History",
+      "focusSelector": "text=Transmission History",
+      "scrollStrategy": { "type": "selector", "selector": "text=Transmission History", "align": "start" },
+      "fallbackScrollY": 520,
+      "actions": [
+        { "type": "wait", "ms": 500 }
+      ]
+    },
+    {
+      "name": "08-privacy-controls.png",
+      "route": "/profile/me",
+      "waitFor": "text=JORDAN BLAKE",
+      "focusSelector": "text=/DANGER\\s+ZONE/i",
+      "scrollStrategy": { "type": "selector", "selector": "text=/DANGER\\s+ZONE/i", "align": "center" },
+      "fallbackScrollY": 1400,
+      "actions": [
+        { "type": "click", "selector": "button[role='tab']:has-text('SETTINGS')" },
+        { "type": "wait", "ms": 700 }
+      ]
+    }
+  ]
+}

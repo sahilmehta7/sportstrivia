@@ -115,6 +115,7 @@ export function QuizzesContent({ quizzes, filterGroups, pagination }: QuizzesCon
             const gradient = getSportGradient(quiz.sport, hashString(`${quiz.title}`));
             const durationLabel = quiz.duration ? `${Math.round(quiz.duration / 60)} MIN` : "FLEX";
             const playersLabel = `${(quiz._count?.attempts || 0).toLocaleString()} PLAYERS`;
+            const difficultyLabel = (quiz.difficulty || "MEDIUM").toString();
 
             return (
               <ShowcaseQuizCard
@@ -124,6 +125,7 @@ export function QuizzesContent({ quizzes, filterGroups, pagination }: QuizzesCon
                 badgeLabel={quiz.sport || quiz.difficulty || "Quiz"}
                 durationLabel={durationLabel}
                 playersLabel={playersLabel}
+                difficultyLabel={difficultyLabel}
                 accent={gradient}
                 coverImageUrl={quiz.descriptionImageUrl}
                 href={`/quizzes/${quiz.slug}`}

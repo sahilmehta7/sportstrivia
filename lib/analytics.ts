@@ -18,7 +18,12 @@ type EventName =
     | 'grid_cell_submitted'
     | 'grid_completed'
     | 'grid_result_shared'
-    | 'share_click_copy';
+    | 'share_click_copy'
+    | 'account_delete_viewed'
+    | 'account_delete_export_clicked'
+    | 'account_delete_confirmed'
+    | 'account_delete_succeeded'
+    | 'account_delete_failed';
 
 export const trackEvent = (eventName: EventName, params?: Record<string, any>) => {
     sendGAEvent('event', eventName, params || {});

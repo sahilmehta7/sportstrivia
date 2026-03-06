@@ -1,6 +1,6 @@
 # Current Project Status - Sports Trivia Platform
 
-**Last Updated**: February 2025  
+**Last Updated**: March 2026  
 **Overall Status**: Production-ready platform with active roadmap
 
 ---
@@ -55,6 +55,25 @@ Sports Trivia now ships as a full-stack production experience. The backend, admi
 - Introduce push/realtime notifications for challenges and streak events
 - Deepen AI assistants (template presets, prompt iteration logs)
 - Deliver PWA/mobile companion experience with offline quiz playback
+
+---
+
+## 📱 Google Play Readiness (Updated)
+
+Current status: **In progress**.  
+
+What is now complete:
+- ✅ In-app account deletion flow is implemented under Profile -> Settings -> Danger Zone.
+- ✅ Deletion flow has confirmation safeguards, analytics instrumentation, and sign-out on success.
+- ✅ Existing backend deletion contract remains stable (`DELETE /api/users/me`).
+
+Primary remaining blockers:
+- 🚧 Android distribution path not yet finalized (Trusted Web Activity vs React Native/Flutter shell).
+- 🚧 Play-required release assets and metadata are not yet assembled in a submission-ready set.
+- 🚧 Play Console policy declarations (Data safety, app access/testing instructions, policy forms) are not finalized.
+- 🚧 Mobile release QA and rollout runbook are not yet completed.
+
+See `docs/PLAY_STORE_READINESS.md` for the full checklist and task breakdown.
 
 ---
 

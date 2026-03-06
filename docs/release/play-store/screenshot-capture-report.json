@@ -1,0 +1,160 @@
+{
+  "capturedAt": "2026-03-06T05:41:44.902Z",
+  "baseUrl": "http://localhost:3310",
+  "manifest": "docs/release/play-store/screenshot-manifest.v1.json",
+  "shots": [
+    {
+      "name": "01-discover-quizzes.png",
+      "route": "/quizzes",
+      "url": "http://localhost:3310/quizzes",
+      "success": true,
+      "focusSelector": "text=DAILY CHALLENGE",
+      "focusFound": true,
+      "focusRect": {
+        "x": 41,
+        "y": 372,
+        "width": 178,
+        "height": 36,
+        "top": 372,
+        "bottom": 408
+      },
+      "safeArea": {
+        "top": 72,
+        "bottom": 108
+      },
+      "issues": []
+    },
+    {
+      "name": "02-gameplay-question.png",
+      "route": "/quizzes/{{randomQuizSlug}}/play",
+      "url": "http://localhost:3310/quizzes/mastering-the-spin-the-ultimate-shane-warne-challenge/play",
+      "success": false,
+      "focusSelector": "text=Keep the streak going",
+      "focusFound": false,
+      "focusRect": null,
+      "safeArea": {
+        "top": 72,
+        "bottom": 108
+      },
+      "issues": [
+        "capture_error:page.waitForSelector: Timeout 20000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('text=/Question\\\\s+1\\\\s+of/i') to be visible\u001b[22m\n"
+      ]
+    },
+    {
+      "name": "03-results-summary.png",
+      "route": "/quizzes/{{quizSlug}}/results/{{resultsAttemptId}}?fresh=1",
+      "url": "http://localhost:3310/quizzes/ultimate-davis-cup-challenge/results/cmmegvpkb0006qmw6imlwguzi?fresh=1",
+      "success": false,
+      "focusSelector": "text=Points & Progress",
+      "focusFound": false,
+      "focusRect": null,
+      "safeArea": {
+        "top": 72,
+        "bottom": 108
+      },
+      "issues": [
+        "capture_error:page.waitForSelector: Timeout 20000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('text=Points & Progress') to be visible\u001b[22m\n"
+      ]
+    },
+    {
+      "name": "04-social-challenges.png",
+      "route": "/challenges",
+      "url": "http://localhost:3310/challenges",
+      "success": true,
+      "focusSelector": "text=INITIATE CHALLENGE",
+      "focusFound": true,
+      "focusRect": {
+        "x": 16,
+        "y": 169,
+        "width": 328,
+        "height": 48,
+        "top": 169,
+        "bottom": 217
+      },
+      "safeArea": {
+        "top": 72,
+        "bottom": 108
+      },
+      "issues": []
+    },
+    {
+      "name": "05-leaderboard.png",
+      "route": "/leaderboard",
+      "url": "http://localhost:3310/leaderboard",
+      "success": true,
+      "focusSelector": "text=GLOBAL RANKINGS",
+      "focusFound": true,
+      "focusRect": {
+        "x": 84,
+        "y": 96,
+        "width": 193,
+        "height": 16,
+        "top": 96,
+        "bottom": 112
+      },
+      "safeArea": {
+        "top": 72,
+        "bottom": 108
+      },
+      "issues": []
+    },
+    {
+      "name": "06-profile-progress.png",
+      "route": "/profile/me",
+      "url": "http://localhost:3310/profile/me",
+      "success": true,
+      "focusSelector": "text=Sector Insights",
+      "focusFound": true,
+      "focusRect": {
+        "x": 44,
+        "y": 96,
+        "width": 347,
+        "height": 38,
+        "top": 96,
+        "bottom": 134
+      },
+      "safeArea": {
+        "top": 72,
+        "bottom": 108
+      },
+      "issues": []
+    },
+    {
+      "name": "07-notifications.png",
+      "route": "/notifications",
+      "url": "http://localhost:3310/notifications",
+      "success": true,
+      "focusSelector": "text=Transmission History",
+      "focusFound": true,
+      "focusRect": {
+        "x": 36,
+        "y": 96,
+        "width": 250,
+        "height": 32,
+        "top": 96,
+        "bottom": 128
+      },
+      "safeArea": {
+        "top": 72,
+        "bottom": 108
+      },
+      "issues": []
+    },
+    {
+      "name": "08-privacy-controls.png",
+      "route": "/profile/me",
+      "url": "http://localhost:3310/profile/me",
+      "success": true,
+      "focusSelector": "text=/DANGER\\s+ZONE/i",
+      "focusFound": false,
+      "focusRect": null,
+      "safeArea": {
+        "top": 72,
+        "bottom": 108
+      },
+      "issues": [
+        "focus_selector_not_found"
+      ]
+    }
+  ]
+}

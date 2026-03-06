@@ -1,3 +1,5 @@
+"use client";
+
 import { useMemo, memo } from "react";
 import Image from "next/image";
 import { m } from "framer-motion";
