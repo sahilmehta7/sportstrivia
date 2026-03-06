@@ -47,7 +47,7 @@ export function QuizCard({ quiz }: QuizCardProps) {
               src={coverImage}
               alt={`${quiz.title} cover`}
               fill
-              className="object-cover transition-transform duration-500 will-change-transform group-hover:scale-105"
+              className="object-cover grayscale-[0.45] transition-all duration-500 will-change-transform group-hover:grayscale-0 group-hover:scale-105"
               sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
               priority={false}
             />
