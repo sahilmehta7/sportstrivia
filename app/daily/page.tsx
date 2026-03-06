@@ -54,21 +54,21 @@ export default async function DailyPage() {
         : undefined;
 
     return (
-        <div className="min-h-screen py-8 px-4">
-            <div className="max-w-4xl mx-auto">
+        <div className="min-h-screen overflow-x-hidden px-4 py-5 sm:py-8">
+            <div className="mx-auto max-w-4xl">
                 {/* Back link */}
                 <Link
                     href="/quizzes"
-                    className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-8 uppercase tracking-wide"
+                    className="mb-6 inline-flex items-center gap-2 text-sm uppercase tracking-wide text-muted-foreground transition-colors hover:text-foreground sm:mb-8"
                 >
                     <ArrowLeft className="w-4 h-4" />
                     Back to Quizzes
                 </Link>
 
                 {/* Header */}
-                <div className="text-center mb-10">
+                <div className="mb-6 text-center sm:mb-10">
                     {/* Badge row */}
-                    <div className="flex items-center justify-center gap-3 mb-4">
+                    <div className="mb-3 flex items-center justify-center gap-3 sm:mb-4">
                         <span className={cn(getChipStyles('accent'), 'text-[10px] px-2 py-0.5')}>
                             {game.gameType}
                         </span>
@@ -79,14 +79,14 @@ export default async function DailyPage() {
 
                     {/* Title */}
                     <h1 className={cn(
-                        "text-5xl sm:text-6xl font-bold uppercase tracking-tighter font-['Barlow_Condensed',sans-serif] mb-3",
+                        "mb-2 font-['Barlow_Condensed',sans-serif] text-4xl font-bold uppercase tracking-tighter sm:mb-3 sm:text-6xl",
                         getGradientText('editorial')
                     )}>
                         {displayName.toUpperCase()}
                     </h1>
 
                     {/* Meta info */}
-                    <div className="flex items-center justify-center gap-4 text-sm text-muted-foreground uppercase tracking-wide">
+                    <div className="flex items-center justify-center gap-3 text-xs uppercase tracking-wide text-muted-foreground sm:gap-4 sm:text-sm">
                         <span className="font-mono">{game.date}</span>
                         <span className="w-1 h-1 bg-muted-foreground rounded-full" />
                         <span>{maxGuesses} attempts</span>
@@ -102,10 +102,10 @@ export default async function DailyPage() {
                 </div>
 
                 {/* Divider */}
-                <div className="flex items-center justify-center mb-10">
-                    <div className="h-px w-24 bg-border" />
+                <div className="mb-6 flex items-center justify-center sm:mb-10">
+                    <div className="h-px w-16 bg-border sm:w-24" />
                     <div className="w-2 h-2 border border-border rotate-45 mx-4" />
-                    <div className="h-px w-24 bg-border" />
+                    <div className="h-px w-16 bg-border sm:w-24" />
                 </div>
 
                 {/* Game */}

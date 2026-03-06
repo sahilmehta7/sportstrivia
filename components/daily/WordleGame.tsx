@@ -140,7 +140,7 @@ export function WordleGame({
 
 
     return (
-        <div className="flex flex-col items-center gap-6 sm:gap-8 py-4">
+        <div className="flex flex-col items-center gap-4 py-2 sm:gap-8 sm:py-4">
             <WordleBoard
                 guesses={guesses}
                 currentGuess={currentGuess}

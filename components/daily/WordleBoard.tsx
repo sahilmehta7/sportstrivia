@@ -26,8 +26,8 @@ function WordleTile({ letter, status, isRevealing, delay = 0 }: WordleTileProps)
     return (
         <motion.div
             className={cn(
-                'w-14 h-14 sm:w-16 sm:h-16 border-2 flex items-center justify-center',
-                "text-2xl sm:text-3xl font-bold uppercase font-['Barlow_Condensed',sans-serif] tracking-tight",
+                'flex h-11 w-11 items-center justify-center border-2 sm:h-16 sm:w-16',
+                "font-['Barlow_Condensed',sans-serif] text-xl font-bold uppercase tracking-tight sm:text-3xl",
                 baseStyles,
                 status && statusStyles[status]
             )}
@@ -112,7 +112,7 @@ export function WordleBoard({
     }
 
     return (
-        <div className="flex flex-col items-center gap-1">
+        <div className="flex w-full flex-col items-center gap-1 overflow-x-hidden">
             {rows}
         </div>
     );

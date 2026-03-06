@@ -31,9 +31,9 @@ export function VirtualKeyboard({ onKeyPress, letterStatuses, disabled }: Virtua
     };
 
     return (
-        <div className="flex flex-col items-center gap-1 w-full max-w-lg mx-auto px-1">
+        <div className="mx-auto flex w-full max-w-sm flex-col items-center gap-1 overflow-x-hidden px-0.5 sm:max-w-lg sm:px-1">
             {KEYBOARD_ROWS.map((row, rowIndex) => (
-                <div key={rowIndex} className="flex gap-1 justify-center w-full">
+                <div key={rowIndex} className="flex w-full justify-center gap-1">
                     {row.map((key) => {
                         const isSpecial = key === 'ENTER' || key === 'BACKSPACE';
                         const status = letterStatuses[key];
@@ -45,10 +45,12 @@ export function VirtualKeyboard({ onKeyPress, letterStatuses, disabled }: Virtua
                                 onClick={() => handleClick(key)}
                                 disabled={disabled}
                                 className={cn(
-                                    'h-12 sm:h-14 border-2 transition-colors',
-                                    "font-bold text-xs sm:text-sm uppercase tracking-wide font-['Barlow_Condensed',sans-serif]",
+                                    'flex h-10 items-center justify-center border-2 transition-colors sm:h-14',
+                                    "font-['Barlow_Condensed',sans-serif] text-[11px] font-bold uppercase tracking-wide sm:text-sm",
                                     'flex items-center justify-center',
-                                    isSpecial ? 'px-2 sm:px-4 min-w-[52px] sm:min-w-[65px]' : 'w-8 sm:w-10',
+                                    isSpecial
+                                        ? 'min-w-[44px] px-1.5 sm:min-w-[65px] sm:px-4'
+                                        : 'w-[8.5vw] max-w-8 min-w-7 sm:w-10',
                                     disabled && 'opacity-50 cursor-not-allowed',
                                     status
                                         ? statusStyles[status]
@@ -56,9 +58,9 @@ export function VirtualKeyboard({ onKeyPress, letterStatuses, disabled }: Virtua
                                 )}
                             >
                                 {key === 'BACKSPACE' ? (
-                                    <Delete className="w-5 h-5" />
+                                    <Delete className="h-4 w-4 sm:h-5 sm:w-5" />
                                 ) : key === 'ENTER' ? (
-                                    <CornerDownLeft className="w-5 h-5" />
+                                    <CornerDownLeft className="h-4 w-4 sm:h-5 sm:w-5" />
                                 ) : (
                                     key
                                 )}
