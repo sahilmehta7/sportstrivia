@@ -1,0 +1,52 @@
+{
+  "version": "1.0",
+  "theme": {
+    "fontFamily": "Arial, Helvetica, sans-serif",
+    "headlineColor": "#FFFFFF",
+    "subtextColor": "#D6E0FF",
+    "shadow": "rgba(0,0,0,0.65)",
+    "pillBg": "rgba(4, 11, 30, 0.72)",
+    "pillBorder": "rgba(255,255,255,0.18)",
+    "accent": "#F5C20B"
+  },
+  "defaults": {
+    "headlineY": 84,
+    "subtextY": 144,
+    "paddingX": 48,
+    "maxWidth": 984
+  },
+  "overlays": {
+    "01-discover-quizzes.png": {
+      "headline": "Discover Daily Sports Trivia Missions",
+      "subtext": "Pick a challenge and enter the quiz instantly."
+    },
+    "02-gameplay-question.png": {
+      "headline": "Fast-Paced Real Gameplay Questions",
+      "subtext": "Answer under pressure and climb your rank."
+    },
+    "03-results-summary.png": {
+      "headline": "Instant Results After Every Run",
+      "subtext": "Track accuracy, score, and mission outcome."
+    },
+    "04-social-challenges.png": {
+      "headline": "Challenge Friends Head-To-Head",
+      "subtext": "Send, accept, and settle live trivia duels."
+    },
+    "05-leaderboard.png": {
+      "headline": "Compete On Global Leaderboards",
+      "subtext": "Daily and all-time rankings update in real time."
+    },
+    "06-profile-progress.png": {
+      "headline": "Track Streaks, Stats, And Progress",
+      "subtext": "Build long-term momentum across every quiz."
+    },
+    "07-notifications.png": {
+      "headline": "Stay Updated With Smart Alerts",
+      "subtext": "Never miss challenges, badges, or social activity."
+    },
+    "08-privacy-controls.png": {
+      "headline": "Privacy Controls You Can Trust",
+      "subtext": "Manage account settings, including deletion controls."
+    }
+  }
+}

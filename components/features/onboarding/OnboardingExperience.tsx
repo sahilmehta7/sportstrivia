@@ -57,7 +57,7 @@ export function OnboardingExperience() {
                                 </div>
                                 <div>
                                     <h3 className="text-xl font-black uppercase tracking-tighter text-white">
-                                        Your Arena Awaits
+                                        Your Quiz Awaits
                                     </h3>
                                     <p className="text-xs font-black uppercase tracking-widest text-primary/80">
                                         Level 0 Rookie

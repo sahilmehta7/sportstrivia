@@ -93,7 +93,7 @@ export function QuizzesContent({ quizzes, filterGroups, pagination }: QuizzesCon
               THE LIBRARY
             </h2>
             <p className="max-w-xl text-lg text-muted-foreground font-semibold uppercase tracking-tight leading-tight">
-              Browse every contested arena in the trivia universe.
+              Browse every contested quiz in the trivia universe.
             </p>
           </div>
         </div>
@@ -141,7 +141,7 @@ export function QuizzesContent({ quizzes, filterGroups, pagination }: QuizzesCon
             </div>
           </div>
           <div className="space-y-4 max-w-sm">
-            <h2 className="text-3xl font-bold tracking-tighter uppercase font-['Barlow_Condensed',sans-serif]">No Arenas Found</h2>
+            <h2 className="text-3xl font-bold tracking-tighter uppercase font-['Barlow_Condensed',sans-serif]">No Quizzes Found</h2>
             <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-muted-foreground/60 leading-relaxed">
               Target parameters returned null. Adjust filters or check back for new deployments.
             </p>

@@ -40,7 +40,7 @@ export function ShowcaseReviewsPanel({ reviews, onAddReview, className }: Showca
       <ShowcaseEmptyState
         icon="💬"
         title="BE THE FIRST TO COMMENT"
-        description="This arena has no records yet. Share your experience with the community."
+        description="This quiz has no records yet. Share your experience with the community."
         {...(canAddReview ? { actionLabel: "DEPLOY REVIEW", onAction: handleAdd } : {})}
         className={className}
       />

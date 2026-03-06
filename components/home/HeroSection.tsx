@@ -42,7 +42,7 @@ export function HeroSection({ stats }: HeroSectionProps) {
               </h1>
 
               <p className="max-w-xl text-lg sm:text-xl font-medium text-muted-foreground/90 leading-relaxed">
-                Join the arena where sports knowledge meets professional competition.
+                Join the quiz where sports knowledge meets professional competition.
                 Challenge your limits across every major league and claim your place among the elite.
               </p>
             </div>
@@ -94,7 +94,7 @@ export function HeroSection({ stats }: HeroSectionProps) {
             <div className="relative aspect-[4/5] bg-muted overflow-hidden border-8 border-foreground shadow-[20px_20px_0px_0px_rgba(0,0,0,1)] dark:shadow-[20px_20px_0px_0px_rgba(255,255,255,0.1)] group">
               {/* This would be a high-quality sports action shot in production */}
               <div className="absolute inset-0 bg-gradient-to-t from-foreground/80 to-transparent flex flex-col justify-end p-12 text-background">
-                <p className="text-xs font-bold uppercase tracking-widest mb-2 text-accent">Arena Spotlight</p>
+                <p className="text-xs font-bold uppercase tracking-widest mb-2 text-accent">Quiz Spotlight</p>
                 <h3 className="text-4xl font-bold font-['Barlow_Condensed',sans-serif] uppercase mb-4">NBA Legends Edition</h3>
                 <Link href="/quizzes/nba-legends" className="inline-flex items-center gap-2 text-sm font-bold uppercase tracking-widest group-hover:gap-4 transition-all">
                   Take The Quiz <ArrowRight className="h-4 w-4" />

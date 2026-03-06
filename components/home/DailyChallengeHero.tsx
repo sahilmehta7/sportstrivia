@@ -70,7 +70,7 @@ export function DailyChallengeHero({
         <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="relative border border-border bg-card"
+            className="relative hidden md:block border border-border bg-card"
         >
             {/* Accent bar */}
             <div className="absolute top-0 left-0 right-0 h-1 bg-primary" />

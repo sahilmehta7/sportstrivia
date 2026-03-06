@@ -14,7 +14,7 @@ import { getBlurCircles, getGradientText } from "@/lib/showcase-theme";
 import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = {
-  title: "Random Matrix | Sports Trivia",
+  title: "Random Quiz | Sports Trivia",
   description: "Test your knowledge with a randomly selected sports trivia quiz.",
 };
 
@@ -55,12 +55,12 @@ export default async function RandomQuizPage() {
                 <ShieldAlert className="h-10 w-10" />
               </div>
               <div className="space-y-4">
-                <h1 className={cn("text-5xl lg:text-7xl font-bold uppercase tracking-tighter", getGradientText("editorial"))}>NO MATRICES</h1>
-                <p className="text-sm font-bold tracking-[0.2em] text-muted-foreground/60 uppercase">ALL SINGLE-ATTEMPT SECTORS HAVE BEEN RESOLVED</p>
+                <h1 className={cn("text-5xl lg:text-7xl font-bold uppercase tracking-tighter", getGradientText("editorial"))}>NO QUIZZES LEFT</h1>
+                <p className="text-sm font-bold tracking-[0.2em] text-muted-foreground/60 uppercase">ALL SINGLE-ATTEMPT QUIZZES HAVE BEEN COMPLETED</p>
               </div>
             </div>
             <Button asChild variant="glass" size="xl" className="rounded-2xl px-10">
-              <Link href="/quizzes">RETURN TO REGISTRY</Link>
+              <Link href="/quizzes">RETURN TO ALL QUIZZES</Link>
             </Button>
           </PageContainer>
         </main>
@@ -85,7 +85,7 @@ export default async function RandomQuizPage() {
 
   if (!quiz) redirect("/quizzes");
 
-  const category = quiz.topicConfigs?.[0]?.topic?.name ?? quiz.sport ?? "Arena";
+  const category = quiz.topicConfigs?.[0]?.topic?.name ?? quiz.sport ?? "Quiz";
   const durationLabel = formatQuizDuration(quiz.duration ?? quiz.timePerQuestion);
   const playersLabel = formatPlayerCount(quiz._count?.attempts ?? 0);
   const difficultyLabel = (quiz.difficulty ?? "Medium").toString().toUpperCase().replace(/_/g, " ");
@@ -94,36 +94,29 @@ export default async function RandomQuizPage() {
 
   return (
     <ShowcaseThemeProvider>
-      <main className="relative min-h-screen overflow-hidden pt-12 pb-24 lg:pt-20">
+      <main className="relative min-h-screen overflow-hidden pt-12 pb-40 md:pb-24 lg:pt-20">
         <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none">
           <div className={cn("absolute -left-[10%] top-[10%] h-[40%] w-[40%] rounded-full opacity-20 blur-[120px]", circle1)} />
           <div className={cn("absolute -right-[10%] top-[20%] h-[40%] w-[40%] rounded-full opacity-20 blur-[120px]", circle2)} />
           <div className={cn("absolute left-[20%] -bottom-[10%] h-[40%] w-[40%] rounded-full opacity-20 blur-[120px]", circle3)} />
         </div>
 
-        <PageContainer className="space-y-20">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-10 pt-4">
+        <PageContainer className="space-y-10 md:space-y-20">
+          <div className="hidden md:flex flex-col sm:flex-row sm:items-center justify-between gap-10 pt-4">
             <div className="space-y-6">
               <div className="flex items-center gap-4">
                 <div className="h-10 w-1 rounded-full bg-primary shadow-neon-cyan" />
                 <h1 className={cn("text-5xl lg:text-8xl font-bold uppercase tracking-tighter leading-[1]", getGradientText("editorial"))}>
-                  MATRIX SHIFT
+                  RANDOM QUIZ
                 </h1>
               </div>
               <p className="text-[10px] font-black tracking-[0.4em] text-muted-foreground uppercase lg:pl-5 opacity-60">
-                RANDOM SECTOR RESOLVED • INITIATING MISSION
+                A FRESH QUIZ PICKED FOR YOU • START WHEN READY
               </p>
             </div>
-
-            <Button asChild variant="glass" size="sm" className="rounded-2xl border-white/10 px-6 h-12 text-[10px] font-black uppercase tracking-widest">
-              <Link href="/quizzes">
-                <ArrowLeft className="mr-3 h-4 w-4" />
-                REGISTRY
-              </Link>
-            </Button>
           </div>
 
-          <div className="mx-auto flex w-full justify-center scale-[0.9] sm:scale-100 transition-transform origin-top">
+          <div className="w-full">
             <ShowcaseFeaturedQuizCard
               title={quiz.title}
               subtitle={quiz.description}
@@ -135,7 +128,17 @@ export default async function RandomQuizPage() {
               coverImageUrl={quiz.descriptionImageUrl ?? undefined}
               accent={accent}
               ctaHref={`/quizzes/${quiz.slug}`}
+              ctaLabel="TAKE THE QUIZ"
             />
+          </div>
+
+          <div className="flex justify-center md:justify-start">
+            <Button asChild variant="glass" size="sm" className="rounded-2xl border-white/10 px-6 h-12 text-[10px] font-black uppercase tracking-widest">
+              <Link href="/quizzes">
+                <ArrowLeft className="mr-3 h-4 w-4" />
+                ALL QUIZZES
+              </Link>
+            </Button>
           </div>
         </PageContainer>
 
@@ -145,6 +148,14 @@ export default async function RandomQuizPage() {
         </div>
         <div className="fixed top-1/2 -right-20 pointer-events-none opacity-[0.02]">
           <Activity className="h-96 w-96" />
+        </div>
+
+        <div className="fixed inset-x-4 bottom-24 z-30 md:hidden">
+          <Button asChild variant="accent" size="xl" className="h-14 w-full rounded-2xl shadow-athletic">
+            <Link href={`/quizzes/${quiz.slug}`}>
+              TAKE THE QUIZ
+            </Link>
+          </Button>
         </div>
       </main>
     </ShowcaseThemeProvider>

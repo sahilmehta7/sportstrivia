@@ -33,7 +33,7 @@ export function ShowcaseQuizCard({
   priority = false,
 }: ShowcaseQuizCardProps) {
   const pattern = useMemo(() => generatePattern(title), [title]);
-  const label = (badgeLabel ?? "Arena").toUpperCase();
+  const label = (badgeLabel ?? "Quiz").toUpperCase();
   const linkHref = href || `/quizzes/${id}`;
 
   return (
@@ -114,7 +114,7 @@ export function ShowcaseQuizCard({
               ))}
             </div>
             <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-muted-foreground/40 group-hover:text-foreground transition-colors">
-              Enter Arena
+              Enter Quiz
             </span>
           </div>
         </div>

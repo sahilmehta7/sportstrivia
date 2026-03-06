@@ -3,7 +3,7 @@
 import { useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Calendar, Trophy, Clock, ArrowRight, Play } from "lucide-react";
+import { Calendar, Trophy, ArrowRight, Play } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { DailyQuizItem } from "@/lib/services/public-quiz.service";
 
@@ -43,7 +43,7 @@ export function ShowcaseDailyCarousel({
             </div>
             <div className="space-y-4">
               <h3 className="text-4xl font-bold uppercase tracking-tighter leading-none font-['Barlow_Condensed',sans-serif]">
-                DAILY <br /> ARENAS
+                DAILY <br /> QUIZZES
               </h3>
               <div className="h-1 w-12 bg-accent mx-auto" />
               <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-[0.3em]">
@@ -51,7 +51,7 @@ export function ShowcaseDailyCarousel({
               </p>
             </div>
             <div className="inline-flex items-center gap-2 px-4 py-2 bg-foreground text-background text-[10px] font-bold uppercase tracking-[0.2em] shadow-athletic">
-              {dailyQuizzes.length} ARENAS LIVE
+              {dailyQuizzes.length} QUIZZES LIVE
             </div>
           </div>
         </div>
@@ -101,23 +101,10 @@ export function ShowcaseDailyCarousel({
                   </div>
                 </div>
 
-                <div className="p-8 space-y-6">
+                <div className="p-8 space-y-4">
                   <h3 className="line-clamp-2 text-2xl font-bold uppercase tracking-tighter leading-none font-['Barlow_Condensed',sans-serif] group-hover/card:text-accent transition-colors">
                     {quiz.title}
                   </h3>
-
-                  <div className="flex items-center justify-between border-t border-foreground/5 pt-6">
-                    <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-                      <Clock className="h-3.5 w-3.5 text-accent" />
-                      <span>LIVE TODAY</span>
-                    </div>
-
-                    <div className="flex items-center gap-1.5">
-                      {[1, 2, 3].map((i) => (
-                        <div key={i} className="h-1 w-3 bg-foreground/10 group-hover/card:bg-accent transition-colors" />
-                      ))}
-                    </div>
-                  </div>
                 </div>
               </div>
             </Link>

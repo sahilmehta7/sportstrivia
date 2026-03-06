@@ -71,7 +71,7 @@ export default async function QuizDetailShowcasePage() {
     quiz = {
       id: "demo-quiz",
       title: "Ultimate Cricket Venue Challenge",
-      description: "An immersive sprint through global cricket arenas.",
+      description: "An immersive sprint through global cricket quizzes.",
       descriptionImageUrl: "https://images.unsplash.com/photo-1531415074968-036ba1b575da?w=800",
       slug: "demo-cricket-venue",
       sport: "Cricket",

@@ -152,7 +152,7 @@ export function FriendsClient({
               <TabsList className="h-auto p-1.5 rounded-[2rem] glass border border-white/10 shadow-glass-lg">
                 {[
                   { value: "friends", label: "Nodes", count: friends.length, icon: Users },
-                  { value: "challenges", label: "Arenas", count: challenges.length, icon: Swords, isOrange: true },
+                  { value: "challenges", label: "Quizzes", count: challenges.length, icon: Swords, isOrange: true },
                   { value: "requests", label: "Signals", count: receivedRequests.length, icon: Inbox },
                   { value: "add", label: "Recruit", icon: UserPlus },
                 ].map((tab) => (

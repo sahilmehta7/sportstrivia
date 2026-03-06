@@ -142,7 +142,7 @@ export default async function QuizDetailPage({ params }: QuizDetailPageProps) {
   const topicConfigs = ensureArray(quiz.topicConfigs);
   const durationLabel = formatQuizDuration(quiz.duration ?? quiz.timePerQuestion);
   const playersLabel = formatPlayerCount(uniqueUsersCount);
-  const badgeLabel = (topicConfigs[0] as any)?.topic?.name ?? quiz.sport ?? quiz.difficulty ?? "Arena";
+  const badgeLabel = (topicConfigs[0] as any)?.topic?.name ?? quiz.sport ?? quiz.difficulty ?? "Quiz";
 
   const maxAttempts = quiz.maxAttemptsPerUser ?? null;
   const remainingAttempts = attemptLimitStatus?.remainingBeforeStart ?? maxAttempts;
@@ -394,7 +394,7 @@ export default async function QuizDetailPage({ params }: QuizDetailPageProps) {
               <div className="flex items-center gap-4 p-6 rounded-[2rem] border border-white/5 text-muted-foreground">
                 <Info className="h-5 w-5 shrink-0" />
                 <p className="text-[10px] font-black uppercase tracking-widest leading-relaxed">
-                  Secure Arena Environment. All attempts are verified for fair play and competitive integrity.
+                  Secure Quiz Environment. All attempts are verified for fair play and competitive integrity.
                 </p>
               </div>
             </aside>

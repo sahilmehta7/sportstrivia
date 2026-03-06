@@ -47,7 +47,7 @@ export function Features() {
     {
       icon: Users,
       title: "Versus Mode",
-      description: "Challenge friends directly and see who truly owns the arena.",
+      description: "Challenge friends directly and see who truly owns the quiz.",
       iconColor: "text-accent",
     },
   ];

@@ -8,7 +8,7 @@ import { ShieldCheck } from "lucide-react";
 
 export function QuizzesPageHeader() {
   return (
-    <div className="mb-12 space-y-6 text-center lg:text-left md:mb-16">
+    <div className="hidden md:block mb-12 space-y-6 text-center lg:text-left md:mb-16">
       <div className="space-y-6">
         <div className="inline-flex items-center gap-2 border border-foreground/10 px-4 py-1.5 bg-muted/30">
           <ShieldCheck className="h-4 w-4 text-accent" />

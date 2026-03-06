@@ -20,7 +20,14 @@ export function FilterBar({ groups, className, onChange, isPending }: FilterBarP
         {groups.map((group) => (
           <div key={group.id} className="space-y-4">
             <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-muted-foreground/60">{group.label}</span>
-            <div className="flex flex-wrap gap-2">
+            <div
+              className={cn(
+                "flex gap-2",
+                group.id === "category"
+                  ? "-mx-4 overflow-x-auto px-4 pb-2 no-scrollbar flex-nowrap md:mx-0 md:overflow-visible md:px-0 md:pb-0 md:flex-wrap"
+                  : "flex-wrap"
+              )}
+            >
               {group.options.map((option) => {
                 const isActive = option.value === group.activeValue ||
                   (group.activeValue === undefined && option.value === "all");

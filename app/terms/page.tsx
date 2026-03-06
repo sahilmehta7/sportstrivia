@@ -15,7 +15,7 @@ export default function TermsPage() {
                         Terms of <span className="text-accent">Usage</span>
                     </h1>
                     <p className="text-lg text-white/60 font-medium uppercase tracking-widest max-w-2xl">
-                        Rules of the arena. Fair play required at all times.
+                        Rules of the quiz. Fair play required at all times.
                     </p>
                 </div>
 

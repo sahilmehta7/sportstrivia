@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { SignInForm } from "@/components/auth/SignInForm";
 
 export const metadata: Metadata = {
-  title: "Sign In - Enter the Arena",
+  title: "Sign In - Enter the Quiz",
   description: "Join the elite circle of sports fans. Sign in to track your trivia legacy, compete on leaderboards, and claim your place among the elite.",
 };
 

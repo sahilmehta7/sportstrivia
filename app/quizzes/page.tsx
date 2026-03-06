@@ -43,7 +43,7 @@ export default async function QuizzesPage({
       <PageContainer className="pt-6 md:pt-12">
         <QuizzesPageHeader />
 
-        <div className="space-y-16 mt-12">
+        <div className="mt-4 space-y-10 md:mt-12 md:space-y-16">
           {/* Daily Challenge Hero */}
           <Suspense fallback={<DailyChallengeSkeleton />}>
             <DailyChallengeSection />

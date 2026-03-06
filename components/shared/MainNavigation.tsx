@@ -67,6 +67,14 @@ export function MainNavigation() {
     { href: "/quizzes", label: "Playbook", icon: Gamepad2 },
     { href: "/topics", label: "Discover", icon: Compass },
     { href: "/leaderboard", label: "Rankings", icon: Trophy },
+    { href: "/random-quiz", label: "Random Quiz", icon: Shuffle },
+    { href: "/challenges", label: "Challenges", icon: Trophy },
+  ];
+
+  const companyLinks = [
+    { href: "/privacy", label: "Privacy Policy" },
+    { href: "/terms", label: "Terms of Usage" },
+    { href: "mailto:support@sportstrivia.in", label: "Contact Support" },
   ];
 
   const isActive = (href: string) => pathname.startsWith(href);
@@ -102,7 +110,7 @@ export function MainNavigation() {
             </Link>
             <Link href="/auth/signin">
               <Button variant="accent" size="lg" className="rounded-none font-bold uppercase tracking-widest">
-                Join Arena
+                Join Quiz
               </Button>
             </Link>
           </div>
@@ -264,27 +272,41 @@ export function MainNavigation() {
                             onClick={() => setMobileMenuOpen(false)}
                           >
                             <Trophy className="h-5 w-5" />
-                            Rank
+                            Challenges
                           </Link>
                         </div>
+                        <button
+                          onClick={() => {
+                            setTheme(theme === "dark" ? "light" : "dark");
+                            setMobileMenuOpen(false);
+                          }}
+                          className="flex items-center justify-between border border-foreground/10 px-4 py-4 text-[10px] font-bold uppercase tracking-widest hover:bg-muted transition-colors"
+                        >
+                          <div className="flex items-center gap-3">
+                            {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+                            Visual Theme
+                          </div>
+                          <span className="text-accent uppercase">{theme}</span>
+                        </button>
                       </div>
                     </div>
 
+                    <p className="mt-8 mb-2 text-[10px] font-bold uppercase tracking-[0.3em] text-accent">Company</p>
                     <div className="grid grid-cols-1 gap-2">
-                      <button
-                        onClick={() => {
-                          setTheme(theme === "dark" ? "light" : "dark");
-                          setMobileMenuOpen(false);
-                        }}
-                        className="flex items-center justify-between border border-foreground/5 px-6 py-4 text-xs font-bold uppercase tracking-widest hover:bg-muted transition-colors"
-                      >
-                        <div className="flex items-center gap-3">
-                          {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-                          Visual Theme
-                        </div>
-                        <span className="text-accent uppercase">{theme}</span>
-                      </button>
+                      {companyLinks.map((link) => (
+                        <Link
+                          key={link.href}
+                          href={link.href}
+                          className="flex items-center justify-between border border-foreground/5 px-6 py-4 text-xs font-bold uppercase tracking-widest hover:bg-muted transition-colors"
+                          onClick={() => setMobileMenuOpen(false)}
+                        >
+                          <span>{link.label}</span>
+                          <span className="text-muted-foreground/40">↗</span>
+                        </Link>
+                      ))}
+                    </div>
 
+                    <div className="grid grid-cols-1 gap-2">
                       <button
                         onClick={() => {
                           setMobileMenuOpen(false);

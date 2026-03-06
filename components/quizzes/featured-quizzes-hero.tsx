@@ -15,7 +15,7 @@ export function FeaturedQuizzesHero({ featuredQuizzes }: FeaturedQuizzesHeroProp
   }
 
   return (
-    <section className="mb-12">
+    <section className="hidden md:block mb-12">
       <div className="mb-6">
         <h2 className={glassText.h2}>Featured Quizzes</h2>
         <p className={"mt-2 " + glassText.subtitle}>
@@ -45,4 +45,3 @@ export function FeaturedQuizzesHero({ featuredQuizzes }: FeaturedQuizzesHeroProp
     </section>
   );
 }
-

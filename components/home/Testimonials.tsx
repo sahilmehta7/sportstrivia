@@ -9,7 +9,7 @@ export function Testimonials() {
     {
       name: "SARAH JOHNSON",
       title: "CRICKET ELITE",
-      quote: "The arena where knowledge meets competition. The daily drills keep me sharp and the climb to the top is exhilarating.",
+      quote: "The quiz where knowledge meets competition. The daily drills keep me sharp and the climb to the top is exhilarating.",
       rating: 5,
       accent: "text-primary shadow-neon-cyan/20",
     },

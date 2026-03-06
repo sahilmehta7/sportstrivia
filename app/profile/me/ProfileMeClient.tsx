@@ -31,6 +31,7 @@ import { ShowcaseThemeProvider } from "@/components/showcase/ShowcaseThemeProvid
 import Link from "next/link";
 import { PushSubscriptionCard } from "@/components/notifications/PushSubscriptionCard";
 import { DigestPreferencesCard } from "@/components/notifications/DigestPreferencesCard";
+import { DeleteAccountSection } from "@/components/profile/DeleteAccountSection";
 import { JsonLdScript } from "next-seo";
 import { PageContainer } from "@/components/shared/PageContainer";
 import { getBlurCircles, getGradientText } from "@/lib/showcase-theme";
@@ -309,7 +310,7 @@ export function ProfileMeClient({
                   <div className="space-y-8">
                     <div className="flex items-center gap-4 px-2">
                       <div className="h-6 w-1 rounded-full bg-secondary shadow-neon-magenta" />
-                      <h4 className="text-2xl font-black uppercase tracking-tight">Active Arenas</h4>
+                      <h4 className="text-2xl font-black uppercase tracking-tight">Active Quizzes</h4>
                     </div>
                     <div className="rounded-[2.5rem] p-8 glass-elevated border border-white/10">
                       <ShowcaseContinuePlayingQueue
@@ -395,6 +396,8 @@ export function ProfileMeClient({
                   )}
                 </div>
               </div>
+
+              <DeleteAccountSection />
             </TabsContent>
           </Tabs>
         </PageContainer>

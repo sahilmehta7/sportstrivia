@@ -49,7 +49,7 @@ export default async function ShowcaseFeaturedQuizCardPage() {
     console.warn("[showcase/featured-quiz-card] Using fallback data", error);
     quiz = {
       title: "Ultimate Cricket Venue Challenge",
-      description: "An immersive sprint through global cricket arenas.",
+      description: "An immersive sprint through global cricket quizzes.",
       slug: "demo-cricket-venue",
       sport: "Cricket",
       difficulty: "Medium",

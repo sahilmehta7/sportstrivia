@@ -190,7 +190,7 @@ export default async function AdminDashboard() {
                 <Trophy className="h-8 w-8" />
               </div>
               <div className="space-y-4">
-                <h3 className="text-4xl font-black uppercase tracking-tighter leading-tight">Arena Statistics</h3>
+                <h3 className="text-4xl font-black uppercase tracking-tighter leading-tight">Quiz Statistics</h3>
                 <p className="text-xs font-bold tracking-widest text-muted-foreground uppercase leading-relaxed">COMPILED PERFORMANCE METRICS ACROSS ALL OPERATIONAL SECTORS</p>
               </div>
             </div>

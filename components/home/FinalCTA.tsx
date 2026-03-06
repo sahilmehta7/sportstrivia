@@ -32,7 +32,7 @@ export function FinalCTA() {
 
           <p className="mx-auto max-w-2xl text-xl sm:text-2xl text-background/80 font-medium leading-relaxed uppercase tracking-tight">
             Join thousands of elite sports fans who challenge their instincts daily.
-            Your legacy starts the moment you enter the arena.
+            Your legacy starts the moment you enter the quiz.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-6 justify-center items-center pt-8">
@@ -42,7 +42,7 @@ export function FinalCTA() {
                 variant="accent"
                 className="w-full sm:min-w-[280px] gap-4 font-bold uppercase tracking-widest text-xl rounded-none py-8 shadow-[6px_6px_0px_0px_rgba(255,255,255,0.2)]"
               >
-                Enter Arena Now
+                Enter Quiz Now
                 <ArrowRight className="h-6 w-6" />
               </Button>
             </Link>

@@ -29,7 +29,7 @@ export function TopicHero({
   const shouldTruncateDescription = Boolean(subtitle && subtitle.trim().length > 220);
 
   return (
-    <section className="relative mb-20">
+    <section className="relative hidden md:block mb-20">
       {/* Dynamic Background Glows */}
       <div className="absolute -top-24 -left-24 w-96 h-96 bg-primary/20 rounded-full blur-[120px] pointer-events-none" />
       <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-secondary/20 rounded-full blur-[120px] pointer-events-none" />

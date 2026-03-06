@@ -70,7 +70,7 @@ export default async function SearchPage({
   const toCardProps = (quiz: PublicQuizListItem) => {
     const durationLabel = formatQuizDuration(quiz.duration ?? null);
     const playersLabel = `${formatPlayerCount(quiz._count?.attempts)} Players`;
-    const badgeLabel = quiz.sport ?? quiz.difficulty ?? "Arena";
+    const badgeLabel = quiz.sport ?? quiz.difficulty ?? "Quiz";
     const accent = getSportGradient(quiz.sport);
     return { title: quiz.title, badgeLabel, durationLabel, playersLabel, accent, coverImageUrl: quiz.descriptionImageUrl || undefined } as const;
   };

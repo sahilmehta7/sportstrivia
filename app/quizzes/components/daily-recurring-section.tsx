@@ -14,7 +14,7 @@ export async function DailyRecurringSection() {
         <section className="space-y-6">
             <div className="flex items-center gap-4 px-1">
                 <div className="h-6 w-1 rounded-full bg-primary shadow-neon-cyan" />
-                <h2 className="text-2xl font-black tracking-tight uppercase">Daily Arenas</h2>
+                <h2 className="text-2xl font-black tracking-tight uppercase">Daily Quizzes</h2>
             </div>
             <ShowcaseDailyCarousel dailyQuizzes={quizzes} />
         </section>

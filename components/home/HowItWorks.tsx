@@ -8,8 +8,8 @@ export function HowItWorks() {
   const steps = [
     {
       icon: Search,
-      title: "Select Arena",
-      description: "Browse the pro playbook and pick the arena that fits your expertise.",
+      title: "Select Quiz",
+      description: "Browse the pro playbook and pick the quiz that fits your expertise.",
       color: "text-primary",
     },
     {

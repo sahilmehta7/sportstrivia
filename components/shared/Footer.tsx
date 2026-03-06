@@ -5,7 +5,7 @@ export function Footer() {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="w-full bg-background border-t border-accent/20">
+    <footer className="hidden w-full border-t border-accent/20 bg-background md:block">
       <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-12 lg:gap-8">
 
@@ -18,7 +18,7 @@ export function Footer() {
               </span>
             </Link>
             <p className="text-sm font-medium text-foreground/60 uppercase tracking-widest leading-relaxed max-w-xs">
-              The ultimate arena for sports fanatics. Prove your knowledge. Claim your glory.
+              The ultimate quiz for sports fanatics. Prove your knowledge. Claim your glory.
             </p>
             <div className="flex gap-4">
               {[

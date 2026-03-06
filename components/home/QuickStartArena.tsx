@@ -36,7 +36,7 @@ const arenas = [
     },
     {
         sport: "Tennis",
-        description: "Grand slams and court masters. Ace every question in the arena.",
+        description: "Grand slams and court masters. Ace every question in the quiz.",
         quizzes: 12,
         rating: 4.6,
         color: "from-yellow-400 to-orange-400",

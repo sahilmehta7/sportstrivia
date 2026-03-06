@@ -10,8 +10,8 @@ import { cn } from "@/lib/utils";
 export const revalidate = 300;
 
 export const metadata: Metadata = {
-  title: "Global Leaderboard - Neon Arena",
-  description: "View the top contenders in the Sports Trivia arena. Check daily and all-time rankings.",
+  title: "Global Leaderboard - Neon Quiz",
+  description: "View the top contenders in the Sports Trivia quiz. Check daily and all-time rankings.",
 };
 
 async function fetchLeaderboard(baseUrl: string, period: string): Promise<LeaderboardEntry[]> {
@@ -68,7 +68,7 @@ export default async function LeaderboardPage() {
   const { circle1, circle2, circle3 } = getBlurCircles();
 
   return (
-    <main className="relative min-h-screen overflow-hidden pt-12 pb-24 lg:pt-24">
+    <main className="relative min-h-screen overflow-hidden pt-6 pb-24 md:pt-12 lg:pt-24">
       {/* Background Animated Elements */}
       <div className="absolute inset-0 -z-10">
         <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none">
@@ -80,22 +80,22 @@ export default async function LeaderboardPage() {
         {circle3}
       </div>
 
-      <PageContainer variant="narrow" className="space-y-16 lg:space-y-24">
-        <header className="flex flex-col items-center text-center gap-6 px-4">
+      <PageContainer variant="narrow" className="space-y-6 md:space-y-16 lg:space-y-24">
+        <header className="hidden md:flex flex-col items-center text-center gap-6 px-4">
           <div className="space-y-4">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full glass border border-white/10 text-[10px] font-black uppercase tracking-widest text-primary shadow-neon-cyan/20">
               <span className="relative flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
               </span>
-              Live Arena Rankings
+              Live Quiz Rankings
             </div>
             <h1 className={cn("text-5xl lg:text-8xl font-bold uppercase tracking-tighter leading-[0.85]", getGradientText("editorial"))}>
               THE HALL <br className="hidden lg:block" /> OF HEROES
             </h1>
           </div>
           <p className="max-w-xl text-muted-foreground font-medium text-lg leading-relaxed">
-            Behold the greatest trivia contenders. Compete in daily arenas to secure your place in history.
+            Behold the greatest trivia contenders. Compete in daily quizzes to secure your place in history.
           </p>
         </header>
 

@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { ShieldCheck,  TrendingUp, ShieldAlert, Play } from "lucide-react";
+import { ArrowRight, ShieldAlert, Play } from "lucide-react";
 import type { PublicQuizListItem } from "@/lib/services/public-quiz.service";
 import { cn } from "@/lib/utils";
 
@@ -33,16 +33,6 @@ export function FeaturedCardTrading({ quiz }: FeaturedCardTradingProps) {
     };
 
     const level = difficultyMap[quiz.difficulty] || difficultyMap.MEDIUM;
-
-    const baseXP = quiz._count.questionPool * 10;
-    const multiplier = quiz.difficulty === "HARD" ? 2 : quiz.difficulty === "MEDIUM" ? 1.5 : 1;
-    const calculatedXP = Math.round(baseXP * multiplier);
-    const xp = quiz.completionBonus || calculatedXP;
-
-    // Derived IQ Rank: difficulty base + passing score weight
-    const difficultyBase = quiz.difficulty === "HARD" ? 9.0 : quiz.difficulty === "MEDIUM" ? 7.5 : 5.0;
-    const passingScoreWeight = (quiz.passingScore - 70) / 20; // Normalizing passing score impact
-    const scoreRank = (difficultyBase + passingScoreWeight).toFixed(1);
 
     return (
         <div className="relative w-full group overflow-hidden">
@@ -82,7 +72,7 @@ export function FeaturedCardTrading({ quiz }: FeaturedCardTradingProps) {
                     <div className="absolute bottom-6 left-8 flex items-center gap-3">
                         <div className="h-px w-8 bg-accent" />
                         <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-foreground">
-                            {quiz.sport || "Arena"}
+                            {quiz.sport || "Quiz"}
                         </span>
                     </div>
                 </div>
@@ -99,21 +89,10 @@ export function FeaturedCardTrading({ quiz }: FeaturedCardTradingProps) {
                         <div className="h-1 w-12 bg-foreground/10" />
                     </div>
 
-                    {/* Performance Stats Overlay */}
-                    <div className="grid grid-cols-2 gap-px bg-foreground/5 border border-foreground/5">
-                        <div className="bg-background p-6 space-y-2">
-                            <div className="flex items-center gap-2">
-                                <ShieldCheck className="h-4 w-4 text-accent" />
-                                <span className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground/60">IQ Rank</span>
-                            </div>
-                            <p className="text-3xl font-bold tracking-tighter font-['Barlow_Condensed',sans-serif]">{scoreRank}</p>
-                        </div>
-                        <div className="bg-background p-6 space-y-2">
-                            <div className="flex items-center gap-2">
-                                <TrendingUp className="h-4 w-4 text-accent" />
-                                <span className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground/60">XP Yield</span>
-                            </div>
-                            <p className="text-3xl font-bold tracking-tighter font-['Barlow_Condensed',sans-serif]">{xp}</p>
+                    <div className="flex items-center justify-start">
+                        <div className="inline-flex items-center gap-3 bg-accent px-6 py-4 text-sm font-bold uppercase tracking-[0.2em] text-white shadow-athletic transition-all group-hover:translate-x-1 group-hover:bg-accent/90">
+                            <span>Take The Quiz</span>
+                            <ArrowRight className="h-4 w-4" />
                         </div>
                     </div>
                 </div>

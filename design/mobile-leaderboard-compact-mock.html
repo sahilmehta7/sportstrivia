@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Compact Mobile Leaderboard Mock</title>
+    <style>
+      :root {
+        --bg: #050816;
+        --panel: rgba(7, 16, 40, 0.92);
+        --panel-soft: rgba(10, 18, 44, 0.68);
+        --line: rgba(255, 255, 255, 0.08);
+        --text: #f3f6ff;
+        --muted: #9aa8ca;
+        --gold: #f5c84c;
+        --cyan: #4ad8ff;
+        --pink: #ff5d8f;
+        --green: #99e06d;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        background:
+          radial-gradient(circle at 18% 12%, rgba(255, 200, 76, 0.16), transparent 30%),
+          radial-gradient(circle at 85% 18%, rgba(74, 216, 255, 0.18), transparent 28%),
+          radial-gradient(circle at 50% 100%, rgba(255, 93, 143, 0.12), transparent 36%),
+          linear-gradient(180deg, #06101f 0%, var(--bg) 55%);
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        color: var(--text);
+      }
+
+      .phone {
+        width: 390px;
+        min-height: 844px;
+        background:
+          radial-gradient(circle at top left, rgba(255, 255, 255, 0.03), transparent 32%),
+          linear-gradient(180deg, rgba(4, 10, 25, 0.94), rgba(2, 7, 20, 0.98));
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 36px;
+        overflow: hidden;
+        position: relative;
+        box-shadow: 0 30px 80px rgba(0, 0, 0, 0.55);
+      }
+
+      .phone::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background:
+          linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+        background-size: 24px 24px;
+        opacity: 0.15;
+        pointer-events: none;
+      }
+
+      .topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 18px 18px 14px;
+        position: relative;
+        z-index: 1;
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .logo {
+        width: 42px;
+        height: 42px;
+        border-radius: 14px;
+        display: grid;
+        place-items: center;
+        font-weight: 900;
+        color: #08111f;
+        background: linear-gradient(135deg, #fff3b6, var(--gold));
+        box-shadow: 0 10px 26px rgba(245, 200, 76, 0.25);
+      }
+
+      .wordmark {
+        font-weight: 900;
+        letter-spacing: -0.05em;
+        font-size: 1.5rem;
+        font-style: italic;
+      }
+
+      .wordmark span {
+        color: var(--gold);
+      }
+
+      .icons {
+        display: flex;
+        gap: 10px;
+      }
+
+      .icon {
+        width: 44px;
+        height: 44px;
+        border-radius: 14px;
+        border: 1px solid var(--line);
+        background: rgba(255, 255, 255, 0.03);
+        display: grid;
+        place-items: center;
+        color: var(--muted);
+        font-size: 1.1rem;
+      }
+
+      .content {
+        padding: 8px 18px 22px;
+        display: grid;
+        gap: 14px;
+        position: relative;
+        z-index: 1;
+      }
+
+      .hero {
+        padding: 18px;
+        border-radius: 28px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        background:
+          linear-gradient(145deg, rgba(10, 22, 56, 0.95), rgba(6, 14, 34, 0.86)),
+          var(--panel);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+      }
+
+      .eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 12px;
+        border-radius: 999px;
+        font-size: 0.72rem;
+        font-weight: 800;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: #dbe6ff;
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+      }
+
+      .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--green);
+        box-shadow: 0 0 0 6px rgba(153, 224, 109, 0.12);
+      }
+
+      h1 {
+        margin: 14px 0 10px;
+        font-size: 2.55rem;
+        line-height: 0.92;
+        letter-spacing: -0.08em;
+        text-transform: uppercase;
+      }
+
+      .subcopy {
+        margin: 0;
+        color: var(--muted);
+        font-size: 1rem;
+        line-height: 1.45;
+        max-width: 30ch;
+      }
+
+      .stats {
+        margin-top: 16px;
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+      }
+
+      .stat {
+        padding: 12px;
+        border-radius: 18px;
+        background: var(--panel-soft);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+      }
+
+      .stat-label {
+        color: var(--muted);
+        font-size: 0.66rem;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+      }
+
+      .stat-value {
+        margin-top: 6px;
+        font-size: 1rem;
+        font-weight: 800;
+        letter-spacing: -0.03em;
+      }
+
+      .hero-actions {
+        margin-top: 14px;
+        display: flex;
+        gap: 10px;
+      }
+
+      .btn {
+        flex: 1;
+        min-height: 48px;
+        border-radius: 16px;
+        border: 1px solid transparent;
+        display: grid;
+        place-items: center;
+        font-size: 0.85rem;
+        font-weight: 800;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+      }
+
+      .btn-primary {
+        background: linear-gradient(135deg, #fff4cb, var(--gold));
+        color: #111827;
+      }
+
+      .btn-secondary {
+        color: #d9e4ff;
+        border-color: rgba(255, 255, 255, 0.09);
+        background: rgba(255, 255, 255, 0.035);
+      }
+
+      .board {
+        padding: 16px;
+        border-radius: 28px;
+        background: rgba(6, 12, 28, 0.92);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+      }
+
+      .board-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 12px;
+      }
+
+      .board-title {
+        font-size: 0.82rem;
+        text-transform: uppercase;
+        letter-spacing: 0.22em;
+        color: #dfe8ff;
+        font-weight: 800;
+      }
+
+      .micro {
+        color: var(--muted);
+        font-size: 0.74rem;
+      }
+
+      .tabs {
+        display: flex;
+        gap: 8px;
+        padding: 6px;
+        border-radius: 18px;
+        background: rgba(255, 255, 255, 0.035);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        margin-bottom: 12px;
+      }
+
+      .tab {
+        flex: 1;
+        min-height: 44px;
+        border-radius: 14px;
+        display: grid;
+        place-items: center;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        font-size: 0.72rem;
+        font-weight: 800;
+        color: #9fb0d6;
+      }
+
+      .tab.active {
+        background: #f3f4f8;
+        color: #121827;
+      }
+
+      .podium-strip {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+        margin-bottom: 12px;
+      }
+
+      .podium-card {
+        padding: 14px 10px;
+        border-radius: 22px;
+        background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.03));
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        text-align: center;
+      }
+
+      .podium-card.primary {
+        transform: translateY(-8px);
+        background: linear-gradient(180deg, rgba(245, 200, 76, 0.2), rgba(255, 255, 255, 0.04));
+      }
+
+      .medal {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        margin: 0 auto 10px;
+        display: grid;
+        place-items: center;
+        font-weight: 900;
+        color: #0b1020;
+        background: linear-gradient(135deg, #fff6d5, #fff, var(--gold));
+      }
+
+      .rank-name {
+        font-size: 0.86rem;
+        font-weight: 800;
+      }
+
+      .rank-score {
+        margin-top: 4px;
+        font-size: 0.8rem;
+        color: var(--gold);
+        font-weight: 700;
+      }
+
+      .list {
+        display: grid;
+        gap: 10px;
+      }
+
+      .row {
+        display: grid;
+        grid-template-columns: 34px 1fr auto;
+        align-items: center;
+        gap: 12px;
+        min-height: 56px;
+        padding: 0 14px;
+        border-radius: 18px;
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+      }
+
+      .row-rank {
+        color: var(--muted);
+        font-size: 0.86rem;
+        font-weight: 800;
+      }
+
+      .row-name {
+        font-size: 0.95rem;
+        font-weight: 700;
+      }
+
+      .row-score {
+        font-size: 0.92rem;
+        color: #dfe8ff;
+        font-weight: 800;
+      }
+
+      .bottom-nav {
+        position: absolute;
+        left: 14px;
+        right: 14px;
+        bottom: 14px;
+        min-height: 70px;
+        border-radius: 24px;
+        background: rgba(6, 10, 25, 0.88);
+        border: 1px solid rgba(255, 255, 255, 0.07);
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        align-items: center;
+        padding: 10px;
+        z-index: 2;
+        backdrop-filter: blur(16px);
+      }
+
+      .nav-item {
+        text-align: center;
+        color: #6d7b9b;
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+      }
+
+      .nav-item strong {
+        display: block;
+        margin-bottom: 6px;
+        font-size: 1rem;
+      }
+
+      .nav-item.active {
+        color: #ffffff;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="phone">
+      <div class="topbar">
+        <div class="brand">
+          <div class="logo">ST</div>
+          <div class="wordmark">SPORTS<span>TRIVIA</span></div>
+        </div>
+        <div class="icons">
+          <div class="icon">◔</div>
+          <div class="icon">☰</div>
+        </div>
+      </div>
+
+      <div class="content">
+        <section class="hero">
+          <div class="eyebrow"><span class="dot"></span> Live arena rankings</div>
+          <h1>Hall of<br />Heroes</h1>
+          <p class="subcopy">See today’s standouts at a glance, then jump straight into the live board without scrolling through a giant banner.</p>
+
+          <div class="stats">
+            <div class="stat">
+              <div class="stat-label">Leader</div>
+              <div class="stat-value">Solar</div>
+            </div>
+            <div class="stat">
+              <div class="stat-label">Your Rank</div>
+              <div class="stat-value">#18</div>
+            </div>
+            <div class="stat">
+              <div class="stat-label">Win Streak</div>
+              <div class="stat-value">5 days</div>
+            </div>
+          </div>
+
+          <div class="hero-actions">
+            <div class="btn btn-primary">View podium</div>
+            <div class="btn btn-secondary">Scoring</div>
+          </div>
+        </section>
+
+        <section class="board">
+          <div class="board-top">
+            <div class="board-title">Global Rankings</div>
+            <div class="micro">Updated 2m ago</div>
+          </div>
+
+          <div class="tabs">
+            <div class="tab active">Solar Cycle</div>
+            <div class="tab">Archive Hall</div>
+          </div>
+
+          <div class="podium-strip">
+            <div class="podium-card">
+              <div class="medal">2</div>
+              <div class="rank-name">Nova</div>
+              <div class="rank-score">14,200</div>
+            </div>
+            <div class="podium-card primary">
+              <div class="medal">1</div>
+              <div class="rank-name">Solar</div>
+              <div class="rank-score">15,980</div>
+            </div>
+            <div class="podium-card">
+              <div class="medal">3</div>
+              <div class="rank-name">Atlas</div>
+              <div class="rank-score">13,870</div>
+            </div>
+          </div>
+
+          <div class="list">
+            <div class="row">
+              <div class="row-rank">#4</div>
+              <div class="row-name">Ember Lane</div>
+              <div class="row-score">12,640</div>
+            </div>
+            <div class="row">
+              <div class="row-rank">#5</div>
+              <div class="row-name">Pulse FC</div>
+              <div class="row-score">12,210</div>
+            </div>
+            <div class="row">
+              <div class="row-rank">#6</div>
+              <div class="row-name">Drift King</div>
+              <div class="row-score">11,900</div>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <div class="bottom-nav">
+        <div class="nav-item"><strong>🎮</strong>Play</div>
+        <div class="nav-item"><strong>🧭</strong>Explore</div>
+        <div class="nav-item active"><strong>🏆</strong>Rank</div>
+        <div class="nav-item"><strong>👤</strong>Me</div>
+      </div>
+    </div>
+  </body>
+</html>
