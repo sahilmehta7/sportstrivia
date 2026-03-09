@@ -23,7 +23,12 @@ type EventName =
     | 'account_delete_export_clicked'
     | 'account_delete_confirmed'
     | 'account_delete_succeeded'
-    | 'account_delete_failed';
+    | 'account_delete_failed'
+    | 'pre_onboarding_viewed'
+    | 'pre_onboarding_step_viewed'
+    | 'pre_onboarding_skipped'
+    | 'pre_onboarding_completed'
+    | 'pre_onboarding_cta_clicked';
 
 export const trackEvent = (eventName: EventName, params?: Record<string, any>) => {
     sendGAEvent('event', eventName, params || {});
