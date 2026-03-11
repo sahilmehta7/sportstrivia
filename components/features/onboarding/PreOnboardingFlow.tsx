@@ -63,6 +63,19 @@ export function PreOnboardingFlow({ onFinish, onSkip, onStepChange }: PreOnboard
   const prefersReducedMotion = useReducedMotion();
 
   useEffect(() => {
+    const previousOverflow = document.body.style.overflow;
+    const previousOverscrollBehavior = document.body.style.overscrollBehavior;
+
+    document.body.style.overflow = "hidden";
+    document.body.style.overscrollBehavior = "none";
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.body.style.overscrollBehavior = previousOverscrollBehavior;
+    };
+  }, []);
+
+  useEffect(() => {
     onStepChange?.(stepIndex + 1);
   }, [onStepChange, stepIndex]);
 
@@ -83,7 +96,7 @@ export function PreOnboardingFlow({ onFinish, onSkip, onStepChange }: PreOnboard
     : { duration: 0.28, ease: "easeOut" as const };
 
   return (
-    <div className="fixed inset-0 z-[120] bg-background text-foreground">
+    <div className="fixed inset-0 z-[120] overflow-hidden bg-background text-foreground touch-none">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.06),_transparent_45%)]" />
       <div
         className="absolute inset-0 opacity-[0.05]"

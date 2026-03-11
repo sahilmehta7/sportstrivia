@@ -5,13 +5,19 @@ import { usePathname, useRouter } from "next/navigation";
 
 import { PreOnboardingFlow } from "@/components/features/onboarding/PreOnboardingFlow";
 import { trackEvent } from "@/lib/analytics";
-import { useMobileAppContext } from "@/hooks/useMobileAppContext";
 import { usePreOnboardingState } from "@/hooks/usePreOnboardingState";
 
 const APP_ENTRY_PATHS = ["/", "/quizzes", "/leaderboard"];
 
-export function MobileAppPreOnboardingGate() {
-  const { isDetectingMobileAppContext, isMobileAppContext } = useMobileAppContext();
+type MobileAppPreOnboardingGateProps = {
+  isDetectingMobileAppContext: boolean;
+  isMobileAppContext: boolean;
+};
+
+export function MobileAppPreOnboardingGate({
+  isDetectingMobileAppContext,
+  isMobileAppContext,
+}: MobileAppPreOnboardingGateProps) {
   const pathname = usePathname();
   const router = useRouter();
   const { isHydrated, shouldShow, markCompleted, markSkipped } = usePreOnboardingState();
