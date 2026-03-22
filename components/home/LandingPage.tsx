@@ -23,7 +23,7 @@ interface LandingPageProps {
 
 export function LandingPage({ stats }: LandingPageProps) {
   return (
-    <div className="relative flex min-h-screen flex-col overflow-hidden bg-background">
+    <div className="relative flex min-h-screen min-w-0 flex-col overflow-x-clip overflow-y-hidden bg-background">
       {/* Hero Section */}
       <HeroSection stats={stats} />
 

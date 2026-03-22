@@ -11,12 +11,12 @@ const APP_ENTRY_PATHS = ["/", "/quizzes", "/leaderboard"];
 
 type MobileAppPreOnboardingGateProps = {
   isDetectingMobileAppContext: boolean;
-  isMobileAppContext: boolean;
+  shouldShowPreOnboardingContext: boolean;
 };
 
 export function MobileAppPreOnboardingGate({
   isDetectingMobileAppContext,
-  isMobileAppContext,
+  shouldShowPreOnboardingContext,
 }: MobileAppPreOnboardingGateProps) {
   const pathname = usePathname();
   const router = useRouter();
@@ -28,7 +28,12 @@ export function MobileAppPreOnboardingGate({
     [pathname]
   );
 
-  const isVisible = !isDetectingMobileAppContext && isHydrated && isMobileAppContext && isEligiblePath && shouldShow;
+  const isVisible =
+    !isDetectingMobileAppContext &&
+    isHydrated &&
+    shouldShowPreOnboardingContext &&
+    isEligiblePath &&
+    shouldShow;
 
   useEffect(() => {
     if (!isVisible || hasTrackedView) {
@@ -66,8 +71,8 @@ export function MobileAppPreOnboardingGate({
     navigateToQuizFeed();
   };
 
-  const handleStepChange = (step: number) => {
-    trackEvent("pre_onboarding_step_viewed", { step });
+  const handleStepChange = (step: number, stepName: string) => {
+    trackEvent("pre_onboarding_step_viewed", { step, step_name: stepName });
   };
 
   return (

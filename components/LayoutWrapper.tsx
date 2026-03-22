@@ -16,7 +16,10 @@ const APP_ENTRY_PATHS = ["/", "/quizzes", "/leaderboard"];
 
 export function LayoutWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { isDetectingMobileAppContext, isMobileAppContext } = useMobileAppContext();
+  const {
+    isDetectingMobileAppContext,
+    shouldShowPreOnboardingContext,
+  } = useMobileAppContext();
   const { isHydrated, shouldShow } = usePreOnboardingState();
 
   // Admin routes have their own layout (AdminShell), so don't wrap them
@@ -28,7 +31,7 @@ export function LayoutWrapper({ children }: { children: React.ReactNode }) {
   const shouldShowNeutralShell = isDetectingMobileAppContext && !isQuizPlayRoute;
   const shouldShowOnboardingFirst =
     !isDetectingMobileAppContext &&
-    isMobileAppContext &&
+    shouldShowPreOnboardingContext &&
     !isQuizPlayRoute &&
     isEligibleAppEntryPath &&
     isHydrated &&
@@ -40,11 +43,11 @@ export function LayoutWrapper({ children }: { children: React.ReactNode }) {
 
   if (shouldShowNeutralShell) {
     return (
-      <div className="flex min-h-screen flex-col bg-background">
-        <main className="flex-1">
+      <div className="flex min-h-screen flex-col overflow-x-clip bg-background">
+        <main className="flex-1 min-w-0 overflow-x-clip">
           <MobileAppPreOnboardingGate
             isDetectingMobileAppContext={isDetectingMobileAppContext}
-            isMobileAppContext={isMobileAppContext}
+            shouldShowPreOnboardingContext={shouldShowPreOnboardingContext}
           />
         </main>
       </div>
@@ -53,11 +56,11 @@ export function LayoutWrapper({ children }: { children: React.ReactNode }) {
 
   if (shouldShowOnboardingFirst) {
     return (
-      <div className="flex min-h-screen flex-col bg-background">
-        <main className="flex-1">
+      <div className="flex min-h-screen flex-col overflow-x-clip bg-background">
+        <main className="flex-1 min-w-0 overflow-x-clip">
           <MobileAppPreOnboardingGate
             isDetectingMobileAppContext={isDetectingMobileAppContext}
-            isMobileAppContext={isMobileAppContext}
+            shouldShowPreOnboardingContext={shouldShowPreOnboardingContext}
           />
         </main>
       </div>
@@ -65,20 +68,20 @@ export function LayoutWrapper({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-background">
+    <div className="flex min-h-screen flex-col overflow-x-clip bg-background">
       <MainNavigation />
-      <main className={cn("flex-1", !isQuizPlayRoute && "pb-24 lg:pb-0")}>
+      <main className={cn("flex-1 min-w-0 overflow-x-clip", !isQuizPlayRoute && "pb-24 lg:pb-0")}>
         {children}
       </main>
       <Footer />
       {!isQuizPlayRoute && <MobileBottomNav />}
-      {!isMobileAppContext && !isAdminRoute && !isQuizPlayRoute && (
+      {!shouldShowPreOnboardingContext && !isAdminRoute && !isQuizPlayRoute && (
         <OnboardingExperience />
       )}
       {!isAdminRoute && !isQuizPlayRoute && (
         <MobileAppPreOnboardingGate
           isDetectingMobileAppContext={isDetectingMobileAppContext}
-          isMobileAppContext={isMobileAppContext}
+          shouldShowPreOnboardingContext={shouldShowPreOnboardingContext}
         />
       )}
     </div>

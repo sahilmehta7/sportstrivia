@@ -19,13 +19,15 @@ export function FinalCTA() {
 
       <div className="mx-auto max-w-5xl relative z-10 text-center">
         <div className="space-y-12">
-          <div className="inline-flex items-center gap-3 border-2 border-accent px-6 py-2">
+          <div className="inline-flex flex-wrap items-center justify-center gap-2 border-2 border-accent px-4 py-2 sm:gap-3 sm:px-6">
             <Trophy className="h-5 w-5 text-accent" />
-            <span className="text-xs font-bold uppercase tracking-[0.3em] text-accent">Season One: Open Enrollment</span>
+            <span className="text-[10px] font-bold uppercase tracking-[0.24em] text-accent sm:text-xs sm:tracking-[0.3em]">
+              Season One: Open Enrollment
+            </span>
           </div>
 
           <h2 className={cn(
-            "text-6xl sm:text-8xl lg:text-9xl font-bold tracking-tighter leading-[0.85] font-['Barlow_Condensed',sans-serif] uppercase"
+            "break-words text-5xl font-bold tracking-tighter leading-[0.85] sm:text-7xl lg:text-9xl font-['Barlow_Condensed',sans-serif] uppercase"
           )}>
             THE ARENA <br className="sm:hidden" /> AWAITS <br /> YOUR LEGACY
           </h2>

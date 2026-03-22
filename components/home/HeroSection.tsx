@@ -17,16 +17,16 @@ interface HeroSectionProps {
 
 export function HeroSection({ stats }: HeroSectionProps) {
   return (
-    <section className="relative px-4 py-20 sm:px-6 lg:py-40 overflow-hidden bg-background">
+    <section className="relative overflow-hidden bg-background px-4 py-20 sm:px-6 lg:py-40">
       {/* Background Pattern - Subtle Editorial Grid */}
       <div className="absolute inset-0 -z-10 opacity-[0.03]"
         style={{ backgroundImage: 'radial-gradient(#000 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
 
-      <div className="mx-auto max-w-7xl relative z-10">
-        <div className="flex flex-col lg:flex-row items-center gap-16 lg:gap-24">
+      <div className="relative z-10 mx-auto max-w-7xl min-w-0">
+        <div className="flex min-w-0 flex-col items-center gap-16 lg:flex-row lg:gap-24">
 
           {/* Left Column: Content */}
-          <div className="flex-1 text-left space-y-10">
+          <div className="flex-1 min-w-0 space-y-10 text-left">
             <div className="inline-flex items-center gap-3 px-3 py-1 border-l-4 border-accent bg-accent/5">
               <ShieldCheck className="h-4 w-4 text-accent" />
               <p className="text-xs font-bold uppercase tracking-[0.2em] text-accent">Professional Edition</p>
@@ -34,7 +34,7 @@ export function HeroSection({ stats }: HeroSectionProps) {
 
             <div className="space-y-6">
               <h1 className={cn(
-                "text-6xl sm:text-8xl lg:text-9xl font-bold uppercase tracking-tighter leading-[0.8] font-['Barlow_Condensed',sans-serif]",
+                "break-words text-5xl font-bold uppercase leading-[0.8] tracking-tighter sm:text-7xl lg:text-9xl font-['Barlow_Condensed',sans-serif]",
                 "text-foreground"
               )}>
                 THE ULTIMATE <br />
@@ -90,7 +90,7 @@ export function HeroSection({ stats }: HeroSectionProps) {
           </div>
 
           {/* Right Column: Featured Image / Visual */}
-          <div className="flex-1 w-full max-w-xl lg:max-w-none">
+          <div className="w-full max-w-xl flex-1 lg:max-w-none">
             <div className="relative aspect-[4/5] bg-muted overflow-hidden border-8 border-foreground shadow-[20px_20px_0px_0px_rgba(0,0,0,1)] dark:shadow-[20px_20px_0px_0px_rgba(255,255,255,0.1)] group">
               {/* This would be a high-quality sports action shot in production */}
               <div className="absolute inset-0 bg-gradient-to-t from-foreground/80 to-transparent flex flex-col justify-end p-12 text-background">

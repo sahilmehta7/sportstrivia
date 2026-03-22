@@ -5,6 +5,8 @@ import { useEffect, useState } from "react";
 type MobileAppContextState = {
   isDetectingMobileAppContext: boolean;
   isMobileAppContext: boolean;
+  isMobileViewport: boolean;
+  shouldShowPreOnboardingContext: boolean;
 };
 
 function detectMobileAppContext() {
@@ -23,22 +25,33 @@ export function useMobileAppContext() {
   const [state, setState] = useState<MobileAppContextState>({
     isDetectingMobileAppContext: true,
     isMobileAppContext: false,
+    isMobileViewport: false,
+    shouldShowPreOnboardingContext: false,
   });
 
   useEffect(() => {
-    const mediaQuery = window.matchMedia("(display-mode: standalone)");
+    const standaloneMediaQuery = window.matchMedia("(display-mode: standalone)");
+    const mobileViewportMediaQuery = window.matchMedia("(max-width: 1023.98px)");
+
     const updateContext = () => {
+      const isMobileAppContext = detectMobileAppContext();
+      const isMobileViewport = mobileViewportMediaQuery.matches;
+
       setState({
         isDetectingMobileAppContext: false,
-        isMobileAppContext: detectMobileAppContext(),
+        isMobileAppContext,
+        isMobileViewport,
+        shouldShowPreOnboardingContext: isMobileAppContext || isMobileViewport,
       });
     };
 
     updateContext();
-    mediaQuery.addEventListener("change", updateContext);
+    standaloneMediaQuery.addEventListener("change", updateContext);
+    mobileViewportMediaQuery.addEventListener("change", updateContext);
 
     return () => {
-      mediaQuery.removeEventListener("change", updateContext);
+      standaloneMediaQuery.removeEventListener("change", updateContext);
+      mobileViewportMediaQuery.removeEventListener("change", updateContext);
     };
   }, []);
 

@@ -82,9 +82,9 @@ export function MainNavigation() {
   if (!session?.user) {
     return (
       <nav className="sticky top-0 z-50 border-b-2 border-foreground bg-background">
-        <div className="mx-auto flex h-20 w-full max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-          <Link href="/" className="flex items-center gap-3 group">
-            <div className="relative h-12 w-12">
+        <div className="mx-auto flex h-20 w-full max-w-7xl items-center gap-3 px-4 sm:px-6 lg:px-8">
+          <Link href="/" className="group flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
+            <div className="relative h-10 w-10 shrink-0 sm:h-12 sm:w-12">
               <Image
                 src="/logo.png"
                 alt="Sports Trivia Logo"
@@ -100,17 +100,21 @@ export function MainNavigation() {
                 priority
               />
             </div>
-            <span className="text-3xl font-black italic tracking-tighter uppercase font-['Barlow_Condensed',sans-serif]">
+            <span className="truncate text-xl font-black italic tracking-tight uppercase font-['Barlow_Condensed',sans-serif] sm:text-2xl md:text-3xl">
               SPORTS<span className="text-accent underline decoration-4 underline-offset-4">TRIVIA</span>
             </span>
           </Link>
-          <div className="flex items-center gap-6">
+          <div className="ml-auto flex shrink-0 items-center gap-2 sm:gap-6">
             <Link href="/auth/signin" className="hidden sm:block">
               <span className="text-xs font-bold uppercase tracking-widest hover:text-accent transition-colors">Member Access</span>
             </Link>
             <Link href="/auth/signin">
-              <Button variant="accent" size="lg" className="rounded-none font-bold uppercase tracking-widest">
-                Join Quiz
+              <Button
+                variant="accent"
+                size="sm"
+                className="rounded-none px-3 text-[10px] font-bold uppercase tracking-[0.14em] sm:px-4 sm:text-xs"
+              >
+                Login
               </Button>
             </Link>
           </div>
