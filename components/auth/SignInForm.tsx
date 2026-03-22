@@ -2,7 +2,7 @@
 
 import { signInWithGoogleAction } from "@/app/auth/signin/actions";
 import { Button } from "@/components/ui/button";
-import { Trophy, Sparkles, ArrowRight } from "lucide-react";
+import { Trophy, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getBlurCircles, getGradientText } from "@/lib/showcase-theme";
 import { useEffect, useState } from "react";
@@ -100,17 +100,6 @@ export function SignInForm() {
                             <div className="h-[1px] flex-1 bg-white/5" />
                         </div>
 
-                        <Button
-                            variant="glass"
-                            size="xl"
-                            asChild
-                            className="w-full gap-3 font-black uppercase tracking-widest text-lg"
-                        >
-                            <Link href="/quizzes">
-                                Explore Guest Passes
-                                <ArrowRight className="h-6 w-6" />
-                            </Link>
-                        </Button>
                     </form>
 
                     {/* Footer text */}
