@@ -36,6 +36,25 @@ export interface DailyGameData {
     maxGuesses: number;
 }
 
+export interface ContinuePlayingRailItem {
+    id: string;
+    title: string;
+    slug: string;
+    lastPlayedLabel: string;
+    streak: number;
+    daysOfWeek: boolean[];
+}
+
+interface AttemptForContinueRail {
+    id: string;
+    completedAt: Date | null;
+    quiz: {
+        slug: string;
+        title: string;
+        recurringType?: string | null;
+    };
+}
+
 // Helper to get daily game data for the hero
 export async function getDailyGameData(userId?: string): Promise<DailyGameData | null> {
     try {
@@ -223,4 +242,136 @@ export async function getFilterGroups(searchParams: SearchParams): Promise<Showc
             activeValue: topicParam || "all",
         },
     ];
+}
+
+export async function getPersonalizedTopicSlug(userId?: string): Promise<string | undefined> {
+    if (!userId) return undefined;
+
+    const topTopicStat = await prisma.userTopicStats.findFirst({
+        where: {
+            userId,
+            questionsAnswered: { gt: 0 },
+            topic: {
+                OR: [
+                    {
+                        quizTopicConfigs: {
+                            some: {
+                                quiz: {
+                                    isPublished: true,
+                                    status: "PUBLISHED",
+                                },
+                            },
+                        },
+                    },
+                    {
+                        questions: {
+                            some: {
+                                quizPools: {
+                                    some: {
+                                        quiz: {
+                                            isPublished: true,
+                                            status: "PUBLISHED",
+                                        },
+                                    },
+                                },
+                            },
+                        },
+                    },
+                ],
+            },
+        },
+        orderBy: [{ questionsAnswered: "desc" }, { updatedAt: "desc" }],
+        select: {
+            topic: {
+                select: {
+                    slug: true,
+                },
+            },
+        },
+    });
+
+    return topTopicStat?.topic.slug;
+}
+
+export function buildContinuePlayingItemsFromAttempts(
+    attempts: AttemptForContinueRail[],
+    limit = 5
+): ContinuePlayingRailItem[] {
+    const eligibleAttempts = attempts.filter(
+        (attempt) =>
+            Boolean(attempt.completedAt) &&
+            Boolean(attempt.quiz?.slug) &&
+            Boolean(attempt.quiz?.title) &&
+            attempt.quiz?.recurringType &&
+            attempt.quiz.recurringType !== "NONE"
+    );
+
+    if (eligibleAttempts.length === 0) return [];
+
+    const groupedByQuiz = new Map<
+        string,
+        {
+            id: string;
+            title: string;
+            slug: string;
+            dates: number[];
+            lastCompletedAt: number;
+        }
+    >();
+
+    for (const attempt of eligibleAttempts) {
+        const completedAt = new Date(attempt.completedAt as Date);
+        const dayTs = new Date(completedAt).setHours(0, 0, 0, 0);
+        const ts = completedAt.getTime();
+        const quizSlug = attempt.quiz.slug;
+        const existing = groupedByQuiz.get(quizSlug) ?? {
+            id: attempt.id,
+            title: attempt.quiz.title,
+            slug: quizSlug,
+            dates: [],
+            lastCompletedAt: 0,
+        };
+
+        existing.dates.push(dayTs);
+        existing.lastCompletedAt = Math.max(existing.lastCompletedAt, ts);
+        groupedByQuiz.set(quizSlug, existing);
+    }
+
+    const last7DayEpochs = Array.from({ length: 7 }).map((_, index) => {
+        const day = new Date();
+        day.setDate(day.getDate() - (6 - index));
+        day.setHours(0, 0, 0, 0);
+        return day.getTime();
+    });
+
+    return Array.from(groupedByQuiz.values())
+        .sort((a, b) => b.lastCompletedAt - a.lastCompletedAt)
+        .slice(0, limit)
+        .map((item) => {
+            const uniqueDaysDesc = Array.from(new Set(item.dates)).sort((a, b) => b - a);
+            const daysOfWeek = last7DayEpochs.map((dayTs) => uniqueDaysDesc.includes(dayTs));
+
+            let streak = 0;
+            if (uniqueDaysDesc.length > 0) {
+                streak = 1;
+                for (let index = 1; index < uniqueDaysDesc.length; index += 1) {
+                    if (uniqueDaysDesc[index - 1] - uniqueDaysDesc[index] === 86400000) {
+                        streak += 1;
+                    } else {
+                        break;
+                    }
+                }
+            }
+
+            return {
+                id: item.id,
+                title: item.title,
+                slug: item.slug,
+                lastPlayedLabel: new Intl.DateTimeFormat("en-US", {
+                    dateStyle: "medium",
+                }).format(new Date(item.lastCompletedAt)),
+                streak,
+                daysOfWeek,
+            };
+        });
 }

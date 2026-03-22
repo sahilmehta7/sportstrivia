@@ -1,8 +1,14 @@
 
 import { auth } from "@/lib/auth";
-import { getPublicQuizList } from "@/lib/services/public-quiz.service";
+import { getPublicQuizFilterOptions, getPublicQuizList } from "@/lib/services/public-quiz.service";
+import { getUserProfileStats } from "@/lib/services/user-profile.service";
 import { QuizzesContent } from "@/app/quizzes/QuizzesContent";
-import { parsePublicFilters, getFilterGroups, SearchParams } from "@/app/quizzes/quiz-utils";
+import {
+    parsePublicFilters,
+    getFilterGroups,
+    buildContinuePlayingItemsFromAttempts,
+    SearchParams,
+} from "@/app/quizzes/quiz-utils";
 import { ItemListStructuredData } from "@/components/seo/ItemListStructuredData";
 
 
@@ -16,10 +22,16 @@ export async function QuizListSection({
     const userId = session?.user?.id;
 
     // We fetch filter groups and quiz list in parallel
-    const [listing, filterGroups] = await Promise.all([
+    const [listing, filterGroups, filterOptions, statsData] = await Promise.all([
         getPublicQuizList(filters, { telemetryUserId: userId }),
         getFilterGroups(searchParams),
+        getPublicQuizFilterOptions(),
+        userId ? getUserProfileStats(userId).catch(() => null) : Promise.resolve(null),
     ]);
+
+    const continuePlayingItems = statsData
+        ? buildContinuePlayingItemsFromAttempts(statsData.recentAttempts)
+        : [];
 
     const baseUrl =
         process.env.NEXT_PUBLIC_APP_URL ||
@@ -38,6 +50,8 @@ export async function QuizListSection({
             <QuizzesContent
                 quizzes={listing.quizzes}
                 filterGroups={filterGroups}
+                difficultyOptions={filterOptions.difficulties}
+                continuePlayingItems={continuePlayingItems}
                 pagination={listing.pagination}
             />
             <ItemListStructuredData itemListElements={itemList} name="Sports Trivia Quizzes" />

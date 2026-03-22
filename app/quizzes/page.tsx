@@ -10,6 +10,11 @@ import { FeaturedSection, FeaturedSectionSkeleton } from "./components/featured-
 import { DailyRecurringSection, DailyRecurringSkeleton } from "./components/daily-recurring-section";
 import { ComingSoonSection, ComingSoonSkeleton } from "./components/coming-soon-section";
 import { QuizListSection, QuizListSectionSkeleton } from "./components/quiz-list-section";
+import { StickyPickRailSection, StickyPickRailSectionSkeleton } from "./components/sticky-pick-rail-section";
+import {
+  AllSportsTopicsWidgetSection,
+  AllSportsTopicsWidgetSectionSkeleton,
+} from "./components/all-sports-topics-widget-section";
 
 // Route segment config
 export const dynamic = 'auto';
@@ -44,6 +49,14 @@ export default async function QuizzesPage({
         <QuizzesPageHeader />
 
         <div className="mt-4 space-y-10 md:mt-12 md:space-y-16">
+          <Suspense fallback={<StickyPickRailSectionSkeleton />}>
+            <StickyPickRailSection searchParams={params} />
+          </Suspense>
+
+          <Suspense fallback={<AllSportsTopicsWidgetSectionSkeleton />}>
+            <AllSportsTopicsWidgetSection />
+          </Suspense>
+
           {/* Daily Challenge Hero */}
           <Suspense fallback={<DailyChallengeSkeleton />}>
             <DailyChallengeSection />
