@@ -1,6 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
+import type { CSSProperties } from 'react';
 import { cn } from '@/lib/utils';
 import type { LetterResult, LetterStatus } from '@/lib/utils/daily-game-logic';
 
@@ -9,9 +10,10 @@ interface WordleTileProps {
     status?: LetterStatus;
     isRevealing?: boolean;
     delay?: number;
+    tileSizeStyle?: CSSProperties;
 }
 
-function WordleTile({ letter, status, isRevealing, delay = 0 }: WordleTileProps) {
+function WordleTile({ letter, status, isRevealing, delay = 0, tileSizeStyle }: WordleTileProps) {
     // Minimalist athletic color scheme
     const statusStyles: Record<LetterStatus, string> = {
         correct: 'bg-accent text-accent-foreground border-accent',
@@ -26,11 +28,13 @@ function WordleTile({ letter, status, isRevealing, delay = 0 }: WordleTileProps)
     return (
         <motion.div
             className={cn(
-                'flex h-11 w-11 items-center justify-center border-2 sm:h-16 sm:w-16',
-                "font-['Barlow_Condensed',sans-serif] text-xl font-bold uppercase tracking-tight sm:text-3xl",
+                'flex items-center justify-center border-2',
+                "font-['Barlow_Condensed',sans-serif] font-bold uppercase tracking-tight",
+                'h-[var(--tile-size)] w-[var(--tile-size)] text-[clamp(1rem,calc(var(--tile-size)*0.5),1.9rem)]',
                 baseStyles,
                 status && statusStyles[status]
             )}
+            style={tileSizeStyle}
             initial={isRevealing ? { rotateX: 0 } : undefined}
             animate={isRevealing ? { rotateX: 360 } : undefined}
             transition={{
@@ -61,13 +65,21 @@ export function WordleBoard({
 }: WordleBoardProps) {
     const rows = [];
 
+    // Keep long words visible on small screens by shrinking tiles to fit.
+    const rowGapPx = 4;
+    const boardPaddingPx = 32;
+    const minTilePx = 26;
+    const maxTilePx = 64;
+    const calculatedTileSize = `clamp(${minTilePx}px, calc((100vw - ${boardPaddingPx}px - ${(wordLength - 1) * rowGapPx}px) / ${wordLength}), ${maxTilePx}px)`;
+    const tileSizeStyle = { '--tile-size': calculatedTileSize } as CSSProperties;
+
     // Completed guesses
     for (let i = 0; i < guesses.length; i++) {
         const guess = guesses[i];
         const isLatestGuess = i === guesses.length - 1;
 
         rows.push(
-            <div key={`guess-${i}`} className="flex gap-1">
+            <div key={`guess-${i}`} className="flex w-max gap-1">
                 {guess.map((result, j) => (
                     <WordleTile
                         key={j}
@@ -75,6 +87,7 @@ export function WordleBoard({
                         status={result.status}
                         isRevealing={isLatestGuess && isRevealing}
                         delay={j * 0.08}
+                        tileSizeStyle={tileSizeStyle}
                     />
                 ))}
             </div>
@@ -85,7 +98,7 @@ export function WordleBoard({
     if (guesses.length < maxGuesses) {
         const currentLetters = currentGuess.split('');
         rows.push(
-            <div key="current" className="flex gap-1">
+            <div key="current" className="flex w-max gap-1">
                 {Array.from({ length: wordLength }).map((_, i) => (
                     <motion.div
                         key={i}
@@ -93,7 +106,7 @@ export function WordleBoard({
                         animate={currentLetters[i] ? { scale: 1 } : undefined}
                         transition={{ type: 'spring', stiffness: 600, damping: 35 }}
                     >
-                        <WordleTile letter={currentLetters[i]} />
+                        <WordleTile letter={currentLetters[i]} tileSizeStyle={tileSizeStyle} />
                     </motion.div>
                 ))}
             </div>
@@ -103,17 +116,19 @@ export function WordleBoard({
     // Empty rows
     for (let i = guesses.length + 1; i < maxGuesses; i++) {
         rows.push(
-            <div key={`empty-${i}`} className="flex gap-1">
+            <div key={`empty-${i}`} className="flex w-max gap-1">
                 {Array.from({ length: wordLength }).map((_, j) => (
-                    <WordleTile key={j} />
+                    <WordleTile key={j} tileSizeStyle={tileSizeStyle} />
                 ))}
             </div>
         );
     }
 
     return (
-        <div className="flex w-full flex-col items-center gap-1 overflow-x-hidden">
-            {rows}
+        <div className="w-full overflow-x-auto pb-1">
+            <div className="mx-auto flex w-fit max-w-full flex-col items-center gap-1 [--tile-size:56px]">
+                {rows}
+            </div>
         </div>
     );
 }

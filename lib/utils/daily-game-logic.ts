@@ -140,7 +140,8 @@ export function generateShareableGrid(
     gameNumber: number,
     guesses: LetterResult[][],
     won: boolean,
-    maxGuesses: number = 6
+    maxGuesses: number = 6,
+    shareUrl: string = 'https://sportstrivia.com/daily'
 ): string {
     const header = `SportsTrivia Daily #${gameNumber} ${won ? guesses.length : 'X'}/${maxGuesses}\n\n`;
 
@@ -154,7 +155,20 @@ export function generateShareableGrid(
         }).join('')
     ).join('\n');
 
-    return header + grid + '\n\nhttps://sportstrivia.com/daily';
+    return header + grid + `\n\n${shareUrl}`;
+}
+
+/**
+ * Build a deterministic short referral tag from a stable user ID.
+ */
+export function createDailyReferralTag(userId: string): string {
+    let hash = 5381;
+    for (let i = 0; i < userId.length; i++) {
+        hash = ((hash << 5) + hash) ^ userId.charCodeAt(i);
+    }
+
+    const normalized = (hash >>> 0).toString(36).slice(0, 8);
+    return normalized || 'player';
 }
 
 /**
@@ -182,4 +196,3 @@ export function getMaxGuesses(gameType: DailyGameType): number {
         default: return 6;
     }
 }
-

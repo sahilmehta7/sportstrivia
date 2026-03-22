@@ -2,11 +2,13 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { AnimatePresence } from 'framer-motion';
+import { Share2 } from 'lucide-react';
 import { WordleBoard } from './WordleBoard';
 import { VirtualKeyboard } from './VirtualKeyboard';
 import { DailyGameResult } from './DailyGameResult';
-import type { LetterResult, LetterStatus } from '@/lib/utils/daily-game-logic';
+import { generateShareableGrid, type LetterResult, type LetterStatus } from '@/lib/utils/daily-game-logic';
 import { useToast } from '@/hooks/use-toast';
+import { Button } from '@/components/ui/button';
 
 interface WordleGameProps {
     gameId: string;
@@ -17,6 +19,7 @@ interface WordleGameProps {
     isCompleted?: boolean;
     targetWord?: string;
     gameNumber: number;
+    referralTag?: string;
 }
 
 export function WordleGame({
@@ -28,6 +31,7 @@ export function WordleGame({
     isCompleted = false,
     targetWord,
     gameNumber,
+    referralTag,
 }: WordleGameProps) {
     const [guesses, setGuesses] = useState<LetterResult[][]>(initialGuesses);
     const [solution, setSolution] = useState(targetWord);
@@ -39,6 +43,39 @@ export function WordleGame({
     const [won, setWon] = useState(initialGuesses.some(g => g.every(l => l.status === 'correct')));
     const [showResult, setShowResult] = useState(false);
     const { toast } = useToast();
+
+    const buildShareUrl = useCallback((isWin: boolean, solvedInGuesses: number) => {
+        const params = new URLSearchParams({
+            challenge: String(gameNumber),
+            score: isWin ? String(solvedInGuesses) : 'X',
+            ref: referralTag || 'player',
+            utm_source: 'daily_share',
+            utm_medium: 'app',
+            utm_campaign: 'daily_word',
+        });
+
+        const origin = typeof window === 'undefined' ? 'https://sportstrivia.com' : window.location.origin;
+        return `${origin}/daily?${params.toString()}`;
+    }, [gameNumber, referralTag]);
+
+    const handleShare = useCallback(async () => {
+        const shareUrl = buildShareUrl(won, guesses.length);
+        const shareText = generateShareableGrid(gameNumber, guesses, won, maxGuesses, shareUrl);
+
+        try {
+            if (navigator.share) {
+                await navigator.share({ text: shareText });
+            } else {
+                await navigator.clipboard.writeText(shareText);
+                toast({
+                    title: 'Copied to clipboard!',
+                    description: 'Challenge link copied. Share with friends.',
+                });
+            }
+        } catch {
+            // User cancelled share
+        }
+    }, [buildShareUrl, gameNumber, guesses, maxGuesses, toast, won]);
 
     const submitGuess = useCallback(async () => {
         if (currentGuess.length !== wordLength || isSubmitting) return;
@@ -163,10 +200,21 @@ export function WordleGame({
                         maxGuesses={maxGuesses}
                         gameNumber={gameNumber}
                         targetWord={solution}
+                        shareUrl={buildShareUrl(won, guesses.length)}
                         onClose={() => setShowResult(false)}
                     />
                 )}
             </AnimatePresence>
+
+            {gameOver && !showResult && (
+                <Button
+                    onClick={handleShare}
+                    className="h-11 gap-2 px-6 font-bold uppercase tracking-widest text-xs sm:text-sm"
+                >
+                    <Share2 className="h-4 w-4" />
+                    Share Challenge
+                </Button>
+            )}
         </div>
     );
 }

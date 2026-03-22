@@ -16,6 +16,7 @@ interface DailyGameBoardProps {
     isCompleted?: boolean;
     targetValue?: string;
     gameNumber: number;
+    referralTag?: string;
 }
 
 /**
@@ -31,6 +32,7 @@ export function DailyGameBoard({
     isCompleted = false,
     targetValue,
     gameNumber,
+    referralTag,
 }: DailyGameBoardProps) {
     switch (gameType) {
         case 'WORD': {
@@ -88,6 +90,7 @@ export function DailyGameBoard({
                     isCompleted={isCompleted}
                     targetWord={targetValue}
                     gameNumber={gameNumber}
+                    referralTag={referralTag}
                 />
             );
         }

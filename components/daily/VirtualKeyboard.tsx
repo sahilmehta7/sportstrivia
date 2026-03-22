@@ -31,7 +31,7 @@ export function VirtualKeyboard({ onKeyPress, letterStatuses, disabled }: Virtua
     };
 
     return (
-        <div className="mx-auto flex w-full max-w-sm flex-col items-center gap-1 overflow-x-hidden px-0.5 sm:max-w-lg sm:px-1">
+        <div className="mx-auto flex w-full max-w-sm flex-col items-center gap-1 overflow-x-auto px-0.5 sm:max-w-lg sm:px-1">
             {KEYBOARD_ROWS.map((row, rowIndex) => (
                 <div key={rowIndex} className="flex w-full justify-center gap-1">
                     {row.map((key) => {

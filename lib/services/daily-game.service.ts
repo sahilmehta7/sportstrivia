@@ -102,6 +102,13 @@ export async function submitGuess(
     userId: string,
     guess: string
 ): Promise<GuessResult> {
+    const sanitizedGuess = guess.trim();
+    if (!sanitizedGuess) {
+        throw new Error('Guess cannot be empty');
+    }
+
+    const normalizedGuess = sanitizedGuess.toUpperCase();
+
     // Get the game
     const game = await (prisma as any).dailyGame.findUnique({
         where: { id: gameId },
@@ -143,19 +150,31 @@ export async function submitGuess(
     let isCorrect = false;
 
     switch (game.gameType) {
-        case 'WORD':
-            feedback = evaluateWordleGuess(guess, game.targetValue);
-            isCorrect = isWordleWin(guess, game.targetValue);
+        case 'WORD': {
+            if (!/^[A-Z]+$/.test(normalizedGuess)) {
+                throw new Error('Word guesses must contain letters A-Z only');
+            }
+
+            if (normalizedGuess.length !== game.targetValue.length) {
+                throw new Error(`Word must be exactly ${game.targetValue.length} letters`);
+            }
+
+            feedback = evaluateWordleGuess(normalizedGuess, game.targetValue);
+            isCorrect = isWordleWin(normalizedGuess, game.targetValue);
             break;
+        }
         case 'ATHLETE':
         case 'TEAM':
             // For athlete/team, we just check if the name matches
-            isCorrect = guess.toUpperCase() === game.targetValue.toUpperCase();
-            feedback = { match: isCorrect, guessedName: guess };
+            isCorrect = normalizedGuess === game.targetValue.toUpperCase();
+            feedback = { match: isCorrect, guessedName: normalizedGuess };
             break;
         case 'STAT': {
-            const guessNum = parseFloat(guess);
+            const guessNum = parseFloat(sanitizedGuess);
             const targetNum = parseFloat(game.targetValue);
+            if (Number.isNaN(guessNum)) {
+                throw new Error('Stat guesses must be numeric');
+            }
             isCorrect = guessNum === targetNum;
             feedback = {
                 match: isCorrect,
@@ -168,7 +187,8 @@ export async function submitGuess(
     }
 
     // Update or create attempt
-    const newGuesses = [...currentGuesses, guess.toUpperCase()];
+    const guessToStore = game.gameType === 'STAT' ? sanitizedGuess : normalizedGuess;
+    const newGuesses = [...currentGuesses, guessToStore];
     const gameOver = isCorrect || newGuesses.length >= maxGuesses;
 
     if (attempt) {
@@ -250,18 +270,18 @@ export async function getUserDailyStats(userId: string) {
     const totalWon = attempts.filter((a: DailyGameAttempt) => a.solved).length;
     const winRate = totalPlayed > 0 ? Math.round((totalWon / totalPlayed) * 100) : 0;
 
-    // Calculate current streak
-    let currentStreak = 0;
-    const sortedAttempts = [...attempts].sort((a: DailyGameAttempt, b: DailyGameAttempt) =>
-        new Date(b.dailyGame!.date).getTime() - new Date(a.dailyGame!.date).getTime()
+    // Calculate current streak on IST calendar days ending today
+    const solvedDates = new Set(
+        attempts
+            .filter((attempt: DailyGameAttempt) => attempt.solved && attempt.dailyGame?.date)
+            .map((attempt: DailyGameAttempt) => attempt.dailyGame!.date)
     );
 
-    for (const attempt of sortedAttempts) {
-        if (attempt.solved) {
-            currentStreak++;
-        } else {
-            break;
-        }
+    let currentStreak = 0;
+    let streakDate = getISTDateString();
+    while (solvedDates.has(streakDate)) {
+        currentStreak++;
+        streakDate = getPreviousDateString(streakDate);
     }
 
     // Guess distribution for WORD games
@@ -281,6 +301,12 @@ export async function getUserDailyStats(userId: string) {
         currentStreak,
         guessDistribution,
     };
+}
+
+function getPreviousDateString(dateString: string): string {
+    const date = new Date(`${dateString}T00:00:00.000Z`);
+    date.setUTCDate(date.getUTCDate() - 1);
+    return date.toISOString().split('T')[0];
 }
 
 /**
@@ -339,4 +365,3 @@ export async function deleteDailyGame(id: string) {
         where: { id },
     });
 }
-

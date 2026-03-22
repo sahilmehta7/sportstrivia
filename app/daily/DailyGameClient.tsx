@@ -13,6 +13,7 @@ interface DailyGameClientProps {
     isCompleted?: boolean;
     targetValue?: string;
     gameNumber: number;
+    referralTag?: string;
 }
 
 export function DailyGameClient(props: DailyGameClientProps) {

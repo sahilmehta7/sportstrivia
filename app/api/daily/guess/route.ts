@@ -5,7 +5,7 @@ import { z } from 'zod';
 
 const guessSchema = z.object({
     gameId: z.string(),
-    guess: z.string().min(1).max(100),
+    guess: z.string().trim().min(1).max(100),
 });
 
 /**

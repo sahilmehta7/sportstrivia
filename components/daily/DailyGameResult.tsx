@@ -14,6 +14,7 @@ interface DailyGameResultProps {
     maxGuesses: number;
     gameNumber: number;
     targetWord?: string;
+    shareUrl?: string;
     onClose: () => void;
 }
 
@@ -23,12 +24,13 @@ export function DailyGameResult({
     maxGuesses,
     gameNumber,
     targetWord,
+    shareUrl,
     onClose,
 }: DailyGameResultProps) {
     const { toast } = useToast();
 
     const handleShare = async () => {
-        const shareText = generateShareableGrid(gameNumber, guesses, won, maxGuesses);
+        const shareText = generateShareableGrid(gameNumber, guesses, won, maxGuesses, shareUrl);
 
         try {
             if (navigator.share) {

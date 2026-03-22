@@ -1,7 +1,7 @@
 import { Metadata } from 'next';
 import { auth } from '@/lib/auth';
 import { getTodaysGame } from '@/lib/services/daily-game.service';
-import { getMaxGuesses, getGameTypeDisplayName, getISTDateString } from '@/lib/utils/daily-game-logic';
+import { createDailyReferralTag, getMaxGuesses, getGameTypeDisplayName, getISTDateString } from '@/lib/utils/daily-game-logic';
 import { DailyGameClient } from './DailyGameClient';
 import { cn } from '@/lib/utils';
 import { getGradientText, getChipStyles } from '@/lib/showcase-theme';
@@ -15,9 +15,19 @@ export const metadata: Metadata = {
 
 export const dynamic = 'force-dynamic';
 
-export default async function DailyPage() {
+interface DailyPageProps {
+    searchParams?: Promise<Record<string, string | string[] | undefined>>;
+}
+
+function getSearchParamValue(value: string | string[] | undefined): string | undefined {
+    if (Array.isArray(value)) return value[0];
+    return value;
+}
+
+export default async function DailyPage({ searchParams }: DailyPageProps) {
     const session = await auth();
     const game = await getTodaysGame(session?.user?.id);
+    const params = (await searchParams) || {};
 
     if (!game) {
         return (
@@ -52,6 +62,12 @@ export default async function DailyPage() {
     const wordLength = game.gameType === 'WORD'
         ? game.targetValue.length
         : undefined;
+    const referralTag = session?.user?.id ? createDailyReferralTag(session.user.id) : undefined;
+
+    const challengeNumber = getSearchParamValue(params.challenge);
+    const challengeScore = getSearchParamValue(params.score);
+    const challengeRef = getSearchParamValue(params.ref);
+    const hasValidChallengeBanner = Boolean(challengeNumber && /^\d+$/.test(challengeNumber) && challengeScore && /^(X|\d+)$/i.test(challengeScore));
 
     return (
         <div className="min-h-screen overflow-x-hidden px-4 py-5 sm:py-8">
@@ -64,6 +80,15 @@ export default async function DailyPage() {
                     <ArrowLeft className="w-4 h-4" />
                     Back to Quizzes
                 </Link>
+
+                {hasValidChallengeBanner && (
+                    <div className="mb-6 border border-accent/30 bg-accent/10 px-4 py-3 text-center sm:mb-8">
+                        <p className="text-xs uppercase tracking-wide text-accent sm:text-sm">
+                            Challenge #{challengeNumber}: Can you beat {String(challengeScore).toUpperCase()}/6?
+                            {challengeRef ? ` Shared by ${challengeRef.toUpperCase()}` : ''}
+                        </p>
+                    </div>
+                )}
 
                 {/* Header */}
                 <div className="mb-6 text-center sm:mb-10">
@@ -93,10 +118,20 @@ export default async function DailyPage() {
                     </div>
 
                     {!session && (
-                        <div className="mt-6 inline-flex items-center gap-2 px-4 py-2 border border-warning/30 bg-warning/5">
-                            <span className="text-sm text-warning uppercase tracking-wide">
-                                Sign in to save progress & earn XP
-                            </span>
+                        <div className="mt-6 space-y-4">
+                            <div className="inline-flex items-center gap-2 border border-warning/30 bg-warning/5 px-4 py-2">
+                                <span className="text-sm uppercase tracking-wide text-warning">
+                                    Sign in to play today&apos;s challenge
+                                </span>
+                            </div>
+                            <div>
+                                <Link
+                                    href="/auth/signin"
+                                    className="inline-flex h-11 items-center justify-center border border-primary bg-primary px-6 text-xs font-bold uppercase tracking-widest text-primary-foreground transition-colors hover:opacity-90 sm:text-sm"
+                                >
+                                    Sign In To Play
+                                </Link>
+                            </div>
                         </div>
                     )}
                 </div>
@@ -109,17 +144,26 @@ export default async function DailyPage() {
                 </div>
 
                 {/* Game */}
-                <DailyGameClient
-                    gameId={game.id}
-                    gameType={game.gameType}
-                    maxGuesses={maxGuesses}
-                    wordLength={wordLength}
-                    clues={game.clues as Record<string, unknown> | undefined}
-                    initialGuesses={(game.userAttempt?.guesses as string[]) || []}
-                    isCompleted={isCompleted}
-                    targetValue={isCompleted ? game.targetValue : undefined}
-                    gameNumber={gameNumber}
-                />
+                {session ? (
+                    <DailyGameClient
+                        gameId={game.id}
+                        gameType={game.gameType}
+                        maxGuesses={maxGuesses}
+                        wordLength={wordLength}
+                        clues={game.clues as Record<string, unknown> | undefined}
+                        initialGuesses={(game.userAttempt?.guesses as string[]) || []}
+                        isCompleted={isCompleted}
+                        targetValue={isCompleted ? game.targetValue : undefined}
+                        gameNumber={gameNumber}
+                        referralTag={referralTag}
+                    />
+                ) : (
+                    <div className="mx-auto max-w-xl border border-border bg-card p-6 text-center sm:p-8">
+                        <p className="text-sm uppercase tracking-wide text-muted-foreground">
+                            Sign in required to play the Daily Challenge.
+                        </p>
+                    </div>
+                )}
             </div>
         </div>
     );
