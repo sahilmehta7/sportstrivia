@@ -10,6 +10,8 @@ import {
   sanitizeUrlList,
 } from "@/lib/topic-schema";
 import { TOPIC_SCHEMA_TYPES, type TopicSchemaTypeValue } from "@/lib/topic-schema-options";
+import { normalizeAlternateNames } from "@/lib/topic-graph/topic-readiness.service";
+import { syncTopicEntityReadiness } from "@/lib/topic-graph/topic-readiness.persistence";
 
 const topicUpdateSchema = z.object({
   name: z.string().min(2).optional(),
@@ -21,6 +23,7 @@ const topicUpdateSchema = z.object({
   schemaType: z.enum(TOPIC_SCHEMA_TYPES).optional(),
   schemaCanonicalUrl: z.string().url().optional().nullable(),
   schemaSameAs: z.array(z.string().url()).optional(),
+  alternateNames: z.array(z.string()).optional(),
   schemaEntityData: z.record(z.any()).optional().nullable(),
 });
 
@@ -53,6 +56,7 @@ export async function GET(
             schemaType: true,
             schemaCanonicalUrl: true,
             schemaSameAs: true,
+            alternateNames: true,
             schemaEntityData: true,
           },
         },
@@ -142,6 +146,10 @@ export async function PATCH(
       validatedData.schemaSameAs !== undefined
         ? sanitizeUrlList(validatedData.schemaSameAs)
         : existingTopic.schemaSameAs;
+    const alternateNames =
+      validatedData.alternateNames !== undefined
+        ? normalizeAlternateNames(validatedData.name ?? existingTopic.name, validatedData.alternateNames)
+        : existingTopic.alternateNames;
     const rawEntityData =
       validatedData.schemaEntityData !== undefined
         ? validatedData.schemaEntityData
@@ -149,7 +157,6 @@ export async function PATCH(
     const schemaEntityData = parseTopicEntityData(nextSchemaType, rawEntityData);
     const schemaEntityDataValue =
       schemaEntityData === null ? Prisma.JsonNull : (schemaEntityData as Prisma.InputJsonValue);
-
     if (requiresCanonicalUrl(nextSchemaType) && !schemaCanonicalUrl) {
       throw new Error("schemaCanonicalUrl is required when schemaType is not NONE");
     }
@@ -165,6 +172,7 @@ export async function PATCH(
       ...(validatedData.schemaType !== undefined ? { schemaType: validatedData.schemaType } : {}),
       ...(validatedData.schemaCanonicalUrl !== undefined ? { schemaCanonicalUrl } : {}),
       ...(validatedData.schemaSameAs !== undefined ? { schemaSameAs } : {}),
+      ...(validatedData.alternateNames !== undefined ? { alternateNames } : {}),
       ...(validatedData.schemaEntityData !== undefined || validatedData.schemaType !== undefined
         ? { schemaEntityData: schemaEntityDataValue }
         : {}),
@@ -192,6 +200,20 @@ export async function PATCH(
     // If level changed, update all descendants
     if (level !== existingTopic.level) {
       await updateDescendantLevels(id, level);
+    }
+
+    if (
+      validatedData.schemaEntityData !== undefined ||
+      validatedData.schemaType !== undefined ||
+      validatedData.schemaCanonicalUrl !== undefined
+    ) {
+      const readiness = await syncTopicEntityReadiness(id);
+
+      return successResponse({
+        ...topic,
+        entityStatus: readiness.entityStatus,
+        entityValidatedAt: readiness.isReady ? new Date().toISOString() : null,
+      });
     }
 
     return successResponse(topic);

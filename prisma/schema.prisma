@@ -91,6 +91,9 @@ model User {
   badges                  UserBadge[]
   searchQueries           UserSearchQuery[]
   topicStats              UserTopicStats[]
+  interestPreferences     UserInterestPreference[]
+  followedTopics          UserFollowedTopic[]
+  discoveryPreference     UserDiscoveryPreference?
   completionAwards        QuizCompletionBonusAward[]
   // Back relations for gamification
   levelHistory            UserLevel[]
@@ -153,7 +156,10 @@ model Topic {
   schemaType       TopicSchemaType   @default(NONE)
   schemaCanonicalUrl String?
   schemaSameAs     String[]
+  alternateNames   String[]
   schemaEntityData Json?
+  entityStatus     TopicEntityStatus @default(DRAFT)
+  entityValidatedAt DateTime?
   contentStatus    String            @default("NONE")
   contentQualityScore Float?
   contentLastReviewedAt DateTime?
@@ -171,6 +177,10 @@ model Topic {
   parent           Topic?            @relation("TopicHierarchy", fields: [parentId], references: [id])
   children         Topic[]           @relation("TopicHierarchy")
   userStats        UserTopicStats[]
+  interestedUsers  UserInterestPreference[]
+  followers        UserFollowedTopic[]
+  outgoingRelations TopicRelation[]  @relation("TopicRelationsFrom")
+  incomingRelations TopicRelation[]  @relation("TopicRelationsTo")
   sourceDocuments  TopicSourceDocument[]
   claims           TopicClaim[]
   contentSnapshots TopicContentSnapshot[]
@@ -316,6 +326,84 @@ enum TopicSchemaType {
   ATHLETE
   SPORTS_ORGANIZATION
   SPORTS_EVENT
+}
+
+enum TopicEntityStatus {
+  DRAFT
+  READY
+  NEEDS_REVIEW
+}
+
+enum TopicRelationType {
+  BELONGS_TO_SPORT
+  PLAYS_FOR
+  REPRESENTS
+  COMPETES_IN
+  ORGANIZED_BY
+  RIVAL_OF
+  RELATED_TO
+}
+
+enum InterestPreferenceSource {
+  ONBOARDING
+  PROFILE
+  ADMIN
+  IMPORT
+}
+
+model TopicRelation {
+  id           String            @id @default(cuid())
+  fromTopicId  String
+  toTopicId    String
+  relationType TopicRelationType
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+  fromTopic    Topic             @relation("TopicRelationsFrom", fields: [fromTopicId], references: [id], onDelete: Cascade)
+  toTopic      Topic             @relation("TopicRelationsTo", fields: [toTopicId], references: [id], onDelete: Cascade)
+
+  @@unique([fromTopicId, toTopicId, relationType])
+  @@index([fromTopicId, relationType])
+  @@index([toTopicId, relationType])
+}
+
+model UserInterestPreference {
+  id        String                   @id @default(cuid())
+  userId    String
+  topicId   String
+  source    InterestPreferenceSource
+  strength  Float                    @default(1)
+  createdAt DateTime                 @default(now())
+  updatedAt DateTime                 @updatedAt
+  user      User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  topic     Topic                    @relation(fields: [topicId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, topicId])
+  @@index([userId])
+  @@index([topicId])
+}
+
+model UserFollowedTopic {
+  id        String   @id @default(cuid())
+  userId    String
+  topicId   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  topic     Topic    @relation(fields: [topicId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, topicId])
+  @@index([userId])
+  @@index([topicId])
+}
+
+model UserDiscoveryPreference {
+  id                  String     @id @default(cuid())
+  userId              String     @unique
+  preferredDifficulty Difficulty?
+  preferredPlayModes  PlayMode[]
+  createdAt           DateTime   @default(now())
+  updatedAt           DateTime   @updatedAt
+  user                User       @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Quiz {

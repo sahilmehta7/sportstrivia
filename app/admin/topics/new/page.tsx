@@ -87,18 +87,13 @@ export default function NewTopicPage() {
           .split("\n")
           .map((value) => value.trim())
           .filter(Boolean),
+        alternateNames: formData.aliases
+          .split(",")
+          .map((value) => value.trim())
+          .filter(Boolean),
         schemaEntityData:
           formData.schemaType === "SPORT"
-            ? {
-                ...(formData.aliases
-                  ? {
-                      aliases: formData.aliases
-                        .split(",")
-                        .map((value) => value.trim())
-                        .filter(Boolean),
-                    }
-                  : {}),
-              }
+            ? {}
             : formData.schemaType === "SPORTS_TEAM"
               ? {
                   ...(formData.sportName ? { sportName: formData.sportName } : {}),
@@ -397,15 +392,16 @@ export default function NewTopicPage() {
             </div>
 
             {formData.schemaType === "SPORT" && (
-              <div className="space-y-2">
-                <Label htmlFor="aliases">Sport aliases</Label>
-                <Input
-                  id="aliases"
-                  placeholder="Soccer, Association Football"
-                  value={formData.aliases}
-                  onChange={(e) => updateField("aliases", e.target.value)}
-                />
-              </div>
+            <div className="space-y-2">
+              <Label htmlFor="aliases">Alternate names</Label>
+              <Input
+                id="aliases"
+                placeholder="Soccer, Association Football"
+                value={formData.aliases}
+                onChange={(e) => updateField("aliases", e.target.value)}
+              />
+              <p className="text-xs text-muted-foreground">Optional search aliases, comma separated.</p>
+            </div>
             )}
 
             {(formData.schemaType === "SPORTS_TEAM" ||

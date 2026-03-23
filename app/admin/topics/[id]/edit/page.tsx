@@ -30,6 +30,7 @@ import {
 import { cn } from "@/lib/utils";
 import { TOPIC_SCHEMA_TYPE_LABELS, type TopicSchemaTypeValue } from "@/lib/topic-schema-options";
 import { DEFAULT_QUALITY_GATE } from "@/lib/services/topic-content/types";
+import { TopicGraphAdminPanel } from "@/components/admin/TopicGraphAdminPanel";
 import {
   Dialog,
   DialogContent,
@@ -165,6 +166,7 @@ export default function EditTopicPage({ params }: EditTopicPageProps) {
           schemaType: (topic.schemaType || "NONE") as TopicSchemaTypeValue,
           schemaCanonicalUrl: topic.schemaCanonicalUrl || "",
           schemaSameAsText: Array.isArray(topic.schemaSameAs) ? topic.schemaSameAs.join("\n") : "",
+          aliases: Array.isArray(topic.alternateNames) ? topic.alternateNames.join(", ") : "",
           sportName: topic.schemaEntityData?.sportName || "",
           leagueName: topic.schemaEntityData?.leagueName || "",
           organizationName: topic.schemaEntityData?.organizationName || "",
@@ -181,7 +183,6 @@ export default function EditTopicPage({ params }: EditTopicPageProps) {
             : "",
           locationName: topic.schemaEntityData?.locationName || "",
           organizerName: topic.schemaEntityData?.organizerName || "",
-          aliases: Array.isArray(topic.schemaEntityData?.aliases) ? topic.schemaEntityData.aliases.join(", ") : "",
         });
       } catch (error: any) {
         toast({
@@ -381,18 +382,13 @@ export default function EditTopicPage({ params }: EditTopicPageProps) {
           .split("\n")
           .map((value) => value.trim())
           .filter(Boolean),
+        alternateNames: formData.aliases
+          .split(",")
+          .map((value) => value.trim())
+          .filter(Boolean),
         schemaEntityData:
           formData.schemaType === "SPORT"
-            ? {
-                ...(formData.aliases
-                  ? {
-                      aliases: formData.aliases
-                        .split(",")
-                        .map((value) => value.trim())
-                        .filter(Boolean),
-                    }
-                  : {}),
-              }
+            ? {}
             : formData.schemaType === "SPORTS_TEAM"
               ? {
                   ...(formData.sportName ? { sportName: formData.sportName } : {}),
@@ -723,6 +719,10 @@ export default function EditTopicPage({ params }: EditTopicPageProps) {
         }
       />
 
+      <div className="mb-6">
+        <TopicGraphAdminPanel topicId={topicId} topics={topics} />
+      </div>
+
       {!canDelete && (
         <div className="mb-6 p-4 bg-yellow-50 dark:bg-yellow-950 border border-yellow-200 dark:border-yellow-800 rounded-lg">
           <p className="text-sm font-medium">⚠️ This topic cannot be deleted because:</p>
@@ -875,13 +875,14 @@ export default function EditTopicPage({ params }: EditTopicPageProps) {
 
             {formData.schemaType === "SPORT" && (
               <div className="space-y-2">
-                <Label htmlFor="aliases">Sport aliases</Label>
+                <Label htmlFor="aliases">Alternate names</Label>
                 <Input
                   id="aliases"
                   placeholder="Soccer, Association Football"
                   value={formData.aliases}
                   onChange={(e) => updateField("aliases", e.target.value)}
                 />
+                <p className="text-xs text-muted-foreground">Optional search aliases, comma separated.</p>
               </div>
             )}
 
