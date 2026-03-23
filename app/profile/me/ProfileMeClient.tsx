@@ -32,6 +32,7 @@ import Link from "next/link";
 import { PushSubscriptionCard } from "@/components/notifications/PushSubscriptionCard";
 import { DigestPreferencesCard } from "@/components/notifications/DigestPreferencesCard";
 import { DeleteAccountSection } from "@/components/profile/DeleteAccountSection";
+import { ProfileDiscoverabilityPanel } from "@/components/profile/ProfileDiscoverabilityPanel";
 import { JsonLdScript } from "next-seo";
 import { PageContainer } from "@/components/shared/PageContainer";
 import { getBlurCircles, getGradientText } from "@/lib/showcase-theme";
@@ -333,6 +334,8 @@ export function ProfileMeClient({
             </TabsContent>
 
             <TabsContent value="settings" className="space-y-12 shrink-0">
+              <ProfileDiscoverabilityPanel />
+
               <div className="grid gap-12 lg:grid-cols-2">
                 <div className="space-y-8">
                   <div className="flex items-center gap-4 px-2">

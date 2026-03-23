@@ -17,6 +17,7 @@ import { ItemListStructuredData } from "@/components/seo/ItemListStructuredData"
 import { getCanonicalUrl } from "@/lib/next-seo-config";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { TopicHero } from "@/components/topics/topic-hero";
+import { TopicFollowButton } from "@/components/topics/TopicFollowButton";
 import { TopicAuthoritySection } from "@/components/topics/topic-authority-section";
 import { FeaturedRow } from "@/components/quizzes/featured-row";
 import { FeaturedQuizzesHero } from "@/components/quizzes/featured-quizzes-hero";
@@ -186,6 +187,16 @@ export default async function TopicDetailPage({
       where: { id: user.id },
       select: { currentStreak: true, longestStreak: true },
     })
+    : null;
+  const followRecord = user
+    ? await prisma.userFollowedTopic.findUnique({
+        where: {
+          userId_topicId: {
+            userId: user.id,
+            topicId: topic.id,
+          },
+        },
+      })
     : null;
 
   const topicIds = await getTopicIdsWithDescendants(topic.id);
@@ -390,6 +401,16 @@ export default async function TopicDetailPage({
           }
           secondaryCta={listing.pagination.total > 0 ? { label: "View all quizzes", href: "#topic-quizzes" } : undefined}
         />
+
+        <div className="flex justify-end">
+          <TopicFollowButton
+            topicId={topic.id}
+            topicName={topic.name}
+            schemaType={topic.schemaType as TopicSchemaTypeValue}
+            initialIsFollowing={Boolean(followRecord)}
+            isAuthenticated={Boolean(user)}
+          />
+        </div>
 
         {showAuthority && publishedSnapshot && (
           <TopicAuthoritySection

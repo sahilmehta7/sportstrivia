@@ -20,6 +20,31 @@ export async function GET() {
     const user = await prisma.user.findUnique({
       where: { id: authUser.id },
       include: {
+        interestPreferences: {
+          include: {
+            topic: {
+              select: {
+                id: true,
+                name: true,
+                slug: true,
+                schemaType: true,
+              },
+            },
+          },
+        },
+        followedTopics: {
+          include: {
+            topic: {
+              select: {
+                id: true,
+                name: true,
+                slug: true,
+                schemaType: true,
+              },
+            },
+          },
+        },
+        discoveryPreference: true,
         _count: {
           select: {
             quizAttempts: true,
