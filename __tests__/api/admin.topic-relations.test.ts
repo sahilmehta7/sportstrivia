@@ -18,6 +18,7 @@ jest.mock("@/lib/auth-helpers", () => ({
 var prismaMock: {
   topic: {
     findUnique: jest.Mock;
+    update: jest.Mock;
   };
   topicRelation: {
     findMany: jest.Mock;
@@ -31,6 +32,7 @@ jest.mock("@/lib/db", () => {
   prismaMock = {
     topic: {
       findUnique: jest.fn(),
+      update: jest.fn(),
     },
     topicRelation: {
       findMany: jest.fn(),
@@ -72,6 +74,23 @@ describe("topic relation routes", () => {
       toTopicId: "team_1",
       relationType: "PLAYS_FOR",
     });
+    prismaMock.topic.findUnique.mockResolvedValueOnce({
+      id: "athlete_1",
+      schemaType: "ATHLETE",
+      schemaCanonicalUrl: "https://example.com/athlete",
+      schemaEntityData: { athleteName: "Player" },
+      outgoingRelations: [
+        {
+          fromTopicId: "athlete_1",
+          toTopicId: "sport_1",
+          relationType: "BELONGS_TO_SPORT",
+        },
+      ],
+    });
+    prismaMock.topic.update.mockResolvedValue({
+      id: "athlete_1",
+      entityStatus: "READY",
+    });
 
     const request = new Request("http://localhost/api/admin/topics/athlete_1/relations", {
       method: "POST",
@@ -91,6 +110,12 @@ describe("topic relation routes", () => {
     expect(body.data).toMatchObject({
       id: "rel_1",
       relationType: "PLAYS_FOR",
+    });
+    expect(prismaMock.topic.update).toHaveBeenCalledWith({
+      where: { id: "athlete_1" },
+      data: expect.objectContaining({
+        entityStatus: "READY",
+      }),
     });
   });
 
@@ -175,6 +200,23 @@ describe("topic relation routes", () => {
       toTopicId: "team_1",
       relationType: "PLAYS_FOR",
     });
+    prismaMock.topic.findUnique.mockResolvedValueOnce({
+      id: "athlete_1",
+      schemaType: "ATHLETE",
+      schemaCanonicalUrl: "https://example.com/athlete",
+      schemaEntityData: { athleteName: "Player" },
+      outgoingRelations: [
+        {
+          fromTopicId: "athlete_1",
+          toTopicId: "sport_1",
+          relationType: "BELONGS_TO_SPORT",
+        },
+      ],
+    });
+    prismaMock.topic.update.mockResolvedValue({
+      id: "athlete_1",
+      entityStatus: "READY",
+    });
 
     const request = new Request("http://localhost/api/admin/topics/athlete_1/relations/rel_1", {
       method: "PATCH",
@@ -190,10 +232,28 @@ describe("topic relation routes", () => {
     });
 
     expect(response.status).toBe(200);
+    expect(prismaMock.topic.update).toHaveBeenCalled();
   });
 
   it("deletes an admin topic relation", async () => {
     prismaMock.topicRelation.delete.mockResolvedValue({ id: "rel_1" });
+    prismaMock.topic.findUnique.mockResolvedValue({
+      id: "athlete_1",
+      schemaType: "ATHLETE",
+      schemaCanonicalUrl: "https://example.com/athlete",
+      schemaEntityData: { athleteName: "Player" },
+      outgoingRelations: [
+        {
+          fromTopicId: "athlete_1",
+          toTopicId: "sport_1",
+          relationType: "BELONGS_TO_SPORT",
+        },
+      ],
+    });
+    prismaMock.topic.update.mockResolvedValue({
+      id: "athlete_1",
+      entityStatus: "READY",
+    });
 
     const response = await deleteAdminRelation({} as any, {
       params: Promise.resolve({ id: "athlete_1", relationId: "rel_1" }),
@@ -202,6 +262,7 @@ describe("topic relation routes", () => {
 
     expect(response.status).toBe(200);
     expect(body.data.message).toContain("deleted");
+    expect(prismaMock.topic.update).toHaveBeenCalled();
   });
 
   it("lists admin topic relations", async () => {
@@ -211,6 +272,18 @@ describe("topic relation routes", () => {
         fromTopicId: "athlete_1",
         toTopicId: "team_1",
         relationType: "PLAYS_FOR",
+        fromTopic: {
+          id: "athlete_1",
+          name: "Virat Kohli",
+          slug: "virat-kohli",
+          schemaType: "ATHLETE",
+        },
+        toTopic: {
+          id: "team_1",
+          name: "India",
+          slug: "india-cricket-team",
+          schemaType: "SPORTS_TEAM",
+        },
       },
     ]);
 
@@ -221,5 +294,6 @@ describe("topic relation routes", () => {
 
     expect(response.status).toBe(200);
     expect(body.data.relations).toHaveLength(1);
+    expect(body.data.relations[0].toTopic.slug).toBe("india-cricket-team");
   });
 });

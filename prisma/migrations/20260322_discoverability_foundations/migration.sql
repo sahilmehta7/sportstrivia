@@ -12,6 +12,14 @@ ALTER TABLE "Topic" ADD COLUMN     "alternateNames" TEXT[],
 ADD COLUMN     "entityStatus" "TopicEntityStatus" NOT NULL DEFAULT 'DRAFT',
 ADD COLUMN     "entityValidatedAt" TIMESTAMP(3);
 
+UPDATE "Topic"
+SET "alternateNames" = ARRAY[]::TEXT[]
+WHERE "alternateNames" IS NULL;
+
+ALTER TABLE "Topic"
+ALTER COLUMN "alternateNames" SET DEFAULT ARRAY[]::TEXT[],
+ALTER COLUMN "alternateNames" SET NOT NULL;
+
 -- CreateTable
 CREATE TABLE "TopicRelation" (
     "id" TEXT NOT NULL,
@@ -110,4 +118,3 @@ ALTER TABLE "UserFollowedTopic" ADD CONSTRAINT "UserFollowedTopic_topicId_fkey" 
 
 -- AddForeignKey
 ALTER TABLE "UserDiscoveryPreference" ADD CONSTRAINT "UserDiscoveryPreference_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-

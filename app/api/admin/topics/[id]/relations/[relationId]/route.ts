@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/auth-helpers";
 import { NotFoundError, handleError, successResponse } from "@/lib/errors";
 import { validateTopicRelation, type TopicRelationTypeValue } from "@/lib/topic-graph/topic-readiness.service";
+import { syncTopicEntityReadiness } from "@/lib/topic-graph/topic-readiness.persistence";
 import { z } from "zod";
 
 const relationUpdateSchema = z.object({
@@ -52,6 +53,7 @@ export async function PATCH(
         relationType: body.relationType,
       },
     });
+    await syncTopicEntityReadiness(fromTopic.id);
 
     return successResponse(relation);
   } catch (error) {
@@ -65,11 +67,12 @@ export async function DELETE(
 ) {
   try {
     await requireAdmin();
-    const { relationId } = await params;
+    const { id, relationId } = await params;
 
     await prisma.topicRelation.delete({
       where: { id: relationId },
     });
+    await syncTopicEntityReadiness(id);
 
     return successResponse({ message: "Relation deleted successfully" });
   } catch (error) {

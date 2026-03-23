@@ -23,7 +23,7 @@ var prismaMock: {
   };
   userFollowedTopic: {
     findMany: jest.Mock;
-    create: jest.Mock;
+    upsert: jest.Mock;
     deleteMany: jest.Mock;
   };
   userDiscoveryPreference: {
@@ -38,6 +38,7 @@ var prismaMock: {
   };
   topic: {
     findUnique: jest.Mock;
+    findMany: jest.Mock;
   };
   $transaction: jest.Mock;
 };
@@ -51,7 +52,7 @@ jest.mock("@/lib/db", () => {
     },
     userFollowedTopic: {
       findMany: jest.fn(),
-      create: jest.fn(),
+      upsert: jest.fn(),
       deleteMany: jest.fn(),
     },
     userDiscoveryPreference: {
@@ -66,6 +67,7 @@ jest.mock("@/lib/db", () => {
     },
     topic: {
       findUnique: jest.fn(),
+      findMany: jest.fn(),
     },
     $transaction: jest.fn(),
   };
@@ -87,6 +89,12 @@ describe("user interests and follows routes", () => {
   });
 
   it("replaces explicit interests and updates discovery preferences", async () => {
+    prismaMock.topic.findMany.mockResolvedValue([
+      {
+        id: "sport_cricket",
+        schemaType: "SPORT",
+      },
+    ]);
     prismaMock.userDiscoveryPreference.upsert.mockResolvedValue({
       userId: "user_1",
       preferredDifficulty: "MEDIUM",
@@ -112,10 +120,28 @@ describe("user interests and follows routes", () => {
     });
 
     const response = await putInterests(request as any);
+    const body = await response.json();
+
     expect(response.status).toBe(200);
     expect(prismaMock.userInterestPreference.deleteMany).toHaveBeenCalled();
-    expect(prismaMock.userInterestPreference.createMany).toHaveBeenCalled();
+    expect(prismaMock.userInterestPreference.createMany).toHaveBeenCalledWith({
+      data: [
+        {
+          userId: "user_1",
+          topicId: "sport_cricket",
+          source: "PROFILE",
+          strength: 1,
+        },
+      ],
+    });
     expect(prismaMock.userDiscoveryPreference.upsert).toHaveBeenCalled();
+    expect(body.data.savedInterests).toEqual([
+      expect.objectContaining({
+        topicId: "sport_cricket",
+        source: "PROFILE",
+      }),
+    ]);
+    expect(body.data.droppedTopicIds).toEqual([]);
   });
 
   it("returns explicit interests and discovery preferences", async () => {
@@ -188,7 +214,17 @@ describe("user interests and follows routes", () => {
       },
     ]);
     prismaMock.userTopicStats.findMany.mockResolvedValue([]);
-    prismaMock.userSearchQuery.findMany.mockResolvedValue([]);
+    prismaMock.userSearchQuery.findMany.mockResolvedValue([
+      {
+        searchQueryId: "search_query_1",
+        lastSearchedAt: new Date("2026-03-20T00:00:00.000Z"),
+        timesSearched: 4,
+        searchQuery: {
+          query: "mystery string",
+          context: "TOPIC",
+        },
+      },
+    ]);
     prismaMock.userDiscoveryPreference.findUnique.mockResolvedValue({
       preferredDifficulty: "MEDIUM",
       preferredPlayModes: ["STANDARD"],
@@ -199,16 +235,63 @@ describe("user interests and follows routes", () => {
 
     expect(response.status).toBe(200);
     expect(body.data.summary.topEntities[0]).toBe("India");
+    expect(body.data.inferred).toEqual([]);
   });
 
-  it("follows a typed topic", async () => {
+  it("drops invalid and non-followable interests and forces PROFILE source", async () => {
+    prismaMock.topic.findMany.mockResolvedValue([
+      {
+        id: "sport_cricket",
+        schemaType: "SPORT",
+      },
+    ]);
+    prismaMock.userDiscoveryPreference.upsert.mockResolvedValue({
+      userId: "user_1",
+      preferredDifficulty: null,
+      preferredPlayModes: [],
+    });
+
+    const request = new Request("http://localhost/api/users/me/interests", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        interests: [
+          { topicId: "sport_cricket", source: "ADMIN", strength: 0.9 },
+          { topicId: "topic_freeform", source: "PROFILE", strength: 0.8 },
+          { topicId: "missing_topic", source: "PROFILE", strength: 0.7 },
+        ],
+        preferences: {
+          preferredDifficulty: null,
+          preferredPlayModes: [],
+        },
+      }),
+    });
+
+    const response = await putInterests(request as any);
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(prismaMock.userInterestPreference.createMany).toHaveBeenCalledWith({
+      data: [
+        {
+          userId: "user_1",
+          topicId: "sport_cricket",
+          source: "PROFILE",
+          strength: 0.9,
+        },
+      ],
+    });
+    expect(body.data.droppedTopicIds).toEqual(["topic_freeform", "missing_topic"]);
+  });
+
+  it("follows a typed topic idempotently", async () => {
     prismaMock.topic.findUnique.mockResolvedValue({
       id: "team_india",
       schemaType: "SPORTS_TEAM",
       slug: "india-cricket-team",
       name: "India",
     });
-    prismaMock.userFollowedTopic.create.mockResolvedValue({
+    prismaMock.userFollowedTopic.upsert.mockResolvedValue({
       id: "follow_1",
       userId: "user_1",
       topicId: "team_india",
@@ -219,7 +302,36 @@ describe("user interests and follows routes", () => {
     });
 
     expect(response.status).toBe(200);
-    expect(prismaMock.userFollowedTopic.create).toHaveBeenCalled();
+    expect(prismaMock.userFollowedTopic.upsert).toHaveBeenCalledWith({
+      where: {
+        userId_topicId: {
+          userId: "user_1",
+          topicId: "team_india",
+        },
+      },
+      update: {},
+      create: {
+        userId: "user_1",
+        topicId: "team_india",
+      },
+    });
+  });
+
+  it("rejects follows for non-followable topics", async () => {
+    prismaMock.topic.findUnique.mockResolvedValue({
+      id: "topic_misc",
+      schemaType: "NONE",
+      slug: "misc",
+      name: "Misc",
+    });
+
+    const response = await followTopic({} as any, {
+      params: Promise.resolve({ id: "topic_misc" }),
+    });
+    const body = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(body.error).toMatch(/not followable/i);
   });
 
   it("unfollows a topic", async () => {

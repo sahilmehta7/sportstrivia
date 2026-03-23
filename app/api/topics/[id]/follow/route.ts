@@ -30,8 +30,15 @@ export async function POST(
       throw new BadRequestError("Topic is not followable");
     }
 
-    await prisma.userFollowedTopic.create({
-      data: {
+    await prisma.userFollowedTopic.upsert({
+      where: {
+        userId_topicId: {
+          userId: user.id,
+          topicId: topic.id,
+        },
+      },
+      update: {},
+      create: {
         userId: user.id,
         topicId: topic.id,
       },

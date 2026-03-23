@@ -57,6 +57,22 @@ const allowedRelationPairs = new Set<string>([
   "SPORTS_TEAM:RIVAL_OF:SPORTS_TEAM",
 ]);
 
+export function isAllowedTopicRelationPair(
+  fromSchemaType: TopicSchemaTypeValue,
+  relationType: TopicRelationTypeValue,
+  toSchemaType: TopicSchemaTypeValue
+): boolean {
+  if (fromSchemaType === "NONE" || toSchemaType === "NONE") {
+    return false;
+  }
+
+  if (relationType === "RELATED_TO") {
+    return true;
+  }
+
+  return allowedRelationPairs.has(`${fromSchemaType}:${relationType}:${toSchemaType}`);
+}
+
 export function normalizeAlternateNames(
   canonicalName: string,
   alternateNames: string[] | null | undefined
@@ -94,8 +110,7 @@ export function validateTopicRelation(input: RelationValidationInput): true {
     return true;
   }
 
-  const key = `${input.fromSchemaType}:${input.relationType}:${input.toSchemaType}`;
-  if (!allowedRelationPairs.has(key)) {
+  if (!isAllowedTopicRelationPair(input.fromSchemaType, input.relationType, input.toSchemaType)) {
     throw new TopicRelationValidationError("Invalid relation pairing");
   }
 

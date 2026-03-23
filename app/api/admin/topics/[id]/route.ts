@@ -10,7 +10,8 @@ import {
   sanitizeUrlList,
 } from "@/lib/topic-schema";
 import { TOPIC_SCHEMA_TYPES, type TopicSchemaTypeValue } from "@/lib/topic-schema-options";
-import { evaluateTopicEntityReadiness, normalizeAlternateNames } from "@/lib/topic-graph/topic-readiness.service";
+import { normalizeAlternateNames } from "@/lib/topic-graph/topic-readiness.service";
+import { syncTopicEntityReadiness } from "@/lib/topic-graph/topic-readiness.persistence";
 
 const topicUpdateSchema = z.object({
   name: z.string().min(2).optional(),
@@ -156,13 +157,6 @@ export async function PATCH(
     const schemaEntityData = parseTopicEntityData(nextSchemaType, rawEntityData);
     const schemaEntityDataValue =
       schemaEntityData === null ? Prisma.JsonNull : (schemaEntityData as Prisma.InputJsonValue);
-    const readiness = evaluateTopicEntityReadiness({
-      schemaType: nextSchemaType,
-      schemaCanonicalUrl,
-      schemaEntityData: schemaEntityData as Record<string, unknown> | null,
-      relations: [],
-    });
-
     if (requiresCanonicalUrl(nextSchemaType) && !schemaCanonicalUrl) {
       throw new Error("schemaCanonicalUrl is required when schemaType is not NONE");
     }
@@ -181,14 +175,6 @@ export async function PATCH(
       ...(validatedData.alternateNames !== undefined ? { alternateNames } : {}),
       ...(validatedData.schemaEntityData !== undefined || validatedData.schemaType !== undefined
         ? { schemaEntityData: schemaEntityDataValue }
-        : {}),
-      ...(validatedData.schemaEntityData !== undefined ||
-      validatedData.schemaType !== undefined ||
-      validatedData.schemaCanonicalUrl !== undefined
-        ? {
-            entityStatus: readiness.entityStatus,
-            entityValidatedAt: readiness.isReady ? new Date() : null,
-          }
         : {}),
       ...(validatedData.parentId !== undefined ? { level } : {}),
     };
@@ -214,6 +200,20 @@ export async function PATCH(
     // If level changed, update all descendants
     if (level !== existingTopic.level) {
       await updateDescendantLevels(id, level);
+    }
+
+    if (
+      validatedData.schemaEntityData !== undefined ||
+      validatedData.schemaType !== undefined ||
+      validatedData.schemaCanonicalUrl !== undefined
+    ) {
+      const readiness = await syncTopicEntityReadiness(id);
+
+      return successResponse({
+        ...topic,
+        entityStatus: readiness.entityStatus,
+        entityValidatedAt: readiness.isReady ? new Date().toISOString() : null,
+      });
     }
 
     return successResponse(topic);

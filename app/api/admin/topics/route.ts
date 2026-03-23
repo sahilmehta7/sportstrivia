@@ -10,7 +10,8 @@ import {
   sanitizeUrlList,
 } from "@/lib/topic-schema";
 import { TOPIC_SCHEMA_TYPES, type TopicSchemaTypeValue } from "@/lib/topic-schema-options";
-import { evaluateTopicEntityReadiness, normalizeAlternateNames } from "@/lib/topic-graph/topic-readiness.service";
+import { normalizeAlternateNames } from "@/lib/topic-graph/topic-readiness.service";
+import { syncTopicEntityReadiness } from "@/lib/topic-graph/topic-readiness.persistence";
 
 const topicSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
@@ -118,13 +119,6 @@ export async function POST(request: NextRequest) {
     const schemaEntityDataValue =
       schemaEntityData === null ? Prisma.JsonNull : (schemaEntityData as Prisma.InputJsonValue);
     const schemaCanonicalUrl = validatedData.schemaCanonicalUrl?.trim() || null;
-    const readiness = evaluateTopicEntityReadiness({
-      schemaType,
-      schemaCanonicalUrl,
-      schemaEntityData: schemaEntityData as Record<string, unknown> | null,
-      relations: [],
-    });
-
     if (requiresCanonicalUrl(schemaType) && !schemaCanonicalUrl) {
       throw new BadRequestError("schemaCanonicalUrl is required when schemaType is not NONE");
     }
@@ -174,8 +168,8 @@ export async function POST(request: NextRequest) {
         schemaSameAs,
         alternateNames,
         schemaEntityData: schemaEntityDataValue,
-        entityStatus: readiness.entityStatus,
-        entityValidatedAt: readiness.isReady ? new Date() : null,
+        entityStatus: "DRAFT",
+        entityValidatedAt: null,
       },
       include: {
         parent: {
@@ -205,7 +199,16 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    return successResponse(topic, 201);
+    const readiness = await syncTopicEntityReadiness(topic.id);
+
+    return successResponse(
+      {
+        ...topic,
+        entityStatus: readiness.entityStatus,
+        entityValidatedAt: readiness.isReady ? new Date().toISOString() : null,
+      },
+      201
+    );
   } catch (error) {
     return handleError(error);
   }

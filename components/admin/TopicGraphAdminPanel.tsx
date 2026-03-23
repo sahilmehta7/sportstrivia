@@ -6,6 +6,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import {
+  isAllowedTopicRelationPair,
+  type TopicRelationTypeValue,
+} from "@/lib/topic-graph/topic-readiness.service";
+import { type TopicSchemaTypeValue } from "@/lib/topic-schema-options";
 
 const RELATION_TYPES = [
   "BELONGS_TO_SPORT",
@@ -21,6 +26,7 @@ type TopicOption = {
   id: string;
   name: string;
   slug: string;
+  schemaType: TopicSchemaTypeValue;
 };
 
 type TopicGraphAdminPanelProps = {
@@ -35,7 +41,14 @@ export function TopicGraphAdminPanel({ topicId, topics }: TopicGraphAdminPanelPr
   const [relationType, setRelationType] =
     useState<(typeof RELATION_TYPES)[number]>("BELONGS_TO_SPORT");
   const [relatedTopicId, setRelatedTopicId] = useState("");
-  const [relations, setRelations] = useState<any[]>([]);
+  const [relations, setRelations] = useState<
+    Array<{
+      id: string;
+      relationType: TopicRelationTypeValue;
+      fromTopic: TopicOption;
+      toTopic: TopicOption;
+    }>
+  >([]);
   const [readiness, setReadiness] = useState<{
     isReady: boolean;
     entityStatus: string;
@@ -46,6 +59,19 @@ export function TopicGraphAdminPanel({ topicId, topics }: TopicGraphAdminPanelPr
     () => topics.filter((topic) => topic.id !== topicId),
     [topicId, topics]
   );
+  const currentTopic = useMemo(
+    () => topics.find((topic) => topic.id === topicId) ?? null,
+    [topicId, topics]
+  );
+  const filteredTopicOptions = useMemo(() => {
+    if (!currentTopic) {
+      return topicOptions;
+    }
+
+    return topicOptions.filter((topic) =>
+      isAllowedTopicRelationPair(currentTopic.schemaType, relationType, topic.schemaType)
+    );
+  }, [currentTopic, relationType, topicOptions]);
 
   const loadPanelData = async () => {
     try {
@@ -79,6 +105,12 @@ export function TopicGraphAdminPanel({ topicId, topics }: TopicGraphAdminPanelPr
     if (!topicId) return;
     loadPanelData();
   }, [topicId]);
+
+  useEffect(() => {
+    if (relatedTopicId && !filteredTopicOptions.some((topic) => topic.id === relatedTopicId)) {
+      setRelatedTopicId("");
+    }
+  }, [filteredTopicOptions, relatedTopicId]);
 
   const handleCreateRelation = async () => {
     if (!relatedTopicId) return;
@@ -199,9 +231,9 @@ export function TopicGraphAdminPanel({ topicId, topics }: TopicGraphAdminPanelPr
               className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
             >
               <option value="">Select a topic</option>
-              {topicOptions.map((topic) => (
+              {filteredTopicOptions.map((topic) => (
                 <option key={topic.id} value={topic.id}>
-                  {topic.name}
+                  {topic.name} ({topic.schemaType})
                 </option>
               ))}
             </select>
@@ -227,7 +259,9 @@ export function TopicGraphAdminPanel({ topicId, topics }: TopicGraphAdminPanelPr
                 <div className="space-y-1">
                   <p className="text-sm font-medium">{relation.relationType}</p>
                   <p className="text-xs text-muted-foreground">
-                    {relation.fromTopicId} → {relation.toTopicId}
+                    {relation.fromTopic.name} ({relation.fromTopic.schemaType}) / {relation.fromTopic.slug}
+                    {" -> "}
+                    {relation.toTopic.name} ({relation.toTopic.schemaType}) / {relation.toTopic.slug}
                   </p>
                 </div>
                 <Button
@@ -235,6 +269,7 @@ export function TopicGraphAdminPanel({ topicId, topics }: TopicGraphAdminPanelPr
                   variant="outline"
                   size="sm"
                   onClick={() => handleDeleteRelation(relation.id)}
+                  aria-label={`Remove relation ${relation.relationType} to ${relation.toTopic.name}`}
                 >
                   Remove
                 </Button>

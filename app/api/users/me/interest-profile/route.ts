@@ -7,7 +7,7 @@ export async function GET() {
   try {
     const user = await requireAuth();
 
-    const [explicitInterests, follows, topicStats, searchSignals, preferences] = await Promise.all([
+    const [explicitInterests, follows, topicStats, preferences] = await Promise.all([
       prisma.userInterestPreference.findMany({
         where: { userId: user.id },
         include: {
@@ -47,12 +47,6 @@ export async function GET() {
           },
         },
       }),
-      prisma.userSearchQuery.findMany({
-        where: { userId: user.id },
-        include: {
-          searchQuery: true,
-        },
-      }),
       prisma.userDiscoveryPreference.findUnique({
         where: { userId: user.id },
       }),
@@ -83,16 +77,7 @@ export async function GET() {
         successRate: entry.successRate,
         lastAnsweredAt: entry.lastAnsweredAt?.toISOString() ?? null,
       })),
-      searchSignals: searchSignals
-        .filter((entry) => entry.searchQuery.context === "TOPIC")
-        .map((entry) => ({
-          topicId: entry.searchQueryId,
-          slug: entry.searchQuery.query,
-          name: entry.searchQuery.query,
-          schemaType: "SPORT" as const,
-          timesSearched: entry.timesSearched,
-          lastSearchedAt: entry.lastSearchedAt?.toISOString() ?? null,
-        })),
+      searchSignals: [],
       preferences: {
         preferredDifficulty: preferences?.preferredDifficulty ?? null,
         preferredPlayModes: preferences?.preferredPlayModes ?? [],

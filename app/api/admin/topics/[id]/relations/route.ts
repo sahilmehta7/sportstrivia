@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/auth-helpers";
 import { NotFoundError, handleError, successResponse } from "@/lib/errors";
 import { validateTopicRelation, type TopicRelationTypeValue } from "@/lib/topic-graph/topic-readiness.service";
+import { syncTopicEntityReadiness } from "@/lib/topic-graph/topic-readiness.persistence";
 import { z } from "zod";
 
 const relationSchema = z.object({
@@ -21,6 +22,24 @@ export async function GET(
     const relations = await prisma.topicRelation.findMany({
       where: {
         OR: [{ fromTopicId: id }, { toTopicId: id }],
+      },
+      include: {
+        fromTopic: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+            schemaType: true,
+          },
+        },
+        toTopic: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+            schemaType: true,
+          },
+        },
       },
     });
 
@@ -72,6 +91,7 @@ export async function POST(
         relationType: body.relationType,
       },
     });
+    await syncTopicEntityReadiness(fromTopic.id);
 
     return successResponse(relation, 201);
   } catch (error) {
