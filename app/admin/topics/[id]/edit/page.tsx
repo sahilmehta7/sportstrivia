@@ -30,6 +30,7 @@ import {
 import { cn } from "@/lib/utils";
 import { TOPIC_SCHEMA_TYPE_LABELS, type TopicSchemaTypeValue } from "@/lib/topic-schema-options";
 import { DEFAULT_QUALITY_GATE } from "@/lib/services/topic-content/types";
+import { TopicGraphAdminPanel } from "@/components/admin/TopicGraphAdminPanel";
 import {
   Dialog,
   DialogContent,
@@ -717,6 +718,10 @@ export default function EditTopicPage({ params }: EditTopicPageProps) {
           </div>
         }
       />
+
+      <div className="mb-6">
+        <TopicGraphAdminPanel topicId={topicId} topics={topics} />
+      </div>
 
       {!canDelete && (
         <div className="mb-6 p-4 bg-yellow-50 dark:bg-yellow-950 border border-yellow-200 dark:border-yellow-800 rounded-lg">
