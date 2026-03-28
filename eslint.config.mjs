@@ -55,7 +55,9 @@ const config = [
   // Node.js globals for server-side code
   {
     files: [
+      "scripts/**/*.{js,mjs,ts}",
       "scripts/**/*.{js,ts}",
+      "**/*.mjs",
       "vendor/**/*.js",
       "prisma/**/*.ts",
       "app/**/*.{ts,tsx}",
@@ -116,6 +118,15 @@ const config = [
     },
   },
   {
+    files: ["scripts/play-store/capture-screenshots.mjs"],
+    languageOptions: {
+      globals: {
+        ...globals.node,
+        ...globals.browser,
+      },
+    },
+  },
+  {
     files: ["**/*.test.{ts,tsx,js,jsx}", "**/__tests__/**/*.{ts,tsx,js,jsx}"],
     languageOptions: {
       globals: {
@@ -126,5 +137,3 @@ const config = [
 ];
 
 export default config;
-
-

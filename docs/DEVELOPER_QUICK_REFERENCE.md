@@ -11,7 +11,7 @@
 npm install
 cp .env.example .env.local     # fill Supabase, OAuth, service role secrets
 npx prisma generate
-npx prisma migrate dev
+npm run prisma:migrate:dev
 npm run prisma:seed
 npm run dev
 ```
@@ -72,6 +72,8 @@ Full breakdown lives in `docs/API_REFERENCE.md`; quick commands in `docs/API_QUI
 npm run lint                   # ESLint (strict, zero warnings)
 npm test                       # Jest + Supertest suite
 npm run test:watch             # Watch mode
+npm run prisma:migrate         # Apply committed migrations to shared/remote DBs
+npm run prisma:migrate:dev     # Create/apply migrations on a local dev DB
 npm run prisma:studio          # Inspect database
 npm run scripts:backfill:emojis  # Populate topic emoji defaults
 ```

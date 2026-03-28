@@ -58,7 +58,7 @@ Modern multi-player sports trivia experience built with Next.js 15, Prisma, and 
 3. **Setup database**
    ```bash
    npx prisma generate
-   npx prisma migrate dev
+   npm run prisma:migrate:dev
    npm run prisma:seed
    ```
 4. **Run the app**
@@ -121,7 +121,9 @@ npm run lint                # ESLint
 npm test                    # Jest test suite
 npm run test:watch          # Jest watch mode
 npm run prisma:generate     # Generate Prisma client
-npm run prisma:migrate      # Run migrations (dev)
+npm run prisma:migrate      # Apply committed migrations to shared/remote DBs
+npm run prisma:migrate:dev  # Create/apply migrations on a local dev DB
+npm run prisma:migrate:status  # Show migration status
 npm run prisma:studio       # Open Prisma Studio
 npm run prisma:seed         # Seed sample data
 npm run scripts:backfill:emojis  # Populate topic emoji defaults
