@@ -1,4 +1,5 @@
 import { NextRequest } from "next/server";
+import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/auth-helpers";
 import { quizSchema } from "@/lib/validations/quiz.schema";
@@ -182,6 +183,10 @@ export async function POST(request: NextRequest) {
         },
       },
     });
+
+    if (quiz.isPublished && quiz.status === "PUBLISHED") {
+      revalidatePath("/sitemap.xml");
+    }
 
     return successResponse(quiz, 201);
   } catch (error) {

@@ -218,7 +218,7 @@ export default function SettingsPage() {
 
       toast({
         title: "Sitemap regenerated!",
-        description: "The sitemap has been successfully regenerated",
+        description: "Sitemap cache invalidated. Search engines will see fresh content on next fetch.",
       });
     } catch (error: any) {
       toast({
@@ -420,7 +420,7 @@ export default function SettingsPage() {
               Sitemap Management
             </CardTitle>
             <CardDescription>
-              Regenerate the sitemap to update search engine indexing
+              Auto-refresh runs hourly and on publish actions. Use manual refresh as a backup.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -430,7 +430,7 @@ export default function SettingsPage() {
               <AlertDescription>
                 <p className="text-sm">
                   The sitemap helps search engines discover and index all your quizzes, topics, and pages. 
-                  Regenerate it after adding new content or making significant changes to your site structure.
+                  It refreshes automatically every hour and when content is published. Use manual regeneration if you need an immediate cache invalidation.
                 </p>
               </AlertDescription>
             </Alert>
@@ -439,7 +439,7 @@ export default function SettingsPage() {
               <div>
                 <p className="text-sm font-medium">Current Status</p>
                 <p className="text-xs text-muted-foreground">
-                  Sitemap is automatically generated from your published content
+                  Auto refresh: hourly + on publish. Manual button invalidates sitemap cache now.
                 </p>
               </div>
               <Button

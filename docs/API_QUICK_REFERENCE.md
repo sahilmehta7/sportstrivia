@@ -131,7 +131,7 @@ Manage pools:
 - Track AI jobs: `GET /api/admin/ai/tasks` / `GET /api/admin/ai/tasks/task-id`
 - Upload image: `POST /api/admin/upload/image` (form-data: `file`)
 - Delete image: `DELETE /api/admin/upload/image?path=...`
-- Build sitemap: `POST /api/admin/sitemap`
+- Refresh sitemap cache now (manual): `POST /api/admin/sitemap`
 
 ---
 

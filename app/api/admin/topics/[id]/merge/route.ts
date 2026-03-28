@@ -1,5 +1,7 @@
 import { NextRequest } from "next/server";
+import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/auth-helpers";
+import { prisma } from "@/lib/db";
 import { handleError, successResponse } from "@/lib/errors";
 import { mergeTopics, getDescendantTopicIds } from "@/lib/services/topic.service";
 import { z } from "zod";
@@ -30,7 +32,16 @@ export async function POST(
             throw new Error("Cannot merge a topic into one of its descendants");
         }
 
+        const sourceTopic = await prisma.topic.findUnique({
+            where: { id: sourceId },
+            select: { indexEligible: true },
+        });
+
         await mergeTopics(sourceId, destinationId);
+
+        if (sourceTopic?.indexEligible) {
+            revalidatePath("/sitemap.xml");
+        }
 
         return successResponse({ message: "Topics merged successfully" });
     } catch (error) {

@@ -1,4 +1,5 @@
 import { NextRequest } from "next/server";
+import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/auth-helpers";
 import { quizUpdateSchema } from "@/lib/validations/quiz.schema";
@@ -16,6 +17,10 @@ function toPrismaAttemptResetPeriod(
   return PrismaAttemptResetPeriod[
     value as keyof typeof PrismaAttemptResetPeriod
   ];
+}
+
+function isSitemapEligible(isPublished: boolean, status: string): boolean {
+  return isPublished && status === "PUBLISHED";
 }
 
 // GET /api/admin/quizzes/[id] - Get single quiz
@@ -146,6 +151,8 @@ export async function PUT(
     if (!existingQuiz) {
       throw new NotFoundError("Quiz not found");
     }
+
+    const wasSitemapEligible = isSitemapEligible(existingQuiz.isPublished, existingQuiz.status);
 
     // Generate unique slug if title changed
     let slug = existingQuiz.slug;
@@ -289,6 +296,11 @@ export async function PUT(
         return updatedQuiz;
       });
 
+      const isNowSitemapEligible = isSitemapEligible(finalQuiz.isPublished, finalQuiz.status);
+      if (wasSitemapEligible !== isNowSitemapEligible || (isNowSitemapEligible && finalQuiz.slug !== existingQuiz.slug)) {
+        revalidatePath("/sitemap.xml");
+      }
+
       return successResponse(finalQuiz);
     }
 
@@ -304,6 +316,11 @@ export async function PUT(
         },
       },
     });
+
+    const isNowSitemapEligible = isSitemapEligible(quiz.isPublished, quiz.status);
+    if (wasSitemapEligible !== isNowSitemapEligible || (isNowSitemapEligible && quiz.slug !== existingQuiz.slug)) {
+      revalidatePath("/sitemap.xml");
+    }
 
     return successResponse(quiz);
   } catch (error) {
@@ -328,6 +345,8 @@ export async function DELETE(
       throw new NotFoundError("Quiz not found");
     }
 
+    const wasSitemapEligible = isSitemapEligible(quiz.isPublished, quiz.status);
+
     // Soft delete by archiving
     await prisma.quiz.update({
       where: { id },
@@ -336,6 +355,10 @@ export async function DELETE(
         isPublished: false,
       },
     });
+
+    if (wasSitemapEligible) {
+      revalidatePath("/sitemap.xml");
+    }
 
     return successResponse({ message: "Quiz archived successfully" });
   } catch (error) {

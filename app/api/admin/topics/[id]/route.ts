@@ -1,4 +1,5 @@
 import { NextRequest } from "next/server";
+import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/auth-helpers";
 import { handleError, successResponse, NotFoundError } from "@/lib/errors";
@@ -197,6 +198,10 @@ export async function PATCH(
       },
     });
 
+    if (existingTopic.indexEligible && topic.slug !== existingTopic.slug) {
+      revalidatePath("/sitemap.xml");
+    }
+
     // If level changed, update all descendants
     if (level !== existingTopic.level) {
       await updateDescendantLevels(id, level);
@@ -293,6 +298,10 @@ export async function DELETE(
     await prisma.topic.delete({
       where: { id },
     });
+
+    if (topic.indexEligible) {
+      revalidatePath("/sitemap.xml");
+    }
 
     return successResponse({ message: "Topic deleted successfully" });
   } catch (error) {

@@ -1,4 +1,5 @@
 import { NextRequest } from "next/server";
+import { revalidatePath } from "next/cache";
 import { requireAuth } from "@/lib/auth-helpers";
 import { isAdmin } from "@/lib/auth-helpers";
 import { handleError, successResponse, ForbiddenError } from "@/lib/errors";
@@ -14,12 +15,10 @@ export async function POST(_request: NextRequest) {
       throw new ForbiddenError("Only admins can regenerate the sitemap");
     }
 
-    // In Next.js, sitemap is generated at build time or on-demand
-    // We'll just return success and let Next.js handle the generation
-    // The sitemap will be regenerated on the next request
+    revalidatePath("/sitemap.xml");
     
     return successResponse({
-      message: "Sitemap regeneration triggered successfully",
+      message: "Sitemap cache invalidated successfully",
       timestamp: new Date().toISOString(),
     });
   } catch (error) {

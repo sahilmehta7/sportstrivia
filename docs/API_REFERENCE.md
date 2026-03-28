@@ -181,7 +181,7 @@ All require `role === ADMIN`. These routes live under `/api/admin/**`.
 | POST | `/api/admin/ai/generate-quiz` | Kick off AI quiz generation task |
 | GET | `/api/admin/ai/tasks` | List background AI tasks |
 | GET | `/api/admin/ai/tasks/[id]` | Fetch task detail/status |
-| POST | `/api/admin/sitemap` | Generate sitemap |
+| POST | `/api/admin/sitemap` | Invalidate sitemap cache (manual refresh trigger) |
 | POST | `/api/admin/upload/image` | Upload image (Supabase storage) |
 | DELETE | `/api/admin/upload/image` | Remove uploaded image |
 
