@@ -1253,7 +1253,7 @@ export default function EditTopicPage({ params }: EditTopicPageProps) {
                   Selected claims for publish: {contentPreview.citationCount}
                 </div>
                 {qualityFailures.length > 0 && (
-                  <div className="rounded-md border border-amber-500/40 bg-amber-500/10 p-2 text-amber-100">
+                  <div className="rounded-md border border-amber-200 bg-amber-50 p-2 text-amber-900 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-100">
                     <div className="font-medium mb-1">Auto-rejected because:</div>
                     <ul className="list-disc pl-5 space-y-1">
                       {qualityFailures.map((reason) => (
@@ -1313,7 +1313,7 @@ export default function EditTopicPage({ params }: EditTopicPageProps) {
             )}
 
             {contentStatus && !contentStatus.hasReadySnapshot && (
-              <div className="rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-sm text-amber-100">
+              <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-100">
                 No READY snapshot is available yet. Run Ingest and Generate first, then publish.
               </div>
             )}
