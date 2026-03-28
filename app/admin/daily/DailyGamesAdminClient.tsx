@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Plus, Calendar, Trash2, Edit2, RefreshCw, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -64,6 +65,7 @@ const gameTypeBadgeVariants: Record<DailyGameType, string> = {
 };
 
 export function DailyGamesAdminClient({ initialGames }: DailyGamesAdminClientProps) {
+    const router = useRouter();
     const [games, setGames] = useState<DailyGame[]>(initialGames);
     const [isLoading, setIsLoading] = useState(false);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -77,6 +79,10 @@ export function DailyGamesAdminClient({ initialGames }: DailyGamesAdminClientPro
         targetValue: '',
         clues: '',
     });
+
+    useEffect(() => {
+        setGames(initialGames);
+    }, [initialGames]);
 
     const resetForm = () => {
         setFormData({
@@ -146,22 +152,13 @@ export function DailyGamesAdminClient({ initialGames }: DailyGamesAdminClientPro
                 throw new Error(data.error || 'Failed to save game');
             }
 
-            const { game } = await response.json();
-
-            setGames(prev => {
-                const existing = prev.findIndex(g => g.date === game.date);
-                if (existing >= 0) {
-                    const updated = [...prev];
-                    updated[existing] = game;
-                    return updated;
-                }
-                return [...prev, game].sort((a, b) => a.date.localeCompare(b.date));
-            });
+            await response.json();
 
             toast({
                 title: 'Success',
                 description: editingGame ? 'Game updated' : 'Game created',
             });
+            router.refresh();
 
             setIsDialogOpen(false);
             resetForm();
@@ -190,12 +187,11 @@ export function DailyGamesAdminClient({ initialGames }: DailyGamesAdminClientPro
                 throw new Error('Failed to delete game');
             }
 
-            setGames(prev => prev.filter(g => g.id !== game.id));
-
             toast({
                 title: 'Deleted',
                 description: `Game for ${game.date} has been deleted`,
             });
+            router.refresh();
         } catch {
             toast({
                 title: 'Error',
@@ -222,10 +218,7 @@ export function DailyGamesAdminClient({ initialGames }: DailyGamesAdminClientPro
                 throw new Error('Failed to auto-schedule');
             }
 
-            // Refresh games list
-            const gamesResponse = await fetch('/api/admin/daily');
-            const { games: newGames } = await gamesResponse.json();
-            setGames(newGames);
+            router.refresh();
 
             toast({
                 title: 'Success',

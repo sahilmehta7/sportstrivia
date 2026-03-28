@@ -682,6 +682,25 @@ export default function EditTopicPage({ params }: EditTopicPageProps) {
     );
   }
 
+  if (!currentTopic) {
+    return (
+      <div>
+        <PageHeader
+          title="Topic not found"
+          description="The requested topic could not be loaded."
+          action={
+            <Link href="/admin/topics">
+              <Button variant="outline">
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back
+              </Button>
+            </Link>
+          }
+        />
+      </div>
+    );
+  }
+
   const canDelete =
     currentTopic &&
     currentTopic._count.questions === 0 &&
@@ -723,7 +742,7 @@ export default function EditTopicPage({ params }: EditTopicPageProps) {
         <TopicGraphAdminPanel topicId={topicId} topics={topics} />
       </div>
 
-      {!canDelete && (
+      {currentTopic && !canDelete && (
         <div className="mb-6 p-4 bg-yellow-50 dark:bg-yellow-950 border border-yellow-200 dark:border-yellow-800 rounded-lg">
           <p className="text-sm font-medium">⚠️ This topic cannot be deleted because:</p>
           <ul className="text-sm mt-2 space-y-1 list-disc list-inside">

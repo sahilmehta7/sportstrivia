@@ -50,6 +50,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
+import { AdminPaginationClient } from "@/components/admin/AdminPaginationClient";
 
 interface TopicNode {
   id: string;
@@ -94,6 +95,12 @@ interface AdminTopicsClientProps {
     matched: number;
     directMatches: number;
   };
+  pagination: {
+    page: number;
+    limit: number;
+    totalRoots: number;
+    totalPages: number;
+  };
 }
 
 function collectExpandableNodeIds(nodes: TopicNode[]): Set<string> {
@@ -118,6 +125,7 @@ export function AdminTopicsClient({
   filters,
   filterOptions,
   counts,
+  pagination,
 }: AdminTopicsClientProps) {
   const { toast } = useToast();
   const router = useRouter();
@@ -143,6 +151,10 @@ export function AdminTopicsClient({
     Boolean(filters.search) ||
     (filters.schema.length > 0 && filters.schema !== "all") ||
     Boolean(filters.level);
+  const hasPrevious = pagination.page > 1;
+  const hasNext = pagination.page < pagination.totalPages;
+  const startRoot = pagination.totalRoots === 0 ? 0 : (pagination.page - 1) * pagination.limit + 1;
+  const endRoot = pagination.totalRoots === 0 ? 0 : startRoot + topics.length - 1;
 
   useEffect(() => {
     setSearch(filters.search);
@@ -485,6 +497,11 @@ export function AdminTopicsClient({
                 </>
               )}
             </Button>
+            <Link href="/admin/topics/inference">
+              <Button variant="outline">
+                Inference Workflow
+              </Button>
+            </Link>
             <Link href="/admin/topics/new">
               <Button>
                 <Plus className="mr-2 h-4 w-4" />
@@ -607,6 +624,23 @@ export function AdminTopicsClient({
             )}
           </TableBody>
         </Table>
+      </div>
+
+      <div className="mt-6 flex items-center justify-between text-sm text-muted-foreground">
+        <div>
+          Showing roots{" "}
+          <span className="font-medium">
+            {startRoot}-{endRoot}
+          </span>{" "}
+          of <span className="font-medium">{pagination.totalRoots}</span>
+        </div>
+        <AdminPaginationClient
+          currentPage={pagination.page}
+          totalPages={pagination.totalPages}
+          hasPrevious={hasPrevious}
+          hasNext={hasNext}
+          variant="client"
+        />
       </div>
 
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>

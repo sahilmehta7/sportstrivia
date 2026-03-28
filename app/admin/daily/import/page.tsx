@@ -179,7 +179,7 @@ FIELD`;
           <CardHeader>
             <CardTitle>Import Settings</CardTitle>
             <CardDescription>
-              Words must be letters only (A-Z). Optional clues format: <span className="font-mono">WORD|{"{"}"hint":"...{"}"}</span>.
+              Words must be letters only (A-Z). Optional clues format: <span className="font-mono">WORD|{"{"}&quot;hint&quot;:&quot;...&quot;{"}"}</span>.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">

@@ -36,6 +36,14 @@ export default async function TopicsPage({ searchParams }: TopicsPageProps) {
     levelParam.length > 0 && Number.isInteger(parsedLevel) && parsedLevel >= 0
       ? parsedLevel
       : undefined;
+  const page = Math.max(
+    1,
+    Number(typeof params?.page === "string" ? params.page : "1") || 1
+  );
+  const limit = Math.min(
+    100,
+    Math.max(1, Number(typeof params?.limit === "string" ? params.limit : "20") || 20)
+  );
 
   // Fetch all topics once; filtering is done in-memory so ancestor context is preserved.
   const allTopics = await prisma.topic.findMany({
@@ -66,10 +74,15 @@ export default async function TopicsPage({ searchParams }: TopicsPageProps) {
       level,
     }
   );
+  const totalRoots = rootTopics.length;
+  const totalPages = Math.max(1, Math.ceil(totalRoots / limit));
+  const safePage = Math.min(page, totalPages);
+  const skip = (safePage - 1) * limit;
+  const pagedRootTopics = rootTopics.slice(skip, skip + limit);
 
   return (
     <AdminTopicsClient
-      topics={rootTopics}
+      topics={pagedRootTopics}
       allTopics={allTopics.map((topic) => ({
         id: topic.id,
         name: topic.name,
@@ -88,6 +101,12 @@ export default async function TopicsPage({ searchParams }: TopicsPageProps) {
         total: allTopics.length,
         matched: includedCount,
         directMatches: directMatchCount,
+      }}
+      pagination={{
+        page: safePage,
+        limit,
+        totalRoots,
+        totalPages,
       }}
     />
   );

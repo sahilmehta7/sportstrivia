@@ -39,12 +39,21 @@ export function MainNavigation() {
   const fetchUnreadCount = useCallback(async () => {
     try {
       const response = await fetch("/api/notifications?unreadOnly=true&limit=1");
-      const result = await response.json();
+      const raw = await response.text();
+      if (!raw) {
+        setUnreadCount(0);
+        return;
+      }
+
+      const result = JSON.parse(raw);
       if (response.ok) {
-        setUnreadCount(result.data?.unreadCount || 0);
+        setUnreadCount(result?.data?.unreadCount || 0);
+      } else {
+        setUnreadCount(0);
       }
     } catch (error) {
       console.error("Failed to fetch notifications:", error);
+      setUnreadCount(0);
     }
   }, []);
 

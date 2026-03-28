@@ -11,12 +11,7 @@ interface AdminPaginationClientProps {
   hasPrevious: boolean;
   hasNext: boolean;
   variant?: "client" | "server";
-  filterParams?: {
-    search?: string;
-    topicId?: string;
-    difficulty?: string;
-    limit?: string;
-  };
+  filterParams?: Record<string, string | undefined>;
 }
 
 export function AdminPaginationClient({
@@ -52,10 +47,9 @@ export function AdminPaginationClient({
   // Server variant - use Link components
   const buildPageLink = (targetPage: number) => {
     const params = new URLSearchParams();
-    if (filterParams.search) params.set("search", filterParams.search);
-    if (filterParams.topicId) params.set("topicId", filterParams.topicId);
-    if (filterParams.difficulty) params.set("difficulty", filterParams.difficulty);
-    if (filterParams.limit) params.set("limit", filterParams.limit);
+    for (const [key, value] of Object.entries(filterParams)) {
+      if (value) params.set(key, value);
+    }
     params.set("page", targetPage.toString());
     return `?${params.toString()}`;
   };
@@ -78,4 +72,3 @@ export function AdminPaginationClient({
     </div>
   );
 }
-

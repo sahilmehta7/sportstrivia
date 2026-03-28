@@ -7,6 +7,7 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { AdminDataTable } from "@/components/admin/data-table/AdminDataTable";
 import { AdminFilterForm } from "@/components/admin/data-table/AdminFilterForm";
+import { AdminPaginationClient } from "@/components/admin/AdminPaginationClient";
 import { FeaturedToggleButton } from "@/components/admin/FeaturedToggleButton";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { InstagramStoryTeaserMenu } from "@/components/shared/InstagramStoryTeaserMenu";
@@ -49,6 +50,14 @@ export default async function QuizzesPage({ searchParams }: QuizzesPageProps) {
   const sportFilter = typeof params?.sport === "string" ? params.sport : "";
   const featuredFilter = typeof params?.featured === "string" ? params.featured : "";
   const recurringFilter = typeof params?.recurringType === "string" ? params.recurringType : "";
+  const page = Math.max(
+    1,
+    Number(typeof params?.page === "string" ? params.page : "1") || 1
+  );
+  const limit = Math.min(
+    100,
+    Math.max(1, Number(typeof params?.limit === "string" ? params.limit : "20") || 20)
+  );
 
   const where: Prisma.QuizWhereInput = {};
 
@@ -92,10 +101,17 @@ export default async function QuizzesPage({ searchParams }: QuizzesPageProps) {
     where.recurringType = recurringFilter as RecurringType;
   }
 
+  const total = await prisma.quiz.count({ where });
+  const totalPages = Math.max(1, Math.ceil(total / limit));
+  const safePage = Math.min(page, totalPages);
+  const skip = (safePage - 1) * limit;
+
   // Fetch data in parallel
   const [quizzes, topics, sports] = await Promise.all([
     prisma.quiz.findMany({
       where,
+      skip,
+      take: limit,
       orderBy: { createdAt: "desc" },
       include: {
         _count: {
@@ -131,6 +147,18 @@ export default async function QuizzesPage({ searchParams }: QuizzesPageProps) {
   const uniqueSports: string[] = Array.from(
     new Set(sports.map((s) => s.sport).filter(Boolean))
   ) as string[];
+  const hasPrevious = safePage > 1;
+  const hasNext = safePage < totalPages;
+  const filterParams = {
+    search: search || undefined,
+    topicId: topicFilter || undefined,
+    difficulty: difficultyFilter || undefined,
+    status: statusFilter || undefined,
+    sport: sportFilter || undefined,
+    featured: featuredFilter || undefined,
+    recurringType: recurringFilter || undefined,
+    limit: limit.toString(),
+  };
 
   return (
     <div>
@@ -167,10 +195,12 @@ export default async function QuizzesPage({ searchParams }: QuizzesPageProps) {
           <input type="hidden" name="sport" value={sportFilter} />
           <input type="hidden" name="featured" value={featuredFilter} />
           <input type="hidden" name="recurringType" value={recurringFilter} />
+          <input type="hidden" name="page" value="1" />
+          <input type="hidden" name="limit" value={limit} />
           <div className="flex items-end gap-2">
             <Button type="submit">Search</Button>
             {search && (
-              <Link href="/admin/quizzes">
+              <Link href={`/admin/quizzes?limit=${limit}`}>
                 <Button type="button" variant="outline">
                   Clear
                 </Button>
@@ -182,6 +212,8 @@ export default async function QuizzesPage({ searchParams }: QuizzesPageProps) {
 
       <AdminFilterForm method="get" action="/admin/quizzes" className="md:grid-cols-4">
         <input type="hidden" name="search" value={search} />
+        <input type="hidden" name="page" value="1" />
+        <input type="hidden" name="limit" value={limit} />
 
         <div className="space-y-2">
           <label htmlFor="topicId" className="text-sm font-medium">
@@ -221,7 +253,7 @@ export default async function QuizzesPage({ searchParams }: QuizzesPageProps) {
 
         <div className="flex items-end gap-2">
           <Button type="submit">Apply</Button>
-          <Link href="/admin/quizzes">
+          <Link href={`/admin/quizzes?limit=${limit}`}>
             <Button type="button" variant="outline">
               Reset
             </Button>
@@ -399,6 +431,24 @@ export default async function QuizzesPage({ searchParams }: QuizzesPageProps) {
           );
         })}
       </AdminDataTable>
+
+      <div className="mt-6 flex items-center justify-between text-sm text-muted-foreground">
+        <div>
+          Showing{" "}
+          <span className="font-medium">
+            {quizzes.length === 0 ? 0 : skip + 1}-{skip + quizzes.length}
+          </span>{" "}
+          of <span className="font-medium">{total}</span>
+        </div>
+        <AdminPaginationClient
+          currentPage={safePage}
+          totalPages={totalPages}
+          hasPrevious={hasPrevious}
+          hasNext={hasNext}
+          variant="server"
+          filterParams={filterParams}
+        />
+      </div>
     </div>
   );
 }

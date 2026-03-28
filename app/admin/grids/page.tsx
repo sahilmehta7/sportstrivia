@@ -11,11 +11,32 @@ import {
     TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { AdminPaginationClient } from "@/components/admin/AdminPaginationClient";
 
 export const dynamic = "force-dynamic";
 
-export default async function GridsAdminPage() {
+interface GridsAdminPageProps {
+    searchParams?: Promise<Record<string, string | string[] | undefined>>;
+}
+
+export default async function GridsAdminPage({ searchParams }: GridsAdminPageProps) {
+    const params = await searchParams;
+    const page = Math.max(
+        1,
+        Number(typeof params?.page === "string" ? params.page : "1") || 1
+    );
+    const limit = Math.min(
+        100,
+        Math.max(1, Number(typeof params?.limit === "string" ? params.limit : "20") || 20)
+    );
+    const total = await db.gridQuiz.count();
+    const totalPages = Math.max(1, Math.ceil(total / limit));
+    const safePage = Math.min(page, totalPages);
+    const skip = (safePage - 1) * limit;
+
     const grids = await db.gridQuiz.findMany({
+        skip,
+        take: limit,
         orderBy: { createdAt: "desc" },
         include: {
             _count: {
@@ -23,6 +44,9 @@ export default async function GridsAdminPage() {
             },
         },
     });
+
+    const hasPrevious = safePage > 1;
+    const hasNext = safePage < totalPages;
 
     return (
         <div className="mx-auto max-w-6xl px-4 py-8 space-y-6">
@@ -87,6 +111,24 @@ export default async function GridsAdminPage() {
                         )}
                     </TableBody>
                 </Table>
+            </div>
+
+            <div className="mt-2 flex items-center justify-between text-sm text-muted-foreground">
+                <div>
+                    Showing{" "}
+                    <span className="font-medium">
+                        {grids.length === 0 ? 0 : skip + 1}-{skip + grids.length}
+                    </span>{" "}
+                    of <span className="font-medium">{total}</span>
+                </div>
+                <AdminPaginationClient
+                    currentPage={safePage}
+                    totalPages={totalPages}
+                    hasPrevious={hasPrevious}
+                    hasNext={hasNext}
+                    variant="server"
+                    filterParams={{ limit: limit.toString() }}
+                />
             </div>
         </div>
     );
