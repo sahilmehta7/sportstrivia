@@ -31,6 +31,7 @@ import { ChevronRight } from "lucide-react";
 import { PageContainer } from "@/components/shared/PageContainer";
 import { getFAQSchema, getTopicGraphSchema } from "@/lib/schema-utils";
 import type { TopicSchemaTypeValue } from "@/lib/topic-schema-options";
+import { parseFaqMarkdown } from "@/lib/faq-utils";
 
 const topicWithRelations = {
   include: {
@@ -383,18 +384,7 @@ export default async function TopicDetailPage({
   });
   const faqSchema = showAuthority && publishedSnapshot
     ? getFAQSchema(
-        publishedSnapshot.faqMd
-          .split(/\n(?=###\s+)/g)
-          .map((section) => {
-            const lines = section.split("\n").map((value) => value.trim()).filter(Boolean);
-            if (!lines[0]?.startsWith("### ")) return null;
-            const question = lines[0].replace(/^###\s+/, "").trim();
-            const answer = lines.slice(1).join(" ").trim();
-            if (!question || !answer) return null;
-            return { question, answer };
-          })
-          .filter((item): item is { question: string; answer: string } => Boolean(item))
-          .slice(0, 8)
+        parseFaqMarkdown(publishedSnapshot.faqMd)
       )
     : null;
 

@@ -1,4 +1,5 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { parseFaqMarkdown } from "@/lib/faq-utils";
 
 type TopicAuthoritySectionProps = {
   topicName: string;
@@ -27,19 +28,6 @@ function mdParagraphs(md: string): string[] {
     .filter((line) => line.length > 0 && !line.startsWith("### "));
 }
 
-function parseFaq(md: string): Array<{ q: string; a: string }> {
-  const sections = md.split(/\n(?=###\s+)/g);
-  const items: Array<{ q: string; a: string }> = [];
-  for (const section of sections) {
-    const lines = section.split("\n").map((v) => v.trim()).filter(Boolean);
-    if (!lines[0]?.startsWith("### ")) continue;
-    const q = lines[0].replace(/^###\s+/, "").trim();
-    const a = lines.slice(1).join(" ");
-    if (q && a) items.push({ q, a });
-  }
-  return items.slice(0, 8);
-}
-
 function parseSources(md: string): Array<{ label: string; url: string }> {
   const links = md.match(/\[([^\]]+)\]\(([^)]+)\)/g) ?? [];
   return links
@@ -64,7 +52,7 @@ export function TopicAuthoritySection({
   const keyFacts = mdBulletsToItems(keyFactsMd);
   const timeline = mdBulletsToItems(timelineMd || "");
   const analysisParagraphs = mdParagraphs(analysisMd);
-  const faqs = parseFaq(faqMd);
+  const faqs = parseFaqMarkdown(faqMd);
   const sources = parseSources(sourcesMd);
   const reviewed =
     lastReviewedAt ? new Date(lastReviewedAt).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }) : null;
@@ -134,8 +122,8 @@ export function TopicAuthoritySection({
           <CardContent className="space-y-4">
             {faqs.map((faq, idx) => (
               <div key={`${faq.q}-${idx}`}>
-                <h3 className="font-semibold">{faq.q}</h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">{faq.a}</p>
+                <h3 className="font-semibold">{faq.question}</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">{faq.answer}</p>
               </div>
             ))}
           </CardContent>
