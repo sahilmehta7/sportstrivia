@@ -35,6 +35,7 @@ describe("TopicFollowButton", () => {
         topicId="team_india"
         topicName="India"
         schemaType="SPORTS_TEAM"
+        entityStatus="READY"
         initialIsFollowing={false}
         isAuthenticated
       />
@@ -43,7 +44,7 @@ describe("TopicFollowButton", () => {
     fireEvent.click(screen.getByRole("button", { name: /follow india/i }));
 
     await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalledWith("/api/topics/by-id/team_india/follow", {
+      expect(global.fetch).toHaveBeenCalledWith("/api/topics/team_india/follow", {
         method: "POST",
       });
     });
@@ -64,6 +65,7 @@ describe("TopicFollowButton", () => {
         topicId="team_india"
         topicName="India"
         schemaType="SPORTS_TEAM"
+        entityStatus="READY"
         initialIsFollowing
         isAuthenticated
       />
@@ -72,7 +74,7 @@ describe("TopicFollowButton", () => {
     fireEvent.click(screen.getByRole("button", { name: /following india/i }));
 
     await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalledWith("/api/topics/by-id/team_india/follow", {
+      expect(global.fetch).toHaveBeenCalledWith("/api/topics/team_india/follow", {
         method: "DELETE",
       });
     });
@@ -80,5 +82,20 @@ describe("TopicFollowButton", () => {
     await waitFor(() => {
       expect(screen.getByRole("button", { name: /follow india/i })).toBeInTheDocument();
     });
+  });
+
+  it("does not render when entity status is not READY", () => {
+    render(
+      <TopicFollowButton
+        topicId="team_india"
+        topicName="India"
+        schemaType="SPORTS_TEAM"
+        entityStatus="DRAFT"
+        initialIsFollowing={false}
+        isAuthenticated
+      />
+    );
+
+    expect(screen.queryByRole("button", { name: /follow india/i })).not.toBeInTheDocument();
   });
 });

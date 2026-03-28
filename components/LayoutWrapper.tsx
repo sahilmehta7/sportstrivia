@@ -7,6 +7,7 @@ import { MobileBottomNav } from "@/components/shared/MobileBottomNav";
 import { Footer } from "@/components/shared/Footer";
 import { OnboardingExperience } from "@/components/features/onboarding/OnboardingExperience";
 import { MobileAppPreOnboardingGate } from "@/components/features/onboarding/MobileAppPreOnboardingGate";
+import { AuthInterestOnboardingGate } from "@/components/features/onboarding/AuthInterestOnboardingGate";
 
 import { cn } from "@/lib/utils";
 import { useMobileAppContext } from "@/hooks/useMobileAppContext";
@@ -78,6 +79,7 @@ export function LayoutWrapper({ children }: { children: React.ReactNode }) {
       {!shouldShowPreOnboardingContext && !isAdminRoute && !isQuizPlayRoute && (
         <OnboardingExperience />
       )}
+      {!isAdminRoute && !isQuizPlayRoute && <AuthInterestOnboardingGate />}
       {!isAdminRoute && !isQuizPlayRoute && (
         <MobileAppPreOnboardingGate
           isDetectingMobileAppContext={isDetectingMobileAppContext}

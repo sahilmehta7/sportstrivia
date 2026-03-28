@@ -58,6 +58,27 @@ describe("ProfileDiscoverabilityPanel", () => {
             ],
           },
         }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          data: {
+            topics: [
+              {
+                id: "sport_cricket",
+                name: "Cricket",
+                slug: "cricket",
+                schemaType: "SPORT",
+              },
+              {
+                id: "team_india",
+                name: "India",
+                slug: "india-cricket-team",
+                schemaType: "SPORTS_TEAM",
+              },
+            ],
+          },
+        }),
       });
   });
 
@@ -73,12 +94,13 @@ describe("ProfileDiscoverabilityPanel", () => {
 
     render(<ProfileDiscoverabilityPanel />);
 
-    expect(await screen.findByDisplayValue("India")).toBeInTheDocument();
-    expect(screen.getByDisplayValue("sport_cricket")).toBeInTheDocument();
+    expect(await screen.findByText("India")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /remove cricket/i })).toBeInTheDocument();
 
-    fireEvent.change(screen.getByLabelText(/interest topic ids/i), {
-      target: { value: "sport_cricket,team_india" },
+    fireEvent.change(screen.getByLabelText(/add interests/i), {
+      target: { value: "india" },
     });
+    fireEvent.click(await screen.findByRole("button", { name: /india/i }));
     fireEvent.change(screen.getByLabelText(/preferred difficulty/i), {
       target: { value: "HARD" },
     });
@@ -89,10 +111,8 @@ describe("ProfileDiscoverabilityPanel", () => {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          interests: [
-            { topicId: "sport_cricket", source: "PROFILE", strength: 1 },
-            { topicId: "team_india", source: "PROFILE", strength: 1 },
-          ],
+          topicIds: ["sport_cricket", "team_india"],
+          source: "PROFILE",
           preferences: {
             preferredDifficulty: "HARD",
             preferredPlayModes: ["STANDARD"],

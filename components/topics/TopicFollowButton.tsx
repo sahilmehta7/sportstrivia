@@ -10,6 +10,7 @@ type TopicFollowButtonProps = {
   topicId: string;
   topicName: string;
   schemaType: TopicSchemaTypeValue;
+  entityStatus?: string;
   initialIsFollowing: boolean;
   isAuthenticated: boolean;
 };
@@ -18,6 +19,7 @@ export function TopicFollowButton({
   topicId,
   topicName,
   schemaType,
+  entityStatus,
   initialIsFollowing,
   isAuthenticated,
 }: TopicFollowButtonProps) {
@@ -25,7 +27,11 @@ export function TopicFollowButton({
   const [isFollowing, setIsFollowing] = useState(initialIsFollowing);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  if (!isAuthenticated || !isFollowableTopicSchemaType(schemaType)) {
+  if (
+    !isAuthenticated ||
+    !isFollowableTopicSchemaType(schemaType) ||
+    entityStatus !== "READY"
+  ) {
     return null;
   }
 
@@ -35,7 +41,7 @@ export function TopicFollowButton({
     setIsSubmitting(true);
     try {
       const method = isFollowing ? "DELETE" : "POST";
-      const response = await fetch(`/api/topics/by-id/${topicId}/follow`, { method });
+      const response = await fetch(`/api/topics/${topicId}/follow`, { method });
       const result = await response.json();
 
       if (!response.ok) {

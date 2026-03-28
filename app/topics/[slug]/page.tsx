@@ -407,6 +407,7 @@ export default async function TopicDetailPage({
             topicId={topic.id}
             topicName={topic.name}
             schemaType={topic.schemaType as TopicSchemaTypeValue}
+            entityStatus={topic.entityStatus}
             initialIsFollowing={Boolean(followRecord)}
             isAuthenticated={Boolean(user)}
           />
