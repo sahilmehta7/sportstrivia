@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { isFollowableTopicSchemaType } from "@/lib/services/interest-profile.service";
+import { isFollowableTopicSchemaType } from "@/lib/topic-followability";
 import type { TopicSchemaTypeValue } from "@/lib/topic-schema-options";
 
 type TopicFollowButtonProps = {

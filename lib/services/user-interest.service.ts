@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/db";
 import type { Difficulty, InterestPreferenceSource, PlayMode } from "@prisma/client";
-import { invalidateInterestProfileCache, isFollowableTopicSchemaType } from "@/lib/services/interest-profile.service";
+import { isFollowableTopicSchemaType } from "@/lib/topic-followability";
+import { invalidateInterestProfileCache } from "@/lib/services/interest-profile.service";
 
 export type ReplaceUserInterestsInput = {
   userId: string;

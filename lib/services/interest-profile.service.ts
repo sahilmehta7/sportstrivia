@@ -1,15 +1,9 @@
+import "server-only";
 import { prisma } from "@/lib/db";
 import { SearchContext } from "@prisma/client";
 import type { Difficulty, PlayMode } from "@prisma/client";
 import type { TopicSchemaTypeValue } from "@/lib/topic-schema-options";
-
-const FOLLOWABLE_SCHEMA_TYPES = new Set<TopicSchemaTypeValue>([
-  "SPORT",
-  "SPORTS_TEAM",
-  "ATHLETE",
-  "SPORTS_EVENT",
-  "SPORTS_ORGANIZATION",
-]);
+import { isFollowableTopicSchemaType } from "@/lib/topic-followability";
 
 const INTEREST_PROFILE_TTL_MS = 10 * 60 * 1000;
 
@@ -134,10 +128,6 @@ function rankInferredSignals(input: { topicStats: TopicStatSignal[]; searchSigna
   }
 
   return scoreAndSort(Array.from(mergedByTopic.values())).slice(0, 20);
-}
-
-export function isFollowableTopicSchemaType(schemaType: TopicSchemaTypeValue): boolean {
-  return FOLLOWABLE_SCHEMA_TYPES.has(schemaType);
 }
 
 export function invalidateInterestProfileCache(userId: string) {

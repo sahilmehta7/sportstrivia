@@ -1,10 +1,8 @@
 import { prisma } from "@/lib/db";
 import type { TopicSchemaTypeValue } from "@/lib/topic-schema-options";
+import { isFollowableTopicSchemaType } from "@/lib/topic-followability";
 import { BadRequestError, NotFoundError } from "@/lib/errors";
-import {
-  invalidateInterestProfileCache,
-  isFollowableTopicSchemaType,
-} from "@/lib/services/interest-profile.service";
+import { invalidateInterestProfileCache } from "@/lib/services/interest-profile.service";
 
 export type FollowableTopic = {
   id: string;

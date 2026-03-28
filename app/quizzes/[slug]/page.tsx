@@ -142,6 +142,7 @@ export default async function QuizDetailPage({ params }: QuizDetailPageProps) {
   const durationLabel = formatQuizDuration(quiz.duration ?? quiz.timePerQuestion);
   const playersLabel = formatPlayerCount(uniqueUsersCount);
   const badgeLabel = (topicConfigs[0] as any)?.topic?.name ?? quiz.sport ?? quiz.difficulty ?? "Quiz";
+  const badgeTopicSlug = (topicConfigs[0] as any)?.topic?.slug ?? null;
 
   const maxAttempts = quiz.maxAttemptsPerUser ?? null;
   const remainingAttempts = attemptLimitStatus?.remainingBeforeStart ?? maxAttempts;
@@ -221,9 +222,18 @@ export default async function QuizDetailPage({ params }: QuizDetailPageProps) {
 
                 <div className="space-y-6">
                   <div className="flex flex-wrap items-center gap-3">
-                    <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full glass border border-white/10 text-[10px] font-black uppercase tracking-widest text-primary shadow-neon-cyan/20">
-                      {badgeLabel}
-                    </div>
+                    {badgeTopicSlug ? (
+                      <Link
+                        href={`/topics/${badgeTopicSlug}`}
+                        className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full glass border border-white/10 text-[10px] font-black uppercase tracking-widest text-primary shadow-neon-cyan/20 transition-opacity hover:opacity-80"
+                      >
+                        {badgeLabel}
+                      </Link>
+                    ) : (
+                      <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full glass border border-white/10 text-[10px] font-black uppercase tracking-widest text-primary shadow-neon-cyan/20">
+                        {badgeLabel}
+                      </div>
+                    )}
                     <div className="flex items-center gap-1.5 text-amber-400">
                       <Star className="h-4 w-4 fill-current" />
                       <span className="text-xs font-black tracking-widest">{averageRating.toFixed(1)}</span>
