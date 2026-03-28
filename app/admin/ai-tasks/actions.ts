@@ -20,13 +20,33 @@ export async function retryTask(taskId: string) {
 
     if (task.type === BackgroundTaskType.AI_QUIZ_GENERATION) {
         after(async () => {
-            const { processAIQuizTask } = await import("@/lib/services/ai-quiz-processor.service");
-            await processAIQuizTask(finalTaskId);
+            try {
+                const { processAIQuizTask } = await import("@/lib/services/ai-quiz-processor.service");
+                await processAIQuizTask(finalTaskId);
+            } catch (error) {
+                const message = error instanceof Error ? error.message : String(error);
+                console.error("[AI Task] after() callback failed", {
+                    taskId: finalTaskId,
+                    taskType: BackgroundTaskType.AI_QUIZ_GENERATION,
+                    attempt: (restarted as any).attempt ?? 1,
+                    message,
+                });
+            }
         });
     } else if (task.type === BackgroundTaskType.AI_TOPIC_QUESTION_GENERATION) {
         after(async () => {
-            const { processAIQuestionsTask } = await import("@/lib/services/ai-questions-processor.service");
-            await processAIQuestionsTask(finalTaskId);
+            try {
+                const { processAIQuestionsTask } = await import("@/lib/services/ai-questions-processor.service");
+                await processAIQuestionsTask(finalTaskId);
+            } catch (error) {
+                const message = error instanceof Error ? error.message : String(error);
+                console.error("[AI Task] after() callback failed", {
+                    taskId: finalTaskId,
+                    taskType: BackgroundTaskType.AI_TOPIC_QUESTION_GENERATION,
+                    attempt: (restarted as any).attempt ?? 1,
+                    message,
+                });
+            }
         });
     } else {
         throw new Error("Retry not implemented for this task type");

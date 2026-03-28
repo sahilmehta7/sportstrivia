@@ -44,6 +44,8 @@ next-env.d.ts
 !/prisma/migrations/20260228150000_topic_content_pipeline/migration.sql
 !/prisma/migrations/20260322_discoverability_foundations/
 !/prisma/migrations/20260322_discoverability_foundations/migration.sql
+!/prisma/migrations/20260328_ai_task_attempt_lifecycle/
+!/prisma/migrations/20260328_ai_task_attempt_lifecycle/migration.sql
 
 # test
 /test-results/

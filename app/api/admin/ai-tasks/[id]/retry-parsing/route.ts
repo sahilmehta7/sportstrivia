@@ -1,7 +1,11 @@
 import { NextRequest } from "next/server";
 import { requireAdmin } from "@/lib/auth-helpers";
-import { handleError, successResponse, BadRequestError, NotFoundError } from "@/lib/errors";
-import { getBackgroundTaskById, updateBackgroundTask, markBackgroundTaskCompleted } from "@/lib/services/background-task.service";
+import { handleError, successResponse, BadRequestError, ConflictError } from "@/lib/errors";
+import {
+  getOwnedBackgroundTaskOrThrow,
+  updateBackgroundTask,
+  markBackgroundTaskCompletedFromFailed,
+} from "@/lib/services/background-task.service";
 import { BackgroundTaskType } from "@prisma/client";
 import { extractJSON } from "@/lib/services/ai-quiz-processor.service";
 
@@ -20,16 +24,16 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    await requireAdmin();
+    const admin = await requireAdmin();
     const { id } = await params;
 
-    const task = await getBackgroundTaskById(id);
-    if (!task) {
-      throw new NotFoundError("Task not found");
-    }
+    const task = await getOwnedBackgroundTaskOrThrow(id, admin.id);
     const attempt = (task as any).attempt ?? 1;
     if ((task as any).cancelledAttempt === attempt || task.status === "CANCELLED") {
       throw new BadRequestError("Cannot retry parsing for a cancelled task attempt.");
+    }
+    if (task.status !== "FAILED") {
+      throw new BadRequestError("Parsing retry is only available for failed task attempts.");
     }
 
     // Verify this is an AI generation task
@@ -69,7 +73,7 @@ export async function POST(
       parsed = JSON.parse(cleanedContent);
     } catch (error: any) {
       // Update the parse error with new attempt
-      await updateBackgroundTask(id, {
+      const parseErrorUpdate = await updateBackgroundTask(id, {
         result: {
           ...result,
           parseError: {
@@ -80,6 +84,9 @@ export async function POST(
           },
         },
       }, { attempt });
+      if (!parseErrorUpdate) {
+        throw new ConflictError("Task attempt state changed while retrying parse. Reload and try again.");
+      }
       
       throw new BadRequestError(`Failed to parse JSON on retry. Error: ${error.message}`);
     }
@@ -122,7 +129,7 @@ export async function POST(
           : {}),
       };
 
-      await markBackgroundTaskCompleted(id, {
+      const completed = await markBackgroundTaskCompletedFromFailed(id, {
         quiz: parsed,
         metadata,
         rawResponse,
@@ -130,6 +137,9 @@ export async function POST(
         parseRetriedAt: new Date().toISOString(),
         parseRetrySuccessful: true,
       }, attempt);
+      if (!completed) {
+        throw new ConflictError("Task attempt state changed before completion. Reload and retry.");
+      }
 
       return successResponse({
         taskId: id,
@@ -192,7 +202,10 @@ export async function POST(
         parseRetrySuccessful: true,
       };
 
-      await markBackgroundTaskCompleted(id, resultPayload, attempt);
+      const completed = await markBackgroundTaskCompletedFromFailed(id, resultPayload, attempt);
+      if (!completed) {
+        throw new ConflictError("Task attempt state changed before completion. Reload and retry.");
+      }
 
       return successResponse({
         taskId: id,

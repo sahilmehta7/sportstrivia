@@ -40,15 +40,24 @@ export async function POST(
       input: priorTask.input ?? undefined,
     });
     after(async () => {
-      if (priorTask.type === BackgroundTaskType.TOPIC_RELATION_INFERENCE) {
-        await processTopicInferenceTask(task.id);
-        return;
+      try {
+        if (priorTask.type === BackgroundTaskType.TOPIC_RELATION_INFERENCE) {
+          await processTopicInferenceTask(task.id);
+          return;
+        }
+        if (priorTask.type === BackgroundTaskType.TOPIC_TYPE_APPLY) {
+          await processTopicTypeApplyTask(task.id);
+          return;
+        }
+        await processTopicTypeAuditTask(task.id);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        console.error("[AI Task] after() callback failed", {
+          taskId: task.id,
+          taskType: priorTask.type,
+          message,
+        });
       }
-      if (priorTask.type === BackgroundTaskType.TOPIC_TYPE_APPLY) {
-        await processTopicTypeApplyTask(task.id);
-        return;
-      }
-      await processTopicTypeAuditTask(task.id);
     });
     return successResponse({ taskId: task.id, attempt: (task as any).attempt ?? 1, status: "processing" });
   } catch (error) {

@@ -71,7 +71,12 @@ import { GET as downloadUntypedReport } from "@/app/api/admin/topics/inference/r
 import { POST as startTypeAuditRun } from "@/app/api/admin/topics/inference/type-audit/route";
 import { POST as startTypeApplyRun } from "@/app/api/admin/topics/inference/type-apply/route";
 import { GET as getTaskDetail } from "@/app/api/admin/ai/tasks/[id]/route";
-import { validateTopicTypeApplySelections } from "@/lib/services/topic-inference-task.service";
+import {
+  processTopicInferenceTask,
+  processTopicTypeApplyTask,
+  processTopicTypeAuditTask,
+  validateTopicTypeApplySelections,
+} from "@/lib/services/topic-inference-task.service";
 
 describe("topic inference task routes", () => {
   beforeEach(() => {
@@ -108,6 +113,21 @@ describe("topic inference task routes", () => {
     expect(prismaMock.adminBackgroundTask.create).toHaveBeenCalled();
   });
 
+  it("returns success even if relation inference processor throws in after callback", async () => {
+    (processTopicInferenceTask as jest.Mock).mockRejectedValueOnce(new Error("boom"));
+    const request = new Request("http://localhost/api/admin/topics/inference/runs", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ runMode: "dry_run" }),
+    });
+
+    const response = await startInferenceRun(request as any);
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.data.status).toBe("processing");
+  });
+
   it("starts an AI topic type audit run and returns a task id", async () => {
     prismaMock.adminBackgroundTask.create.mockResolvedValue({
       id: "task_ai_1",
@@ -131,6 +151,30 @@ describe("topic inference task routes", () => {
 
     expect(response.status).toBe(200);
     expect(body.data.taskId).toBe("task_ai_1");
+  });
+
+  it("returns success even if type-audit processor throws in after callback", async () => {
+    (processTopicTypeAuditTask as jest.Mock).mockRejectedValueOnce(new Error("boom"));
+    prismaMock.adminBackgroundTask.create.mockResolvedValue({
+      id: "task_ai_1",
+      userId: "admin_1",
+      type: BackgroundTaskType.TOPIC_TYPE_AUDIT,
+      status: "PENDING",
+      label: "Topic type audit",
+      input: { reportKind: "all" },
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+
+    const request = new Request("http://localhost/api/admin/topics/inference/type-audit", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ reportKind: "all" }),
+    });
+
+    const response = await startTypeAuditRun(request as any);
+
+    expect(response.status).toBe(200);
   });
 
   it("starts an AI topic type apply run and returns a task id", async () => {
@@ -169,6 +213,36 @@ describe("topic inference task routes", () => {
     });
   });
 
+  it("returns success even if type-apply processor throws in after callback", async () => {
+    (processTopicTypeApplyTask as jest.Mock).mockRejectedValueOnce(new Error("boom"));
+    prismaMock.adminBackgroundTask.create.mockResolvedValue({
+      id: "task_apply_1",
+      userId: "admin_1",
+      type: BackgroundTaskType.TOPIC_TYPE_APPLY,
+      status: "PENDING",
+      label: "Topic type apply",
+      input: {
+        sourceTaskId: "task_ai_1",
+        selections: [{ topicId: "topic_1", targetSchemaType: "SPORTS_TEAM" }],
+      },
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+
+    const request = new Request("http://localhost/api/admin/topics/inference/type-apply", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        sourceTaskId: "task_ai_1",
+        selections: [{ topicId: "topic_1", targetSchemaType: "SPORTS_TEAM" }],
+      }),
+    });
+
+    const response = await startTypeApplyRun(request as any);
+
+    expect(response.status).toBe(200);
+  });
+
   it("reruns a prior relation inference task with the same input", async () => {
     prismaMock.adminBackgroundTask.findUnique.mockResolvedValueOnce({
       id: "task_old",
@@ -202,6 +276,33 @@ describe("topic inference task routes", () => {
         }),
       })
     );
+  });
+
+  it("returns success even if rerun processor throws in after callback", async () => {
+    (processTopicInferenceTask as jest.Mock).mockRejectedValueOnce(new Error("boom"));
+    prismaMock.adminBackgroundTask.findUnique.mockResolvedValueOnce({
+      id: "task_old",
+      userId: "admin_1",
+      type: BackgroundTaskType.TOPIC_RELATION_INFERENCE,
+      label: "Topic relation inference",
+      input: { runMode: "apply_safe_relations" },
+    });
+    prismaMock.adminBackgroundTask.create.mockResolvedValueOnce({
+      id: "task_new",
+      userId: "admin_1",
+      type: BackgroundTaskType.TOPIC_RELATION_INFERENCE,
+      status: "PENDING",
+      label: "Topic relation inference",
+      input: { runMode: "apply_safe_relations" },
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+
+    const response = await rerunInferenceRun(new Request("http://localhost") as any, {
+      params: Promise.resolve({ id: "task_old" }),
+    });
+
+    expect(response.status).toBe(200);
   });
 
   it("serves the typed report download for a completed run", async () => {

@@ -64,7 +64,18 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     // Start processing in background without Inngest
     const finalTaskId = backgroundTask.id;
-    after(() => processAIQuestionsTask(finalTaskId));
+    after(async () => {
+      try {
+        await processAIQuestionsTask(finalTaskId);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        console.error("[AI Task] after() callback failed", {
+          taskId: finalTaskId,
+          taskType: BackgroundTaskType.AI_TOPIC_QUESTION_GENERATION,
+          message,
+        });
+      }
+    });
 
     return successResponse({
       taskId: backgroundTask.id,

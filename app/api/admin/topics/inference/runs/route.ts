@@ -23,7 +23,18 @@ export async function POST(request: NextRequest) {
       label: "Topic relation inference",
       input: body,
     });
-    after(async () => processTopicInferenceTask(task.id));
+    after(async () => {
+      try {
+        await processTopicInferenceTask(task.id);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        console.error("[AI Task] after() callback failed", {
+          taskId: task.id,
+          taskType: BackgroundTaskType.TOPIC_RELATION_INFERENCE,
+          message,
+        });
+      }
+    });
     return successResponse({ taskId: task.id, attempt: (task as any).attempt ?? 1, status: "processing" });
   } catch (error) {
     return handleError(error);

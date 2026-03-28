@@ -210,6 +210,26 @@ export async function markBackgroundTaskCompleted(
   );
 }
 
+export async function markBackgroundTaskCompletedFromFailed(
+  id: string,
+  result: unknown,
+  attempt?: number
+): Promise<AdminBackgroundTask | null> {
+  return guardedUpdateTask(
+    id,
+    {
+      status: BackgroundTaskStatus.COMPLETED,
+      result,
+      completedAt: new Date(),
+      errorMessage: null,
+    },
+    {
+      attempt,
+      allowedStatuses: [BackgroundTaskStatus.FAILED],
+    }
+  );
+}
+
 export async function markBackgroundTaskFailed(
   id: string,
   errorMessage: string,

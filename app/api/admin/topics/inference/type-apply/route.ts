@@ -33,7 +33,18 @@ export async function POST(request: NextRequest) {
       label: "Topic type apply",
       input: body,
     });
-    after(async () => processTopicTypeApplyTask(task.id));
+    after(async () => {
+      try {
+        await processTopicTypeApplyTask(task.id);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        console.error("[AI Task] after() callback failed", {
+          taskId: task.id,
+          taskType: BackgroundTaskType.TOPIC_TYPE_APPLY,
+          message,
+        });
+      }
+    });
     return successResponse({ taskId: task.id, attempt: (task as any).attempt ?? 1, status: "processing" });
   } catch (error) {
     return handleError(error);
