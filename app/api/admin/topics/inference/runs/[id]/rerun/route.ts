@@ -12,6 +12,12 @@ import {
 export const runtime = "nodejs";
 export const maxDuration = 10;
 
+const RERUNNABLE_TOPIC_TASK_TYPES = new Set<BackgroundTaskType>([
+  BackgroundTaskType.TOPIC_RELATION_INFERENCE,
+  BackgroundTaskType.TOPIC_TYPE_AUDIT,
+  BackgroundTaskType.TOPIC_TYPE_APPLY,
+]);
+
 export async function POST(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -23,13 +29,7 @@ export async function POST(
     if (!priorTask || (priorTask.userId && priorTask.userId !== admin.id)) {
       throw new NotFoundError("Task not found");
     }
-    if (
-      ![
-        BackgroundTaskType.TOPIC_RELATION_INFERENCE,
-        BackgroundTaskType.TOPIC_TYPE_AUDIT,
-        BackgroundTaskType.TOPIC_TYPE_APPLY,
-      ].includes(priorTask.type)
-    ) {
+    if (!RERUNNABLE_TOPIC_TASK_TYPES.has(priorTask.type)) {
       throw new NotFoundError("Task not found");
     }
 

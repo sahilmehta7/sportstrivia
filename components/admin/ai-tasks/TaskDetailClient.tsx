@@ -9,15 +9,7 @@ import { cn } from "@/lib/utils";
 import { Loader2, ArrowLeft, Sparkles, ListChecks } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
-
-type BackgroundTaskStatus = "PENDING" | "IN_PROGRESS" | "COMPLETED" | "FAILED" | "CANCELLED";
-type BackgroundTaskType =
-  | "AI_QUIZ_GENERATION"
-  | "AI_TOPIC_QUESTION_GENERATION"
-  | "AI_QUIZ_IMPORT"
-  | "AI_TOPIC_QUESTION_IMPORT"
-  | "BACKUP_CREATE"
-  | "BACKUP_RESTORE";
+import type { BackgroundTaskStatus, BackgroundTaskType } from "@prisma/client";
 
 interface PreviewAnswer {
   text: string;
