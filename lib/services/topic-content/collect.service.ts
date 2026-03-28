@@ -419,14 +419,15 @@ export async function collectTopicSourceDocuments(topicId: string, mode: Collect
   let skipped = 0;
 
   for (const candidate of candidates) {
-    const policy = evaluateSourcePolicy(candidate.sourceName);
+    const normalizedSourceName = candidate.sourceName.toLowerCase();
+    const policy = evaluateSourcePolicy(normalizedSourceName);
     if (!policy.allowed) {
       skipped++;
       continue;
     }
 
     let payload = candidate.payload;
-    if (candidate.sourceName === "wikidata") {
+    if (normalizedSourceName === "wikidata") {
       try {
         payload = await fetchWikidataPayload({
           sourceUrl: candidate.sourceUrl,
@@ -438,7 +439,7 @@ export async function collectTopicSourceDocuments(topicId: string, mode: Collect
           fetchError: error instanceof Error ? error.message : "Unknown Wikidata fetch error",
         };
       }
-    } else if (candidate.sourceName === "wikipedia") {
+    } else if (normalizedSourceName === "wikipedia") {
       try {
         payload = await fetchWikipediaPayload({
           sourceUrl: candidate.sourceUrl,
@@ -450,7 +451,7 @@ export async function collectTopicSourceDocuments(topicId: string, mode: Collect
           fetchError: error instanceof Error ? error.message : "Unknown Wikipedia fetch error",
         };
       }
-    } else if (candidate.sourceName === "openalex") {
+    } else if (normalizedSourceName === "openalex") {
       try {
         payload = await fetchOpenAlexPayload({
           sourceUrl: candidate.sourceUrl,
@@ -462,7 +463,7 @@ export async function collectTopicSourceDocuments(topicId: string, mode: Collect
           fetchError: error instanceof Error ? error.message : "Unknown OpenAlex fetch error",
         };
       }
-    } else if (candidate.sourceName === "crossref") {
+    } else if (normalizedSourceName === "crossref") {
       try {
         payload = await fetchCrossrefPayload({
           sourceUrl: candidate.sourceUrl,
@@ -480,10 +481,10 @@ export async function collectTopicSourceDocuments(topicId: string, mode: Collect
       ...payload,
       collectedAt: new Date().toISOString(),
       mode,
-      sourceName: candidate.sourceName,
+      sourceName: normalizedSourceName,
     };
     const hash = makeHash({
-      sourceName: candidate.sourceName,
+      sourceName: normalizedSourceName,
       sourceUrl: candidate.sourceUrl,
       mode,
       payload,
@@ -493,7 +494,7 @@ export async function collectTopicSourceDocuments(topicId: string, mode: Collect
       await prisma.topicSourceDocument.create({
         data: {
           topicId,
-          sourceName: candidate.sourceName,
+          sourceName: normalizedSourceName,
           sourceUrl: candidate.sourceUrl,
           licenseType: policy.licenseType,
           isCommercialSafe: policy.isCommercialSafe,

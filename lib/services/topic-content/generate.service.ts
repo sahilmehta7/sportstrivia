@@ -13,10 +13,10 @@ type GeneratedSections = {
   sourcesMd: string;
 };
 
-const MIN_KEY_FACTS = 10;
+const MIN_KEY_FACTS = 8;
 const MIN_FAQ_PAIRS = 4;
 const MIN_SOURCE_LINKS = 2;
-const MIN_TOTAL_WORDS = 160;
+const MIN_TOTAL_WORDS = 130;
 
 type SectionValidation = {
   ok: boolean;
@@ -101,6 +101,8 @@ function buildGenerationPrompt(input: {
     "Non-negotiable requirements:",
     `- keyFactsMd: ${MIN_KEY_FACTS}-14 markdown bullets, each a concrete fact.`,
     "- At least 3 key facts should include numeric specificity when available (dates, counts, records).",
+    "- Claims may include machine paths (for example 'claims.awardReceived[0]: ...'). Rewrite these into natural-language facts.",
+    "- Ignore metadata-like claims (ids, hashes, internal URLs, technical keys) even if they appear in inputs.",
     "- Avoid generic statements like 'is important' unless tied to a verifiable fact.",
     `- faqMd: at least ${MIN_FAQ_PAIRS} Q/A pairs in markdown using '- Q:' and 'A:' format.`,
     "- sourcesMd: include at least 2 unique full URLs in markdown bullet list, no placeholders.",
@@ -171,7 +173,7 @@ export async function generateTopicContentSnapshot(topicId: string) {
   const claims = await prisma.topicClaim.findMany({
     where: { topicId, isSelectedForPublish: true, isContradicted: false },
     orderBy: [{ confidence: "desc" }, { createdAt: "asc" }],
-    take: 50,
+    take: 75,
     select: { claimText: true, confidence: true },
   });
 

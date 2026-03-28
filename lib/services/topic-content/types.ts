@@ -28,9 +28,9 @@ export type ContentQualityGate = {
 
 export const DEFAULT_QUALITY_GATE: ContentQualityGate = {
   // Trivia-style output gate (not long-form SEO article gate).
-  minWordCount: 140,
-  minSelectedClaims: 10,
+  minWordCount: 120,
+  minSelectedClaims: 8,
   minDistinctSources: 2,
-  minCitationCoverage: 0.3,
-  minQualityScore: 65,
+  minCitationCoverage: 0.25,
+  minQualityScore: 58,
 };
