@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -73,7 +73,7 @@ export function TopicGraphAdminPanel({ topicId, topics }: TopicGraphAdminPanelPr
     );
   }, [currentTopic, relationType, topicOptions]);
 
-  const loadPanelData = async () => {
+  const loadPanelData = useCallback(async () => {
     try {
       setLoading(true);
       const [relationsResponse, readinessResponse] = await Promise.all([
@@ -99,12 +99,12 @@ export function TopicGraphAdminPanel({ topicId, topics }: TopicGraphAdminPanelPr
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast, topicId]);
 
   useEffect(() => {
     if (!topicId) return;
     loadPanelData();
-  }, [topicId]);
+  }, [loadPanelData, topicId]);
 
   useEffect(() => {
     if (relatedTopicId && !filteredTopicOptions.some((topic) => topic.id === relatedTopicId)) {

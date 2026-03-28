@@ -1,3 +1,5 @@
+/** @jest-environment node */
+
 // Mock next/server - must be before importing the route
 jest.mock("next/server", () => ({
   NextResponse: {
@@ -86,4 +88,3 @@ describe("/api/admin/ai/generate-quiz/process", () => {
     expect(processAIQuizTask).toHaveBeenCalledWith("task_123");
   });
 });
-

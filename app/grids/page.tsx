@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { db } from "@/lib/db";
 import { ShowcaseButton } from "@/components/showcase/ui/buttons/Button";
-import { Grid3X3, Play, Trophy, Users, ShieldCheck, ArrowRight, Zap, Target } from "lucide-react";
+import { Grid3X3, Users, ArrowRight, Zap, Target } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PageContainer } from "@/components/shared/PageContainer";
 import { cn } from "@/lib/utils";
@@ -63,7 +63,6 @@ async function GridsList() {
         <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
             {grids.map((grid, index) => {
                 const rows = (grid.rows as string[]) || [];
-                const cols = (grid.cols as string[]) || [];
                 const playersLabel = formatPlayerCount(grid._count.attempts);
 
                 return (

@@ -52,8 +52,6 @@ export default async function GridDetailPage({ params }: GridDetailPageProps) {
     }
 
     const { circle1, circle2, circle3 } = getBlurCircles();
-    const rows = (grid.rows as string[]) || [];
-    const cols = (grid.cols as string[]) || [];
     const playersLabel = formatPlayerCount(grid._count.attempts);
 
     return (

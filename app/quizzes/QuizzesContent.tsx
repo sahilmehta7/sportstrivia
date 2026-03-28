@@ -98,7 +98,7 @@ export function QuizzesContent({
       set: { topic: storedTopic },
       remove: ["sport"],
     });
-  }, [categoryOptions, topicParam, sportParam]);
+  }, [categoryOptions, pushWithQuery, sportParam, topicParam]);
 
   const setPersistedTopic = (topicSlug?: string) => {
     if (topicSlug) {

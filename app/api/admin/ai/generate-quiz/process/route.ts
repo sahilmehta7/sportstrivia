@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { requireAdmin } from "@/lib/auth-helpers";
-import { handleError, successResponse } from "@/lib/errors";
+import { BadRequestError, handleError, successResponse } from "@/lib/errors";
 import { processAIQuizTask } from "@/lib/services/ai-quiz-processor.service";
 
 // Use Node.js runtime for long-running AI operations
@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
     const { taskId } = body;
 
     if (!taskId) {
-      return handleError(new Error("taskId is required"));
+      throw new BadRequestError("taskId is required");
     }
 
     await processAIQuizTask(taskId);
@@ -54,4 +54,3 @@ export async function POST(request: NextRequest) {
     return handleError(error);
   }
 }
-

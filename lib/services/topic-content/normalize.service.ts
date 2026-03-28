@@ -49,9 +49,7 @@ export function extractClaimsFromPayload(payload: Record<string, unknown>): stri
     }
 
     if (value && typeof value === "object") {
-      for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
-        walk(v, path ? `${path}.${k}` : k);
-      }
+      return;
     }
   };
 

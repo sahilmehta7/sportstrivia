@@ -1,4 +1,3 @@
-import React from "react";
 import { render, screen } from "@testing-library/react";
 import { AllSportsTopicsWidgetSection } from "@/app/quizzes/components/all-sports-topics-widget-section";
 

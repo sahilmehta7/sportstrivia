@@ -1,3 +1,5 @@
+/** @jest-environment node */
+
 // Mock next/server - must be before importing the route
 jest.mock("next/server", () => ({
   after: jest.fn((fn) => fn()),
@@ -13,6 +15,10 @@ jest.mock("next/server", () => ({
 
 jest.mock("@/lib/auth-helpers", () => ({
   requireAdmin: jest.fn().mockResolvedValue({ id: "admin_123", role: "ADMIN" }),
+}));
+
+jest.mock("@/lib/services/restore-lock.service", () => ({
+  assertRestoreUnlocked: jest.fn().mockResolvedValue(undefined),
 }));
 
 import { POST } from "@/app/api/admin/ai/generate-quiz/route";
@@ -256,4 +262,3 @@ describe("/api/admin/ai/generate-quiz", () => {
     expect(createBackgroundTask).not.toHaveBeenCalled();
   });
 });
-

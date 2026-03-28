@@ -106,7 +106,15 @@ export async function POST(request: NextRequest) {
     // Schedule background processing using Next.js after() function
     // This allows the response to be sent immediately while the task runs in the background
     // Start processing in background without Inngest
-    after(() => processAIQuizTask(finalTaskId));
+    after(async () => {
+      try {
+        await processAIQuizTask(finalTaskId);
+      } catch (processingError) {
+        const message =
+          processingError instanceof Error ? processingError.message : "Unknown background processing error";
+        await markBackgroundTaskFailed(finalTaskId, message);
+      }
+    });
 
     // Return immediately with task ID
     return successResponse({
