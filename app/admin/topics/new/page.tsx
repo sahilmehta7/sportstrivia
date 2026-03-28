@@ -1,6 +1,14 @@
 "use client";
 
 import { useState, useEffect, type FormEvent } from "react";
+
+/** Convert a date-like value to ISO string, returning null if invalid or empty. */
+function safeToISOString(value: string | null | undefined): string | null {
+  if (!value || !value.trim()) return null;
+  const d = new Date(value);
+  if (isNaN(d.getTime())) return null;
+  return d.toISOString();
+}
 import { useRouter } from "next/navigation";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { Button } from "@/components/ui/button";
@@ -105,7 +113,7 @@ export default function NewTopicPage() {
                     ...(formData.sportName ? { sportName: formData.sportName } : {}),
                     ...(formData.teamName ? { teamName: formData.teamName } : {}),
                     ...(formData.nationality ? { nationality: formData.nationality } : {}),
-                    ...(formData.birthDate ? { birthDate: new Date(formData.birthDate).toISOString() } : {}),
+                    ...(safeToISOString(formData.birthDate) ? { birthDate: safeToISOString(formData.birthDate) } : {}),
                   }
                 : formData.schemaType === "SPORTS_ORGANIZATION"
                   ? {
@@ -114,8 +122,8 @@ export default function NewTopicPage() {
                   : formData.schemaType === "SPORTS_EVENT"
                     ? {
                         ...(formData.sportName ? { sportName: formData.sportName } : {}),
-                        ...(formData.startDate ? { startDate: new Date(formData.startDate).toISOString() } : {}),
-                        ...(formData.endDate ? { endDate: new Date(formData.endDate).toISOString() } : {}),
+                        ...(safeToISOString(formData.startDate) ? { startDate: safeToISOString(formData.startDate) } : {}),
+                        ...(safeToISOString(formData.endDate) ? { endDate: safeToISOString(formData.endDate) } : {}),
                         ...(formData.locationName ? { locationName: formData.locationName } : {}),
                         ...(formData.organizerName ? { organizerName: formData.organizerName } : {}),
                       }
