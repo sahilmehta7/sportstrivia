@@ -59,9 +59,9 @@ export function TopicAuthoritySection({
 
   return (
     <section className="space-y-6">
-      <Card>
+      <Card className="rounded-xl border border-border/60 bg-card/80">
         <CardHeader>
-          <CardTitle className="text-2xl">About {topicName}</CardTitle>
+          <CardTitle className="text-2xl uppercase tracking-tight font-['Barlow_Condensed',sans-serif]">About {topicName}</CardTitle>
           <CardDescription>Source-grounded insights and context</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -70,7 +70,7 @@ export function TopicAuthoritySection({
       </Card>
 
       {keyFacts.length > 0 && (
-        <Card id="topic-key-facts">
+        <Card id="topic-key-facts" className="rounded-xl border border-border/60 bg-card/80">
           <CardHeader>
             <CardTitle>Key Facts</CardTitle>
           </CardHeader>
@@ -85,7 +85,7 @@ export function TopicAuthoritySection({
       )}
 
       {timeline.length > 0 && (
-        <Card>
+        <Card className="rounded-xl border border-border/60 bg-card/80">
           <CardHeader>
             <CardTitle>Timeline Highlights</CardTitle>
           </CardHeader>
@@ -100,7 +100,7 @@ export function TopicAuthoritySection({
       )}
 
       {analysisParagraphs.length > 0 && (
-        <Card>
+        <Card className="rounded-xl border border-border/60 bg-card/80">
           <CardHeader>
             <CardTitle>Why It Matters</CardTitle>
           </CardHeader>
@@ -115,13 +115,13 @@ export function TopicAuthoritySection({
       )}
 
       {faqs.length > 0 && (
-        <Card id="topic-faq">
+        <Card id="topic-faq" className="rounded-xl border border-border/60 bg-card/80">
           <CardHeader>
             <CardTitle>FAQ</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             {faqs.map((faq, idx) => (
-              <div key={`${faq.q}-${idx}`}>
+              <div key={`${faq.question}-${idx}`}>
                 <h3 className="font-semibold">{faq.question}</h3>
                 <p className="text-sm text-muted-foreground leading-relaxed">{faq.answer}</p>
               </div>
@@ -131,7 +131,7 @@ export function TopicAuthoritySection({
       )}
 
       {(sources.length > 0 || reviewed) && (
-        <Card>
+        <Card className="rounded-xl border border-border/60 bg-card/80">
           <CardHeader>
             <CardTitle>Sources & Review</CardTitle>
           </CardHeader>

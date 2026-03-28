@@ -16,18 +16,17 @@ import { BreadcrumbJsonLd, JsonLdScript } from "next-seo";
 import { ItemListStructuredData } from "@/components/seo/ItemListStructuredData";
 import { getCanonicalUrl } from "@/lib/next-seo-config";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { TopicHero } from "@/components/topics/topic-hero";
 import { TopicFollowButton } from "@/components/topics/TopicFollowButton";
 import { TopicAuthoritySection } from "@/components/topics/topic-authority-section";
 import { TopicAuthorityContainer } from "@/components/topics/topic-authority-container";
 import { FeaturedRow } from "@/components/quizzes/featured-row";
-import { FeaturedQuizzesHero } from "@/components/quizzes/featured-quizzes-hero";
+import { FeaturedTradingCardsCarousel } from "@/components/quizzes/featured-trading-cards-carousel";
 import { ModernFilterBar } from "@/components/quizzes/modern-filter-bar";
 import { QuizCard } from "@/components/quizzes/quiz-card";
 import { QuizPagination } from "@/components/quizzes/quiz-pagination";
 import { StreakIndicator } from "@/components/shared/StreakIndicator";
 
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, ShieldCheck } from "lucide-react";
 import { PageContainer } from "@/components/shared/PageContainer";
 import { getFAQSchema, getTopicGraphSchema } from "@/lib/schema-utils";
 import type { TopicSchemaTypeValue } from "@/lib/topic-schema-options";
@@ -389,8 +388,9 @@ export default async function TopicDetailPage({
     : null;
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-background via-background to-muted">
-      <PageContainer className="space-y-8 pb-16 pt-10">
+    <main className="min-h-screen pb-24">
+      <PageContainer className="pt-6 md:pt-12">
+        <div className="mt-4 space-y-8 md:mt-12 md:space-y-12">
         <nav className="flex items-center gap-2 text-sm text-muted-foreground">
           <Link href="/" className="transition-colors hover:text-foreground">
             Home
@@ -410,24 +410,16 @@ export default async function TopicDetailPage({
           <span className="font-semibold text-foreground">{topic.name}</span>
         </nav>
 
-        <TopicHero
-          title={topic.name}
-          subtitle={
-            topic.description || `Discover quizzes, stats, and storylines for ${topic.name}.`
-          }
-          primaryCta={
-            heroPrimaryQuiz
-              ? { label: "Start a quiz", href: `/quizzes/${heroPrimaryQuiz.slug}` }
-              : undefined
-          }
-          secondaryCta={listing.pagination.total > 0 ? { label: "Browse all quizzes", href: "#topic-quizzes" } : undefined}
-        />
-
-        <section className="space-y-4 rounded-2xl border border-border/50 bg-card/80 p-4 shadow-sm md:hidden">
-          <div className="space-y-2">
-            <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-primary">Topic</p>
-            <h1 className="text-3xl font-black tracking-tight text-foreground">{topic.name}</h1>
-            <p className="line-clamp-2 text-sm text-muted-foreground">
+        <section className="hidden space-y-6 md:block">
+          <div className="space-y-6 text-center lg:text-left">
+            <div className="inline-flex items-center gap-2 border border-foreground/10 px-4 py-1.5 bg-muted/30">
+              <ShieldCheck className="h-4 w-4 text-accent" />
+              <span className="text-[10px] font-bold uppercase tracking-[0.3em]">Topic Intelligence</span>
+            </div>
+            <h1 className="text-6xl font-bold tracking-tighter lg:text-8xl uppercase leading-[0.85] font-['Barlow_Condensed',sans-serif] text-foreground">
+              {topic.name}
+            </h1>
+            <p className="max-w-xl mx-auto lg:mx-0 text-xl text-muted-foreground font-semibold uppercase tracking-tight leading-tight">
               {topic.description || `Discover quizzes, stats, and storylines for ${topic.name}.`}
             </p>
           </div>
@@ -435,33 +427,73 @@ export default async function TopicDetailPage({
             {heroPrimaryQuiz && (
               <Link
                 href={`/quizzes/${heroPrimaryQuiz.slug}`}
-                className="inline-flex items-center rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground"
+                className="inline-flex items-center rounded-md bg-foreground px-3 py-2 text-xs font-bold uppercase tracking-[0.2em] text-background"
               >
                 Start quiz
               </Link>
             )}
             <Link
               href="#topic-quizzes"
-              className="inline-flex items-center rounded-lg border border-border px-3 py-2 text-sm font-medium text-foreground"
+              className="inline-flex items-center rounded-md border border-border px-3 py-2 text-xs font-bold uppercase tracking-[0.2em] text-foreground"
             >
               Browse all
             </Link>
             <Link
               href="#topic-key-facts"
-              className="inline-flex items-center rounded-lg border border-border px-3 py-2 text-sm font-medium text-foreground"
+              className="inline-flex items-center rounded-md border border-border px-3 py-2 text-xs font-bold uppercase tracking-[0.2em] text-foreground"
             >
               Key facts
             </Link>
             <Link
               href="#topic-faq"
-              className="inline-flex items-center rounded-lg border border-border px-3 py-2 text-sm font-medium text-foreground"
+              className="inline-flex items-center rounded-md border border-border px-3 py-2 text-xs font-bold uppercase tracking-[0.2em] text-foreground"
             >
               FAQ
             </Link>
           </div>
         </section>
 
-        <div className="flex justify-end">
+        <section className="space-y-4 rounded-xl border border-border/60 bg-card/80 p-4 shadow-sm md:hidden">
+          <div className="space-y-3">
+            <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-muted-foreground">Topic Intelligence</p>
+            <h1 className="text-4xl font-bold uppercase leading-[0.9] tracking-tighter font-['Barlow_Condensed',sans-serif] text-foreground">
+              {topic.name}
+            </h1>
+            <p className="text-sm font-medium uppercase leading-tight tracking-tight text-muted-foreground">
+              {topic.description || `Discover quizzes, stats, and storylines for ${topic.name}.`}
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {heroPrimaryQuiz && (
+              <Link
+                href={`/quizzes/${heroPrimaryQuiz.slug}`}
+                className="inline-flex items-center rounded-md bg-foreground px-3 py-2 text-xs font-bold uppercase tracking-[0.2em] text-background"
+              >
+                Start quiz
+              </Link>
+            )}
+            <Link
+              href="#topic-quizzes"
+              className="inline-flex items-center rounded-md border border-border px-3 py-2 text-xs font-bold uppercase tracking-[0.2em] text-foreground"
+            >
+              Browse all
+            </Link>
+            <Link
+              href="#topic-key-facts"
+              className="inline-flex items-center rounded-md border border-border px-3 py-2 text-xs font-bold uppercase tracking-[0.2em] text-foreground"
+            >
+              Key facts
+            </Link>
+            <Link
+              href="#topic-faq"
+              className="inline-flex items-center rounded-md border border-border px-3 py-2 text-xs font-bold uppercase tracking-[0.2em] text-foreground"
+            >
+              FAQ
+            </Link>
+          </div>
+        </section>
+
+        <div className="flex justify-end md:-mt-4">
           <TopicFollowButton
             topicId={topic.id}
             topicName={topic.name}
@@ -472,14 +504,14 @@ export default async function TopicDetailPage({
           />
         </div>
 
-        <section className="space-y-6" id="topic-quizzes">
+        <section className="space-y-8" id="topic-quizzes">
           <ModernFilterBar
             filters={appliedFilters}
             {...filterOptions}
             total={listing.pagination.total}
           />
 
-          <div className="space-y-6">
+          <div className="space-y-10">
             {listing.quizzes.length > 0 ? (
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {listing.quizzes.map((quiz) => (
@@ -505,9 +537,11 @@ export default async function TopicDetailPage({
               dedupedTopRated.length > 0 ||
               leaderboards.allTime.length > 0 ||
               Boolean(userStreak)) && (
-              <section className="space-y-4" id="topic-social-proof">
+              <section className="space-y-6" id="topic-social-proof">
                 {dedupedHeroFeatured.length > 0 && (
-                  <FeaturedQuizzesHero featuredQuizzes={dedupedHeroFeatured} />
+                  <section>
+                    <FeaturedTradingCardsCarousel quizzes={dedupedHeroFeatured} embedded />
+                  </section>
                 )}
 
                 {dedupedTopRated.length > 0 && (
@@ -518,7 +552,7 @@ export default async function TopicDetailPage({
                   />
                 )}
 
-                <Card className="rounded-2xl border border-border/40 bg-gradient-to-br from-primary/10 via-background to-background shadow-sm">
+                <Card className="rounded-xl border border-border/60 bg-card/80 shadow-sm">
                   <CardHeader>
                     <CardTitle className="text-lg">Top fans (all-time)</CardTitle>
                     <CardDescription>Correct answers in this topic</CardDescription>
@@ -528,7 +562,7 @@ export default async function TopicDetailPage({
                       leaderboards.allTime.map((entry) => (
                         <div
                           key={entry.userId}
-                          className="flex items-center justify-between rounded-lg border border-border/40 bg-background/60 px-3 py-2 text-sm"
+                          className="flex items-center justify-between rounded-md border border-border/60 bg-background px-3 py-2 text-sm"
                         >
                           <div className="flex items-center gap-2">
                             <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/15 text-xs font-semibold text-primary">
@@ -552,7 +586,7 @@ export default async function TopicDetailPage({
                 </Card>
 
                 {userStreak && (
-                  <Card className="rounded-2xl border border-border/40 bg-gradient-to-br from-amber-500/10 via-background to-background shadow-sm">
+                  <Card className="rounded-xl border border-border/60 bg-card/80 shadow-sm">
                     <CardHeader>
                       <CardTitle className="text-lg">Your streak</CardTitle>
                       <CardDescription>Keep the momentum going</CardDescription>
@@ -575,7 +609,7 @@ export default async function TopicDetailPage({
         </section>
 
         {showAuthority && publishedSnapshot && (
-          <TopicAuthorityContainer className="md:p-0 md:shadow-none md:border-0 md:bg-transparent">
+          <TopicAuthorityContainer className="rounded-xl border-border/60 bg-card/80">
             <TopicAuthoritySection
               topicName={topic.name}
               introMd={publishedSnapshot.introMd}
@@ -590,9 +624,9 @@ export default async function TopicDetailPage({
         )}
 
         {topic.children.length > 0 && (
-          <section className="space-y-4" id="topic-subtopics">
+          <section className="space-y-6" id="topic-subtopics">
             <div>
-              <h2 className="text-2xl font-semibold text-foreground">Related topics</h2>
+              <h2 className="text-2xl font-bold uppercase tracking-tight text-foreground font-['Barlow_Condensed',sans-serif]">Related topics</h2>
               <p className="text-sm text-muted-foreground">
                 Discover more angles connected to {topic.name}.
               </p>
@@ -601,9 +635,9 @@ export default async function TopicDetailPage({
               <div className="flex gap-4">
                 {topic.children.map((child) => (
                   <Link key={child.id} href={`/topics/${child.slug}`} className="flex-none">
-                    <Card className="h-full w-72 overflow-hidden border border-border/40 bg-gradient-to-br from-primary/10 via-background to-background shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
+                    <Card className="h-full w-72 overflow-hidden rounded-xl border border-border/60 bg-card/80 shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
                       <CardHeader className="space-y-2 p-5">
-                        <CardTitle className="truncate text-lg">{child.name}</CardTitle>
+                        <CardTitle className="truncate text-lg uppercase tracking-tight font-['Barlow_Condensed',sans-serif]">{child.name}</CardTitle>
                         <CardDescription className="line-clamp-3 text-sm text-muted-foreground">
                           {sanitizeTopicSnippet(child.description, child.name)}
                         </CardDescription>
@@ -615,6 +649,7 @@ export default async function TopicDetailPage({
             </div>
           </section>
         )}
+        </div>
       </PageContainer>
 
       {/* Structured Data */}

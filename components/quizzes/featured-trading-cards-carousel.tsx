@@ -18,9 +18,10 @@ import { cn } from "@/lib/utils";
 
 interface FeaturedTradingCardsCarouselProps {
     quizzes: PublicQuizListItem[];
+    embedded?: boolean;
 }
 
-export function FeaturedTradingCardsCarousel({ quizzes }: FeaturedTradingCardsCarouselProps) {
+export function FeaturedTradingCardsCarousel({ quizzes, embedded = false }: FeaturedTradingCardsCarouselProps) {
     const [api, setApi] = useState<CarouselApi>();
     const [selectedIndex, setSelectedIndex] = useState(0);
 
@@ -48,7 +49,7 @@ export function FeaturedTradingCardsCarousel({ quizzes }: FeaturedTradingCardsCa
     }
 
     return (
-        <section className="mb-12 w-full max-w-7xl mx-auto px-4 md:px-8 lg:mb-24">
+        <section className={cn("mb-12 w-full lg:mb-24", !embedded && "mx-auto max-w-7xl px-4 md:px-8")}>
             <Carousel
                 setApi={setApi}
                 opts={{
