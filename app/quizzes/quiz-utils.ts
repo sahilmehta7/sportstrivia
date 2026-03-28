@@ -1,5 +1,7 @@
 import { unstable_cache } from "next/cache";
 import { prisma } from "@/lib/db";
+import { isPersonalizedHomeEnabled } from "@/lib/feature-flags";
+import { getInterestProfileForUser } from "@/lib/services/interest-profile.service";
 import { getTodaysGame } from "@/lib/services/daily-game.service";
 import { getMaxGuesses, getGameTypeDisplayName, getISTDateString, DailyGameType } from "@/lib/utils/daily-game-logic";
 import type { PublicQuizFilters } from "@/lib/dto/quiz-filters.dto";
@@ -246,6 +248,14 @@ export async function getFilterGroups(searchParams: SearchParams): Promise<Showc
 
 export async function getPersonalizedTopicSlug(userId?: string): Promise<string | undefined> {
     if (!userId) return undefined;
+
+    if (isPersonalizedHomeEnabled()) {
+        const interestProfile = await getInterestProfileForUser(userId);
+        const personalizedCandidate = interestProfile.follows[0] ?? interestProfile.explicit[0];
+        if (personalizedCandidate?.slug) {
+            return personalizedCandidate.slug;
+        }
+    }
 
     const topTopicStat = await prisma.userTopicStats.findFirst({
         where: {

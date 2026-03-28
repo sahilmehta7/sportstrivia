@@ -1,27 +1,16 @@
-import { prisma } from "@/lib/db";
 import { requireAuth } from "@/lib/auth-helpers";
 import { handleError, successResponse } from "@/lib/errors";
+import { listFollowedTopicsForUser } from "@/lib/services/user-follow.service";
 
 export async function GET() {
   try {
     const user = await requireAuth();
+    const payload = await listFollowedTopicsForUser(user.id);
 
-    const follows = await prisma.userFollowedTopic.findMany({
-      where: { userId: user.id },
-      include: {
-        topic: {
-          select: {
-            id: true,
-            name: true,
-            slug: true,
-            schemaType: true,
-          },
-        },
-      },
-      orderBy: { createdAt: "asc" },
+    return successResponse({
+      ...payload.grouped,
+      follows: payload.flat,
     });
-
-    return successResponse({ follows });
   } catch (error) {
     return handleError(error);
   }

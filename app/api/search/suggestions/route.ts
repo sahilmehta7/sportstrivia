@@ -7,6 +7,8 @@ import {
   getTrendingSearchQueries,
 } from "@/lib/services/search-query.service";
 import { searchSuggestionsRateLimiter, checkRateLimitStrict } from "@/lib/rate-limit";
+import { getInterestProfileForUser } from "@/lib/services/interest-profile.service";
+import { isSearchProfileBiasEnabled } from "@/lib/feature-flags";
 
 function parseContext(value: string | null): SearchContext {
   if (!value) return SearchContext.QUIZ;
@@ -52,10 +54,19 @@ export async function GET(request: NextRequest) {
     const session = await auth();
     const userId = session?.user?.id;
 
-    const [trending, recent] = await Promise.all([
+    const [trending, recent, profile] = await Promise.all([
       getTrendingSearchQueries(context, { limit: 8 }),
       userId ? getRecentSearchQueriesForUser(userId, context, { limit: 6 }) : [],
+      userId && isSearchProfileBiasEnabled() ? getInterestProfileForUser(userId) : null,
     ]);
+
+    const profileQueries = (profile?.summary.topEntities ?? []).slice(0, 3).map((name) => ({
+      query: name,
+      source: "profile" as const,
+      resultCount: null,
+      lastSearchedAt: null,
+      timesSearched: 0,
+    }));
 
     const suggestions = {
       recent: recent.map((entry) => ({
@@ -65,13 +76,13 @@ export async function GET(request: NextRequest) {
         lastSearchedAt: entry.lastSearchedAt ? entry.lastSearchedAt.toISOString() : null,
         timesSearched: entry.timesSearched,
       })),
-      trending: trending.map((entry) => ({
+      trending: [...profileQueries, ...trending.map((entry) => ({
         query: entry.query,
         source: "trending" as const,
         resultCount: entry.lastResultCount ?? null,
         lastSearchedAt: entry.lastSearchedAt ? entry.lastSearchedAt.toISOString() : null,
         timesSearched: entry.timesSearched,
-      })),
+      }))],
     };
 
     return successResponse({
