@@ -1,6 +1,72 @@
-import { NextResponse } from "next/server";
 import { AttemptResetPeriod } from "@prisma/client";
 import { ZodError } from "zod";
+
+function safeJsonStringify(body: unknown): string {
+  try {
+    return JSON.stringify(body);
+  } catch {
+    return JSON.stringify({
+      error: "Failed to serialize response body",
+      code: "SERIALIZATION_ERROR",
+    });
+  }
+}
+
+class TestHeaders {
+  private readonly values = new Map<string, string>();
+
+  constructor(init?: Record<string, string>) {
+    if (!init) return;
+    for (const [key, value] of Object.entries(init)) {
+      this.values.set(key.toLowerCase(), value);
+    }
+  }
+
+  get(name: string): string | null {
+    return this.values.get(name.toLowerCase()) ?? null;
+  }
+}
+
+class TestResponse {
+  public readonly status: number;
+  public readonly headers: TestHeaders;
+  private readonly bodyText: string;
+
+  constructor(bodyText: string, status: number, headers: Record<string, string>) {
+    this.bodyText = bodyText;
+    this.status = status;
+    this.headers = new TestHeaders(headers);
+  }
+
+  async json() {
+    return JSON.parse(this.bodyText);
+  }
+
+  async text() {
+    return this.bodyText;
+  }
+}
+
+function buildJsonResponse(
+  body: unknown,
+  status: number,
+  headers: Record<string, string> = {}
+) {
+  const bodyText = safeJsonStringify(body);
+  const responseHeaders = {
+    "Content-Type": "application/json; charset=utf-8",
+    ...headers,
+  };
+
+  if (typeof Response !== "undefined") {
+    return new Response(bodyText, {
+      status,
+      headers: responseHeaders,
+    });
+  }
+
+  return new TestResponse(bodyText, status, responseHeaders) as any;
+}
 
 export class AppError extends Error {
   constructor(
@@ -65,10 +131,12 @@ export class InternalServerError extends AppError {
   }
 }
 
-/**
- * Sanitize error messages for logging to prevent sensitive data exposure
- * Redacts passwords, tokens, keys, and email addresses
- */
+export class ServiceUnavailableError extends AppError {
+  constructor(message = "Service unavailable") {
+    super(503, message, "SERVICE_UNAVAILABLE");
+  }
+}
+
 function sanitizeErrorForLogging(error: unknown): string {
   let message: string;
 
@@ -80,7 +148,6 @@ function sanitizeErrorForLogging(error: unknown): string {
     message = String(error);
   }
 
-  // Redact sensitive patterns
   return message
     .replace(/password[=:]\s*["']?[^\s"']+["']?/gi, "password=[REDACTED]")
     .replace(/token[=:]\s*["']?[^\s"']+["']?/gi, "token=[REDACTED]")
@@ -88,15 +155,12 @@ function sanitizeErrorForLogging(error: unknown): string {
     .replace(/secret[=:]\s*["']?[^\s"']+["']?/gi, "secret=[REDACTED]")
     .replace(/bearer\s+[^\s]+/gi, "Bearer [REDACTED]")
     .replace(/\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/g, "[EMAIL]")
-    .replace(/\b(?:4[0-9]{12}(?:[0-9]{3})?|5[1-5][0-9]{14}|3[47][0-9]{13})\b/g, "[CARD]"); // Credit card patterns
+    .replace(/\b(?:4[0-9]{12}(?:[0-9]{3})?|5[1-5][0-9]{14}|3[47][0-9]{13})\b/g, "[CARD]");
 }
 
 export function handleError(error: unknown) {
-  // Log sanitized error to prevent sensitive data exposure
-  console.error("API Error:", sanitizeErrorForLogging(error));
-
   if (error instanceof AttemptLimitError) {
-    return NextResponse.json(
+    return buildJsonResponse(
       {
         error: error.message,
         code: error.code,
@@ -104,36 +168,37 @@ export function handleError(error: unknown) {
         period: error.period,
         resetAt: error.resetAt ? error.resetAt.toISOString() : null,
       },
-      { status: error.statusCode }
+      error.statusCode
     );
   }
 
-  // Check for AppError or any object with statusCode and message
-  // Also check for 'code' property as some custom errors might have it
-  const isAppError = error instanceof AppError || (
-    typeof error === 'object' &&
-    error !== null &&
-    ('statusCode' in error || 'code' in error) &&
-    'message' in error
-  );
+  const isAppError =
+    error instanceof AppError ||
+    (typeof error === "object" &&
+      error !== null &&
+      ("statusCode" in error || "code" in error) &&
+      "message" in error);
 
   if (isAppError) {
     const appError = error as any;
-    // Default to 400 if no status code but looks like an app error due to custom code
     const statusCode = appError.statusCode || 400;
 
-    return NextResponse.json(
+    if (statusCode >= 500) {
+      console.error("API Error:", sanitizeErrorForLogging(error));
+    }
+
+    return buildJsonResponse(
       {
         error: appError.message,
-        code: appError.code || 'APP_ERROR',
+        code: appError.code || "APP_ERROR",
         ...(appError.errors && { errors: appError.errors }),
       },
-      { status: statusCode }
+      statusCode
     );
   }
 
-  // Check for ZodError: handle both instanceof and duck typing for test environments
-  const isZodError = error instanceof ZodError ||
+  const isZodError =
+    error instanceof ZodError ||
     (error as any)?.name === "ZodError" ||
     (error as any)?.constructor?.name === "ZodError" ||
     (Array.isArray((error as any)?.errors) && (error as any)?.issues);
@@ -141,107 +206,66 @@ export function handleError(error: unknown) {
   if (isZodError) {
     try {
       const zodErrors = (error as any).errors || (error as any).issues || [];
-      // Simplify errors to avoid circular refs or complex objects
-      const simplifiedErrors = Array.isArray(zodErrors) ? zodErrors.map((e: any) => ({
-        code: e.code,
-        message: e.message,
-        path: e.path
-      })) : [];
+      const simplifiedErrors = Array.isArray(zodErrors)
+        ? zodErrors.map((issue: any) => ({
+            code: issue.code,
+            message: issue.message,
+            path: issue.path,
+          }))
+        : [];
 
-      // Use standard Response to avoid Next.js specific issues in tests
-      const responseBody = {
-        error: "Validation failed",
-        code: "VALIDATION_ERROR",
-        errors: simplifiedErrors,
-      };
-
-      try {
-        return new NextResponse(JSON.stringify(responseBody), {
-          status: 400,
-          headers: { 'Content-Type': 'application/json' }
-        });
-      } catch {
-        // Absolute fallback if even NextResponse fails (e.g. environment issue)
-        return {
-          json: async () => responseBody,
-          status: 400
-        } as any;
-      }
+      return buildJsonResponse(
+        {
+          error: "Validation failed",
+          code: "VALIDATION_ERROR",
+          errors: simplifiedErrors,
+        },
+        400
+      );
     } catch {
-      // Fallback to simple error
-      try {
-        return new NextResponse(JSON.stringify({ error: "Validation failed (fallback)" }), {
-          status: 400,
-          headers: { 'Content-Type': 'application/json' }
-        });
-      } catch {
-        return {
-          json: async () => ({ error: "Validation failed (fallback)" }),
-          status: 400
-        } as any;
-      }
+      return buildJsonResponse({ error: "Validation failed (fallback)" }, 400);
     }
   }
 
   if (error instanceof Error) {
-    return NextResponse.json(
+    console.error("API Error:", sanitizeErrorForLogging(error));
+    return buildJsonResponse(
       {
         error: "Internal server error",
         code: "INTERNAL_ERROR",
       },
-      { status: 500 }
+      500
     );
   }
 
-  return NextResponse.json(
+  console.error("API Error:", sanitizeErrorForLogging(error));
+  return buildJsonResponse(
     {
       error: "An unexpected error occurred",
       code: "UNKNOWN_ERROR",
     },
-    { status: 500 }
+    500
   );
 }
 
 export function successResponse<T>(data: T, status = 200, headers: Record<string, string> = {}) {
-  try {
-    if (NextResponse && NextResponse.json) {
-      return NextResponse.json(
-        {
-          success: true,
-          data,
-        },
-        { status, headers }
-      );
-    }
-    throw new Error('NextResponse not available');
-  } catch {
-    // Fallback for test environment
-    return {
-      json: async () => ({ success: true, data }),
-      status,
-      headers: new Headers(headers)
-    } as any;
-  }
+  return buildJsonResponse(
+    {
+      success: true,
+      data,
+    },
+    status,
+    headers
+  );
 }
 
 export function errorResponse(message: string, status = 400, code?: string) {
-  try {
-    if (NextResponse && NextResponse.json) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: message,
-          code,
-        },
-        { status }
-      );
-    }
-    throw new Error('NextResponse not available');
-  } catch {
-    // Fallback for test environment
-    return {
-      json: async () => ({ success: false, error: message, code }),
-      status
-    } as any;
-  }
+  return buildJsonResponse(
+    {
+      success: false,
+      error: message,
+      code,
+    },
+    status
+  );
 }

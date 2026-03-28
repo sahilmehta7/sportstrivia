@@ -296,4 +296,33 @@ describe("topic relation routes", () => {
     expect(body.data.relations).toHaveLength(1);
     expect(body.data.relations[0].toTopic.slug).toBe("india-cricket-team");
   });
+
+  it("returns 400 for an invalid relation pairing", async () => {
+    prismaMock.topic.findUnique
+      .mockResolvedValueOnce({
+        id: "team_1",
+        schemaType: "SPORTS_TEAM",
+      })
+      .mockResolvedValueOnce({
+        id: "org_1",
+        schemaType: "SPORTS_ORGANIZATION",
+      });
+
+    const request = new Request("http://localhost/api/admin/topics/team_1/relations", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        toTopicId: "org_1",
+        relationType: "PLAYS_FOR",
+      }),
+    });
+
+    const response = await postAdminRelation(request as any, {
+      params: Promise.resolve({ id: "team_1" }),
+    });
+    const body = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(body.error).toMatch(/invalid relation pairing/i);
+  });
 });

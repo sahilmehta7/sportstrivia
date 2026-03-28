@@ -26,6 +26,12 @@ function formatTaskType(type: BackgroundTaskType): string {
             return "Backup Create";
         case BackgroundTaskType.BACKUP_RESTORE:
             return "Backup Restore";
+        case BackgroundTaskType.TOPIC_RELATION_INFERENCE:
+            return "Topic Relation Inference";
+        case BackgroundTaskType.TOPIC_TYPE_AUDIT:
+            return "Topic Type Audit";
+        case BackgroundTaskType.TOPIC_TYPE_APPLY:
+            return "Topic Type Apply";
         default:
             return (type as string).replace(/_/g, " ");
     }

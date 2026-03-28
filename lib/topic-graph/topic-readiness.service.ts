@@ -1,3 +1,4 @@
+import { BadRequestError } from "@/lib/errors";
 import type { TopicSchemaTypeValue } from "@/lib/topic-schema-options";
 
 export type TopicRelationTypeValue =
@@ -11,7 +12,7 @@ export type TopicRelationTypeValue =
 
 export type TopicEntityStatusValue = "DRAFT" | "READY" | "NEEDS_REVIEW";
 
-class TopicRelationValidationError extends Error {
+class TopicRelationValidationError extends BadRequestError {
   constructor(message: string) {
     super(message);
     this.name = "TopicRelationValidationError";

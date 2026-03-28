@@ -4,6 +4,7 @@ import {
   BackgroundTaskStatus,
   BackgroundTaskType,
 } from "@prisma/client";
+import { ServiceUnavailableError } from "@/lib/errors";
 
 export interface CreateBackgroundTaskInput {
   userId?: string | null;
@@ -53,7 +54,23 @@ async function normalizeTaskTypeForDatabase(type: BackgroundTaskType): Promise<B
       );
       return fallback;
     }
+
+    if (type === BackgroundTaskType.TOPIC_TYPE_APPLY) {
+      throw new ServiceUnavailableError(
+        'Topic type apply is temporarily unavailable because database enum "BackgroundTaskType" is missing "TOPIC_TYPE_APPLY".'
+      );
+    }
   } catch (error) {
+    if (error instanceof ServiceUnavailableError) {
+      throw error;
+    }
+
+    if (type === BackgroundTaskType.TOPIC_TYPE_APPLY) {
+      throw new ServiceUnavailableError(
+        "Topic type apply is temporarily unavailable because task type support could not be verified."
+      );
+    }
+
     const fallback = getFallbackTaskType(type);
     console.warn(
       `[BackgroundTask] Could not verify DB enum values for "${type}". Falling back to "${fallback}".`,
