@@ -3,8 +3,8 @@ import { requireAuth } from "@/lib/auth-helpers";
 import { handleError, successResponse } from "@/lib/errors";
 import { followTopicForUser, unfollowTopicForUser } from "@/lib/services/user-follow.service";
 
-// Compatibility alias during migration.
-// Canonical endpoint: /api/topics/[id]/follow.
+// Canonical follow endpoint during migration.
+// Compatibility aliases: /api/topics/by-id/[id]/follow and /api/topics/by-slug/[slug]/follow.
 export async function POST(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }

@@ -4,13 +4,14 @@ import { NotFoundError, handleError, successResponse } from "@/lib/errors";
 
 export async function GET(
   _request: NextRequest,
-  { params }: { params: Promise<{ slug: string }> }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { slug } = await params;
+    const { id } = await params;
 
     const topic = await prisma.topic.findUnique({
-      where: { slug },
+      // This route continues accepting a topic slug in the URL segment for compatibility.
+      where: { slug: id },
       select: {
         id: true,
         slug: true,

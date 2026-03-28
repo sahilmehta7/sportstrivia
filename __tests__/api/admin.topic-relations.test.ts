@@ -49,7 +49,7 @@ import { requireAdmin } from "@/lib/auth-helpers";
 import { GET as getAdminRelations, POST as postAdminRelation } from "@/app/api/admin/topics/[id]/relations/route";
 import { PATCH as patchAdminRelation, DELETE as deleteAdminRelation } from "@/app/api/admin/topics/[id]/relations/[relationId]/route";
 import { GET as getAdminReadiness } from "@/app/api/admin/topics/[id]/readiness/route";
-import { GET as getPublicRelations } from "@/app/api/topics/[slug]/relations/route";
+import { GET as getPublicRelations } from "@/app/api/topics/[id]/relations/route";
 
 describe("topic relation routes", () => {
   beforeEach(() => {
@@ -168,7 +168,7 @@ describe("topic relation routes", () => {
     });
 
     const response = await getPublicRelations({} as any, {
-      params: Promise.resolve({ slug: "india-cricket-team" }),
+      params: Promise.resolve({ id: "india-cricket-team" }),
     });
     const body = await response.json();
 
