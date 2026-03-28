@@ -2,7 +2,7 @@ import { NextRequest, after } from "next/server";
 import { BackgroundTaskType } from "@prisma/client";
 import { requireAdmin } from "@/lib/auth-helpers";
 import { handleError, NotFoundError, successResponse } from "@/lib/errors";
-import { createBackgroundTask, getBackgroundTaskById, markBackgroundTaskFailed } from "@/lib/services/background-task.service";
+import { createBackgroundTask, getBackgroundTaskById } from "@/lib/services/background-task.service";
 import {
   processTopicInferenceTask,
   processTopicTypeApplyTask,
@@ -40,22 +40,17 @@ export async function POST(
       input: priorTask.input ?? undefined,
     });
     after(async () => {
-      try {
-        if (priorTask.type === BackgroundTaskType.TOPIC_RELATION_INFERENCE) {
-          await processTopicInferenceTask(task.id);
-          return;
-        }
-        if (priorTask.type === BackgroundTaskType.TOPIC_TYPE_APPLY) {
-          await processTopicTypeApplyTask(task.id);
-          return;
-        }
-        await processTopicTypeAuditTask(task.id);
-      } catch (processingError) {
-        const message = processingError instanceof Error ? processingError.message : "Unknown background processing error";
-        await markBackgroundTaskFailed(task.id, message);
+      if (priorTask.type === BackgroundTaskType.TOPIC_RELATION_INFERENCE) {
+        await processTopicInferenceTask(task.id);
+        return;
       }
+      if (priorTask.type === BackgroundTaskType.TOPIC_TYPE_APPLY) {
+        await processTopicTypeApplyTask(task.id);
+        return;
+      }
+      await processTopicTypeAuditTask(task.id);
     });
-    return successResponse({ taskId: task.id, status: "processing" });
+    return successResponse({ taskId: task.id, attempt: (task as any).attempt ?? 1, status: "processing" });
   } catch (error) {
     return handleError(error);
   }

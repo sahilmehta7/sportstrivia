@@ -3,6 +3,9 @@ import { requireAuth } from "@/lib/auth-helpers";
 import { handleError, successResponse, BadRequestError } from "@/lib/errors";
 import { z } from "zod";
 import { getAIQuizPrompt, getAIModel } from "@/lib/services/settings.service";
+import { callOpenAIWithRetry, extractContentFromCompletion, extractUsageStats } from "@/lib/services/ai-openai-client.service";
+import { getBudgetPolicyForRequest } from "@/lib/services/ai-budget-policy.service";
+import { extractJSON } from "@/lib/services/ai-quiz-processor.service";
 
 // Simple in-memory rate limit per user: 3 requests/hour
 const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000;
@@ -59,8 +62,6 @@ export async function POST(request: NextRequest) {
     const aiModel = await getAIModel();
     const prompt = buildPrompt(promptTemplate, topic, quizSport, difficulty, numQuestions, slugifiedTopic);
 
-    const usesNewParams = aiModel.startsWith("gpt-5") || aiModel.startsWith("o1");
-
     let systemMessage =
       "You are an expert sports quiz creator. You create engaging, accurate, and well-structured sports trivia quizzes in strict JSON format.";
     if (aiModel.startsWith("o1")) {
@@ -68,60 +69,20 @@ export async function POST(request: NextRequest) {
         "You are an expert sports quiz creator. CRITICAL: Output ONLY valid JSON with no extra text. JSON must match the user prompt structure exactly.";
     }
 
-    const requestBody: any = {
-      model: aiModel,
-      messages: [
-        { role: "system", content: systemMessage },
-        { role: "user", content: prompt },
-      ],
-    };
-
-    if (!aiModel.startsWith("o1") && !aiModel.startsWith("gpt-5")) {
-      requestBody.temperature = 0.7;
-    }
-    if (usesNewParams) {
-      requestBody.max_completion_tokens = 16000;  // Higher limit for GPT-5 reasoning models
-    } else {
-      requestBody.max_tokens = 4000;  // Increased from 3000 for larger question sets
-    }
-    if (!aiModel.startsWith("o1")) {
-      requestBody.response_format = { type: "json_object" };
-    }
-
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
-      },
-      body: JSON.stringify(requestBody),
-    });
-
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({}));
-      throw new BadRequestError(`OpenAI API error: ${error.error?.message || "Unknown error"}`);
-    }
-
-    const completion = await response.json();
-    let generatedContent: string | null = null;
-    if (completion.choices?.[0]?.message?.content) {
-      generatedContent = completion.choices[0].message.content;
-    } else if (completion.choices?.[0]?.text) {
-      generatedContent = completion.choices[0].text;
-    } else if (completion.content) {
-      generatedContent = completion.content;
-    } else if (completion.message?.content) {
-      generatedContent = completion.message.content;
-    } else if (completion.output) {
-      generatedContent = completion.output;
-    } else if (completion.data) {
-      generatedContent = completion.data;
-    }
-
-    if (!generatedContent) {
-      throw new BadRequestError(`No content generated from OpenAI. Model: ${aiModel}.`);
-    }
-
+    const completion = await callOpenAIWithRetry(
+      aiModel,
+      prompt,
+      systemMessage,
+      {
+        temperature: !aiModel.startsWith("o1") && !aiModel.startsWith("gpt-5") ? 0.7 : undefined,
+        maxTokens: aiModel.startsWith("gpt-5") || aiModel.startsWith("o1") ? 16000 : 4000,
+        responseFormat: aiModel.startsWith("o1") ? null : { type: "json_object" },
+        cacheable: true,
+        cacheKeyContext: { type: "quiz_suggest", topic, difficulty, numQuestions, sport: quizSport },
+        budgetPolicy: getBudgetPolicyForRequest("quiz_suggest"),
+      }
+    );
+    const generatedContent = extractContentFromCompletion(completion, aiModel);
     const cleanedContent = extractJSON(generatedContent);
     let generatedQuiz;
     try {
@@ -142,6 +103,7 @@ export async function POST(request: NextRequest) {
       }));
     }
 
+    const usageStats = extractUsageStats(completion);
     return successResponse({
       quiz: generatedQuiz,
       metadata: {
@@ -150,8 +112,10 @@ export async function POST(request: NextRequest) {
         difficulty,
         numQuestions,
         model: aiModel,
-        tokensUsed: completion.usage?.total_tokens || 0,
+        tokensUsed: usageStats.tokensUsed,
+        api: usageStats.api,
         promptPreview: prompt.substring(0, 200) + "...",
+        llmTelemetry: (completion as any)?._codexMeta ?? null,
       },
     });
   } catch (error) {
@@ -177,14 +141,6 @@ function buildPrompt(
     .replace(/\{\{DURATION\}\}/g, (numQuestions * 60).toString());
 }
 
-function extractJSON(content: string): string {
-  content = String(content || "").trim();
-  const markdownMatch = content.match(/```(?:json)?\s*(\{[\s\S]*?\})\s*```/);
-  if (markdownMatch) return markdownMatch[1].trim();
-  const jsonMatch = content.match(/(\{[\s\S]*\})/);
-  return jsonMatch ? jsonMatch[1].trim() : content;
-}
-
 function determineSportFromTopic(topic: string): string {
   const topicLower = topic.toLowerCase();
   const sportKeywords: Record<string, string[]> = {
@@ -202,4 +158,3 @@ function determineSportFromTopic(topic: string): string {
   }
   return "General";
 }
-

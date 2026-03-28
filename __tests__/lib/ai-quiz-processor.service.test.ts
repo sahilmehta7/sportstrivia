@@ -5,6 +5,8 @@ import { clearAIResponseCache } from "@/lib/services/ai-response-cache";
 // Mock dependencies
 jest.mock("@/lib/services/background-task.service", () => ({
   getBackgroundTaskById: jest.fn(),
+  getCurrentTaskExecutionContext: jest.fn(),
+  shouldStopTaskExecution: jest.fn(),
   markBackgroundTaskInProgress: jest.fn(),
   markBackgroundTaskCompleted: jest.fn(),
   markBackgroundTaskFailed: jest.fn(),
@@ -19,6 +21,8 @@ jest.mock("@/lib/services/settings.service", () => ({
 
 const {
   getBackgroundTaskById,
+  getCurrentTaskExecutionContext,
+  shouldStopTaskExecution,
   markBackgroundTaskInProgress,
   markBackgroundTaskCompleted,
   markBackgroundTaskFailed,
@@ -110,7 +114,9 @@ describe("ai-quiz-processor.service", () => {
 
     // Setup default mocks
     getBackgroundTaskById.mockResolvedValue(mockTask);
-    markBackgroundTaskInProgress.mockResolvedValue(undefined);
+    getCurrentTaskExecutionContext.mockResolvedValue({ taskId: mockTaskId, attempt: 1 });
+    shouldStopTaskExecution.mockResolvedValue(false);
+    markBackgroundTaskInProgress.mockResolvedValue({ id: mockTaskId, status: "IN_PROGRESS" });
     markBackgroundTaskCompleted.mockResolvedValue(undefined);
     markBackgroundTaskFailed.mockResolvedValue(undefined);
     updateTaskProgress.mockResolvedValue(undefined);
@@ -132,7 +138,7 @@ describe("ai-quiz-processor.service", () => {
     it("should process a valid task successfully", async () => {
       await processAIQuizTask(mockTaskId);
 
-      expect(markBackgroundTaskInProgress).toHaveBeenCalledWith(mockTaskId);
+      expect(markBackgroundTaskInProgress).toHaveBeenCalledWith(mockTaskId, 1);
       expect(getBackgroundTaskById).toHaveBeenCalledWith(mockTaskId);
       expect(global.fetch).toHaveBeenCalledWith(
         "https://api.openai.com/v1/chat/completions",
@@ -170,7 +176,12 @@ describe("ai-quiz-processor.service", () => {
       getBackgroundTaskById.mockResolvedValue(null);
 
       await expect(processAIQuizTask(mockTaskId)).rejects.toThrow("Task not found or missing input");
-      expect(markBackgroundTaskFailed).toHaveBeenCalledWith(mockTaskId, expect.stringContaining("Task not found"));
+      expect(markBackgroundTaskFailed).toHaveBeenCalledWith(
+        mockTaskId,
+        expect.stringContaining("Task not found"),
+        undefined,
+        1
+      );
     });
 
     it("should throw error if task type is incorrect", async () => {
@@ -223,7 +234,7 @@ describe("ai-quiz-processor.service", () => {
       expect(url).toBe("https://api.openai.com/v1/chat/completions");
       expect(requestBody.max_tokens).toBe(16000);
       expect(requestBody.max_output_tokens).toBeUndefined();
-      expect(requestBody.temperature).toBeUndefined();
+      expect(requestBody.temperature).toBe(0.8);
       expect(requestBody.response_format).toBeUndefined();
     });
 
@@ -298,9 +309,10 @@ describe("ai-quiz-processor.service", () => {
       });
 
       await expect(processAIQuizTask(mockTaskId)).rejects.toThrow();
-      expect(global.fetch).toHaveBeenCalledTimes(3); // Max retries
+      // primary model retries + two fallback model retries
+      expect(global.fetch).toHaveBeenCalledTimes(9);
       expect(markBackgroundTaskFailed).toHaveBeenCalled();
-    });
+    }, 12000);
 
     it("should handle JSON wrapped in markdown code blocks", async () => {
       const wrappedResponse = {
@@ -346,7 +358,11 @@ describe("ai-quiz-processor.service", () => {
     it("should update progress during processing", async () => {
       await processAIQuizTask(mockTaskId);
 
-      expect(updateTaskProgress).toHaveBeenCalledWith(mockTaskId, expect.objectContaining({ percentage: expect.any(Number) }));
+      expect(updateTaskProgress).toHaveBeenCalledWith(
+        mockTaskId,
+        expect.objectContaining({ percentage: expect.any(Number) }),
+        1
+      );
     });
 
     it("should extract content from Responses API output_text field", async () => {

@@ -861,6 +861,9 @@ model AdminBackgroundTask {
   userId       String?
   type         BackgroundTaskType
   status       BackgroundTaskStatus @default(PENDING)
+  attempt      Int                  @default(1)
+  cancelledAt  DateTime?
+  cancelledAttempt Int?
   label        String
   input        Json?
   result       Json?
@@ -874,6 +877,7 @@ model AdminBackgroundTask {
   @@index([userId])
   @@index([type])
   @@index([status])
+  @@index([attempt])
   @@index([createdAt])
 }
 

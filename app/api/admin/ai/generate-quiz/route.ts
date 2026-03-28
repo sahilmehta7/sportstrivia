@@ -5,7 +5,6 @@ import { handleError, successResponse, BadRequestError } from "@/lib/errors";
 import { z } from "zod";
 import {
   createBackgroundTask,
-  markBackgroundTaskFailed,
 } from "@/lib/services/background-task.service";
 import { processAIQuizTask } from "@/lib/services/ai-quiz-processor.service";
 import { determineSportFromTopic, fetchSourceMaterial } from "@/lib/services/ai-quiz-processor.service";
@@ -106,31 +105,16 @@ export async function POST(request: NextRequest) {
     // Schedule background processing using Next.js after() function
     // This allows the response to be sent immediately while the task runs in the background
     // Start processing in background without Inngest
-    after(async () => {
-      try {
-        await processAIQuizTask(finalTaskId);
-      } catch (processingError) {
-        const message =
-          processingError instanceof Error ? processingError.message : "Unknown background processing error";
-        await markBackgroundTaskFailed(finalTaskId, message);
-      }
-    });
+    after(async () => processAIQuizTask(finalTaskId));
 
     // Return immediately with task ID
     return successResponse({
       taskId,
+      attempt: (backgroundTask as any).attempt ?? 1,
       status: "processing",
       message: "Quiz generation started. Check the task status for progress.",
     });
   } catch (error) {
-    if (taskId) {
-      const message = error instanceof Error ? error.message : "Unknown error";
-      try {
-        await markBackgroundTaskFailed(taskId, message);
-      } catch {
-        // Silently handle task status update errors
-      }
-    }
     return handleError(error);
   }
 }

@@ -2,8 +2,10 @@ import { NextRequest } from "next/server";
 import { requireAdmin } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/db";
 import { handleError, successResponse, NotFoundError, BadRequestError } from "@/lib/errors";
-
-const MODEL = "gpt-4o";
+import { getAIModel } from "@/lib/services/settings.service";
+import { callOpenAIWithRetry, extractContentFromCompletion } from "@/lib/services/ai-openai-client.service";
+import { extractJSON } from "@/lib/services/ai-quiz-processor.service";
+import { getBudgetPolicyForRequest } from "@/lib/services/ai-budget-policy.service";
 
 export async function POST(
   request: NextRequest,
@@ -75,42 +77,21 @@ Difficulty: ${quiz.difficulty}
 Sample questions:\n${sampleQuestions.join("\n") || "No questions available"}
 Include unique angles or hooks pulled from the questions.`;
 
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
-      },
-      body: JSON.stringify({
-        model: MODEL,
-        messages: [
-          {
-            role: "system",
-            content:
-              "You craft concise, compelling sports quiz titles and descriptions. Always respond with valid JSON matching the requested schema.",
-          },
-          {
-            role: "user",
-            content: prompt,
-          },
-        ],
+    const aiModel = await getAIModel();
+    const completion = await callOpenAIWithRetry(
+      aiModel,
+      prompt,
+      "You craft concise, compelling sports quiz titles and descriptions. Always respond with valid JSON matching the requested schema.",
+      {
         temperature: 0.7,
-        max_tokens: 500,
-        response_format: {
-          type: "json_object",
-        },
-      }),
-    });
-
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({}));
-      throw new BadRequestError(
-        `OpenAI API error: ${error.error?.message || response.statusText}`
-      );
-    }
-
-    const completion = await response.json();
-    const content = completion.choices?.[0]?.message?.content;
+        maxTokens: 500,
+        responseFormat: aiModel.startsWith("o1") ? null : { type: "json_object" },
+        cacheable: true,
+        cacheKeyContext: { type: "quiz_metadata", quizId: id, title: quiz.title, topics: Array.from(topics) },
+        budgetPolicy: getBudgetPolicyForRequest("quiz_metadata"),
+      }
+    );
+    const content = extractContentFromCompletion(completion, aiModel);
 
     if (!content) {
       throw new BadRequestError("OpenAI response did not contain any content");
@@ -118,7 +99,7 @@ Include unique angles or hooks pulled from the questions.`;
 
     let parsed;
     try {
-      parsed = JSON.parse(content);
+      parsed = JSON.parse(extractJSON(content));
     } catch (error: any) {
       throw new BadRequestError(
         `Failed to parse OpenAI response. Ensure JSON formatting. Error: ${error.message}`

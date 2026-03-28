@@ -8,36 +8,109 @@ import { buildAIResponseCacheKey, getCachedAIResponse, setCachedAIResponse } fro
  * - Other models → Chat Completions API (/v1/chat/completions)
  */
 
-/**
- * Calls the Responses API for GPT-5 models.
- * This API provides better parameter support for GPT-5 (max_output_tokens, reasoning_effort, verbosity).
- */
-export async function callResponsesAPIWithRetry(
+export class TaskCancelledError extends Error {
+  constructor(message = "Task cancelled") {
+    super(message);
+    this.name = "TaskCancelledError";
+  }
+}
+
+export type AIBudgetPolicy = {
+  maxTotalTokens?: number;
+  maxEstimatedCostUsd?: number;
+  fallbackModels?: string[];
+  hardFailOnExceed?: boolean;
+};
+
+type OpenAIRequestOptions = {
+  temperature?: number;
+  maxTokens?: number;
+  responseFormat?: { type: "json_object" } | null;
+  cacheable?: boolean;
+  cacheKeyContext?: Record<string, unknown>;
+  cancellationCheck?: () => Promise<boolean>;
+  budgetPolicy?: AIBudgetPolicy;
+};
+
+type LLMTelemetry = {
+  model: string;
+  initialModel: string;
+  fallbackUsed: boolean;
+  fallbackFrom?: string | null;
+  retryCount: number;
+  cacheHit: boolean;
+  api: "responses" | "chat_completions";
+  totalTokens: number;
+  promptTokens: number;
+  completionTokens: number;
+  estimatedCostUsd: number;
+  durationMs: number;
+  budget: AIBudgetPolicy | null;
+};
+
+const MODEL_PRICING_USD_PER_1K_TOKENS: Record<string, { prompt: number; completion: number }> = {
+  "gpt-5": { prompt: 0.005, completion: 0.015 },
+  "gpt-5-chat": { prompt: 0.005, completion: 0.015 },
+  "gpt-5-mini": { prompt: 0.0015, completion: 0.0045 },
+  "gpt-5-nano": { prompt: 0.0006, completion: 0.0018 },
+  "gpt-4o": { prompt: 0.005, completion: 0.015 },
+  "gpt-4o-mini": { prompt: 0.00015, completion: 0.0006 },
+  "o1": { prompt: 0.015, completion: 0.06 },
+  "o1-preview": { prompt: 0.015, completion: 0.06 },
+  "o1-mini": { prompt: 0.003, completion: 0.012 },
+  "gpt-4-turbo": { prompt: 0.01, completion: 0.03 },
+  "gpt-4": { prompt: 0.03, completion: 0.06 },
+  "gpt-3.5-turbo": { prompt: 0.0005, completion: 0.0015 },
+};
+
+function normalizeModelForPricing(model: string): string {
+  if (model.startsWith("gpt-5-nano")) return "gpt-5-nano";
+  if (model.startsWith("gpt-5-mini")) return "gpt-5-mini";
+  if (model.startsWith("gpt-5-chat")) return "gpt-5-chat";
+  if (model.startsWith("gpt-5")) return "gpt-5";
+  if (model.startsWith("gpt-4o-mini")) return "gpt-4o-mini";
+  if (model.startsWith("gpt-4o")) return "gpt-4o";
+  if (model.startsWith("o1-mini")) return "o1-mini";
+  if (model.startsWith("o1-preview")) return "o1-preview";
+  if (model.startsWith("o1")) return "o1";
+  if (model.startsWith("gpt-4-turbo")) return "gpt-4-turbo";
+  if (model.startsWith("gpt-4")) return "gpt-4";
+  if (model.startsWith("gpt-3.5-turbo")) return "gpt-3.5-turbo";
+  return "gpt-4o";
+}
+
+function roughTokenEstimate(text: string): number {
+  return Math.max(1, Math.ceil((text || "").length / 4));
+}
+
+function estimateCostUsd(model: string, promptTokens: number, completionTokens: number): number {
+  const pricing = MODEL_PRICING_USD_PER_1K_TOKENS[normalizeModelForPricing(model)];
+  const promptCost = (promptTokens / 1000) * pricing.prompt;
+  const completionCost = (completionTokens / 1000) * pricing.completion;
+  return Number((promptCost + completionCost).toFixed(6));
+}
+
+async function callResponsesAPIWithRetry(
   aiModel: string,
   prompt: string,
   systemMessage: string,
-  maxRetries = 3
-): Promise<any> {
-  // Combine system message and user prompt for Responses API
-  // Responses API uses 'input' field (single string) instead of messages array
+  maxRetries = 3,
+  options?: { cancellationCheck?: () => Promise<boolean> }
+): Promise<{ completion: any; retryCount: number }> {
   const fullPrompt = `${systemMessage}\n\n${prompt}`;
-
-  // Build request body for Responses API
   const requestBody: any = {
     model: aiModel,
     input: fullPrompt,
-    reasoning: {
-      effort: "medium", // Use medium reasoning effort for quiz/question generation
-    },
-    text: {
-      verbosity: "medium", // Medium verbosity for detailed content
-    },
-    max_output_tokens: 16000, // Proper parameter name for Responses API
+    reasoning: { effort: "medium" },
+    text: { verbosity: "medium" },
+    max_output_tokens: 16000,
   };
 
-  // Retry logic with exponential backoff
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     try {
+      if (options?.cancellationCheck && (await options.cancellationCheck())) {
+        throw new TaskCancelledError("Task cancelled before OpenAI Responses API call");
+      }
       const response = await fetch("https://api.openai.com/v1/responses", {
         method: "POST",
         headers: {
@@ -48,14 +121,11 @@ export async function callResponsesAPIWithRetry(
       });
 
       if (response.ok) {
-        return await response.json();
+        return { completion: await response.json(), retryCount: attempt };
       }
 
-      // Parse error response
       const errorData = await response.json().catch(() => ({}));
       const errorMessage = errorData.error?.message || `HTTP ${response.status}`;
-
-      // Retry on 429 (rate limit) or 5xx errors
       if (response.status === 429 || response.status >= 500) {
         if (attempt < maxRetries - 1) {
           const delay = Math.pow(2, attempt) * 1000;
@@ -64,90 +134,57 @@ export async function callResponsesAPIWithRetry(
           continue;
         }
       }
-
       throw new Error(`OpenAI Responses API error: ${errorMessage}`);
     } catch (error) {
-      // If it's the last attempt, throw the error
-      if (attempt === maxRetries - 1) {
-        throw error;
-      }
-
-      // Network errors also retry
-      if (error instanceof Error && !error.message.includes('OpenAI Responses API error')) {
+      if (error instanceof TaskCancelledError) throw error;
+      if (attempt === maxRetries - 1) throw error;
+      if (error instanceof Error && !error.message.includes("OpenAI Responses API error")) {
         const delay = Math.pow(2, attempt) * 1000;
         console.log(`[OpenAI Client] Responses API retry ${attempt + 1}/${maxRetries} after ${delay}ms delay (Network error)`);
         await new Promise(resolve => setTimeout(resolve, delay));
         continue;
       }
-
-      // If it's an API error that we shouldn't retry, throw immediately
       throw error;
     }
   }
-
   throw new Error("Failed to call OpenAI Responses API after retries");
 }
 
-type OpenAIRequestOptions = {
-  temperature?: number;
-  maxTokens?: number;
-  responseFormat?: { type: "json_object" } | null;
-  cacheable?: boolean;
-  cacheKeyContext?: Record<string, unknown>;
-};
-
-/**
- * Calls the Chat Completions API for non-GPT-5 models.
- */
-export async function callChatCompletionsAPIWithRetry(
+async function callChatCompletionsAPIWithRetry(
   aiModel: string,
   prompt: string,
   systemMessage: string,
   options: OpenAIRequestOptions = {},
   maxRetries = 3
-): Promise<any> {
+): Promise<{ completion: any; retryCount: number }> {
   const isO1 = aiModel.startsWith("o1");
-
-  // Build request body for Chat Completions API
   const requestBody: any = {
     model: aiModel,
     messages: [
-      {
-        role: "system",
-        content: systemMessage,
-      },
-      {
-        role: "user",
-        content: prompt,
-      },
+      { role: "system", content: systemMessage },
+      { role: "user", content: prompt },
     ],
   };
 
-  // o1 models don't support custom temperature (only default value)
-  // Standard models support temperature
   if (!isO1 && options.temperature !== undefined) {
     requestBody.temperature = options.temperature;
   } else if (!isO1 && options.temperature === undefined) {
-    requestBody.temperature = 0.8; // Default temperature
+    requestBody.temperature = 0.8;
   }
-
-  // Add token limit parameter - Chat Completions API uses 'max_tokens' for ALL models
-  // For newer models, OpenAI is moving towards 'max_completion_tokens' but 'max_tokens' remains supported
   if (options.maxTokens !== undefined) {
     requestBody.max_tokens = options.maxTokens;
   } else {
     requestBody.max_tokens = isO1 ? 16000 : 4000;
   }
-
-  // Only add response_format for models that support it
-  // o1 models don't support response_format parameter in Chat Completions API
   if (!isO1 && options.responseFormat !== null) {
     requestBody.response_format = options.responseFormat || { type: "json_object" };
   }
 
-  // Retry logic with exponential backoff
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     try {
+      if (options.cancellationCheck && (await options.cancellationCheck())) {
+        throw new TaskCancelledError("Task cancelled before OpenAI Chat Completions API call");
+      }
       const response = await fetch("https://api.openai.com/v1/chat/completions", {
         method: "POST",
         headers: {
@@ -158,14 +195,11 @@ export async function callChatCompletionsAPIWithRetry(
       });
 
       if (response.ok) {
-        return await response.json();
+        return { completion: await response.json(), retryCount: attempt };
       }
 
-      // Parse error response
       const errorData = await response.json().catch(() => ({}));
       const errorMessage = errorData.error?.message || `HTTP ${response.status}`;
-
-      // Retry on 429 (rate limit) or 5xx errors
       if (response.status === 429 || response.status >= 500) {
         if (attempt < maxRetries - 1) {
           const delay = Math.pow(2, attempt) * 1000;
@@ -177,20 +211,14 @@ export async function callChatCompletionsAPIWithRetry(
 
       throw new Error(`OpenAI Chat Completions API error: ${errorMessage}`);
     } catch (error) {
-      // If it's the last attempt, throw the error
-      if (attempt === maxRetries - 1) {
-        throw error;
-      }
-
-      // Network errors also retry
-      if (error instanceof Error && !error.message.includes('OpenAI Chat Completions API error')) {
+      if (error instanceof TaskCancelledError) throw error;
+      if (attempt === maxRetries - 1) throw error;
+      if (error instanceof Error && !error.message.includes("OpenAI Chat Completions API error")) {
         const delay = Math.pow(2, attempt) * 1000;
         console.log(`[OpenAI Client] Chat Completions API retry ${attempt + 1}/${maxRetries} after ${delay}ms delay (Network error)`);
         await new Promise(resolve => setTimeout(resolve, delay));
         continue;
       }
-
-      // If it's an API error that we shouldn't retry, throw immediately
       throw error;
     }
   }
@@ -198,18 +226,6 @@ export async function callChatCompletionsAPIWithRetry(
   throw new Error("Failed to call OpenAI Chat Completions API after retries");
 }
 
-/**
- * Calls OpenAI API with automatic routing to the appropriate endpoint.
- * - GPT-5 models: Uses Responses API (better parameter support)
- * - Other models: Uses Chat Completions API
- * 
- * @param aiModel - The model identifier (e.g., "gpt-5", "gpt-4o", "o1-preview")
- * @param prompt - The user prompt
- * @param systemMessage - The system message
- * @param options - Optional configuration for Chat Completions API
- * @param maxRetries - Maximum number of retry attempts (default: 3)
- * @returns The API response
- */
 export async function callOpenAIWithRetry(
   aiModel: string,
   prompt: string,
@@ -217,59 +233,135 @@ export async function callOpenAIWithRetry(
   options: OpenAIRequestOptions = {},
   maxRetries = 3
 ): Promise<any> {
-  const isGPT5 = aiModel.startsWith("gpt-5");
-  const isO1 = aiModel.startsWith("o1");
+  const models = [aiModel, ...(options.budgetPolicy?.fallbackModels || [])]
+    .map((m) => m.trim())
+    .filter(Boolean)
+    .filter((model, idx, arr) => arr.indexOf(model) === idx);
   const cacheable = options.cacheable !== false;
-  let cacheKey: string | null = null;
+  const fullPrompt = `${systemMessage}\n\n${prompt}`;
+  const estimatedPromptTokens = roughTokenEstimate(fullPrompt);
+  const maxCompletionTokens = options.maxTokens ?? (aiModel.startsWith("o1") ? 16000 : 4000);
+  const budget = options.budgetPolicy || null;
+  const startTime = Date.now();
 
-  const cacheKeyOptions = isGPT5
-    ? {}
-    : {
-      temperature: !isO1 ? options.temperature ?? 0.8 : undefined,
-      maxTokens: options.maxTokens ?? (isO1 ? 16000 : 4000),
-      responseFormat: !isO1
-        ? options.responseFormat === null
-          ? null
-          : options.responseFormat ?? { type: "json_object" }
-        : null,
-    };
+  let lastError: unknown = null;
+  for (let modelIndex = 0; modelIndex < models.length; modelIndex++) {
+    const model = models[modelIndex];
+    const isGPT5 = model.startsWith("gpt-5");
+    const isO1 = model.startsWith("o1");
+    const estimatedTotalTokens = estimatedPromptTokens + maxCompletionTokens;
+    const estimatedUsd = estimateCostUsd(model, estimatedPromptTokens, maxCompletionTokens);
 
-  if (cacheable) {
-    cacheKey = buildAIResponseCacheKey({
-      model: aiModel,
-      systemMessage,
-      prompt,
-      api: isGPT5 ? "responses" : "chat_completions",
-      options: cacheKeyOptions,
-      ...(options.cacheKeyContext ? { context: options.cacheKeyContext } : {}),
-    });
+    if (budget?.maxEstimatedCostUsd !== undefined && estimatedUsd > budget.maxEstimatedCostUsd) {
+      if (modelIndex < models.length - 1) continue;
+      if (budget.hardFailOnExceed !== false) {
+        throw new Error(`Estimated AI cost ${estimatedUsd} exceeds budget ${budget.maxEstimatedCostUsd}.`);
+      }
+    }
+    if (budget?.maxTotalTokens !== undefined && estimatedTotalTokens > budget.maxTotalTokens) {
+      if (modelIndex < models.length - 1) continue;
+      if (budget.hardFailOnExceed !== false) {
+        throw new Error(`Estimated AI tokens ${estimatedTotalTokens} exceed budget ${budget.maxTotalTokens}.`);
+      }
+    }
 
-    const cached = getCachedAIResponse<any>(cacheKey);
-    if (cached) {
-      console.log(`[OpenAI Client] ✅ Cache hit for prompt (Key: ${cacheKey.substring(0, 8)}...)`);
-      return cached;
-    } else {
-      console.log(`[OpenAI Client] 🔍 Cache miss for prompt (Key: ${cacheKey.substring(0, 8)}...)`);
+    const cacheKeyOptions = isGPT5
+      ? {}
+      : {
+        temperature: !isO1 ? options.temperature ?? 0.8 : undefined,
+        maxTokens: options.maxTokens ?? (isO1 ? 16000 : 4000),
+        responseFormat: !isO1
+          ? options.responseFormat === null
+            ? null
+            : options.responseFormat ?? { type: "json_object" }
+          : null,
+      };
+
+    let cacheKey: string | null = null;
+    if (cacheable) {
+      cacheKey = buildAIResponseCacheKey({
+        model,
+        systemMessage,
+        prompt,
+        api: isGPT5 ? "responses" : "chat_completions",
+        options: cacheKeyOptions,
+        ...(options.cacheKeyContext ? { context: options.cacheKeyContext } : {}),
+      });
+      const cached = getCachedAIResponse<any>(cacheKey);
+      if (cached) {
+        const usage = cached?.usage || {};
+        const promptTokens = usage.prompt_tokens || estimatedPromptTokens;
+        const completionTokens = usage.completion_tokens || usage.output_tokens || 0;
+        const totalTokens = usage.total_tokens || (promptTokens + completionTokens);
+        const telemetry: LLMTelemetry = {
+          model,
+          initialModel: aiModel,
+          fallbackUsed: model !== aiModel,
+          fallbackFrom: model !== aiModel ? aiModel : null,
+          retryCount: 0,
+          cacheHit: true,
+          api: isGPT5 ? "responses" : "chat_completions",
+          totalTokens,
+          promptTokens,
+          completionTokens,
+          estimatedCostUsd: estimateCostUsd(model, promptTokens, completionTokens),
+          durationMs: Date.now() - startTime,
+          budget,
+        };
+        (cached as any)._codexMeta = telemetry;
+        return cached;
+      }
+    }
+
+    try {
+      const response = isGPT5
+        ? await callResponsesAPIWithRetry(model, prompt, systemMessage, maxRetries, {
+          cancellationCheck: options.cancellationCheck,
+        })
+        : await callChatCompletionsAPIWithRetry(model, prompt, systemMessage, options, maxRetries);
+      const completion = response.completion;
+      const usage = completion?.usage || {};
+      const promptTokens = usage.prompt_tokens || estimatedPromptTokens;
+      const completionTokens = usage.completion_tokens || usage.output_tokens || 0;
+      const totalTokens = usage.total_tokens || (promptTokens + completionTokens);
+      const actualUsd = estimateCostUsd(model, promptTokens, completionTokens);
+
+      if (budget?.maxTotalTokens !== undefined && totalTokens > budget.maxTotalTokens && budget.hardFailOnExceed !== false) {
+        if (modelIndex < models.length - 1) continue;
+        throw new Error(`Total token usage ${totalTokens} exceeded hard budget ${budget.maxTotalTokens}.`);
+      }
+      if (budget?.maxEstimatedCostUsd !== undefined && actualUsd > budget.maxEstimatedCostUsd && budget.hardFailOnExceed !== false) {
+        if (modelIndex < models.length - 1) continue;
+        throw new Error(`Estimated AI cost ${actualUsd} exceeded hard budget ${budget.maxEstimatedCostUsd}.`);
+      }
+
+      const telemetry: LLMTelemetry = {
+        model,
+        initialModel: aiModel,
+        fallbackUsed: model !== aiModel,
+        fallbackFrom: model !== aiModel ? aiModel : null,
+        retryCount: response.retryCount,
+        cacheHit: false,
+        api: isGPT5 ? "responses" : "chat_completions",
+        totalTokens,
+        promptTokens,
+        completionTokens,
+        estimatedCostUsd: actualUsd,
+        durationMs: Date.now() - startTime,
+        budget,
+      };
+      (completion as any)._codexMeta = telemetry;
+      if (cacheable && cacheKey) {
+        setCachedAIResponse(cacheKey, completion);
+      }
+      return completion;
+    } catch (error) {
+      lastError = error;
+      if (error instanceof TaskCancelledError) throw error;
+      if (modelIndex === models.length - 1) throw error;
     }
   }
-
-  if (isGPT5) {
-    // Use Responses API for GPT-5 models
-    console.log("[OpenAI Client] Using Responses API for GPT-5 model");
-    const completion = await callResponsesAPIWithRetry(aiModel, prompt, systemMessage, maxRetries);
-    if (cacheable && cacheKey) {
-      setCachedAIResponse(cacheKey, completion);
-    }
-    return completion;
-  } else {
-    // Use Chat Completions API for other models (GPT-4, GPT-4o, GPT-3.5-turbo, o1)
-    console.log("[OpenAI Client] Using Chat Completions API for model:", aiModel);
-    const completion = await callChatCompletionsAPIWithRetry(aiModel, prompt, systemMessage, options, maxRetries);
-    if (cacheable && cacheKey) {
-      setCachedAIResponse(cacheKey, completion);
-    }
-    return completion;
-  }
+  throw lastError instanceof Error ? lastError : new Error("Failed to call OpenAI API");
 }
 
 /**

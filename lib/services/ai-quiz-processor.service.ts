@@ -1,8 +1,10 @@
 import {
+  getCurrentTaskExecutionContext,
   getBackgroundTaskById,
   markBackgroundTaskCompleted,
   markBackgroundTaskFailed,
   markBackgroundTaskInProgress,
+  shouldStopTaskExecution,
   updateBackgroundTask,
   updateTaskProgress as updateTaskProgressInDB,
 } from "@/lib/services/background-task.service";
@@ -13,6 +15,7 @@ import {
   extractContentFromCompletion,
   extractUsageStats,
 } from "@/lib/services/ai-openai-client.service";
+import { getBudgetPolicyForTaskType } from "@/lib/services/ai-budget-policy.service";
 
 interface SourceMaterial {
   url: string;
@@ -29,9 +32,14 @@ interface SourceMaterial {
  * @throws Error if task processing fails
  */
 export async function processAIQuizTask(taskId: string): Promise<void> {
+  const execution = await getCurrentTaskExecutionContext(taskId);
+  const attempt = execution?.attempt;
+  if (!attempt) return;
+
   try {
-    await markBackgroundTaskInProgress(taskId);
-    await updateTaskProgress(taskId, { percentage: 0.1, status: "Initializing..." });
+    const started = await markBackgroundTaskInProgress(taskId, attempt);
+    if (!started) return;
+    await updateTaskProgress(taskId, { percentage: 0.1, status: "Initializing..." }, attempt);
 
     // Get task from database
     const task = await getBackgroundTaskById(taskId);
@@ -63,7 +71,8 @@ export async function processAIQuizTask(taskId: string): Promise<void> {
       sourceMaterial = sourceMaterialData as SourceMaterial;
     } else if (sourceUrl) {
       // Fetch if not stored (for backwards compatibility)
-      await updateTaskProgress(taskId, { percentage: 0.2, status: "Fetching source material..." });
+      if (await shouldStopTaskExecution(taskId, attempt)) return;
+      await updateTaskProgress(taskId, { percentage: 0.2, status: "Fetching source material..." }, attempt);
       sourceMaterial = await fetchSourceMaterial(sourceUrl);
     }
 
@@ -77,7 +86,8 @@ export async function processAIQuizTask(taskId: string): Promise<void> {
       .replace(/^-|-$/g, "");
 
     // Get the prompt template and model from settings
-    await updateTaskProgress(taskId, { percentage: 0.3, status: "Preparing AI request..." });
+    if (await shouldStopTaskExecution(taskId, attempt)) return;
+    await updateTaskProgress(taskId, { percentage: 0.3, status: "Preparing AI request..." }, attempt);
     const promptTemplate = await getAIQuizPrompt();
     const aiModel = await getAIModel();
 
@@ -110,7 +120,8 @@ export async function processAIQuizTask(taskId: string): Promise<void> {
     }
 
     // Call OpenAI API with retry logic
-    await updateTaskProgress(taskId, { percentage: 0.4, status: "Calling OpenAI API..." });
+    if (await shouldStopTaskExecution(taskId, attempt)) return;
+    await updateTaskProgress(taskId, { percentage: 0.4, status: "Calling OpenAI API..." }, attempt);
     const completion = await callOpenAIWithRetry(
       aiModel,
       prompt,
@@ -121,10 +132,13 @@ export async function processAIQuizTask(taskId: string): Promise<void> {
         responseFormat: isO1 ? null : { type: "json_object" },
         cacheable: true,
         cacheKeyContext: sourceMaterial ? { sourceHash: sourceMaterial.contentSnippet.substring(0, 100) } : undefined,
+        cancellationCheck: async () => shouldStopTaskExecution(taskId, attempt),
+        budgetPolicy: getBudgetPolicyForTaskType(BackgroundTaskType.AI_QUIZ_GENERATION),
       }
     );
 
-    await updateTaskProgress(taskId, { percentage: 0.8, status: "Parsing response..." });
+    if (await shouldStopTaskExecution(taskId, attempt)) return;
+    await updateTaskProgress(taskId, { percentage: 0.8, status: "Parsing response..." }, attempt);
 
     // Extract content from response
     const generatedContent = extractContentFromCompletion(completion, aiModel);
@@ -166,7 +180,7 @@ export async function processAIQuizTask(taskId: string): Promise<void> {
           },
           canRetryParsing: true,
         },
-      });
+      }, { attempt });
 
       throw new Error(`Failed to parse generated quiz JSON. Error: ${error.message}. This may happen with o1 models - try GPT-4o or GPT-5 instead. You can retry parsing from the admin portal.`);
     }
@@ -185,7 +199,7 @@ export async function processAIQuizTask(taskId: string): Promise<void> {
           },
           canRetryParsing: true,
         },
-      });
+      }, { attempt });
       throw new Error(`Generated quiz structure is invalid: ${validationError}. You can retry parsing from the admin portal.`);
     }
 
@@ -204,7 +218,7 @@ export async function processAIQuizTask(taskId: string): Promise<void> {
           },
           canRetryParsing: true,
         },
-      });
+      }, { attempt });
       throw new Error(`Generated quiz validation failed: ${validationError}. The AI response may be malformed. You can retry parsing from the admin portal.`);
     }
 
@@ -219,7 +233,8 @@ export async function processAIQuizTask(taskId: string): Promise<void> {
       }));
     }
 
-    await updateTaskProgress(taskId, { percentage: 0.9, status: "Finalizing..." });
+    if (await shouldStopTaskExecution(taskId, attempt)) return;
+    await updateTaskProgress(taskId, { percentage: 0.9, status: "Finalizing..." }, attempt);
 
     // Extract usage stats - different APIs have different structures
     const usageStats = extractUsageStats(completion);
@@ -248,13 +263,16 @@ export async function processAIQuizTask(taskId: string): Promise<void> {
       metadata,
       rawResponse: rawResponseData, // Store permanently for retry capability
       canRetryParsing: true, // Flag indicating this task can have parsing retried
-    });
+      llmTelemetry: (completion as any)?._codexMeta ?? null,
+    }, attempt);
 
     console.log(`[AI Generator] ✅ Task ${taskId} completed successfully`);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
     console.error(`[AI Generator] ❌ Task ${taskId} failed:`, message);
-    await markBackgroundTaskFailed(taskId, message);
+    if (!(await shouldStopTaskExecution(taskId, attempt))) {
+      await markBackgroundTaskFailed(taskId, message, undefined, attempt);
+    }
     throw error;
   }
 }
@@ -265,9 +283,10 @@ export async function processAIQuizTask(taskId: string): Promise<void> {
  */
 async function updateTaskProgress(
   taskId: string,
-  progress: { percentage: number; status: string }
+  progress: { percentage: number; status: string },
+  attempt?: number
 ): Promise<void> {
-  await updateTaskProgressInDB(taskId, progress);
+  await updateTaskProgressInDB(taskId, progress, attempt);
 }
 
 /**

@@ -27,6 +27,10 @@ export async function POST(
     if (!task) {
       throw new NotFoundError("Task not found");
     }
+    const attempt = (task as any).attempt ?? 1;
+    if ((task as any).cancelledAttempt === attempt || task.status === "CANCELLED") {
+      throw new BadRequestError("Cannot retry parsing for a cancelled task attempt.");
+    }
 
     // Verify this is an AI generation task
     if (
@@ -75,7 +79,7 @@ export async function POST(
             lastRetryAt: new Date().toISOString(),
           },
         },
-      });
+      }, { attempt });
       
       throw new BadRequestError(`Failed to parse JSON on retry. Error: ${error.message}`);
     }
@@ -125,7 +129,7 @@ export async function POST(
         canRetryParsing: true,
         parseRetriedAt: new Date().toISOString(),
         parseRetrySuccessful: true,
-      });
+      }, attempt);
 
       return successResponse({
         taskId: id,
@@ -188,7 +192,7 @@ export async function POST(
         parseRetrySuccessful: true,
       };
 
-      await markBackgroundTaskCompleted(id, resultPayload);
+      await markBackgroundTaskCompleted(id, resultPayload, attempt);
 
       return successResponse({
         taskId: id,
@@ -203,4 +207,3 @@ export async function POST(
     return handleError(error);
   }
 }
-

@@ -7,6 +7,8 @@ import {
     callOpenAIWithRetry,
     extractContentFromCompletion,
 } from "@/lib/services/ai-openai-client.service";
+import { extractJSON } from "@/lib/services/ai-quiz-processor.service";
+import { getBudgetPolicyForRequest } from "@/lib/services/ai-budget-policy.service";
 
 // Use Node.js runtime for AI operations
 export const runtime = 'nodejs';
@@ -95,7 +97,10 @@ Return the improved version as JSON.`;
             {
                 temperature: 0.7,
                 maxTokens: 1000,
-                responseFormat: { type: "json_object" },
+                responseFormat: aiModel.startsWith("o1") ? null : { type: "json_object" },
+                cacheable: true,
+                cacheKeyContext: { type: "question_fix", topicName, difficulty, questionText },
+                budgetPolicy: getBudgetPolicyForRequest("question_fix"),
             }
         );
 
@@ -109,7 +114,7 @@ Return the improved version as JSON.`;
         // Parse the JSON response
         let parsed;
         try {
-            parsed = JSON.parse(content);
+            parsed = JSON.parse(extractJSON(content));
         } catch (parseError: any) {
             console.error("[AI Question Fix] Failed to parse response:", content);
             throw new BadRequestError(

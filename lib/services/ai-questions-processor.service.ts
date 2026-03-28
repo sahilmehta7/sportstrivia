@@ -1,9 +1,18 @@
-import { markBackgroundTaskFailed, markBackgroundTaskInProgress, markBackgroundTaskCompleted, updateBackgroundTask } from "@/lib/services/background-task.service";
+import {
+    getCurrentTaskExecutionContext,
+    markBackgroundTaskFailed,
+    markBackgroundTaskInProgress,
+    markBackgroundTaskCompleted,
+    shouldStopTaskExecution,
+    updateBackgroundTask
+} from "@/lib/services/background-task.service";
 import { prisma } from "@/lib/db";
 import { NotFoundError } from "@/lib/errors";
 import { getAIModel, getAIQuizPrompt } from "@/lib/services/settings.service";
 import { callOpenAIWithRetry, extractContentFromCompletion, extractUsageStats } from "@/lib/services/ai-openai-client.service";
 import { extractJSON } from "@/lib/services/ai-quiz-processor.service";
+import { getBudgetPolicyForTaskType } from "@/lib/services/ai-budget-policy.service";
+import { BackgroundTaskType } from "@prisma/client";
 
 interface GenerateQuestionsInput {
     topicId: string;
@@ -69,8 +78,13 @@ ${baseTemplate.substring(0, 1000)}
 }
 
 export async function processAIQuestionsTask(taskId: string): Promise<void> {
+    const execution = await getCurrentTaskExecutionContext(taskId);
+    const attempt = execution?.attempt;
+    if (!attempt) return;
+
     try {
-        await markBackgroundTaskInProgress(taskId);
+        const started = await markBackgroundTaskInProgress(taskId, attempt);
+        if (!started) return;
 
         // Get task from database
         const task = await prisma.adminBackgroundTask.findUnique({ where: { id: taskId } });
@@ -105,6 +119,7 @@ export async function processAIQuestionsTask(taskId: string): Promise<void> {
             systemMessage = "You are an expert sports quiz creator. CRITICAL: Output ONLY valid JSON. No markdown or extra text.";
         }
 
+        if (await shouldStopTaskExecution(taskId, attempt)) return;
         const completion = await callOpenAIWithRetry(
             aiModel,
             prompt,
@@ -115,9 +130,12 @@ export async function processAIQuestionsTask(taskId: string): Promise<void> {
                 responseFormat: isO1 ? null : { type: "json_object" },
                 cacheable: true,
                 cacheKeyContext: { topicId, counts: { easyCount, mediumCount, hardCount } },
+                cancellationCheck: async () => shouldStopTaskExecution(taskId, attempt),
+                budgetPolicy: getBudgetPolicyForTaskType(BackgroundTaskType.AI_TOPIC_QUESTION_GENERATION),
             }
         );
 
+        if (await shouldStopTaskExecution(taskId, attempt)) return;
         const generatedContent = extractContentFromCompletion(completion, aiModel);
         const usageStats = extractUsageStats(completion);
 
@@ -144,7 +162,7 @@ export async function processAIQuestionsTask(taskId: string): Promise<void> {
                     },
                     canRetryParsing: true,
                 }
-            });
+            }, { attempt });
             throw new Error("Failed to parse JSON content from AI");
         }
 
@@ -181,11 +199,16 @@ export async function processAIQuestionsTask(taskId: string): Promise<void> {
             canRetryParsing: true,
         };
 
-        await markBackgroundTaskCompleted(taskId, payload);
+        await markBackgroundTaskCompleted(taskId, {
+            ...payload,
+            llmTelemetry: (completion as any)?._codexMeta ?? null,
+        }, attempt);
 
     } catch (error) {
         const message = error instanceof Error ? error.message : "Unknown error";
-        await markBackgroundTaskFailed(taskId, message);
+        if (!(await shouldStopTaskExecution(taskId, attempt))) {
+            await markBackgroundTaskFailed(taskId, message, undefined, attempt);
+        }
         throw error;
     }
 }

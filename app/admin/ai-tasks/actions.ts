@@ -1,32 +1,19 @@
 "use server";
 
 import { requireAdmin } from "@/lib/auth-helpers";
-import { prisma } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 import { after } from "next/server";
-import { BackgroundTaskStatus, BackgroundTaskType } from "@prisma/client";
+import { BackgroundTaskType } from "@prisma/client";
+import {
+    cancelBackgroundTask,
+    getOwnedBackgroundTaskOrThrow,
+    restartBackgroundTask,
+} from "@/lib/services/background-task.service";
 
 export async function retryTask(taskId: string) {
-    await requireAdmin();
-
-    const task = await prisma.adminBackgroundTask.findUnique({
-        where: { id: taskId },
-    });
-
-    if (!task) {
-        throw new Error("Task not found");
-    }
-
-    // Update status to pending
-    await prisma.adminBackgroundTask.update({
-        where: { id: taskId },
-        data: {
-            status: BackgroundTaskStatus.PENDING,
-            errorMessage: null, // Clear error
-            startedAt: null,
-            completedAt: null,
-        },
-    });
+    const admin = await requireAdmin();
+    const task = await getOwnedBackgroundTaskOrThrow(taskId, admin.id);
+    const restarted = await restartBackgroundTask(taskId);
 
     // Re-trigger/Retry Background Task directly
     const finalTaskId = taskId; // Capture for closure
@@ -46,21 +33,22 @@ export async function retryTask(taskId: string) {
     }
 
     revalidatePath("/admin/ai-tasks");
+    return {
+        taskId: finalTaskId,
+        attempt: (restarted as any).attempt ?? 1,
+        status: restarted.status,
+    };
 }
 
 export async function cancelTask(taskId: string) {
-    await requireAdmin();
-
-    // For now, we only mark as cancelled in DB
-    // Inngest cancellation would require the runId which we ideally should store
-    await prisma.adminBackgroundTask.update({
-        where: { id: taskId },
-        data: {
-            status: BackgroundTaskStatus.CANCELLED,
-            errorMessage: "Cancelled by user",
-            completedAt: new Date(),
-        },
-    });
+    const admin = await requireAdmin();
+    const task = await getOwnedBackgroundTaskOrThrow(taskId, admin.id);
+    const cancelled = await cancelBackgroundTask(task.id, (task as any).attempt ?? 1);
 
     revalidatePath("/admin/ai-tasks");
+    return {
+        taskId,
+        attempt: (task as any).attempt ?? 1,
+        status: cancelled?.status ?? task.status,
+    };
 }

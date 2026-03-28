@@ -3,20 +3,9 @@ import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/auth-helpers";
 import { handleError, successResponse, BadRequestError, NotFoundError } from "@/lib/errors";
 import { z } from "zod";
-import { getAIModel, getAIQuizPrompt } from "@/lib/services/settings.service";
-import {
-  createBackgroundTask,
-  markBackgroundTaskCompleted as _markBackgroundTaskCompleted,
-  markBackgroundTaskFailed,
-  markBackgroundTaskInProgress as _markBackgroundTaskInProgress,
-  updateBackgroundTask as _updateBackgroundTask,
-} from "@/lib/services/background-task.service";
+import { getAIModel } from "@/lib/services/settings.service";
+import { createBackgroundTask } from "@/lib/services/background-task.service";
 import { BackgroundTaskType } from "@prisma/client";
-import {
-  callOpenAIWithRetry as _callOpenAIWithRetry,
-  extractContentFromCompletion as _extractContentFromCompletion,
-  extractUsageStats as _extractUsageStats,
-} from "@/lib/services/ai-openai-client.service";
 import { processAIQuestionsTask } from "@/lib/services/ai-questions-processor.service";
 import { after } from "next/server";
 
@@ -38,7 +27,6 @@ const generationSchema = z
   });
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  let taskId: string | null = null;
   try {
     const admin = await requireAdmin();
 
@@ -58,7 +46,6 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     const total = easyCount + mediumCount + hardCount;
     const aiModel = await getAIModel();
-    const _baseTemplate = await getAIQuizPrompt();
 
     const backgroundTask = await createBackgroundTask({
       userId: admin.id,
@@ -74,27 +61,18 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         model: aiModel,
       },
     });
-    taskId = backgroundTask.id;
 
     // Start processing in background without Inngest
-    const finalTaskId = taskId;
+    const finalTaskId = backgroundTask.id;
     after(() => processAIQuestionsTask(finalTaskId));
 
     return successResponse({
-      taskId,
+      taskId: backgroundTask.id,
+      attempt: (backgroundTask as any).attempt ?? 1,
       status: "processing",
       message: "Question generation started via Inngest.",
     });
   } catch (error) {
-    if (taskId) {
-      const message = error instanceof Error ? error.message : "Unknown error";
-      try {
-        await markBackgroundTaskFailed(taskId, message);
-      } catch {
-        // Silently handle task status update errors
-      }
-    }
     return handleError(error);
   }
 }
-

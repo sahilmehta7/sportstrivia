@@ -1,10 +1,12 @@
 import { BackgroundTaskStatus, BackgroundTaskType } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import {
+  getCurrentTaskExecutionContext,
   getBackgroundTaskById,
   markBackgroundTaskCompleted,
   markBackgroundTaskFailed,
   markBackgroundTaskInProgress,
+  shouldStopTaskExecution,
   updateTaskProgress,
 } from "@/lib/services/background-task.service";
 import {
@@ -27,6 +29,7 @@ import type { TopicSchemaTypeValue } from "@/lib/topic-schema-options";
 import { callOpenAIWithRetry, extractContentFromCompletion } from "@/lib/services/ai-openai-client.service";
 import { getAIModel } from "@/lib/services/settings.service";
 import { BadRequestError, ForbiddenError, NotFoundError } from "@/lib/errors";
+import { getBudgetPolicyForTaskType } from "@/lib/services/ai-budget-policy.service";
 
 export type TopicInferenceRunMode = "dry_run" | "apply_safe_relations";
 export type TopicTypeAuditRow = {
@@ -159,9 +162,14 @@ function summarizeInferenceResult(result: {
 }
 
 export async function processTopicInferenceTask(taskId: string): Promise<void> {
+  const execution = await getCurrentTaskExecutionContext(taskId);
+  const attempt = execution?.attempt;
+  if (!attempt) return;
+
   try {
-    await markBackgroundTaskInProgress(taskId);
-    await updateTaskProgress(taskId, { percentage: 0.1, status: "Loading topic hierarchy..." });
+    const started = await markBackgroundTaskInProgress(taskId, attempt);
+    if (!started) return;
+    await updateTaskProgress(taskId, { percentage: 0.1, status: "Loading topic hierarchy..." }, attempt);
 
     const task = await getBackgroundTaskById(taskId);
     if (!task || !task.input) {
@@ -175,14 +183,16 @@ export async function processTopicInferenceTask(taskId: string): Promise<void> {
     const runMode = input.runMode ?? "dry_run";
     const topics = await loadTopicHierarchy();
 
-    await updateTaskProgress(taskId, { percentage: 0.45, status: "Analyzing hierarchy..." });
+    if (await shouldStopTaskExecution(taskId, attempt)) return;
+    await updateTaskProgress(taskId, { percentage: 0.45, status: "Analyzing hierarchy..." }, attempt);
     const analysis = analyzeTopicHierarchy(topics);
     const typedRows = buildTypedTopicReportRows(analysis);
     const untypedRows = buildUntypedTopicReportRows(analysis);
 
     let appliedCount = 0;
     if (runMode === "apply_safe_relations") {
-      await updateTaskProgress(taskId, { percentage: 0.75, status: "Applying safe relations..." });
+      if (await shouldStopTaskExecution(taskId, attempt)) return;
+      await updateTaskProgress(taskId, { percentage: 0.75, status: "Applying safe relations..." }, attempt);
       const applied = await applyInferredSportRelations({
         inferredRelations: analysis.inferredRelations,
         anomalyTopicIds: analysis.anomalyTopics.map((item) => item.topicId),
@@ -199,16 +209,22 @@ export async function processTopicInferenceTask(taskId: string): Promise<void> {
         skippedCount: analysis.skippedTopics.length,
         anomalyCount: analysis.anomalyTopics.length,
         appliedCount,
-      })
+      }),
+      attempt
     );
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
-    await markBackgroundTaskFailed(taskId, message);
+    if (!(await shouldStopTaskExecution(taskId, attempt))) {
+      await markBackgroundTaskFailed(taskId, message, undefined, attempt);
+    }
     throw error;
   }
 }
 
-async function classifyTopicWithAI(promptInput: ReturnType<typeof buildTopicTypeAuditPromptInput>) {
+async function classifyTopicWithAI(
+  promptInput: ReturnType<typeof buildTopicTypeAuditPromptInput>,
+  options?: { cancellationCheck?: () => Promise<boolean> }
+) {
   if (!process.env.OPENAI_API_KEY) {
     return {
       suggestedSchemaType: promptInput.currentSchemaType === "NONE" ? "SPORTS_EVENT" : promptInput.currentSchemaType,
@@ -237,6 +253,8 @@ async function classifyTopicWithAI(promptInput: ReturnType<typeof buildTopicType
       temperature: 0.1,
       maxTokens: 400,
       responseFormat: aiModel.startsWith("o1") ? null : { type: "json_object" },
+      cancellationCheck: options?.cancellationCheck,
+      budgetPolicy: getBudgetPolicyForTaskType(BackgroundTaskType.TOPIC_TYPE_AUDIT),
     }
   );
   const content = extractContentFromCompletion(completion, aiModel);
@@ -245,9 +263,14 @@ async function classifyTopicWithAI(promptInput: ReturnType<typeof buildTopicType
 }
 
 export async function processTopicTypeAuditTask(taskId: string): Promise<void> {
+  const execution = await getCurrentTaskExecutionContext(taskId);
+  const attempt = execution?.attempt;
+  if (!attempt) return;
+
   try {
-    await markBackgroundTaskInProgress(taskId);
-    await updateTaskProgress(taskId, { percentage: 0.1, status: "Loading topics for type audit..." });
+    const started = await markBackgroundTaskInProgress(taskId, attempt);
+    if (!started) return;
+    await updateTaskProgress(taskId, { percentage: 0.1, status: "Loading topics for type audit..." }, attempt);
 
     const task = await getBackgroundTaskById(taskId);
     if (!task) throw new Error("Task not found");
@@ -307,7 +330,10 @@ export async function processTopicTypeAuditTask(taskId: string): Promise<void> {
 
       let normalized: { suggestedSchemaType: TopicSchemaTypeValue | null; confidence: number | null; rationale: string };
       try {
-        normalized = await classifyTopicWithAI(promptInput);
+        if (await shouldStopTaskExecution(taskId, attempt)) return;
+        normalized = await classifyTopicWithAI(promptInput, {
+          cancellationCheck: async () => shouldStopTaskExecution(taskId, attempt),
+        });
       } catch (classificationError) {
         const message =
           classificationError instanceof Error ? classificationError.message : "Unknown AI classification error";
@@ -337,7 +363,7 @@ export async function processTopicTypeAuditTask(taskId: string): Promise<void> {
       await updateTaskProgress(taskId, {
         percentage: 0.1 + ((index + 1) / Math.max(topics.length, 1)) * 0.8,
         status: `Auditing topic types (${index + 1}/${topics.length})`,
-      });
+      }, attempt);
     }
 
     await markBackgroundTaskCompleted(taskId, {
@@ -353,18 +379,25 @@ export async function processTopicTypeAuditTask(taskId: string): Promise<void> {
         typedReport: buildTopicTypeAuditCsvArtifact("typed", typedRows as any),
         untypedReport: buildTopicTypeAuditCsvArtifact("untyped", untypedRows as any),
       },
-    });
+    }, attempt);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
-    await markBackgroundTaskFailed(taskId, message);
+    if (!(await shouldStopTaskExecution(taskId, attempt))) {
+      await markBackgroundTaskFailed(taskId, message, undefined, attempt);
+    }
     throw error;
   }
 }
 
 export async function processTopicTypeApplyTask(taskId: string): Promise<void> {
+  const execution = await getCurrentTaskExecutionContext(taskId);
+  const attempt = execution?.attempt;
+  if (!attempt) return;
+
   try {
-    await markBackgroundTaskInProgress(taskId);
-    await updateTaskProgress(taskId, { percentage: 0.1, status: "Loading selected topic type changes..." });
+    const started = await markBackgroundTaskInProgress(taskId, attempt);
+    if (!started) return;
+    await updateTaskProgress(taskId, { percentage: 0.1, status: "Loading selected topic type changes..." }, attempt);
 
     const task = await getBackgroundTaskById(taskId);
     if (!task || !task.input) {
@@ -424,7 +457,7 @@ export async function processTopicTypeApplyTask(taskId: string): Promise<void> {
       await updateTaskProgress(taskId, {
         percentage: 0.1 + ((index + 1) / selections.length) * 0.8,
         status: `Applying topic types (${index + 1}/${selections.length})`,
-      });
+      }, attempt);
     }
 
     await markBackgroundTaskCompleted(taskId, {
@@ -435,10 +468,12 @@ export async function processTopicTypeApplyTask(taskId: string): Promise<void> {
         skippedCount,
       },
       appliedRows,
-    });
+    }, attempt);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
-    await markBackgroundTaskFailed(taskId, message);
+    if (!(await shouldStopTaskExecution(taskId, attempt))) {
+      await markBackgroundTaskFailed(taskId, message, undefined, attempt);
+    }
     throw error;
   }
 }

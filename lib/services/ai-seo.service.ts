@@ -1,6 +1,7 @@
 import { getAIModel } from "@/lib/services/settings.service";
 import { callOpenAIWithRetry, extractContentFromCompletion } from "@/lib/services/ai-openai-client.service";
 import { extractJSON } from "@/lib/services/ai-quiz-processor.service";
+import { getBudgetPolicyForRequest } from "@/lib/services/ai-budget-policy.service";
 
 export interface AISEOMetadata {
     title: string;
@@ -61,6 +62,7 @@ Goal: Dominant, curiosity-driven SEO metadata for "${topicName}".
                 responseFormat: isO1 ? null : { type: "json_object" },
                 cacheable: true,
                 cacheKeyContext: { topicName, type: "topic_metadata" },
+                budgetPolicy: getBudgetPolicyForRequest("quiz_metadata"),
             }
         );
 
@@ -131,6 +133,7 @@ Goal: Designs that trigger the "Competitor Mindset" for "${quizTitle}".
                 responseFormat: isO1 ? null : { type: "json_object" },
                 cacheable: true,
                 cacheKeyContext: { quizTitle, type: "quiz_metadata" },
+                budgetPolicy: getBudgetPolicyForRequest("quiz_metadata"),
             }
         );
 
