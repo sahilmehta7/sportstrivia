@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Trophy, ArrowRight, Sparkles } from "lucide-react";
+import { usePathname } from "next/navigation";
 
 import { ShowcaseButton } from "@/components/showcase/ui/buttons/Button";
 import Link from "next/link";
@@ -10,17 +11,22 @@ import Link from "next/link";
 export function OnboardingExperience() {
     const [isVisible, setIsVisible] = useState(false);
     const [isDismissed, setIsDismissed] = useState(false);
+    const pathname = usePathname();
 
     useEffect(() => {
         // Check if user has already dismissed or completed onboarding
         const hasDismissed = localStorage.getItem("hasDismissedOnboarding_v2");
         const hasCompletedFirstQuiz = localStorage.getItem("hasCompletedFirstQuiz") === "true";
 
+        if (pathname.startsWith("/topics/")) {
+            return;
+        }
+
         if (!hasDismissed && !hasCompletedFirstQuiz) {
             const timer = setTimeout(() => setIsVisible(true), 1500);
             return () => clearTimeout(timer);
         }
-    }, []);
+    }, [pathname]);
 
     const handleDismiss = () => {
         setIsVisible(false);

@@ -19,6 +19,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { TopicHero } from "@/components/topics/topic-hero";
 import { TopicFollowButton } from "@/components/topics/TopicFollowButton";
 import { TopicAuthoritySection } from "@/components/topics/topic-authority-section";
+import { TopicAuthorityContainer } from "@/components/topics/topic-authority-container";
 import { FeaturedRow } from "@/components/quizzes/featured-row";
 import { FeaturedQuizzesHero } from "@/components/quizzes/featured-quizzes-hero";
 import { ModernFilterBar } from "@/components/quizzes/modern-filter-bar";
@@ -120,6 +121,30 @@ async function fetchFeaturedQuizzesForTopic(topicIds: string[]): Promise<PublicQ
   });
 }
 
+function sanitizeTopicSnippet(raw: string | null | undefined, topicName: string): string {
+  if (!raw) return `Explore quizzes focused on ${topicName}.`;
+  const stripped = raw
+    .replace(/<[^>]*>/g, " ")
+    .replace(/\{\{[^}]*\}\}/g, " ")
+    .replace(/\[\[(?:[^|\]]+\|)?([^\]]+)\]\]/g, "$1")
+    .replace(/\[(?:https?:\/\/[^\s\]]+)\s+([^\]]+)\]/g, "$1")
+    .replace(/\[[0-9]+\]/g, " ")
+    .replace(/=+\s*[^=]*\s*=+/g, " ")
+    .replace(/'''?|''/g, " ")
+    .replace(/[_*`>#]/g, " ")
+    .replace(/\b(?:citation needed|edit)\b/gi, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  if (!stripped || stripped.length < 24) {
+    return `Explore quizzes focused on ${topicName}.`;
+  }
+
+  const firstSentence = stripped.split(/(?<=[.!?])\s+/)[0]?.trim() ?? "";
+  const candidate = firstSentence.length >= 30 ? firstSentence : stripped;
+  return candidate.slice(0, 160);
+}
+
 
 
 export async function generateMetadata({
@@ -152,6 +177,9 @@ export async function generateMetadata({
     description,
     keywords,
     robots: topic.indexEligible ? undefined : { index: false, follow: true },
+    alternates: {
+      canonical: `${baseUrl}/topics/${topic.slug}`,
+    },
     openGraph: {
       title,
       description,
@@ -293,11 +321,14 @@ export default async function TopicDetailPage({
   const leaderboards = await buildTopicDatasets(topic.id);
   const publishedSnapshot = await fetchPublishedSnapshot(topic.id);
   const showAuthority = Boolean(topic.contentStatus === "PUBLISHED" && topic.indexEligible && publishedSnapshot);
+  const listingQuizIds = new Set(listing.quizzes.map((quiz) => quiz.id));
+  const dedupedHeroFeatured = heroFeaturedQuizzes.filter((quiz) => !listingQuizIds.has(quiz.id));
+  const dedupedTopRated = topRatedListing.quizzes.filter((quiz) => !listingQuizIds.has(quiz.id)).slice(0, 6);
 
   const heroPrimaryQuiz =
-    heroFeaturedQuizzes[0] ??
-    topRatedListing.quizzes[0] ??
     listing.quizzes[0] ??
+    dedupedHeroFeatured[0] ??
+    topRatedListing.quizzes[0] ??
     null;
 
   // Generate structured data for next-seo components
@@ -399,8 +430,46 @@ export default async function TopicDetailPage({
               ? { label: "Start a quiz", href: `/quizzes/${heroPrimaryQuiz.slug}` }
               : undefined
           }
-          secondaryCta={listing.pagination.total > 0 ? { label: "View all quizzes", href: "#topic-quizzes" } : undefined}
+          secondaryCta={listing.pagination.total > 0 ? { label: "Browse all quizzes", href: "#topic-quizzes" } : undefined}
         />
+
+        <section className="space-y-4 rounded-2xl border border-border/50 bg-card/80 p-4 shadow-sm md:hidden">
+          <div className="space-y-2">
+            <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-primary">Topic</p>
+            <h1 className="text-3xl font-black tracking-tight text-foreground">{topic.name}</h1>
+            <p className="line-clamp-2 text-sm text-muted-foreground">
+              {topic.description || `Discover quizzes, stats, and storylines for ${topic.name}.`}
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {heroPrimaryQuiz && (
+              <Link
+                href={`/quizzes/${heroPrimaryQuiz.slug}`}
+                className="inline-flex items-center rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground"
+              >
+                Start quiz
+              </Link>
+            )}
+            <Link
+              href="#topic-quizzes"
+              className="inline-flex items-center rounded-lg border border-border px-3 py-2 text-sm font-medium text-foreground"
+            >
+              Browse all
+            </Link>
+            <Link
+              href="#topic-key-facts"
+              className="inline-flex items-center rounded-lg border border-border px-3 py-2 text-sm font-medium text-foreground"
+            >
+              Key facts
+            </Link>
+            <Link
+              href="#topic-faq"
+              className="inline-flex items-center rounded-lg border border-border px-3 py-2 text-sm font-medium text-foreground"
+            >
+              FAQ
+            </Link>
+          </div>
+        </section>
 
         <div className="flex justify-end">
           <TopicFollowButton
@@ -413,30 +482,121 @@ export default async function TopicDetailPage({
           />
         </div>
 
+        <section className="space-y-6" id="topic-quizzes">
+          <ModernFilterBar
+            filters={appliedFilters}
+            {...filterOptions}
+            total={listing.pagination.total}
+          />
+
+          <div className="space-y-6">
+            {listing.quizzes.length > 0 ? (
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {listing.quizzes.map((quiz) => (
+                  <QuizCard key={quiz.id} quiz={quiz as any} />
+                ))}
+              </div>
+            ) : (
+              <Card>
+                <CardContent className="py-10 text-center text-muted-foreground">
+                  No published quizzes include {topic.name} yet. Check back soon for new challenges.
+                </CardContent>
+              </Card>
+            )}
+
+            <QuizPagination
+              page={listing.pagination.page}
+              pages={listing.pagination.pages}
+              total={listing.pagination.total}
+              pageSize={listing.pagination.limit}
+            />
+
+            {(dedupedHeroFeatured.length > 0 ||
+              dedupedTopRated.length > 0 ||
+              leaderboards.allTime.length > 0 ||
+              Boolean(userStreak)) && (
+              <section className="space-y-4" id="topic-social-proof">
+                {dedupedHeroFeatured.length > 0 && (
+                  <FeaturedQuizzesHero featuredQuizzes={dedupedHeroFeatured} />
+                )}
+
+                {dedupedTopRated.length > 0 && (
+                  <FeaturedRow
+                    title="Top rated by fans"
+                    description="Quizzes the community keeps replaying"
+                    quizzes={dedupedTopRated}
+                  />
+                )}
+
+                <Card className="rounded-2xl border border-border/40 bg-gradient-to-br from-primary/10 via-background to-background shadow-sm">
+                  <CardHeader>
+                    <CardTitle className="text-lg">Top fans (all-time)</CardTitle>
+                    <CardDescription>Correct answers in this topic</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    {leaderboards.allTime.length > 0 ? (
+                      leaderboards.allTime.map((entry) => (
+                        <div
+                          key={entry.userId}
+                          className="flex items-center justify-between rounded-lg border border-border/40 bg-background/60 px-3 py-2 text-sm"
+                        >
+                          <div className="flex items-center gap-2">
+                            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/15 text-xs font-semibold text-primary">
+                              {entry.rank}
+                            </span>
+                            <span className="font-medium text-foreground">{entry.name}</span>
+                          </div>
+                          <span className="text-xs text-muted-foreground">{entry.score} correct</span>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-sm text-muted-foreground">Be the first to climb this leaderboard.</p>
+                    )}
+                    <Link
+                      href={`/leaderboard?topic=${topic.slug}`}
+                      className="text-sm font-medium text-primary transition hover:text-primary/80"
+                    >
+                      View full leaderboards
+                    </Link>
+                  </CardContent>
+                </Card>
+
+                {userStreak && (
+                  <Card className="rounded-2xl border border-border/40 bg-gradient-to-br from-amber-500/10 via-background to-background shadow-sm">
+                    <CardHeader>
+                      <CardTitle className="text-lg">Your streak</CardTitle>
+                      <CardDescription>Keep the momentum going</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-3 text-sm">
+                      <StreakIndicator
+                        currentStreak={userStreak.currentStreak}
+                        longestStreak={userStreak.longestStreak}
+                        showLabel
+                      />
+                      <p className="text-muted-foreground">
+                        Answer a quiz today to extend your streak and climb the rankings.
+                      </p>
+                    </CardContent>
+                  </Card>
+                )}
+              </section>
+            )}
+          </div>
+        </section>
+
         {showAuthority && publishedSnapshot && (
-          <TopicAuthoritySection
-            topicName={topic.name}
-            introMd={publishedSnapshot.introMd}
-            keyFactsMd={publishedSnapshot.keyFactsMd}
-            timelineMd={publishedSnapshot.timelineMd}
-            analysisMd={publishedSnapshot.analysisMd}
-            faqMd={publishedSnapshot.faqMd}
-            sourcesMd={publishedSnapshot.sourcesMd}
-            lastReviewedAt={publishedSnapshot.lastReviewedAt}
-          />
-        )}
-
-
-        {heroFeaturedQuizzes.length > 0 && (
-          <FeaturedQuizzesHero featuredQuizzes={heroFeaturedQuizzes} />
-        )}
-
-        {topRatedListing.quizzes.length > 0 && (
-          <FeaturedRow
-            title="Top rated by fans"
-            description="Quizzes the community keeps replaying"
-            quizzes={topRatedListing.quizzes.slice(0, 6)}
-          />
+          <TopicAuthorityContainer className="md:p-0 md:shadow-none md:border-0 md:bg-transparent">
+            <TopicAuthoritySection
+              topicName={topic.name}
+              introMd={publishedSnapshot.introMd}
+              keyFactsMd={publishedSnapshot.keyFactsMd}
+              timelineMd={publishedSnapshot.timelineMd}
+              analysisMd={publishedSnapshot.analysisMd}
+              faqMd={publishedSnapshot.faqMd}
+              sourcesMd={publishedSnapshot.sourcesMd}
+              lastReviewedAt={publishedSnapshot.lastReviewedAt}
+            />
+          </TopicAuthorityContainer>
         )}
 
         {topic.children.length > 0 && (
@@ -455,7 +615,7 @@ export default async function TopicDetailPage({
                       <CardHeader className="space-y-2 p-5">
                         <CardTitle className="truncate text-lg">{child.name}</CardTitle>
                         <CardDescription className="line-clamp-3 text-sm text-muted-foreground">
-                          {child.description || `Explore quizzes focused on ${child.name}.`}
+                          {sanitizeTopicSnippet(child.description, child.name)}
                         </CardDescription>
                       </CardHeader>
                     </Card>
@@ -465,95 +625,6 @@ export default async function TopicDetailPage({
             </div>
           </section>
         )}
-
-        <section className="space-y-6" id="topic-quizzes">
-          <ModernFilterBar
-            filters={appliedFilters}
-            {...filterOptions}
-            total={listing.pagination.total}
-          />
-
-          <div className="flex flex-col gap-6 lg:grid lg:grid-cols-[minmax(0,1fr)_320px] lg:gap-8">
-            <div className="space-y-6">
-              {listing.quizzes.length > 0 ? (
-                <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                  {listing.quizzes.map((quiz) => (
-                    <QuizCard key={quiz.id} quiz={quiz as any} />
-                  ))}
-                </div>
-              ) : (
-                <Card>
-                  <CardContent className="py-10 text-center text-muted-foreground">
-                    No published quizzes include {topic.name} yet. Check back soon for new challenges.
-                  </CardContent>
-                </Card>
-              )}
-
-              <QuizPagination
-                page={listing.pagination.page}
-                pages={listing.pagination.pages}
-                total={listing.pagination.total}
-                pageSize={listing.pagination.limit}
-              />
-            </div>
-
-            <aside className="space-y-4 lg:sticky lg:top-24">
-              <Card className="rounded-2xl border border-border/40 bg-gradient-to-br from-primary/10 via-background to-background shadow-sm">
-                <CardHeader>
-                  <CardTitle className="text-lg">Top fans (all-time)</CardTitle>
-                  <CardDescription>Correct answers in this topic</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  {leaderboards.allTime.length > 0 ? (
-                    leaderboards.allTime.map((entry) => (
-                      <div
-                        key={entry.userId}
-                        className="flex items-center justify-between rounded-lg border border-border/40 bg-background/60 px-3 py-2 text-sm"
-                      >
-                        <div className="flex items-center gap-2">
-                          <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/15 text-xs font-semibold text-primary">
-                            {entry.rank}
-                          </span>
-                          <span className="font-medium text-foreground">{entry.name}</span>
-                        </div>
-                        <span className="text-xs text-muted-foreground">{entry.score} correct</span>
-                      </div>
-                    ))
-                  ) : (
-                    <p className="text-sm text-muted-foreground">Be the first to climb this leaderboard.</p>
-                  )}
-                  <Link
-                    href={`/leaderboard?topic=${topic.slug}`}
-                    className="text-sm font-medium text-primary transition hover:text-primary/80"
-                  >
-                    View full leaderboards
-                  </Link>
-                </CardContent>
-              </Card>
-
-              {userStreak && (
-                <Card className="rounded-2xl border border-border/40 bg-gradient-to-br from-amber-500/10 via-background to-background shadow-sm">
-                  <CardHeader>
-                    <CardTitle className="text-lg">Your streak</CardTitle>
-                    <CardDescription>Keep the momentum going</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-3 text-sm">
-                    <StreakIndicator
-                      currentStreak={userStreak.currentStreak}
-                      longestStreak={userStreak.longestStreak}
-                      showLabel
-                    />
-                    <p className="text-muted-foreground">
-                      Answer a quiz today to extend your streak and climb the rankings.
-                    </p>
-                  </CardContent>
-                </Card>
-              )}
-
-
-            </aside>
-          </div>
-        </section>
       </PageContainer>
 
       {/* Structured Data */}

@@ -70,7 +70,7 @@ export function TopicAuthoritySection({
     lastReviewedAt ? new Date(lastReviewedAt).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }) : null;
 
   return (
-    <section className="space-y-6" id="topic-authority">
+    <section className="space-y-6">
       <Card>
         <CardHeader>
           <CardTitle className="text-2xl">About {topicName}</CardTitle>
@@ -82,7 +82,7 @@ export function TopicAuthoritySection({
       </Card>
 
       {keyFacts.length > 0 && (
-        <Card>
+        <Card id="topic-key-facts">
           <CardHeader>
             <CardTitle>Key Facts</CardTitle>
           </CardHeader>
@@ -127,7 +127,7 @@ export function TopicAuthoritySection({
       )}
 
       {faqs.length > 0 && (
-        <Card>
+        <Card id="topic-faq">
           <CardHeader>
             <CardTitle>FAQ</CardTitle>
           </CardHeader>

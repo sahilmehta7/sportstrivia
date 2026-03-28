@@ -38,7 +38,7 @@ export function QuizCard({ quiz }: QuizCardProps) {
   const difficultyDisplay = quiz.difficulty;
 
   return (
-    <Card className="group relative overflow-hidden rounded-[1.5rem] border border-border/60 bg-card transition-all duration-300 hover:-translate-y-0.5 hover:border-foreground/20 hover:shadow-athletic">
+    <Card className="group relative overflow-hidden rounded-2xl border border-border/60 bg-card transition-all duration-300 hover:-translate-y-0.5 hover:border-foreground/20 hover:shadow-athletic">
       <Link href={`/quizzes/${quiz.slug}`} className="flex h-full flex-col">
         {/* Cover Image */}
         <div className="relative aspect-[16/9] w-full overflow-hidden bg-muted">
@@ -89,40 +89,46 @@ export function QuizCard({ quiz }: QuizCardProps) {
           </div>
         </div>
 
-        <CardContent className="flex flex-1 flex-col justify-between space-y-4 p-5">
+        <CardContent className="flex flex-1 flex-col justify-between space-y-4 p-4 sm:p-5">
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
                 {quiz.sport ?? "Multi-sport"}
               </span>
             </div>
-            <CardTitle className="line-clamp-2 text-lg font-bold uppercase leading-tight tracking-tight text-foreground transition-colors group-hover:text-primary">
+            <CardTitle className="line-clamp-2 text-base font-bold uppercase leading-tight tracking-tight text-foreground transition-colors group-hover:text-primary sm:text-lg">
               {quiz.title}
             </CardTitle>
 
             {quiz.description && (
-              <CardDescription className="line-clamp-2 text-xs font-medium text-muted-foreground">
+              <CardDescription className="line-clamp-2 text-xs text-muted-foreground">
                 {quiz.description}
               </CardDescription>
             )}
           </div>
 
-          <div className="flex items-center justify-between border-t border-border/60 pt-4">
-            <div className="flex items-center gap-4 text-xs font-medium text-muted-foreground">
-              <div className="flex items-center gap-1.5">
-                <Clock className="h-3.5 w-3.5" />
-                <span>{formatDuration(quiz.duration)}</span>
+          <div className="space-y-3 border-t border-border/60 pt-3">
+            <div className="flex items-center justify-between text-xs font-medium text-muted-foreground">
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-1.5">
+                  <Clock className="h-3.5 w-3.5" />
+                  <span>{formatDuration(quiz.duration)}</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <Users className="h-3.5 w-3.5" />
+                  <span>{quiz._count.attempts > 1000 ? `${(quiz._count.attempts / 1000).toFixed(1)}k` : quiz._count.attempts}</span>
+                </div>
               </div>
-              <div className="flex items-center gap-1.5">
-                <Users className="h-3.5 w-3.5" />
-                <span>{quiz._count.attempts > 1000 ? `${(quiz._count.attempts / 1000).toFixed(1)}k` : quiz._count.attempts}</span>
+
+              <div className="flex items-center gap-1 text-xs font-bold text-accent">
+                <Star className="h-3.5 w-3.5 fill-accent text-accent" />
+                {hasRating ? <span>{rating.toFixed(1)}</span> : <span className="text-muted-foreground">--</span>}
               </div>
             </div>
-
-            {/* Rating */}
-            <div className="flex items-center gap-1 text-xs font-bold text-accent">
-              <Star className="h-3.5 w-3.5 fill-accent text-accent" />
-              {hasRating ? <span>{rating.toFixed(1)}</span> : <span className="text-muted-foreground">--</span>}
+            <div className="flex items-center justify-end">
+              <span className="rounded-md bg-primary/10 px-2 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-primary">
+                Play now
+              </span>
             </div>
           </div>
         </CardContent>

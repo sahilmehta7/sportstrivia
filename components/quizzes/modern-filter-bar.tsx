@@ -12,10 +12,18 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import {
   Filter,
   RefreshCw,
   ChevronDown,
-  Star
+  Star,
+  SlidersHorizontal,
 } from "lucide-react";
 import type { Difficulty } from "@prisma/client";
 import type { QuizFilterOptions } from "@/lib/services/public-quiz.service";
@@ -60,6 +68,7 @@ export function ModernFilterBar({
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [isExpanded, setIsExpanded] = useState(false);
+  const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
 
   const updateQuery = (key: string, value?: string) => {
     trackEvent("filter_change", { filter_type: key, value });
@@ -130,11 +139,212 @@ export function ModernFilterBar({
     return current?.value ?? "createdAt:desc";
   }, [filters.sortBy, filters.sortOrder]);
 
+  const renderExpandedFilters = () => (
+    <div className="space-y-6">
+      <div className="space-y-2">
+        <label className="text-sm font-medium text-foreground">Sport</label>
+        <div className="flex flex-wrap gap-2">
+          <Button
+            variant={!filters.sport ? "default" : "outline"}
+            size="sm"
+            onClick={() => updateQuery("sport", undefined)}
+            className="h-9"
+          >
+            All Sports
+          </Button>
+          {sports.map((sport) => (
+            <Button
+              key={sport}
+              variant={filters.sport === sport ? "default" : "outline"}
+              size="sm"
+              onClick={() => updateQuery("sport", sport)}
+              className="h-9"
+            >
+              {sport}
+            </Button>
+          ))}
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <label className="text-sm font-medium text-foreground">Difficulty</label>
+        <div className="flex flex-wrap gap-2">
+          <Button
+            variant={!filters.difficulty ? "default" : "outline"}
+            size="sm"
+            onClick={() => updateQuery("difficulty", undefined)}
+            className="h-9"
+          >
+            All difficulties
+          </Button>
+          {difficulties.map((difficulty) => (
+            <Button
+              key={difficulty}
+              variant={filters.difficulty === difficulty ? "default" : "outline"}
+              size="sm"
+              onClick={() => updateQuery("difficulty", difficulty)}
+              className="h-9"
+            >
+              {difficultyLabels[difficulty]}
+            </Button>
+          ))}
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <label className="text-sm font-medium text-foreground">Rating</label>
+        <div className="space-y-2">
+          {[4, 3, 2, 1].map((rating) => (
+            <button
+              key={rating}
+              onClick={() => handleRatingClick(rating)}
+              className={cn(
+                "flex w-full items-center gap-2 rounded-lg border px-4 py-2.5 text-left transition-all hover:border-primary/50 hover:bg-primary/5",
+                filters.minRating === rating
+                  ? "border-primary bg-primary/10"
+                  : "border-border/60 bg-transparent"
+              )}
+            >
+              <div className="flex items-center gap-0.5">
+                {Array.from({ length: 5 }).map((_, index) => (
+                  <Star
+                    key={index}
+                    className={cn(
+                      "h-4 w-4",
+                      index < rating
+                        ? "fill-primary text-primary"
+                        : "fill-muted text-muted"
+                    )}
+                  />
+                ))}
+              </div>
+              <span className="text-sm text-muted-foreground">& up</span>
+              {filters.minRating === rating && (
+                <Badge variant="secondary" className="ml-auto bg-primary/20 text-primary">
+                  Active
+                </Badge>
+              )}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {topics.length > 0 && (
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-foreground">Topic</label>
+          <Select
+            value={filters.topic ?? "all"}
+            onValueChange={(value) => updateQuery("topic", value === "all" ? undefined : value)}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Any topic" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Any topic</SelectItem>
+              {topics.map((topic) => (
+                <SelectItem key={topic.slug} value={topic.slug}>
+                  {topic.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+
+      {tags.length > 0 && (
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-foreground">Tag</label>
+          <Select
+            value={filters.tag ?? "all"}
+            onValueChange={(value) => updateQuery("tag", value === "all" ? undefined : value)}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Any tag" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Any tag</SelectItem>
+              {tags.map((tag) => (
+                <SelectItem key={tag.slug} value={tag.slug}>
+                  {tag.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+    </div>
+  );
+
   return (
     <div className="space-y-4">
-      {/* Compact Filter Bar */}
-      <div className="flex flex-wrap items-center gap-3 rounded-xl border border-border/60 bg-card/80 p-4 shadow-sm backdrop-blur">
-        {/* Results Count */}
+      <div className="sticky top-16 z-30 -mx-4 space-y-2 border-y border-border/60 bg-background/95 px-4 py-3 backdrop-blur md:hidden">
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-muted-foreground">{total.toLocaleString()} quizzes</span>
+          <Select value={sortValue} onValueChange={handleSortChange}>
+            <SelectTrigger className="ml-auto h-8 w-[120px] border-border/60 bg-card px-2 text-xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {sortOptions.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Sheet open={mobileDrawerOpen} onOpenChange={setMobileDrawerOpen}>
+            <SheetTrigger asChild>
+              <Button variant="outline" size="sm" className="h-8 gap-1 px-2 text-xs">
+                <SlidersHorizontal className="h-3.5 w-3.5" />
+                Filters
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="bottom" className="h-[88vh] overflow-y-auto rounded-t-2xl px-4 py-4">
+              <SheetHeader className="mb-4">
+                <SheetTitle>Discover filters</SheetTitle>
+              </SheetHeader>
+              {renderExpandedFilters()}
+              <div className="mt-6 flex items-center justify-between border-t border-border pt-4">
+                <Button variant="ghost" size="sm" onClick={resetFilters}>
+                  <RefreshCw className="mr-2 h-4 w-4" />
+                  Reset
+                </Button>
+                <Button size="sm" onClick={() => setMobileDrawerOpen(false)}>
+                  Apply
+                </Button>
+              </div>
+            </SheetContent>
+          </Sheet>
+        </div>
+
+        <div className="flex gap-2 overflow-x-auto pb-1">
+          {[undefined, "EASY", "MEDIUM", "HARD"].map((difficulty) => (
+            <Button
+              key={difficulty ?? "all"}
+              variant={filters.difficulty === difficulty ? "default" : "outline"}
+              size="sm"
+              className="h-8 shrink-0 rounded-full px-3 text-xs"
+              onClick={() => updateQuery("difficulty", difficulty ?? undefined)}
+            >
+              {difficulty ? difficultyLabels[difficulty as Difficulty] : "All levels"}
+            </Button>
+          ))}
+          {[4, 3].map((rating) => (
+            <Button
+              key={rating}
+              variant={filters.minRating === rating ? "default" : "outline"}
+              size="sm"
+              className="h-8 shrink-0 rounded-full px-3 text-xs"
+              onClick={() => handleRatingClick(rating)}
+            >
+              {rating}+ stars
+            </Button>
+          ))}
+        </div>
+      </div>
+
+      <div className="hidden flex-wrap items-center gap-3 rounded-xl border border-border/60 bg-card/80 p-4 shadow-sm backdrop-blur md:flex">
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <span className="font-medium text-foreground">{total.toLocaleString()}</span>
           <span>quizzes</span>
@@ -142,7 +352,6 @@ export function ModernFilterBar({
 
         <div className="h-6 w-px bg-border" />
 
-        {/* Sort */}
         <div className="flex items-center gap-2">
           <span className="text-sm text-muted-foreground">Sort:</span>
           <Select value={sortValue} onValueChange={handleSortChange}>
@@ -160,7 +369,6 @@ export function ModernFilterBar({
         </div>
 
         <div className="ml-auto flex items-center gap-2">
-          {/* Active Filters Count */}
           {activeFilterCount > 0 && (
             <>
               <Badge variant="secondary" className="bg-primary/10 text-primary">
@@ -178,7 +386,6 @@ export function ModernFilterBar({
             </>
           )}
 
-          {/* Expand/Collapse Button */}
           <Button
             variant="outline"
             size="sm"
@@ -197,145 +404,9 @@ export function ModernFilterBar({
         </div>
       </div>
 
-      {/* Expanded Filters */}
       {isExpanded && (
-        <div className="space-y-6 rounded-xl border border-border/60 bg-card/80 p-6 shadow-sm backdrop-blur">
-          {/* Sport Filter */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-foreground">Sport</label>
-            <div className="flex flex-wrap gap-2">
-              <Button
-                variant={!filters.sport ? "default" : "outline"}
-                size="sm"
-                onClick={() => updateQuery("sport", undefined)}
-                className="h-9"
-              >
-                All Sports
-              </Button>
-              {sports.map((sport) => (
-                <Button
-                  key={sport}
-                  variant={filters.sport === sport ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => updateQuery("sport", sport)}
-                  className="h-9"
-                >
-                  {sport}
-                </Button>
-              ))}
-            </div>
-          </div>
-
-          {/* Difficulty Filter */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-foreground">Difficulty</label>
-            <div className="flex flex-wrap gap-2">
-              <Button
-                variant={!filters.difficulty ? "default" : "outline"}
-                size="sm"
-                onClick={() => updateQuery("difficulty", undefined)}
-                className="h-9"
-              >
-                All difficulties
-              </Button>
-              {difficulties.map((difficulty) => (
-                <Button
-                  key={difficulty}
-                  variant={filters.difficulty === difficulty ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => updateQuery("difficulty", difficulty)}
-                  className="h-9"
-                >
-                  {difficultyLabels[difficulty]}
-                </Button>
-              ))}
-            </div>
-          </div>
-
-          {/* Rating Filter - Amazon Style */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-foreground">Rating</label>
-            <div className="space-y-2">
-              {[4, 3, 2, 1].map((rating) => (
-                <button
-                  key={rating}
-                  onClick={() => handleRatingClick(rating)}
-                  className={cn(
-                    "flex w-full items-center gap-2 rounded-lg border px-4 py-2.5 text-left transition-all hover:border-primary/50 hover:bg-primary/5",
-                    filters.minRating === rating
-                      ? "border-primary bg-primary/10"
-                      : "border-border/60 bg-transparent"
-                  )}
-                >
-                  <div className="flex items-center gap-0.5">
-                    {Array.from({ length: 5 }).map((_, index) => (
-                      <Star
-                        key={index}
-                        className={cn(
-                          "h-4 w-4",
-                          index < rating
-                            ? "fill-primary text-primary"
-                            : "fill-muted text-muted"
-                        )}
-                      />
-                    ))}
-                  </div>
-                  <span className="text-sm text-muted-foreground">& up</span>
-                  {filters.minRating === rating && (
-                    <Badge variant="secondary" className="ml-auto bg-primary/20 text-primary">
-                      Active
-                    </Badge>
-                  )}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Topic Filter */}
-          {topics.length > 0 && (
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-foreground">Topic</label>
-              <Select
-                value={filters.topic ?? "all"}
-                onValueChange={(value) => updateQuery("topic", value === "all" ? undefined : value)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Any topic" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Any topic</SelectItem>
-                  {topics.map((topic) => (
-                    <SelectItem key={topic.slug} value={topic.slug}>
-                      {topic.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          )}
-
-          {/* Tag Filter */}
-          {tags.length > 0 && (
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-foreground">Tag</label>
-              <Select
-                value={filters.tag ?? "all"}
-                onValueChange={(value) => updateQuery("tag", value === "all" ? undefined : value)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Any tag" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Any tag</SelectItem>
-                  {tags.map((tag) => (
-                    <SelectItem key={tag.slug} value={tag.slug}>
-                      {tag.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          )}
+        <div className="hidden rounded-xl border border-border/60 bg-card/80 p-6 shadow-sm backdrop-blur md:block">
+          {renderExpandedFilters()}
         </div>
       )}
     </div>
