@@ -57,7 +57,7 @@ export async function runTopicPublish(topicId: string) {
 }
 
 export async function getTopicContentStatus(topicId: string) {
-  const [topic, latestRun, latestSnapshot, latestReadySnapshot, sourceDocumentCount, claimStats] = await Promise.all([
+  const [topic, latestRun, latestSnapshot, latestReadySnapshot, sourceDocumentCount, distinctSourceCount, claimStats] = await Promise.all([
     prisma.topic.findUnique({
       where: { id: topicId },
       select: {
@@ -98,6 +98,13 @@ export async function getTopicContentStatus(topicId: string) {
     prisma.topicSourceDocument.count({
       where: { topicId },
     }),
+    prisma.topicSourceDocument
+      .findMany({
+        where: { topicId },
+        select: { sourceName: true },
+        distinct: ["sourceName"],
+      })
+      .then((rows) => rows.length),
     prisma.topicClaim.aggregate({
       where: { topicId },
       _count: {
@@ -117,6 +124,7 @@ export async function getTopicContentStatus(topicId: string) {
     hasReadySnapshot: Boolean(latestReadySnapshot),
     latestReadySnapshot,
     sourceDocumentCount,
+    distinctSourceCount,
     claimCount: claimStats._count._all,
   };
 }

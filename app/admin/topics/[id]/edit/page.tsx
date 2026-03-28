@@ -53,7 +53,7 @@ import {
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { TOPIC_SCHEMA_TYPE_LABELS, type TopicSchemaTypeValue } from "@/lib/topic-schema-options";
-import { DEFAULT_QUALITY_GATE } from "@/lib/services/topic-content/types";
+import { computeAdminQualityFailures } from "@/lib/services/topic-content/admin-quality.service";
 import { TopicGraphAdminPanel } from "@/components/admin/TopicGraphAdminPanel";
 import {
   Dialog,
@@ -88,6 +88,7 @@ export default function EditTopicPage({ params }: EditTopicPageProps) {
     indexEligible?: boolean;
     hasReadySnapshot?: boolean;
     sourceDocumentCount?: number;
+    distinctSourceCount?: number;
     claimCount?: number;
     latestRun?: {
       stage?: string;
@@ -231,6 +232,7 @@ export default function EditTopicPage({ params }: EditTopicPageProps) {
         indexEligible: result.data.topic?.indexEligible,
         hasReadySnapshot: Boolean(result.data.hasReadySnapshot),
         sourceDocumentCount: result.data.sourceDocumentCount,
+        distinctSourceCount: result.data.distinctSourceCount,
         claimCount: result.data.claimCount,
         latestRun: result.data.latestRun
           ? {
@@ -507,34 +509,11 @@ export default function EditTopicPage({ params }: EditTopicPageProps) {
   };
 
   const latestSnapshot = contentStatus?.latestSnapshot ?? null;
-  const qualityFailures: string[] = [];
-  if (latestSnapshot) {
-    if (latestSnapshot.wordCount < DEFAULT_QUALITY_GATE.minWordCount) {
-      qualityFailures.push(
-        `Word count too low (${latestSnapshot.wordCount}/${DEFAULT_QUALITY_GATE.minWordCount})`
-      );
-    }
-    if (latestSnapshot.citationCoverage < DEFAULT_QUALITY_GATE.minCitationCoverage) {
-      qualityFailures.push(
-        `Citation coverage too low (${(latestSnapshot.citationCoverage * 100).toFixed(1)}%/${(DEFAULT_QUALITY_GATE.minCitationCoverage * 100).toFixed(1)}%)`
-      );
-    }
-    if ((contentStatus?.sourceDocumentCount ?? 0) < DEFAULT_QUALITY_GATE.minDistinctSources) {
-      qualityFailures.push(
-        `Distinct sources too low (${contentStatus?.sourceDocumentCount ?? 0}/${DEFAULT_QUALITY_GATE.minDistinctSources})`
-      );
-    }
-    if ((contentPreview?.citationCount ?? 0) < DEFAULT_QUALITY_GATE.minSelectedClaims) {
-      qualityFailures.push(
-        `Selected claims too low (${contentPreview?.citationCount ?? 0}/${DEFAULT_QUALITY_GATE.minSelectedClaims})`
-      );
-    }
-    if (latestSnapshot.qualityScore < DEFAULT_QUALITY_GATE.minQualityScore) {
-      qualityFailures.push(
-        `Quality score too low (${latestSnapshot.qualityScore.toFixed(1)}/${DEFAULT_QUALITY_GATE.minQualityScore})`
-      );
-    }
-  }
+  const qualityFailures = computeAdminQualityFailures({
+    latestSnapshot,
+    contentStatus,
+    contentPreview,
+  });
 
   const handleWikipediaAutofill = async () => {
     const query = formData.name.trim();
@@ -1229,7 +1208,10 @@ export default function EditTopicPage({ params }: EditTopicPageProps) {
                 Quality: {typeof contentStatus?.contentQualityScore === "number" ? contentStatus.contentQualityScore.toFixed(1) : "N/A"}
               </Badge>
               <Badge variant="outline">
-                Sources: {contentStatus?.sourceDocumentCount ?? 0}
+                Distinct sources: {contentStatus?.distinctSourceCount ?? 0}
+              </Badge>
+              <Badge variant="outline">
+                Source documents: {contentStatus?.sourceDocumentCount ?? 0}
               </Badge>
               <Badge variant="outline">
                 Claims: {contentStatus?.claimCount ?? 0}

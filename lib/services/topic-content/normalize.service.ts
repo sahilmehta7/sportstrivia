@@ -12,6 +12,11 @@ function hashClaim(value: string) {
   return createHash("sha256").update(value.trim().toLowerCase()).digest("hex");
 }
 
+type SeenClaim = {
+  id: string;
+  confidence: number;
+};
+
 function clamp(value: number, min: number, max: number) {
   return Math.max(min, Math.min(max, value));
 }
@@ -174,9 +179,14 @@ export async function normalizeTopicSourceDocuments(topicId: string) {
 
   const existing = await prisma.topicClaim.findMany({
     where: { topicId },
-    select: { claimText: true },
+    select: { id: true, claimText: true, confidence: true },
   });
-  const seen = new Set(existing.map((c) => hashClaim(c.claimText)));
+  const seen = new Map<string, SeenClaim>(
+    existing.map((claim) => [
+      hashClaim(claim.claimText),
+      { id: claim.id, confidence: claim.confidence },
+    ])
+  );
 
   let inserted = 0;
   let skipped = 0;
@@ -186,25 +196,40 @@ export async function normalizeTopicSourceDocuments(topicId: string) {
     const candidates = extractClaimsFromPayload(payload);
     for (const claimText of candidates) {
       const key = hashClaim(claimText);
-      if (seen.has(key)) {
-        skipped++;
+      const candidateConfidence = computeClaimConfidence({
+        isCommercialSafe: doc.isCommercialSafe,
+        claimText,
+      });
+      const existingClaim = seen.get(key);
+      if (existingClaim) {
+        if (candidateConfidence > existingClaim.confidence) {
+          await prisma.topicClaim.update({
+            where: { id: existingClaim.id },
+            data: {
+              claimType: inferClaimType(claimText),
+              confidence: candidateConfidence,
+              sourceDocumentId: doc.id,
+              sourceSnippet: claimText.slice(0, 320),
+            },
+          });
+          seen.set(key, { id: existingClaim.id, confidence: candidateConfidence });
+        } else {
+          skipped++;
+        }
         continue;
       }
 
-      await prisma.topicClaim.create({
+      const created = await prisma.topicClaim.create({
         data: {
           topicId,
           claimText,
           claimType: inferClaimType(claimText),
-          confidence: computeClaimConfidence({
-            isCommercialSafe: doc.isCommercialSafe,
-            claimText,
-          }),
+          confidence: candidateConfidence,
           sourceDocumentId: doc.id,
           sourceSnippet: claimText.slice(0, 320),
         },
       });
-      seen.add(key);
+      seen.set(key, { id: created.id, confidence: candidateConfidence });
       inserted++;
     }
   }
