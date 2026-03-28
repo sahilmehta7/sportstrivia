@@ -79,7 +79,7 @@ import { requireAuth } from "@/lib/auth-helpers";
 import { GET as getInterests, PUT as putInterests } from "@/app/api/users/me/interests/route";
 import { GET as getFollows } from "@/app/api/users/me/follows/route";
 import { GET as getInterestProfile } from "@/app/api/users/me/interest-profile/route";
-import { POST as followTopic, DELETE as unfollowTopic } from "@/app/api/topics/[id]/follow/route";
+import { POST as followTopic, DELETE as unfollowTopic } from "@/app/api/topics/by-id/[id]/follow/route";
 
 describe("user interests and follows routes", () => {
   beforeEach(() => {

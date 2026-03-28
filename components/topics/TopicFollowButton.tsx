@@ -35,7 +35,7 @@ export function TopicFollowButton({
     setIsSubmitting(true);
     try {
       const method = isFollowing ? "DELETE" : "POST";
-      const response = await fetch(`/api/topics/${topicId}/follow`, { method });
+      const response = await fetch(`/api/topics/by-id/${topicId}/follow`, { method });
       const result = await response.json();
 
       if (!response.ok) {
