@@ -4,34 +4,50 @@ import { InterestCaptureFlow } from "@/components/features/onboarding/InterestCa
 
 describe("InterestCaptureFlow", () => {
   const originalFetch = global.fetch;
+  const topicsPayload = {
+    data: {
+      topics: [
+        {
+          id: "sport_cricket",
+          name: "Cricket",
+          slug: "cricket",
+          schemaType: "SPORT",
+          entityStatus: "READY",
+          parentId: null,
+        },
+        {
+          id: "sport_draft",
+          name: "Draft Sport",
+          slug: "draft-sport",
+          schemaType: "SPORT",
+          entityStatus: "DRAFT",
+          parentId: null,
+        },
+        {
+          id: "team_india",
+          name: "India",
+          slug: "india-cricket-team",
+          schemaType: "SPORTS_TEAM",
+          entityStatus: "READY",
+          parentId: "sport_cricket",
+        },
+        {
+          id: "event_world_cup",
+          name: "World Cup",
+          slug: "world-cup",
+          schemaType: "SPORTS_EVENT",
+          entityStatus: "READY",
+          parentId: "team_india",
+        },
+      ],
+    },
+  };
 
   beforeEach(() => {
     jest.clearAllMocks();
     global.fetch = jest.fn().mockResolvedValueOnce({
       ok: true,
-      json: async () => ({
-        data: {
-          topics: [
-            {
-              id: "sport_cricket",
-              name: "Cricket",
-              slug: "cricket",
-              schemaType: "SPORT",
-              parentId: null,
-              children: [
-                {
-                  id: "team_india",
-                  name: "India",
-                  slug: "india-cricket-team",
-                  schemaType: "SPORTS_TEAM",
-                  parentId: "sport_cricket",
-                  children: [],
-                },
-              ],
-            },
-          ],
-        },
-      }),
+      json: async () => topicsPayload,
     });
   });
 
@@ -76,5 +92,79 @@ describe("InterestCaptureFlow", () => {
     });
 
     expect(onComplete).toHaveBeenCalledTimes(1);
+  });
+
+  it("filters out non-ready sports from step one", async () => {
+    render(<InterestCaptureFlow onSkip={jest.fn()} onComplete={jest.fn()} />);
+
+    expect(await screen.findByRole("button", { name: /cricket/i })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /draft sport/i })).not.toBeInTheDocument();
+  });
+
+  it("filters entities by selected sport using ancestor mapping", async () => {
+    render(<InterestCaptureFlow onSkip={jest.fn()} onComplete={jest.fn()} />);
+
+    fireEvent.click(await screen.findByRole("button", { name: /cricket/i }));
+    fireEvent.click(screen.getByRole("button", { name: /continue/i }));
+
+    expect(await screen.findByRole("button", { name: /world cup/i })).toBeInTheDocument();
+  });
+
+  it("shows save error and does not complete when save fails", async () => {
+    const onComplete = jest.fn();
+    (global.fetch as jest.Mock).mockResolvedValueOnce({
+      ok: false,
+      json: async () => ({ error: "Unable to save preferences right now" }),
+    });
+
+    render(<InterestCaptureFlow onSkip={jest.fn()} onComplete={onComplete} />);
+
+    fireEvent.click(await screen.findByRole("button", { name: /cricket/i }));
+    fireEvent.click(screen.getByRole("button", { name: /continue/i }));
+    fireEvent.click(screen.getByRole("button", { name: /save preferences/i }));
+
+    expect(
+      await screen.findByText(/unable to save preferences right now/i)
+    ).toBeInTheDocument();
+    expect(onComplete).not.toHaveBeenCalled();
+  });
+
+  it("uses token-driven modal styles", async () => {
+    render(<InterestCaptureFlow onSkip={jest.fn()} onComplete={jest.fn()} />);
+
+    const heading = await screen.findByRole("heading", { name: /pick your sports/i });
+    const modalCard = heading.closest("div")?.parentElement;
+
+    expect(modalCard?.className).toContain("bg-card");
+    expect(modalCard?.className).toContain("border-border");
+  });
+
+  it("does not auto-call onSkip when no eligible sports are available", async () => {
+    const onSkip = jest.fn();
+    global.fetch = jest.fn().mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        data: {
+          topics: [
+            {
+              id: "sport_draft",
+              name: "Draft Sport",
+              slug: "draft-sport",
+              schemaType: "SPORT",
+              entityStatus: "DRAFT",
+              parentId: null,
+            },
+          ],
+        },
+      }),
+    });
+
+    const { container } = render(<InterestCaptureFlow onSkip={onSkip} onComplete={jest.fn()} />);
+
+    await waitFor(() => {
+      expect(global.fetch).toHaveBeenCalledWith("/api/topics?limit=5000");
+    });
+    expect(onSkip).not.toHaveBeenCalled();
+    expect(container.firstChild).toBeNull();
   });
 });

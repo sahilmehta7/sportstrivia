@@ -8,11 +8,32 @@ import { InterestCaptureFlow } from "@/components/features/onboarding/InterestCa
 const SKIPPED_KEY = "hasSkippedInterestOnboarding_v1";
 const COMPLETED_KEY = "hasCompletedInterestOnboarding_v1";
 const ENTRY_PATHS = ["/", "/quizzes", "/leaderboard"];
+const TOPICS_PRECHECK_LIMIT = 5000;
 
 type InterestsResponse = {
   data: {
     interests: Array<{
       source: string;
+    }>;
+  };
+};
+
+type FollowsResponse = {
+  data: {
+    follows?: Array<{ topic: { id: string } }>;
+    sports?: Array<{ topic: { id: string } }>;
+    teams?: Array<{ topic: { id: string } }>;
+    athletes?: Array<{ topic: { id: string } }>;
+    events?: Array<{ topic: { id: string } }>;
+    organizations?: Array<{ topic: { id: string } }>;
+  };
+};
+
+type TopicsResponse = {
+  data: {
+    topics: Array<{
+      schemaType: string;
+      entityStatus?: string;
     }>;
   };
 };
@@ -40,26 +61,47 @@ export function AuthInterestOnboardingGate() {
 
       const skipped = window.localStorage.getItem(skippedKey) === "true";
       const completed = window.localStorage.getItem(completedKey) === "true";
-      if (skipped || completed) {
-        setVisible(false);
-        setLoading(false);
-        return;
-      }
 
       try {
-        const response = await fetch("/api/users/me/interests");
-        if (!response.ok) {
+        const [interestsResponse, followsResponse, topicsResponse] = await Promise.all([
+          fetch("/api/users/me/interests"),
+          fetch("/api/users/me/follows"),
+          fetch(`/api/topics?limit=${TOPICS_PRECHECK_LIMIT}`),
+        ]);
+
+        if (!interestsResponse.ok || !followsResponse.ok || !topicsResponse.ok) {
           setVisible(false);
           setLoading(false);
           return;
         }
 
-        const payload = (await response.json()) as InterestsResponse;
-        const hasOnboardingInterests = payload.data.interests.some(
-          (interest) => interest.source === "ONBOARDING"
-        );
+        const interestsPayload = (await interestsResponse.json()) as Partial<InterestsResponse>;
+        const followsPayload = (await followsResponse.json()) as Partial<FollowsResponse>;
+        const topicsPayload = (await topicsResponse.json()) as Partial<TopicsResponse>;
 
-        setVisible(!hasOnboardingInterests);
+        const interests = interestsPayload?.data?.interests;
+        const follows = followsPayload?.data;
+        const topics = topicsPayload?.data?.topics;
+
+        if (!Array.isArray(interests) || !follows || !Array.isArray(topics)) {
+          setVisible(false);
+          return;
+        }
+
+        const hasAnyInterests = interests.length > 0;
+        const hasAnyFollows =
+          (follows.follows?.length ?? 0) > 0 ||
+          (follows.sports?.length ?? 0) > 0 ||
+          (follows.teams?.length ?? 0) > 0 ||
+          (follows.athletes?.length ?? 0) > 0 ||
+          (follows.events?.length ?? 0) > 0 ||
+          (follows.organizations?.length ?? 0) > 0;
+        const hasEligibleSports = topics.some(
+          (topic) => topic.schemaType === "SPORT" && topic.entityStatus === "READY"
+        );
+        const shouldPromptFromServer = !hasAnyInterests && !hasAnyFollows && hasEligibleSports;
+
+        setVisible(shouldPromptFromServer && !skipped && !completed);
       } finally {
         setLoading(false);
       }

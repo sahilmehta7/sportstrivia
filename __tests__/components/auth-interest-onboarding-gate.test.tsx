@@ -29,17 +29,50 @@ jest.mock("@/components/features/onboarding/InterestCaptureFlow", () => ({
 }));
 
 describe("AuthInterestOnboardingGate", () => {
+  const makeFetchMock = ({
+    interests = [],
+    follows = [],
+    topics = [],
+  }: {
+    interests?: Array<{ source: string }>;
+    follows?: Array<{ topic: { id: string } }>;
+    topics?: Array<{ schemaType: string; entityStatus?: string }>;
+  }) =>
+    jest.fn().mockImplementation(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes("/api/users/me/interests")) {
+        return {
+          ok: true,
+          json: async () => ({ data: { interests } }),
+        };
+      }
+      if (url.includes("/api/users/me/follows")) {
+        return {
+          ok: true,
+          json: async () => ({ data: { follows } }),
+        };
+      }
+      if (url.includes("/api/topics")) {
+        return {
+          ok: true,
+          json: async () => ({ data: { topics } }),
+        };
+      }
+
+      return {
+        ok: false,
+        json: async () => ({}),
+      };
+    });
+
   beforeEach(() => {
     jest.clearAllMocks();
     sessionState = { status: "authenticated", userId: "user_1" };
     window.localStorage.clear();
-    global.fetch = jest.fn().mockResolvedValue({
-      ok: true,
-      json: async () => ({
-        data: {
-          interests: [],
-        },
-      }),
+    global.fetch = makeFetchMock({
+      interests: [],
+      follows: [],
+      topics: [{ schemaType: "SPORT", entityStatus: "READY" }],
     }) as unknown as typeof fetch;
   });
 
@@ -53,5 +86,104 @@ describe("AuthInterestOnboardingGate", () => {
       expect(global.fetch).toHaveBeenCalledWith("/api/users/me/interests");
     });
     expect(await screen.findByTestId("interest-capture-flow")).toBeInTheDocument();
+  });
+
+  it("does not show onboarding when explicit interests already exist (any source)", async () => {
+    global.fetch = makeFetchMock({
+      interests: [{ source: "PROFILE" }],
+      follows: [],
+      topics: [{ schemaType: "SPORT", entityStatus: "READY" }],
+    }) as unknown as typeof fetch;
+
+    render(<AuthInterestOnboardingGate />);
+
+    await waitFor(() => {
+      expect(global.fetch).toHaveBeenCalledWith("/api/users/me/interests");
+      expect(global.fetch).toHaveBeenCalledWith("/api/users/me/follows");
+    });
+    expect(screen.queryByTestId("interest-capture-flow")).not.toBeInTheDocument();
+  });
+
+  it("does not show onboarding when follows already exist", async () => {
+    global.fetch = makeFetchMock({
+      interests: [],
+      follows: [{ topic: { id: "topic_1" } }],
+      topics: [{ schemaType: "SPORT", entityStatus: "READY" }],
+    }) as unknown as typeof fetch;
+
+    render(<AuthInterestOnboardingGate />);
+
+    await waitFor(() => {
+      expect(global.fetch).toHaveBeenCalledWith("/api/users/me/follows");
+    });
+    expect(screen.queryByTestId("interest-capture-flow")).not.toBeInTheDocument();
+  });
+
+  it("shows onboarding only when no saved intent exists and eligible sports exist", async () => {
+    global.fetch = makeFetchMock({
+      interests: [],
+      follows: [],
+      topics: [{ schemaType: "SPORT", entityStatus: "READY" }],
+    }) as unknown as typeof fetch;
+
+    render(<AuthInterestOnboardingGate />);
+
+    expect(await screen.findByTestId("interest-capture-flow")).toBeInTheDocument();
+  });
+
+  it("does not show onboarding when no eligible sports exist", async () => {
+    global.fetch = makeFetchMock({
+      interests: [],
+      follows: [],
+      topics: [{ schemaType: "SPORT", entityStatus: "DRAFT" }],
+    }) as unknown as typeof fetch;
+
+    render(<AuthInterestOnboardingGate />);
+
+    await waitFor(() => {
+      expect(global.fetch).toHaveBeenCalledWith("/api/users/me/interests");
+    });
+    expect(screen.queryByTestId("interest-capture-flow")).not.toBeInTheDocument();
+  });
+
+  it("applies local skip only after server says prompt is eligible", async () => {
+    window.localStorage.setItem("hasSkippedInterestOnboarding_v1_user_1", "true");
+    global.fetch = makeFetchMock({
+      interests: [],
+      follows: [],
+      topics: [{ schemaType: "SPORT", entityStatus: "READY" }],
+    }) as unknown as typeof fetch;
+
+    render(<AuthInterestOnboardingGate />);
+
+    await waitFor(() => {
+      expect(global.fetch).toHaveBeenCalledWith("/api/users/me/interests");
+      expect(global.fetch).toHaveBeenCalledWith("/api/users/me/follows");
+      expect(global.fetch).toHaveBeenCalledWith("/api/topics?limit=5000");
+    });
+    expect(screen.queryByTestId("interest-capture-flow")).not.toBeInTheDocument();
+  });
+
+  it("hides onboarding on malformed payloads", async () => {
+    global.fetch = jest.fn().mockImplementation(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes("/api/users/me/interests")) {
+        return { ok: true, json: async () => ({}) };
+      }
+      if (url.includes("/api/users/me/follows")) {
+        return { ok: true, json: async () => ({ data: { follows: [] } }) };
+      }
+      if (url.includes("/api/topics")) {
+        return { ok: true, json: async () => ({ data: { topics: [] } }) };
+      }
+      return { ok: false, json: async () => ({}) };
+    }) as unknown as typeof fetch;
+
+    render(<AuthInterestOnboardingGate />);
+
+    await waitFor(() => {
+      expect(global.fetch).toHaveBeenCalledWith("/api/users/me/interests");
+    });
+    expect(screen.queryByTestId("interest-capture-flow")).not.toBeInTheDocument();
   });
 });

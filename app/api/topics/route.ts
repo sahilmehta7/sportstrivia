@@ -29,12 +29,15 @@ export async function GET(request: NextRequest) {
     }
 
     const includeHierarchy = searchParams.get("hierarchy") === "true";
+    const skip = (page - 1) * limit;
 
     if (includeHierarchy) {
       // Get full hierarchy tree (optimized with select and limits)
       const topics = await prisma.topic.findMany({
         where: { parentId: null },
         orderBy: { name: "asc" },
+        skip,
+        take: limit,
         select: {
           id: true,
           name: true,
@@ -42,6 +45,7 @@ export async function GET(request: NextRequest) {
           description: true,
           level: true,
           schemaType: true,
+          entityStatus: true,
           schemaCanonicalUrl: true,
           schemaSameAs: true,
           schemaEntityData: true,
@@ -58,6 +62,7 @@ export async function GET(request: NextRequest) {
               description: true,
               level: true,
               schemaType: true,
+              entityStatus: true,
               schemaCanonicalUrl: true,
               schemaSameAs: true,
               schemaEntityData: true,
@@ -74,6 +79,7 @@ export async function GET(request: NextRequest) {
                   description: true,
                   level: true,
                   schemaType: true,
+                  entityStatus: true,
                   schemaCanonicalUrl: true,
                   schemaSameAs: true,
                   schemaEntityData: true,
@@ -101,12 +107,15 @@ export async function GET(request: NextRequest) {
       // Get flat list
       const topics = await prisma.topic.findMany({
         orderBy: [{ level: "asc" }, { name: "asc" }],
+        skip,
+        take: limit,
         select: {
           id: true,
           name: true,
           slug: true,
           level: true,
           schemaType: true,
+          entityStatus: true,
           schemaCanonicalUrl: true,
           schemaSameAs: true,
           schemaEntityData: true,
