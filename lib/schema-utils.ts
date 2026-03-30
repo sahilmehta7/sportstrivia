@@ -3,8 +3,7 @@
  * Generates JSON-LD markup for SEO and rich snippets
  */
 import type { TopicSchemaTypeValue } from "@/lib/topic-schema-options";
-
-const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || "https://www.sportstrivia.in";
+import { BASE_URL, getCanonicalUrl } from "@/lib/next-seo-config";
 
 /**
  * Organization Schema - Add to root layout
@@ -274,10 +273,7 @@ function asStringArray(value: unknown): string[] {
 }
 
 function asIsoDate(value: unknown): string | undefined {
-  if (typeof value !== "string") return undefined;
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return undefined;
-  return date.toISOString();
+  return toIsoDateString(value as string | number | Date | null | undefined);
 }
 
 function toIsoDateString(value: Date | string | number | null | undefined): string | undefined {
@@ -331,13 +327,14 @@ export function getTopicCollectionSchema(
 export function getTopicPrimaryEntitySchema(input: TopicSchemaGraphInput["topic"]) {
   const schemaType = input.schemaType;
   const canonicalUrl = asNonEmptyString(input.schemaCanonicalUrl);
-  if (schemaType === "NONE" || !canonicalUrl) {
-    return null;
-  }
-
   const url = topicUrl(input.slug);
   const entityId = topicEntityId(input.slug);
   const collectionId = topicCollectionId(input.slug);
+
+  if (schemaType === "NONE") {
+    return null;
+  }
+
   const sameAs = uniqueUrls(input.schemaSameAs);
   const data = (input.schemaEntityData ?? {}) as TopicSchemaEntityData;
   const sportName = asNonEmptyString(data.sportName);
@@ -345,9 +342,9 @@ export function getTopicPrimaryEntitySchema(input: TopicSchemaGraphInput["topic"
   const baseEntity = {
     "@id": entityId,
     name: input.name,
-    url: canonicalUrl,
+    url: canonicalUrl || url,
     ...(input.description ? { description: input.description } : {}),
-    ...(sameAs.length > 0 ? { sameAs } : {}),
+    ...(sameAs.length > 0 ? { sameAs } : canonicalUrl ? { sameAs: [canonicalUrl] } : {}),
     mainEntityOfPage: { "@id": collectionId },
     subjectOf: { "@id": url },
   };
@@ -474,6 +471,65 @@ export function getTopicGraphSchema(input: TopicSchemaGraphInput) {
 }
 
 /**
+ * Combined Topic Page Graph Schema
+ * Aggregates Breadcrumbs, CollectionPage, Primary Entity, and ItemList
+ */
+export function getTopicPageGraphSchema(input: Omit<TopicSchemaGraphInput, "quizUrls"> & {
+  breadcrumbs: Array<{ name: string; url?: string }>;
+  quizzes: Array<{ title: string; slug: string; description?: string | null; descriptionImageUrl?: string | null }>;
+  faqs?: Array<{ question: string; answer: string }> | null;
+}) {
+  const primaryEntity = getTopicPrimaryEntitySchema(input.topic);
+  const collection = getTopicCollectionSchema(
+    {
+      name: input.topic.name,
+      slug: input.topic.slug,
+      description: input.topic.description,
+      parentSlug: input.topic.parent?.slug,
+    },
+    {
+      quizCount: input.quizzes.length,
+      quizUrls: input.quizzes.map(q => getCanonicalUrl(`/quizzes/${q.slug}`)),
+      mainEntityId: primaryEntity ? topicEntityId(input.topic.slug) : undefined,
+    }
+  );
+
+  const breadcrumbs = getBreadcrumbSchema(input.breadcrumbs);
+  const itemList = getItemListSchema(
+    input.quizzes.map((q, index) => ({
+      id: `quiz-${index}`,
+      title: q.title,
+      slug: q.slug,
+      description: q.description,
+      descriptionImageUrl: q.descriptionImageUrl,
+    })),
+    `${input.topic.name} Quizzes`
+  );
+
+  // We need to fix the itemList to use the provided URLs correctly
+  // Instead of re-parsing URLs, let's use a better approach if possible, 
+  // but for now, we'll keep it simple or update the interface.
+  // Actually, TopicDetailPage passes quiz objects to ItemListStructuredData.
+  // Let's add a more flexible type or another helper.
+
+  const graph: any[] = [
+    breadcrumbs,
+    collection,
+    itemList,
+    ...(primaryEntity ? [primaryEntity] : []),
+  ];
+
+  if (input.faqs && input.faqs.length > 0) {
+    graph.push(getFAQSchema(input.faqs));
+  }
+
+  return {
+    "@context": "https://schema.org",
+    "@graph": graph,
+  };
+}
+
+/**
  * Breadcrumb Schema
  */
 export function getBreadcrumbSchema(items: Array<{
@@ -487,7 +543,7 @@ export function getBreadcrumbSchema(items: Array<{
       "@type": "ListItem",
       position: index + 1,
       name: item.name,
-      ...(item.url ? { item: `${BASE_URL}${item.url}` } : {}),
+      ...(item.url ? { item: getCanonicalUrl(item.url) } : {}),
     })),
   };
 }
@@ -587,7 +643,7 @@ export function getItemListSchema(quizzes: Array<{
     itemListElement: quizzes.map((quiz, index) => ({
       "@type": "ListItem",
       position: index + 1,
-      url: `${BASE_URL}/quizzes/${quiz.slug}`,
+      url: getCanonicalUrl(`/quizzes/${quiz.slug}`),
       name: quiz.title,
       ...(quiz.descriptionImageUrl ? { image: quiz.descriptionImageUrl } : {}),
       ...(quiz.description ? { description: quiz.description } : {}),

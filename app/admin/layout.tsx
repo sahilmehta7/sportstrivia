@@ -24,6 +24,7 @@ export default async function AdminLayout({
         { name: "Quizzes", href: "/admin/quizzes", icon: "FileQuestion" as const },
         { name: "Questions", href: "/admin/questions", icon: "HelpCircle" as const },
         { name: "Topics", href: "/admin/topics", icon: "FolderTree" as const },
+        { name: "Collections", href: "/admin/collections", icon: "Layers" as const },
         { name: "Daily Games", href: "/admin/daily", icon: "Trophy" as const },
         { name: "Grids", href: "/admin/grids", icon: "ListOrdered" as const },
       ],

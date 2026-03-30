@@ -3,7 +3,7 @@
  * Centralizes site-wide SEO defaults
  */
 
-const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || "https://www.sportstrivia.in";
+export const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || "https://www.sportstrivia.in";
 
 export const defaultSeoConfig = {
   siteName: "Sports Trivia",

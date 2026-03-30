@@ -12,11 +12,11 @@ import {
   type PublicQuizListItem,
 } from "@/lib/services/public-quiz.service";
 import { buildTopicLeaderboard, type LeaderboardPeriod } from "@/lib/services/leaderboard.service";
-import { BreadcrumbJsonLd, JsonLdScript } from "next-seo";
-import { ItemListStructuredData } from "@/components/seo/ItemListStructuredData";
-import { getCanonicalUrl } from "@/lib/next-seo-config";
+import { getCanonicalUrl, BASE_URL } from "@/lib/next-seo-config";
+import { StructuredData } from "@/components/seo/StructuredData";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { TopicFollowButton } from "@/components/topics/TopicFollowButton";
+import { CollectionRail } from "@/components/collections/CollectionRail";
 import { TopicAuthoritySection } from "@/components/topics/topic-authority-section";
 import { TopicAuthorityContainer } from "@/components/topics/topic-authority-container";
 import { FeaturedRow } from "@/components/quizzes/featured-row";
@@ -28,9 +28,10 @@ import { StreakIndicator } from "@/components/shared/StreakIndicator";
 
 import { ChevronRight, ShieldCheck } from "lucide-react";
 import { PageContainer } from "@/components/shared/PageContainer";
-import { getFAQSchema, getTopicGraphSchema } from "@/lib/schema-utils";
+import { getFAQSchema, getTopicGraphSchema, getBreadcrumbSchema, getTopicPageGraphSchema } from "@/lib/schema-utils";
 import type { TopicSchemaTypeValue } from "@/lib/topic-schema-options";
 import { parseFaqMarkdown } from "@/lib/faq-utils";
+import { listPublishedCollections } from "@/lib/services/collection.service";
 
 const topicWithRelations = {
   include: {
@@ -178,13 +179,13 @@ export async function generateMetadata({
     keywords,
     robots: topic.indexEligible ? undefined : { index: false, follow: true },
     alternates: {
-      canonical: `${baseUrl}/topics/${topic.slug}`,
+      canonical: getCanonicalUrl(`/topics/${topic.slug}`),
     },
     openGraph: {
       title,
       description,
       type: "website",
-      url: `${baseUrl}/topics/${topic.slug}`,
+      url: getCanonicalUrl(`/topics/${topic.slug}`),
     },
     twitter: {
       card: "summary_large_image",
@@ -282,6 +283,11 @@ export default async function TopicDetailPage({
     heroFeaturedQuizzesPromise,
     getPublicQuizList({ topic: slug, sortBy: "rating", sortOrder: "desc", page: 1, limit: 10 }),
   ]);
+  const topicCollections = await listPublishedCollections({
+    page: 1,
+    limit: 6,
+    topicId: topic.id,
+  });
 
   const appliedFilters = {
     ...listing.filters,
@@ -331,34 +337,14 @@ export default async function TopicDetailPage({
     topRatedListing.quizzes[0] ??
     null;
 
-  // Generate structured data for next-seo components
-  const breadcrumbItems = [
-    { position: 1, name: "Home", item: getCanonicalUrl("/") },
+  // Generate centralized structured data graph
+  const breadcrumbs = [
+    { name: "Home", url: "/" },
+    ...(topic.parent ? [{ name: topic.parent.name, url: `/topics/${topic.parent.slug}` }] : []),
+    { name: topic.name, url: `/topics/${topic.slug}` },
   ];
-  if (topic.parent) {
-    breadcrumbItems.push({
-      position: breadcrumbItems.length + 1,
-      name: topic.parent.name,
-      item: getCanonicalUrl(`/topics/${topic.parent.slug}`)
-    });
-  }
-  breadcrumbItems.push({
-    position: breadcrumbItems.length + 1,
-    name: topic.name,
-    item: getCanonicalUrl(`/topics/${topic.slug}`)
-  });
 
-  const itemListElements = listing.quizzes.length > 0
-    ? listing.quizzes.map((q, index) => ({
-      position: index + 1,
-      name: q.title,
-      item: getCanonicalUrl(`/quizzes/${q.slug}`),
-      ...(q.descriptionImageUrl ? { image: q.descriptionImageUrl } : {}),
-      ...(q.description ? { description: q.description } : {}),
-    }))
-    : [];
-
-  const topicGraphSchema = getTopicGraphSchema({
+  const fullTopicGraph = getTopicPageGraphSchema({
     topic: {
       id: topic.id,
       name: topic.name,
@@ -379,13 +365,10 @@ export default async function TopicDetailPage({
           }
         : null,
     },
-    quizUrls: itemListElements.slice(0, 10).map((item) => item.item),
+    quizzes: listing.quizzes,
+    breadcrumbs,
+    faqs: showAuthority && publishedSnapshot ? parseFaqMarkdown(publishedSnapshot.faqMd) : null,
   });
-  const faqSchema = showAuthority && publishedSnapshot
-    ? getFAQSchema(
-        parseFaqMarkdown(publishedSnapshot.faqMd)
-      )
-    : null;
 
   return (
     <main className="min-h-screen pb-24">
@@ -503,6 +486,14 @@ export default async function TopicDetailPage({
             isAuthenticated={Boolean(user)}
           />
         </div>
+
+        {topicCollections.collections.length > 0 ? (
+          <CollectionRail
+            title={`${topic.name} Collections`}
+            subtitle="Play curated journeys tied to this topic."
+            items={topicCollections.collections}
+          />
+        ) : null}
 
         <section className="space-y-8" id="topic-quizzes">
           <ModernFilterBar
@@ -652,16 +643,8 @@ export default async function TopicDetailPage({
         </div>
       </PageContainer>
 
-      {/* Structured Data */}
-      <JsonLdScript scriptKey={`topic-graph-${topic.id}`} data={topicGraphSchema} />
-      {faqSchema ? <JsonLdScript scriptKey={`topic-faq-${topic.id}`} data={faqSchema} /> : null}
-      <BreadcrumbJsonLd items={breadcrumbItems} />
-      <ItemListStructuredData
-        id={`topic-item-list-${topic.id}`}
-        listId={`${getCanonicalUrl(`/topics/${topic.slug}`)}#quiz-list`}
-        itemListElements={itemListElements}
-        name={`${topic.name} Quizzes`}
-      />
+      {/* Unified Structured Data Graph */}
+      <StructuredData id={`topic-full-graph-${topic.id}`} data={fullTopicGraph} />
     </main>
   );
 }

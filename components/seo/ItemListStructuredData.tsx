@@ -1,4 +1,4 @@
-import { JsonLdScript } from "next-seo";
+import { StructuredData } from "./StructuredData";
 
 interface StructuredListItem {
   position: number;
@@ -39,7 +39,7 @@ export function ItemListStructuredData({ name, itemListElements, id, listId }: I
     return null;
   }
 
-  const scriptKey =
+  const scriptId =
     id ??
     `item-list-${name
       .toLowerCase()
@@ -47,8 +47,8 @@ export function ItemListStructuredData({ name, itemListElements, id, listId }: I
       .replace(/(^-|-$)/g, "")}`;
 
   return (
-    <JsonLdScript
-      scriptKey={scriptKey}
+    <StructuredData
+      id={scriptId}
       data={{
         "@context": "https://schema.org",
         "@type": "ItemList",

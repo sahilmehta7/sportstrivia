@@ -12,6 +12,14 @@ import { ComingSoonSection, ComingSoonSkeleton } from "./components/coming-soon-
 import { QuizListSection, QuizListSectionSkeleton } from "./components/quiz-list-section";
 import { StickyPickRailSection, StickyPickRailSectionSkeleton } from "./components/sticky-pick-rail-section";
 import {
+  ContinueCollectionsSection,
+  ContinueCollectionsSectionSkeleton,
+} from "./components/continue-collections-section";
+import {
+  FeaturedCollectionsSection,
+  FeaturedCollectionsSectionSkeleton,
+} from "./components/featured-collections-section";
+import {
   AllSportsTopicsWidgetSection,
   AllSportsTopicsWidgetSectionSkeleton,
 } from "./components/all-sports-topics-widget-section";
@@ -60,6 +68,14 @@ export default async function QuizzesPage({
           {/* Daily Challenge Hero */}
           <Suspense fallback={<DailyChallengeSkeleton />}>
             <DailyChallengeSection />
+          </Suspense>
+
+          <Suspense fallback={<ContinueCollectionsSectionSkeleton />}>
+            <ContinueCollectionsSection />
+          </Suspense>
+
+          <Suspense fallback={<FeaturedCollectionsSectionSkeleton />}>
+            <FeaturedCollectionsSection />
           </Suspense>
 
           {/* Featured Quizzes (Only shown if no strict filters are applied, or we always show them?) */}

@@ -10,6 +10,7 @@ import type { Prisma } from "@prisma/client";
 import { checkAndAwardBadges } from "@/lib/services/badge.service";
 import { recomputeUserProgress } from "@/lib/services/gamification.service";
 import { createNotification } from "@/lib/services/notification.service";
+import { touchCollectionProgressOnQuizCompletion } from "@/lib/services/collection.service";
 import { z } from "zod";
 import { normalizeAnswer } from "@/lib/grid/fuzzy-match";
 
@@ -594,6 +595,7 @@ export async function PATCH(
                         score: scorePercentage,
                         isPracticeMode: attempt.isPracticeMode
                     }),
+                    touchCollectionProgressOnQuizCompletion(user.id, attempt.quizId),
                     recomputeUserProgress(user.id)
                 ]);
             } catch (err) {

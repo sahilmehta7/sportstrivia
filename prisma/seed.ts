@@ -1,4 +1,12 @@
-import { PrismaClient, Difficulty, QuestionType, BadgeCategory, BadgeRarity } from "@prisma/client";
+import {
+  PrismaClient,
+  Difficulty,
+  QuestionType,
+  BadgeCategory,
+  BadgeRarity,
+  CollectionStatus,
+  CollectionType,
+} from "@prisma/client";
 import {
   LEVELS_MAX,
   TIERS_MAX,
@@ -219,6 +227,141 @@ async function main() {
   });
 
   console.log("✓ Created sample quiz");
+
+  const editorialCollections = [
+    {
+      name: "Cricket Starter Series",
+      slug: "cricket-starter-series",
+      description: "Foundational cricket quizzes for new fans.",
+      primaryTopicId: cricket.id,
+      isFeatured: true,
+    },
+    {
+      name: "Batting Fundamentals",
+      slug: "batting-fundamentals",
+      description: "Build core batting knowledge and records recall.",
+      primaryTopicId: batting.id,
+      isFeatured: true,
+    },
+    {
+      name: "Bowling Deep Dive",
+      slug: "bowling-deep-dive",
+      description: "Progressive bowling-focused quiz run.",
+      primaryTopicId: bowling.id,
+      isFeatured: false,
+    },
+    {
+      name: "Basketball Tip-Off",
+      slug: "basketball-tip-off",
+      description: "Editorial basketball quiz series to start strong.",
+      primaryTopicId: basketball.id,
+      isFeatured: true,
+    },
+    {
+      name: "Sports Warm-Up",
+      slug: "sports-warm-up",
+      description: "General sports warm-up set before tougher modes.",
+      primaryTopicId: sports.id,
+      isFeatured: true,
+    },
+    {
+      name: "Cricket Quick Hits",
+      slug: "cricket-quick-hits",
+      description: "Fast, approachable cricket rounds.",
+      primaryTopicId: cricket.id,
+      isFeatured: false,
+    },
+    {
+      name: "Legends Replay",
+      slug: "legends-replay",
+      description: "Revisit iconic player and team knowledge.",
+      primaryTopicId: sports.id,
+      isFeatured: true,
+    },
+    {
+      name: "Matchday Momentum",
+      slug: "matchday-momentum",
+      description: "Curated run for daily discovery momentum.",
+      primaryTopicId: cricket.id,
+      isFeatured: false,
+    },
+    {
+      name: "Skill Builder Series",
+      slug: "skill-builder-series",
+      description: "Editorial progression from easy to challenge mode.",
+      primaryTopicId: sports.id,
+      isFeatured: true,
+    },
+    {
+      name: "Weekend Collection",
+      slug: "weekend-collection",
+      description: "Weekend-friendly set of editorial quiz picks.",
+      primaryTopicId: cricket.id,
+      isFeatured: true,
+    },
+  ];
+
+  const collectionIds: string[] = [];
+  for (const collection of editorialCollections) {
+    const created = await prisma.collection.upsert({
+      where: { slug: collection.slug },
+      update: {
+        name: collection.name,
+        description: collection.description,
+        status: CollectionStatus.PUBLISHED,
+        type: CollectionType.EDITORIAL,
+        isFeatured: collection.isFeatured,
+        primaryTopicId: collection.primaryTopicId,
+      },
+      create: {
+        name: collection.name,
+        slug: collection.slug,
+        description: collection.description,
+        status: CollectionStatus.PUBLISHED,
+        type: CollectionType.EDITORIAL,
+        isFeatured: collection.isFeatured,
+        primaryTopicId: collection.primaryTopicId,
+      },
+    });
+    collectionIds.push(created.id);
+
+    await prisma.collectionQuiz.upsert({
+      where: {
+        collectionId_quizId: {
+          collectionId: created.id,
+          quizId: sampleQuiz.id,
+        },
+      },
+      update: { order: 1 },
+      create: {
+        collectionId: created.id,
+        quizId: sampleQuiz.id,
+        order: 1,
+      },
+    });
+  }
+
+  // Seed a few in-progress rows so "Continue Collection" has deterministic data.
+  for (const collectionId of collectionIds.slice(0, 3)) {
+    await prisma.userCollectionProgress.upsert({
+      where: {
+        userId_collectionId: {
+          userId: _user.id,
+          collectionId,
+        },
+      },
+      update: {
+        lastPlayedAt: new Date(),
+      },
+      create: {
+        userId: _user.id,
+        collectionId,
+        completedQuizCount: 0,
+      },
+    });
+  }
+
+  console.log("✓ Seeded 10 editorial collections");
 
   // Create sample questions
   const question1 = await prisma.question.create({
@@ -663,6 +806,7 @@ async function main() {
   console.log(`- 6 topics (Sports hierarchy)`);
   console.log(`- 2 quiz tags`);
   console.log(`- 1 quiz with 3 questions`);
+  console.log(`- 10 editorial collections`);
   console.log(`- 19 badges`);
 }
 

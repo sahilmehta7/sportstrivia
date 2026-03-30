@@ -94,6 +94,7 @@ model User {
   interestPreferences     UserInterestPreference[]
   followedTopics          UserFollowedTopic[]
   discoveryPreference     UserDiscoveryPreference?
+  collectionProgress      UserCollectionProgress[]
   completionAwards        QuizCompletionBonusAward[]
   // Back relations for gamification
   levelHistory            UserLevel[]
@@ -146,45 +147,46 @@ model VerificationToken {
 }
 
 model Topic {
-  id               String            @id @default(cuid())
-  name             String            @unique
-  slug             String            @unique
-  description      String?
-  seoTitle         String?
-  seoDescription   String?
-  seoKeywords      String[]
-  schemaType       TopicSchemaType   @default(NONE)
-  schemaCanonicalUrl String?
-  schemaSameAs     String[]
-  alternateNames   String[]
-  schemaEntityData Json?
-  entityStatus     TopicEntityStatus @default(DRAFT)
-  entityValidatedAt DateTime?
-  contentStatus    String            @default("NONE")
-  contentQualityScore Float?
-  contentLastReviewedAt DateTime?
-  indexEligible    Boolean           @default(false)
+  id                     String                   @id @default(cuid())
+  name                   String                   @unique
+  slug                   String                   @unique
+  description            String?
+  seoTitle               String?
+  seoDescription         String?
+  seoKeywords            String[]
+  schemaType             TopicSchemaType          @default(NONE)
+  schemaCanonicalUrl     String?
+  schemaSameAs           String[]
+  alternateNames         String[]
+  schemaEntityData       Json?
+  entityStatus           TopicEntityStatus        @default(DRAFT)
+  entityValidatedAt      DateTime?
+  contentStatus          String                   @default("NONE")
+  contentQualityScore    Float?
+  contentLastReviewedAt  DateTime?
+  indexEligible          Boolean                  @default(false)
   canonicalSourceSummary String?
-  displayEmoji     String?
-  displayImageUrl  String?
-  parentId         String?
-  level            Int               @default(0)
-  order            Int               @default(0)
-  createdAt        DateTime          @default(now())
-  updatedAt        DateTime          @updatedAt
-  questions        Question[]
-  quizTopicConfigs QuizTopicConfig[]
-  parent           Topic?            @relation("TopicHierarchy", fields: [parentId], references: [id])
-  children         Topic[]           @relation("TopicHierarchy")
-  userStats        UserTopicStats[]
-  interestedUsers  UserInterestPreference[]
-  followers        UserFollowedTopic[]
-  outgoingRelations TopicRelation[]  @relation("TopicRelationsFrom")
-  incomingRelations TopicRelation[]  @relation("TopicRelationsTo")
-  sourceDocuments  TopicSourceDocument[]
-  claims           TopicClaim[]
-  contentSnapshots TopicContentSnapshot[]
-  ingestionRuns    TopicIngestionRun[]
+  displayEmoji           String?
+  displayImageUrl        String?
+  parentId               String?
+  level                  Int                      @default(0)
+  order                  Int                      @default(0)
+  createdAt              DateTime                 @default(now())
+  updatedAt              DateTime                 @updatedAt
+  questions              Question[]
+  quizTopicConfigs       QuizTopicConfig[]
+  parent                 Topic?                   @relation("TopicHierarchy", fields: [parentId], references: [id])
+  children               Topic[]                  @relation("TopicHierarchy")
+  userStats              UserTopicStats[]
+  interestedUsers        UserInterestPreference[]
+  followers              UserFollowedTopic[]
+  outgoingRelations      TopicRelation[]          @relation("TopicRelationsFrom")
+  incomingRelations      TopicRelation[]          @relation("TopicRelationsTo")
+  primaryCollections     Collection[]             @relation("CollectionPrimaryTopic")
+  sourceDocuments        TopicSourceDocument[]
+  claims                 TopicClaim[]
+  contentSnapshots       TopicContentSnapshot[]
+  ingestionRuns          TopicIngestionRun[]
 
   @@index([parentId])
   @@index([slug])
@@ -204,27 +206,27 @@ model TopicSourceDocument {
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 
-  topic Topic @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  topic  Topic        @relation(fields: [topicId], references: [id], onDelete: Cascade)
   claims TopicClaim[]
 
+  @@unique([topicId, sourceUrl, hash])
   @@index([topicId])
   @@index([sourceName])
   @@index([retrievedAt])
-  @@unique([topicId, sourceUrl, hash])
 }
 
 model TopicClaim {
-  id                  String   @id @default(cuid())
-  topicId             String
-  claimText           String
-  claimType           String
-  confidence          Float
-  sourceDocumentId    String
-  sourceSnippet       String?
-  isContradicted      Boolean  @default(false)
-  isSelectedForPublish Boolean @default(false)
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
+  id                   String   @id @default(cuid())
+  topicId              String
+  claimText            String
+  claimType            String
+  confidence           Float
+  sourceDocumentId     String
+  sourceSnippet        String?
+  isContradicted       Boolean  @default(false)
+  isSelectedForPublish Boolean  @default(false)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
 
   topic          Topic               @relation(fields: [topicId], references: [id], onDelete: Cascade)
   sourceDocument TopicSourceDocument @relation(fields: [sourceDocumentId], references: [id], onDelete: Cascade)
@@ -235,7 +237,7 @@ model TopicClaim {
 }
 
 model TopicContentSnapshot {
-  id               String   @id @default(cuid())
+  id               String    @id @default(cuid())
   topicId          String
   version          Int
   status           String
@@ -247,23 +249,23 @@ model TopicContentSnapshot {
   analysisMd       String
   faqMd            String
   sourcesMd        String
-  wordCount        Int      @default(0)
-  citationCoverage Float    @default(0)
-  qualityScore     Float    @default(0)
-  thinRiskScore    Float    @default(100)
+  wordCount        Int       @default(0)
+  citationCoverage Float     @default(0)
+  qualityScore     Float     @default(0)
+  thinRiskScore    Float     @default(100)
   lastReviewedAt   DateTime?
   publishedAt      DateTime?
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
 
   topic Topic @relation(fields: [topicId], references: [id], onDelete: Cascade)
 
-  @@index([topicId, status])
   @@unique([topicId, version])
+  @@index([topicId, status])
 }
 
 model TopicIngestionRun {
-  id        String   @id @default(cuid())
+  id        String    @id @default(cuid())
   topicId   String
   stage     String
   status    String
@@ -271,8 +273,8 @@ model TopicIngestionRun {
   endedAt   DateTime?
   error     String?
   metrics   Json?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 
   topic Topic @relation(fields: [topicId], references: [id], onDelete: Cascade)
 
@@ -351,6 +353,22 @@ enum InterestPreferenceSource {
   IMPORT
 }
 
+enum CollectionStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum CollectionType {
+  EDITORIAL
+  EVENT
+  TEAM
+  TOURNAMENT
+  DIFFICULTY
+  FORMAT
+  AUTO_GENERATED
+}
+
 model TopicRelation {
   id           String            @id @default(cuid())
   fromTopicId  String
@@ -397,13 +415,72 @@ model UserFollowedTopic {
 }
 
 model UserDiscoveryPreference {
-  id                  String     @id @default(cuid())
-  userId              String     @unique
+  id                  String      @id @default(cuid())
+  userId              String      @unique
   preferredDifficulty Difficulty?
   preferredPlayModes  PlayMode[]
-  createdAt           DateTime   @default(now())
-  updatedAt           DateTime   @updatedAt
-  user                User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt           DateTime    @default(now())
+  updatedAt           DateTime    @updatedAt
+  user                User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Collection {
+  id             String                   @id @default(cuid())
+  name           String
+  slug           String                   @unique
+  description    String?
+  coverImageUrl  String?
+  seoTitle       String?
+  seoDescription String?
+  status         CollectionStatus         @default(DRAFT)
+  type           CollectionType           @default(EDITORIAL)
+  isFeatured     Boolean                  @default(false)
+  primaryTopicId String?
+  rulesJson      Json?
+  createdAt      DateTime                 @default(now())
+  updatedAt      DateTime                 @updatedAt
+  primaryTopic   Topic?                   @relation("CollectionPrimaryTopic", fields: [primaryTopicId], references: [id], onDelete: SetNull)
+  quizzes        CollectionQuiz[]
+  userProgress   UserCollectionProgress[]
+
+  @@index([status, isFeatured])
+  @@index([type, status])
+  @@index([primaryTopicId, status])
+}
+
+model CollectionQuiz {
+  id           String     @id @default(cuid())
+  collectionId String
+  quizId       String
+  order        Int
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  collection   Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  quiz         Quiz       @relation(fields: [quizId], references: [id], onDelete: Cascade)
+
+  @@unique([collectionId, quizId])
+  @@unique([collectionId, order])
+  @@index([quizId])
+}
+
+model UserCollectionProgress {
+  id                 String     @id @default(cuid())
+  userId             String
+  collectionId       String
+  lastQuizId         String?
+  startedAt          DateTime   @default(now())
+  lastPlayedAt       DateTime   @default(now())
+  completedQuizCount Int        @default(0)
+  completedAt        DateTime?
+  createdAt          DateTime   @default(now())
+  updatedAt          DateTime   @updatedAt
+  user               User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  collection         Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  lastQuiz           Quiz?      @relation(fields: [lastQuizId], references: [id], onDelete: SetNull)
+
+  @@unique([userId, collectionId])
+  @@index([userId, lastPlayedAt])
+  @@index([collectionId, completedAt])
 }
 
 model Quiz {
@@ -455,6 +532,8 @@ model Quiz {
   reviews                QuizReview[]
   tags                   QuizTagRelation[]
   topicConfigs           QuizTopicConfig[]
+  collectionMemberships  CollectionQuiz[]
+  collectionProgress     UserCollectionProgress[]
   completionAwards       QuizCompletionBonusAward[]
   dailyGame              DailyGame?
 
@@ -857,22 +936,22 @@ model UserSearchQuery {
 }
 
 model AdminBackgroundTask {
-  id           String               @id @default(cuid())
-  userId       String?
-  type         BackgroundTaskType
-  status       BackgroundTaskStatus @default(PENDING)
-  attempt      Int                  @default(1)
-  cancelledAt  DateTime?
+  id               String               @id @default(cuid())
+  userId           String?
+  type             BackgroundTaskType
+  status           BackgroundTaskStatus @default(PENDING)
+  attempt          Int                  @default(1)
+  cancelledAt      DateTime?
   cancelledAttempt Int?
-  label        String
-  input        Json?
-  result       Json?
-  errorMessage String?
-  startedAt    DateTime?
-  completedAt  DateTime?
-  createdAt    DateTime             @default(now())
-  updatedAt    DateTime             @updatedAt
-  user         User?                @relation(fields: [userId], references: [id], onDelete: SetNull)
+  label            String
+  input            Json?
+  result           Json?
+  errorMessage     String?
+  startedAt        DateTime?
+  completedAt      DateTime?
+  createdAt        DateTime             @default(now())
+  updatedAt        DateTime             @updatedAt
+  user             User?                @relation(fields: [userId], references: [id], onDelete: SetNull)
 
   @@index([userId])
   @@index([type])
@@ -1041,9 +1120,9 @@ model GridQuiz {
   status      QuizStatus @default(DRAFT)
 
   // Grid Specifics
-  size Int  @default(3) // 3x3
-  rows Json // e.g. ["Lakers", "Celtics", "MVP"]
-  cols Json // e.g. ["Guard", "Forward", ">20 PPG"]
+  size        Int   @default(3) // 3x3
+  rows        Json // e.g. ["Lakers", "Celtics", "MVP"]
+  cols        Json // e.g. ["Guard", "Forward", ">20 PPG"]
   cellAnswers Json? // Matrix of accepted answers e.g. [["Kobe", "Shaq"], ...]
 
   // Configuration

@@ -18,7 +18,7 @@ const slugCache: Map<string, SlugCache> = new Map();
 /**
  * Entity types that support slugs
  */
-export type SlugEntity = "quiz" | "topic" | "tag";
+export type SlugEntity = "quiz" | "topic" | "tag" | "collection";
 
 
 /**
@@ -66,6 +66,15 @@ async function getExistingSlugs(entity: SlugEntity): Promise<Set<string>> {
           select: { slug: true },
         });
         slugs = tags.map((t) => t.slug);
+        break;
+      }
+
+    case "collection":
+      {
+        const collections = await prisma.collection.findMany({
+          select: { slug: true },
+        });
+        slugs = collections.map((c) => c.slug);
         break;
       }
 
@@ -192,6 +201,16 @@ export async function isSlugAvailable(
           select: { id: true },
         });
         exists = tag !== null && tag.id !== excludeId;
+        break;
+      }
+
+    case "collection":
+      {
+        const collection = await prisma.collection.findUnique({
+          where: { slug },
+          select: { id: true },
+        });
+        exists = collection !== null && collection.id !== excludeId;
         break;
       }
   }

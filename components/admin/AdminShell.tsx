@@ -28,6 +28,7 @@ import {
   ShieldCheck,
   Globe,
   DatabaseBackup,
+  Layers,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -52,6 +53,7 @@ const iconComponents = {
   FileText,
   Wrench,
   DatabaseBackup,
+  Layers,
 };
 
 interface NavigationItem {
