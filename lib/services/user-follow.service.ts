@@ -3,6 +3,7 @@ import type { TopicSchemaTypeValue } from "@/lib/topic-schema-options";
 import { isFollowableTopicSchemaType } from "@/lib/topic-followability";
 import { BadRequestError, NotFoundError } from "@/lib/errors";
 import { invalidateInterestProfileCache } from "@/lib/services/interest-profile.service";
+import { resolveTopicIdFromPathReference } from "@/lib/services/route-reference.service";
 
 export type FollowableTopic = {
   id: string;
@@ -50,18 +51,7 @@ export async function assertFollowableTopic(topicId: string): Promise<Followable
 }
 
 export async function resolveTopicIdFromSlug(slug: string): Promise<string> {
-  const topic = await prisma.topic.findUnique({
-    where: { slug },
-    select: {
-      id: true,
-    },
-  });
-
-  if (!topic) {
-    throw new NotFoundError("Topic not found");
-  }
-
-  return topic.id;
+  return resolveTopicIdFromPathReference(slug, { allowIdFallback: false });
 }
 
 export async function followTopicForUser(userId: string, topicId: string) {
