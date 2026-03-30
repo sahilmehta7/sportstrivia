@@ -100,6 +100,7 @@ describe("user interests and follows routes", () => {
       {
         id: "sport_cricket",
         schemaType: "SPORT",
+        entityStatus: "READY",
       },
     ]);
     prismaMock.userDiscoveryPreference.upsert.mockResolvedValue({
@@ -165,6 +166,7 @@ describe("user interests and follows routes", () => {
       }),
     ]);
     expect(body.data.droppedTopicIds).toEqual([]);
+    expect(body.data.meta.gateBSignals.validationPolicy).toBe("FOLLOWABLE_AND_READY");
   });
 
   it("returns explicit interests and discovery preferences", async () => {
@@ -193,6 +195,7 @@ describe("user interests and follows routes", () => {
     expect(response.status).toBe(200);
     expect(body.data.interests).toHaveLength(1);
     expect(body.data.preferences.preferredDifficulty).toBe("MEDIUM");
+    expect(body.data.meta.gateBSignals.validationPolicy).toBe("FOLLOWABLE_AND_READY");
   });
 
   it("returns followed topics", async () => {
@@ -213,6 +216,7 @@ describe("user interests and follows routes", () => {
     expect(response.status).toBe(200);
     expect(body.data.follows[0].topic.slug).toBe("india-cricket-team");
     expect(body.data.teams[0].topic.slug).toBe("india-cricket-team");
+    expect(body.data.meta.gateBSignals.validationPolicy).toBe("FOLLOWABLE_AND_READY");
   });
 
   it("returns a merged interest profile", async () => {
@@ -261,13 +265,16 @@ describe("user interests and follows routes", () => {
     expect(response.status).toBe(200);
     expect(body.data.summary.topEntities[0]).toBe("India");
     expect(body.data.inferred).toEqual([]);
+    expect(body.data.contractVersion).toBe("interest-profile/v1");
+    expect(body.data.meta.gateBSignals.interestProfileGenerated).toBe(true);
   });
 
-  it("drops invalid and non-followable interests and forces PROFILE source", async () => {
+  it("rejects invalid/non-ready interests to match follow eligibility semantics", async () => {
     prismaMock.topic.findMany.mockResolvedValue([
       {
         id: "sport_cricket",
         schemaType: "SPORT",
+        entityStatus: "READY",
       },
     ]);
     prismaMock.userDiscoveryPreference.upsert.mockResolvedValue({
@@ -281,7 +288,7 @@ describe("user interests and follows routes", () => {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         interests: [
-          { topicId: "sport_cricket", source: "ADMIN", strength: 0.9 },
+          { topicId: "sport_cricket", source: "PROFILE", strength: 0.9 },
           { topicId: "topic_freeform", source: "PROFILE", strength: 0.8 },
           { topicId: "missing_topic", source: "PROFILE", strength: 0.7 },
         ],
@@ -295,26 +302,35 @@ describe("user interests and follows routes", () => {
     const response = await putInterests(request as any);
     const body = await response.json();
 
-    expect(response.status).toBe(200);
-    expect(prismaMock.userInterestPreference.upsert).toHaveBeenCalledWith({
-      where: {
-        userId_topicId: {
-          userId: "user_1",
-          topicId: "sport_cricket",
+    expect(response.status).toBe(400);
+    expect(prismaMock.userInterestPreference.upsert).not.toHaveBeenCalled();
+    expect(body.error).toMatch(/not eligible for interests/i);
+  });
+
+  it("rejects mixed sources in legacy interests payload", async () => {
+    const request = new Request("http://localhost/api/users/me/interests", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        interests: [
+          { topicId: "sport_cricket", source: "ADMIN", strength: 0.9 },
+          { topicId: "team_india", source: "PROFILE", strength: 0.8 },
+        ],
+        preferences: {
+          preferredDifficulty: null,
+          preferredPlayModes: [],
         },
-      },
-      update: {
-        source: "ADMIN",
-        strength: 1,
-      },
-      create: {
-        userId: "user_1",
-        topicId: "sport_cricket",
-        source: "ADMIN",
-        strength: 1,
-      },
+      }),
     });
-    expect(body.data.droppedTopicIds).toEqual(["topic_freeform", "missing_topic"]);
+
+    const response = await putInterests(request as any);
+    const body = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(body.code).toBe("VALIDATION_ERROR");
+    expect(body.error).toMatch(/mixed interest sources/i);
+    expect(prismaMock.topic.findMany).not.toHaveBeenCalled();
+    expect(prismaMock.userInterestPreference.upsert).not.toHaveBeenCalled();
   });
 
   it("follows a typed topic idempotently", async () => {

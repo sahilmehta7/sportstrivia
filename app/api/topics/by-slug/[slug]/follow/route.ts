@@ -18,7 +18,16 @@ export async function POST(
     const { slug } = await params;
     const topicId = await resolveTopicIdFromSlug(slug);
     const result = await followTopicForUser(user.id, topicId);
-    return successResponse(result);
+    return successResponse({
+      ...result,
+      meta: {
+        gateBSignals: {
+          followMutationSuccess: true,
+          validationPolicy: "FOLLOWABLE_AND_READY",
+          action: "FOLLOW",
+        },
+      },
+    });
   } catch (error) {
     return handleError(error);
   }
@@ -33,7 +42,16 @@ export async function DELETE(
     const { slug } = await params;
     const topicId = await resolveTopicIdFromSlug(slug);
     const result = await unfollowTopicForUser(user.id, topicId);
-    return successResponse(result);
+    return successResponse({
+      ...result,
+      meta: {
+        gateBSignals: {
+          followMutationSuccess: true,
+          validationPolicy: "FOLLOWABLE_AND_READY",
+          action: "UNFOLLOW",
+        },
+      },
+    });
   } catch (error) {
     return handleError(error);
   }

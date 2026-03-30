@@ -50,16 +50,23 @@ type ScoredInterestTopic = InterestTopic & {
   score: number;
 };
 
+type ScoredExplicitInterestTopic = ScoredInterestTopic & {
+  source: string;
+};
+
 export type InterestProfile = {
+  contractVersion: "interest-profile/v1";
   userId: string;
   generatedAt: string;
   follows: ScoredInterestTopic[];
-  explicit: ScoredInterestTopic[];
+  explicit: ScoredExplicitInterestTopic[];
   inferred: ScoredInterestTopic[];
   preferences: DiscoveryPreferences;
   summary: {
     topEntities: string[];
     topSports: string[];
+    preferredDifficulty: Difficulty | null;
+    preferredPlayModes: PlayMode[];
   };
 };
 
@@ -81,7 +88,7 @@ function uniqueByTopicId<T extends InterestTopic>(items: T[]): T[] {
   return next;
 }
 
-function scoreAndSort(topics: ScoredInterestTopic[]): ScoredInterestTopic[] {
+function scoreAndSort<T extends { score: number; name: string }>(topics: T[]): T[] {
   return topics.sort((left, right) => right.score - left.score || left.name.localeCompare(right.name));
 }
 
@@ -159,6 +166,7 @@ export function computeInterestProfile(input: InterestProfileInput): InterestPro
           slug: topic.slug,
           name: topic.name,
           schemaType: topic.schemaType,
+          source: topic.source,
           score: 60 + topic.strength * 10,
         }))
     )
@@ -179,6 +187,7 @@ export function computeInterestProfile(input: InterestProfileInput): InterestPro
     .map((topic) => topic.name);
 
   return {
+    contractVersion: "interest-profile/v1",
     userId: input.userId,
     generatedAt: new Date().toISOString(),
     follows,
@@ -188,6 +197,54 @@ export function computeInterestProfile(input: InterestProfileInput): InterestPro
     summary: {
       topEntities,
       topSports,
+      preferredDifficulty: input.preferences.preferredDifficulty,
+      preferredPlayModes: input.preferences.preferredPlayModes,
+    },
+  };
+}
+
+function normalizeInterestProfileContract(profile: InterestProfile): InterestProfile {
+  return {
+    contractVersion: "interest-profile/v1",
+    userId: profile.userId,
+    generatedAt: profile.generatedAt,
+    follows: (profile.follows ?? []).map((entry) => ({
+      topicId: entry.topicId,
+      slug: entry.slug,
+      name: entry.name,
+      schemaType: entry.schemaType,
+      score: Number.isFinite(entry.score) ? entry.score : 0,
+    })),
+    explicit: (profile.explicit ?? []).map((entry) => ({
+      topicId: entry.topicId,
+      slug: entry.slug,
+      name: entry.name,
+      schemaType: entry.schemaType,
+      source: entry.source ?? "PROFILE",
+      score: Number.isFinite(entry.score) ? entry.score : 0,
+    })),
+    inferred: (profile.inferred ?? []).map((entry) => ({
+      topicId: entry.topicId,
+      slug: entry.slug,
+      name: entry.name,
+      schemaType: entry.schemaType,
+      score: Number.isFinite(entry.score) ? entry.score : 0,
+    })),
+    preferences: {
+      preferredDifficulty: profile.preferences?.preferredDifficulty ?? null,
+      preferredPlayModes: profile.preferences?.preferredPlayModes ?? [],
+    },
+    summary: {
+      topEntities: profile.summary?.topEntities ?? [],
+      topSports: profile.summary?.topSports ?? [],
+      preferredDifficulty:
+        profile.summary?.preferredDifficulty ??
+        profile.preferences?.preferredDifficulty ??
+        null,
+      preferredPlayModes:
+        profile.summary?.preferredPlayModes ??
+        profile.preferences?.preferredPlayModes ??
+        [],
     },
   };
 }
@@ -420,7 +477,7 @@ export async function getInterestProfileForUser(
     userSearchEntries.filter((entry) => entry.searchQuery.context === SearchContext.TOPIC)
   );
 
-  const profile = computeInterestProfile({
+  const computedProfile = computeInterestProfile({
     userId,
     explicitInterests: explicitInterests.map((entry) => ({
       topicId: entry.topic.id,
@@ -451,6 +508,8 @@ export async function getInterestProfileForUser(
       preferredPlayModes: preferences?.preferredPlayModes ?? [],
     },
   });
+
+  const profile = normalizeInterestProfileContract(computedProfile);
 
   profileCache.set(userId, {
     profile,

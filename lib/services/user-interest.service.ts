@@ -2,6 +2,7 @@ import { prisma } from "@/lib/db";
 import type { Difficulty, InterestPreferenceSource, PlayMode } from "@prisma/client";
 import { isFollowableTopicSchemaType } from "@/lib/topic-followability";
 import { invalidateInterestProfileCache } from "@/lib/services/interest-profile.service";
+import { BadRequestError } from "@/lib/errors";
 
 export type ReplaceUserInterestsInput = {
   userId: string;
@@ -27,20 +28,28 @@ export async function replaceUserInterestsBySource(input: ReplaceUserInterestsIn
           select: {
             id: true,
             schemaType: true,
+            entityStatus: true,
           },
         });
 
-  const validTopicIds = new Set(
-    availableTopics
-      .filter((topic) => isFollowableTopicSchemaType(topic.schemaType))
-      .map((topic) => topic.id)
-  );
+  const byId = new Map(availableTopics.map((topic) => [topic.id, topic]));
+  const invalidTopicIds = uniqueRequestedTopicIds.filter((topicId) => {
+    const topic = byId.get(topicId);
+    if (!topic) return true;
+    if (!isFollowableTopicSchemaType(topic.schemaType)) return true;
+    if (topic.entityStatus !== "READY") return true;
+    return false;
+  });
+
+  if (invalidTopicIds.length > 0) {
+    throw new BadRequestError(
+      "One or more topics are not eligible for interests (must be followable and READY)"
+    );
+  }
 
   const strength = input.defaultStrength ?? 1;
 
-  const savedTopicIds = uniqueRequestedTopicIds.filter((topicId) => validTopicIds.has(topicId));
-
-  const droppedTopicIds = uniqueRequestedTopicIds.filter((topicId) => !validTopicIds.has(topicId));
+  const savedTopicIds = uniqueRequestedTopicIds;
 
   await prisma.$transaction(async (tx) => {
     await tx.userInterestPreference.deleteMany({
@@ -97,7 +106,7 @@ export async function replaceUserInterestsBySource(input: ReplaceUserInterestsIn
       source: input.source,
       strength,
     })),
-    droppedTopicIds,
+    droppedTopicIds: [],
   };
 }
 

@@ -6,7 +6,15 @@ export async function GET() {
   try {
     const user = await requireAuth();
     const profile = await getInterestProfileForUser(user.id);
-    return successResponse(profile);
+    return successResponse({
+      ...profile,
+      meta: {
+        gateBSignals: {
+          interestProfileGenerated: true,
+          contractVersion: profile.contractVersion,
+        },
+      },
+    });
   } catch (error) {
     return handleError(error);
   }

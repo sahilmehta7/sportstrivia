@@ -1,7 +1,7 @@
 import {
   computeInterestProfile,
-  isFollowableTopicSchemaType,
 } from "@/lib/services/interest-profile.service";
+import { isFollowableTopicSchemaType } from "@/lib/topic-followability";
 
 describe("interest profile service", () => {
   it("allows only typed topic schema types for followability", () => {
@@ -55,6 +55,9 @@ describe("interest profile service", () => {
     expect(profile.summary.topEntities[0]).toBe("India");
     expect(profile.follows[0].score).toBeGreaterThan(profile.explicit[0].score);
     expect(profile.explicit[0].score).toBeGreaterThan(profile.inferred[0].score);
+    expect(profile.contractVersion).toBe("interest-profile/v1");
+    expect(profile.summary.preferredDifficulty).toBe("MEDIUM");
+    expect(profile.summary.preferredPlayModes).toEqual(["STANDARD"]);
   });
 
   it("caps the inferred entity list at 20 items", () => {

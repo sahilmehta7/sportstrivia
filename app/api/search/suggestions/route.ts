@@ -68,6 +68,30 @@ export async function GET(request: NextRequest) {
       timesSearched: 0,
     }));
 
+    const trendingWithFallback = trending.map((entry) => ({
+      query: entry.query,
+      source: "trending" as const,
+      resultCount: entry.lastResultCount ?? null,
+      lastSearchedAt: entry.lastSearchedAt ? entry.lastSearchedAt.toISOString() : null,
+      timesSearched: entry.timesSearched,
+    }));
+
+    const dedupedTrending: Array<{
+      query: string;
+      source: "profile" | "trending";
+      resultCount: number | null;
+      lastSearchedAt: string | null;
+      timesSearched: number;
+    }> = [];
+    const seenTrendingQueries = new Set<string>();
+    for (const item of [...profileQueries, ...trendingWithFallback]) {
+      const normalized = item.query.trim().toLowerCase();
+      if (!normalized || seenTrendingQueries.has(normalized)) continue;
+      seenTrendingQueries.add(normalized);
+      dedupedTrending.push(item);
+      if (dedupedTrending.length >= 8) break;
+    }
+
     const suggestions = {
       recent: recent.map((entry) => ({
         query: entry.query,
@@ -76,18 +100,19 @@ export async function GET(request: NextRequest) {
         lastSearchedAt: entry.lastSearchedAt ? entry.lastSearchedAt.toISOString() : null,
         timesSearched: entry.timesSearched,
       })),
-      trending: [...profileQueries, ...trending.map((entry) => ({
-        query: entry.query,
-        source: "trending" as const,
-        resultCount: entry.lastResultCount ?? null,
-        lastSearchedAt: entry.lastSearchedAt ? entry.lastSearchedAt.toISOString() : null,
-        timesSearched: entry.timesSearched,
-      }))],
+      trending: dedupedTrending,
     };
 
     return successResponse({
       context,
       suggestions,
+      meta: {
+        gateBSignals: {
+          profileBiasApplied: Boolean(profileQueries.length > 0),
+          fallbackApplied: profileQueries.length === 0,
+          profileContractVersion: profile?.contractVersion ?? null,
+        },
+      },
     });
   } catch (error) {
     return handleError(error);

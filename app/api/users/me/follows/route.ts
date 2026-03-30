@@ -10,6 +10,13 @@ export async function GET() {
     return successResponse({
       ...payload.grouped,
       follows: payload.flat,
+      meta: {
+        gateBSignals: {
+          followsLoaded: true,
+          totalFollows: payload.flat.length,
+          validationPolicy: "FOLLOWABLE_AND_READY",
+        },
+      },
     });
   } catch (error) {
     return handleError(error);

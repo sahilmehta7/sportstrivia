@@ -13,7 +13,16 @@ export async function POST(
     const user = await requireAuth();
     const { id } = await params;
     const result = await followTopicForUser(user.id, id);
-    return successResponse(result);
+    return successResponse({
+      ...result,
+      meta: {
+        gateBSignals: {
+          followMutationSuccess: true,
+          validationPolicy: "FOLLOWABLE_AND_READY",
+          action: "FOLLOW",
+        },
+      },
+    });
   } catch (error) {
     return handleError(error);
   }
@@ -27,7 +36,16 @@ export async function DELETE(
     const user = await requireAuth();
     const { id } = await params;
     const result = await unfollowTopicForUser(user.id, id);
-    return successResponse(result);
+    return successResponse({
+      ...result,
+      meta: {
+        gateBSignals: {
+          followMutationSuccess: true,
+          validationPolicy: "FOLLOWABLE_AND_READY",
+          action: "UNFOLLOW",
+        },
+      },
+    });
   } catch (error) {
     return handleError(error);
   }

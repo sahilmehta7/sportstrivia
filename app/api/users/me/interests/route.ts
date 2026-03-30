@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { requireAuth } from "@/lib/auth-helpers";
-import { handleError, successResponse } from "@/lib/errors";
+import { handleError, successResponse, ValidationError } from "@/lib/errors";
 import { z } from "zod";
 import {
   getUserInterestsAndPreferences,
@@ -41,9 +41,27 @@ function normalizeInterestsPayload(
     };
   }
 
+  const sources = Array.from(
+    new Set(
+      payload.interests
+        .map((interest) => interest.source)
+        .filter((source): source is InterestPreferenceSource => Boolean(source))
+    )
+  );
+
+  if (sources.length > 1) {
+    throw new ValidationError(
+      "Mixed interest sources are not allowed in a single update request",
+      {
+        reason: "MIXED_INTEREST_SOURCES",
+        sources,
+      }
+    );
+  }
+
   return {
     topicIds: payload.interests.map((interest) => interest.topicId),
-    source: payload.interests[0]?.source ?? "PROFILE",
+    source: sources[0] ?? "PROFILE",
   };
 }
 
@@ -77,6 +95,12 @@ export async function GET() {
         .filter((interest) => groupedFollowableTypes.has(interest.topic.schemaType))
         .map(toInterestResponseRow),
       preferences: payload.preferences,
+      meta: {
+        gateBSignals: {
+          interestsLoaded: true,
+          validationPolicy: "FOLLOWABLE_AND_READY",
+        },
+      },
     });
   } catch (error) {
     return handleError(error);
@@ -107,6 +131,14 @@ export async function PUT(request: NextRequest) {
         strength: interest.strength,
       })),
       droppedTopicIds: result.droppedTopicIds,
+      meta: {
+        gateBSignals: {
+          interestSaveSuccess: true,
+          validationPolicy: "FOLLOWABLE_AND_READY",
+          savedCount: result.savedInterests.length,
+          droppedCount: result.droppedTopicIds.length,
+        },
+      },
     });
   } catch (error) {
     return handleError(error);
