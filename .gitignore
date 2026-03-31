@@ -46,6 +46,10 @@ next-env.d.ts
 !/prisma/migrations/20260322_discoverability_foundations/migration.sql
 !/prisma/migrations/20260328_ai_task_attempt_lifecycle/
 !/prisma/migrations/20260328_ai_task_attempt_lifecycle/migration.sql
+!/prisma/migrations/20260330143000_reconcile_collections_schema/
+!/prisma/migrations/20260330143000_reconcile_collections_schema/migration.sql
+!/prisma/migrations/20260330190000_backup_upload_sessions/
+!/prisma/migrations/20260330190000_backup_upload_sessions/migration.sql
 
 # test
 /test-results/

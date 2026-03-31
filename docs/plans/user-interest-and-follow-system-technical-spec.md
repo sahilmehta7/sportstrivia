@@ -2,7 +2,7 @@
 
 **Source PRD**: `docs/features/user-interest-and-follow-system-prd.md`  
 **Date**: 2026-03-22  
-**Status**: Proposed  
+**Status**: Implemented in Core APIs (Follow-up Consumers Pending)  
 **Owner**: Product + Personalization
 
 ## 1. Purpose
@@ -27,11 +27,9 @@ This system is designed to work with the existing `Topic` backbone and current t
 - `/api/users/me` and profile UI already support editing `favoriteTeams`.
 
 ### Current gaps
-- there is no first-class sport preference
-- there is no follow model
-- explicit preferences are not tied to `Topic`
-- onboarding does not collect discoverability preferences
-- downstream consumers do not have a stable `interest profile` contract
+- interest/profile consumers are not fully rolled out across all discovery surfaces
+- recommendation and personalized-home consumers remain partial
+- onboarding UX and profile management still need iterative polish
 
 ### Explicit non-goals
 Do not build:
@@ -80,15 +78,15 @@ flowchart LR
 model UserInterestPreference {
   id         String                   @id @default(cuid())
   userId     String
-  topicId     String
-  source     UserInterestSource
+  topicId    String
+  source     InterestPreferenceSource
   strength   Float                    @default(1)
   createdAt  DateTime                 @default(now())
   updatedAt  DateTime                 @updatedAt
   user       User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
   topic      Topic                    @relation(fields: [topicId], references: [id], onDelete: Cascade)
 
-  @@unique([userId, topicId, source])
+  @@unique([userId, topicId])
   @@index([userId])
   @@index([topicId])
 }
@@ -115,10 +113,10 @@ model UserFollowedTopic {
 
 ```prisma
 model UserDiscoveryPreference {
-  userId               String      @id
+  id                   String      @id @default(cuid())
+  userId               String      @unique
   preferredDifficulty  Difficulty?
   preferredPlayModes   PlayMode[]
-  onboardingCompletedAt DateTime?
   createdAt            DateTime    @default(now())
   updatedAt            DateTime    @updatedAt
   user                 User        @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -151,9 +149,10 @@ model Topic {
 Enums:
 
 ```prisma
-enum UserInterestSource {
+enum InterestPreferenceSource {
   ONBOARDING
-  PROFILE_EDIT
+  PROFILE
+  ADMIN
   IMPORT
 }
 ```
@@ -189,7 +188,7 @@ type InterestProfile = {
     name: string;
     schemaType: string;
     score: number;
-    source: "ONBOARDING" | "PROFILE_EDIT";
+    source: "ONBOARDING" | "PROFILE" | "ADMIN" | "IMPORT";
   }>;
   follows: Array<{
     topicId: string;
@@ -342,6 +341,10 @@ Behavior:
 - upsert `UserDiscoveryPreference`
 - invalidate interest profile cache
 
+Implementation note (2026-03-30):
+- validation requires topic to be followable and `entityStatus = READY`
+- mixed-source legacy payloads are rejected
+
 ## 8.3 New follow APIs
 
 ### `POST /api/topics/[id]/follow`
@@ -371,6 +374,11 @@ Response:
   "organizations": []
 }
 ```
+
+Canonical and compatibility routes implemented:
+- `POST/DELETE /api/topics/[id]/follow`
+- `POST/DELETE /api/topics/by-id/[id]/follow`
+- `POST/DELETE /api/topics/by-slug/[slug]/follow`
 
 ## 8.4 Interest profile API
 

@@ -6,6 +6,22 @@ import {
 } from "@prisma/client";
 import { NotFoundError, ServiceUnavailableError } from "@/lib/errors";
 
+type BackgroundTaskDbClient = {
+  adminBackgroundTask: {
+    create: (args: any) => Promise<AdminBackgroundTask>;
+    update: (args: any) => Promise<AdminBackgroundTask>;
+    updateMany: (args: any) => Promise<{ count: number }>;
+    findUnique: (args: any) => Promise<AdminBackgroundTask | null>;
+    findMany: (args: any) => Promise<AdminBackgroundTask[]>;
+  };
+};
+
+interface BackgroundTaskScopeOptions {
+  userId?: string | null;
+  types?: BackgroundTaskType[];
+  includeNullOwned?: boolean;
+}
+
 export interface CreateBackgroundTaskInput {
   userId?: string | null;
   type: BackgroundTaskType;
@@ -49,31 +65,32 @@ async function getDbBackgroundTaskEnumValues(): Promise<Set<string>> {
   const rows = (await prisma.$queryRawUnsafe(
     `SELECT unnest(enum_range(NULL::"BackgroundTaskType"))::text AS value`
   )) as EnumRow[];
-  cachedEnumValues = new Set(rows.map((row) => row.value));
+  const values = new Set(rows.map((row) => row.value));
+  cachedEnumValues = values;
   enumCacheAt = now;
-  return cachedEnumValues;
+  return values;
 }
 
-function getFallbackTaskType(type: BackgroundTaskType): BackgroundTaskType {
-  if (type === BackgroundTaskType.BACKUP_CREATE || type === BackgroundTaskType.BACKUP_RESTORE) {
-    return BackgroundTaskType.AI_QUIZ_IMPORT;
-  }
-  return type;
+function isBackupTaskType(type: BackgroundTaskType): boolean {
+  return type === BackgroundTaskType.BACKUP_CREATE || type === BackgroundTaskType.BACKUP_RESTORE;
 }
 
-async function normalizeTaskTypeForDatabase(type: BackgroundTaskType): Promise<BackgroundTaskType> {
+function buildEnumSupportErrorMessage(type: BackgroundTaskType): string {
+  return `Background task type "${type}" is not available in database enum "BackgroundTaskType". Run migrations (for example: npx prisma migrate deploy) and retry.`;
+}
+
+async function normalizeTaskTypeForDatabase(
+  type: BackgroundTaskType,
+  _dbClient?: BackgroundTaskDbClient
+): Promise<BackgroundTaskType> {
   try {
     const values = await getDbBackgroundTaskEnumValues();
     if (values.has(type)) {
       return type;
     }
 
-    const fallback = getFallbackTaskType(type);
-    if (values.has(fallback)) {
-      console.warn(
-        `[BackgroundTask] DB enum missing "${type}". Using fallback "${fallback}". Run migrations to add missing enum values.`
-      );
-      return fallback;
+    if (isBackupTaskType(type)) {
+      throw new ServiceUnavailableError(buildEnumSupportErrorMessage(type));
     }
 
     if (type === BackgroundTaskType.TOPIC_TYPE_APPLY) {
@@ -81,9 +98,20 @@ async function normalizeTaskTypeForDatabase(type: BackgroundTaskType): Promise<B
         'Topic type apply is temporarily unavailable because database enum "BackgroundTaskType" is missing "TOPIC_TYPE_APPLY".'
       );
     }
+
+    console.warn(
+      `[BackgroundTask] DB enum missing "${type}". Continuing without normalization; task creation may fail until migrations are applied.`
+    );
+    return type;
   } catch (error) {
     if (error instanceof ServiceUnavailableError) {
       throw error;
+    }
+
+    if (isBackupTaskType(type)) {
+      throw new ServiceUnavailableError(
+        `Background task type support for "${type}" could not be verified. Ensure database connectivity and apply pending migrations.`
+      );
     }
 
     if (type === BackgroundTaskType.TOPIC_TYPE_APPLY) {
@@ -92,15 +120,75 @@ async function normalizeTaskTypeForDatabase(type: BackgroundTaskType): Promise<B
       );
     }
 
-    const fallback = getFallbackTaskType(type);
     console.warn(
-      `[BackgroundTask] Could not verify DB enum values for "${type}". Falling back to "${fallback}".`,
+      `[BackgroundTask] Could not verify DB enum values for "${type}". Continuing without fallback.`,
       error
     );
-    return fallback;
+    return type;
   }
+}
 
-  return type;
+export async function assertBackgroundTaskTypesSupported(
+  requiredTypes: BackgroundTaskType[]
+): Promise<void> {
+  const values = await getDbBackgroundTaskEnumValues();
+  for (const type of requiredTypes) {
+    if (!values.has(type)) {
+      throw new ServiceUnavailableError(buildEnumSupportErrorMessage(type));
+    }
+  }
+}
+
+async function createBackgroundTaskWithResolvedType(
+  dbClient: BackgroundTaskDbClient,
+  input: CreateBackgroundTaskInput,
+  normalizedType: BackgroundTaskType
+): Promise<AdminBackgroundTask> {
+  const baseData = {
+    type: normalizedType,
+    status: input.status ?? BackgroundTaskStatus.PENDING,
+    label: input.label,
+    input: input.input ?? undefined,
+    attempt: 1,
+    cancelledAttempt: null,
+    cancelledAt: null,
+  };
+
+  try {
+    return await dbClient.adminBackgroundTask.create({
+      data: {
+        ...baseData,
+        userId: input.userId ?? null,
+      },
+    });
+  } catch (error) {
+    const isUserFkViolation =
+      (error as any)?.code === "P2003" &&
+      typeof (error.meta as any)?.field_name === "string" &&
+      String((error.meta as any).field_name).includes("AdminBackgroundTask_userId_fkey");
+
+    if (isUserFkViolation && input.userId) {
+      console.warn(
+        `[BackgroundTask] userId ${input.userId} does not exist in User table; creating task without userId reference.`
+      );
+      return dbClient.adminBackgroundTask.create({
+        data: {
+          ...baseData,
+          userId: null,
+        },
+      });
+    }
+
+    throw error;
+  }
+}
+
+export async function createBackgroundTaskWithClient(
+  dbClient: BackgroundTaskDbClient,
+  input: CreateBackgroundTaskInput
+): Promise<AdminBackgroundTask> {
+  const normalizedType = await normalizeTaskTypeForDatabase(input.type, dbClient);
+  return createBackgroundTaskWithResolvedType(dbClient, input, normalizedType);
 }
 
 async function guardedUpdateTask(
@@ -149,18 +237,12 @@ export async function createBackgroundTask({
   input,
   status = BackgroundTaskStatus.PENDING,
 }: CreateBackgroundTaskInput): Promise<AdminBackgroundTask> {
-  const normalizedType = await normalizeTaskTypeForDatabase(type);
-  return prisma.adminBackgroundTask.create({
-    data: {
-      userId: userId ?? null,
-      type: normalizedType,
-      status,
-      label,
-      input: input ?? undefined,
-      attempt: 1,
-      cancelledAttempt: null,
-      cancelledAt: null,
-    },
+  return createBackgroundTaskWithClient(prisma as unknown as BackgroundTaskDbClient, {
+    userId,
+    type,
+    label,
+    input,
+    status,
   });
 }
 
@@ -314,6 +396,36 @@ export async function getOwnedBackgroundTaskOrThrow(
   return task;
 }
 
+export async function getAdminBackgroundTaskOrThrow(
+  id: string
+): Promise<AdminBackgroundTask> {
+  const task = await prisma.adminBackgroundTask.findUnique({ where: { id } });
+  if (!task) {
+    throw new NotFoundError("Task not found");
+  }
+  return task;
+}
+
+export function buildBackgroundTaskListWhere({
+  userId,
+  types,
+  includeNullOwned = true,
+}: BackgroundTaskScopeOptions = {}): Record<string, unknown> {
+  const where: Record<string, unknown> = {};
+
+  if (userId) {
+    where.OR = includeNullOwned
+      ? [{ userId }, { userId: null }]
+      : [{ userId }];
+  }
+
+  if (types?.length) {
+    where.type = { in: types };
+  }
+
+  return where;
+}
+
 export async function getCurrentTaskExecutionContext(
   id: string
 ): Promise<TaskExecutionContext | null> {
@@ -343,16 +455,21 @@ export async function listBackgroundTasksForUser(
     take?: number;
     skip?: number;
     includeResult?: boolean;
+    includeNullOwned?: boolean;
   } = {}
 ): Promise<AdminBackgroundTask[]> {
-  const { types, take = 50, skip = 0, includeResult = false } = options;
+  const {
+    types,
+    take = 50,
+    skip = 0,
+    includeResult = false,
+    includeNullOwned = true,
+  } = options;
+  const where = buildBackgroundTaskListWhere({ userId, types, includeNullOwned });
 
   if (includeResult) {
     return prisma.adminBackgroundTask.findMany({
-      where: {
-        ...(userId ? { userId } : {}),
-        ...(types?.length ? { type: { in: types } } : {}),
-      },
+      where,
       orderBy: { createdAt: "desc" },
       take,
       skip,
@@ -360,10 +477,7 @@ export async function listBackgroundTasksForUser(
   }
 
   return prisma.adminBackgroundTask.findMany({
-    where: {
-      ...(userId ? { userId } : {}),
-      ...(types?.length ? { type: { in: types } } : {}),
-    },
+    where,
     orderBy: { createdAt: "desc" },
     take,
     skip,
@@ -384,6 +498,18 @@ export async function listBackgroundTasksForUser(
       updatedAt: true,
     },
   }) as Promise<AdminBackgroundTask[]>;
+}
+
+export async function countBackgroundTasksForUser(
+  userId?: string | null,
+  options: {
+    types?: BackgroundTaskType[];
+    includeNullOwned?: boolean;
+  } = {}
+): Promise<number> {
+  const { types, includeNullOwned = true } = options;
+  const where = buildBackgroundTaskListWhere({ userId, types, includeNullOwned });
+  return prisma.adminBackgroundTask.count({ where });
 }
 
 export async function updateTaskProgress(

@@ -1,8 +1,8 @@
 import { z } from "zod";
 
 export const BACKUP_MAGIC = "SPORTSTRIVIA_BACKUP_V1";
-export const BACKUP_VERSION = "1.0.0";
-export const BACKUP_SUPPORTED_VERSIONS = ["1.0.0"] as const;
+export const BACKUP_VERSION = "1.1.0";
+export const BACKUP_SUPPORTED_VERSIONS = ["1.1.0"] as const;
 
 export const backupEncryptionMetadataSchema = z.object({
   alg: z.literal("aes-256-gcm"),

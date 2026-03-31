@@ -2,7 +2,7 @@
 
 **Author**: Sahil + Codex  
 **Date**: 2026-03-22  
-**Status**: Draft (Capability Planning)
+**Status**: Active (Partially Implemented)
 
 ---
 
@@ -19,6 +19,21 @@ Sportstrivia already has meaningful discovery primitives:
 What it does not yet have is the full capability stack required to deliver a true sport-first, personalized discoverability strategy across web and mobile.
 
 This program defines the capability build-out required before broad strategy execution. The goal is to avoid launching a high-level discoverability vision on top of incomplete product infrastructure.
+
+### Implementation Snapshot (2026-03-30)
+
+Implemented:
+- typed topic follow/unfollow APIs are live
+- explicit interests API and deterministic interest profile API are live
+- authenticated interest capture gate/flow is live and now suppresses repeat prompting based on saved intent
+- onboarding and explicit interests enforce followable + `entityStatus = READY`
+- `GET /api/topics` now exposes `entityStatus` and honors `page`/`limit` in non-search mode
+
+Still pending:
+- collections as a complete discovery journey layer
+- entity-aware blended search results
+- recommendation engine rollout
+- relevance-first authenticated home as primary entry surface
 
 ---
 
@@ -145,13 +160,13 @@ This program uses a pragmatic prioritization model based on:
 - quiz list filtering
 
 ### Missing or partial
-- explicit user interest graph
-- follow system
+- explicit user interest graph consumers on major discovery surfaces
+- recommendation and home consumers of interest profile
 - collections
 - entity-aware search results
 - recommendation engine
 - personalized authenticated home
-- typed entity contracts and relationship rules
+- typed entity contracts and relationship quality at full coverage
 
 ---
 
@@ -240,6 +255,8 @@ Do not start the next tier until the current tier passes these gates.
 - users can express explicit interests
 - follows are live
 - interest profile API is available
+
+Gate B status (as of 2026-03-30): **Passed**.
 
 ### Gate C: Retrieval Ready
 - collections exist

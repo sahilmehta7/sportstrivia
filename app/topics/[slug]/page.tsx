@@ -31,7 +31,7 @@ import { PageContainer } from "@/components/shared/PageContainer";
 import { getFAQSchema, getTopicGraphSchema, getBreadcrumbSchema, getTopicPageGraphSchema } from "@/lib/schema-utils";
 import type { TopicSchemaTypeValue } from "@/lib/topic-schema-options";
 import { parseFaqMarkdown } from "@/lib/faq-utils";
-import { listPublishedCollections } from "@/lib/services/collection.service";
+import { listPublishedCollectionsSafe } from "@/lib/services/collection.service";
 
 const topicWithRelations = {
   include: {
@@ -283,11 +283,14 @@ export default async function TopicDetailPage({
     heroFeaturedQuizzesPromise,
     getPublicQuizList({ topic: slug, sortBy: "rating", sortOrder: "desc", page: 1, limit: 10 }),
   ]);
-  const topicCollections = await listPublishedCollections({
-    page: 1,
-    limit: 6,
-    topicId: topic.id,
-  });
+  const topicCollections = await listPublishedCollectionsSafe(
+    {
+      page: 1,
+      limit: 6,
+      topicId: topic.id,
+    },
+    "topics/[slug]/topic-collection-rail"
+  );
 
   const appliedFilters = {
     ...listing.filters,

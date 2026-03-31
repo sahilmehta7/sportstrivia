@@ -39,6 +39,8 @@ jest.mock("@/lib/services/slug.service", () => ({
 
 import {
   createCollection,
+  listPublishedCollectionsSafe,
+  listUserInProgressCollectionsSafe,
   reorderCollectionQuizzes,
   startOrResumeCollection,
 } from "@/lib/services/collection.service";
@@ -111,5 +113,47 @@ describe("collection service hardening", () => {
     await expect(startOrResumeCollection("user_1", "collection_1")).rejects.toThrow(
       /no playable quizzes/i
     );
+  });
+
+  it("returns empty published collections payload on recoverable table-missing errors", async () => {
+    prismaMock.collection.findMany.mockRejectedValue({ code: "P2021" });
+    prismaMock.collection.count.mockRejectedValue({ code: "P2021" });
+    const spy = jest.spyOn(console, "error").mockImplementation(() => {});
+
+    const result = await listPublishedCollectionsSafe(
+      { page: 1, limit: 6, featured: true },
+      "quizzes/featured-collections-section"
+    );
+
+    expect(result.collections).toEqual([]);
+    expect(result.pagination.total).toBe(0);
+    expect(spy).toHaveBeenCalledWith(
+      "[collections:fail-open]",
+      expect.objectContaining({
+        context: "quizzes/featured-collections-section",
+        code: "P2021",
+      })
+    );
+    spy.mockRestore();
+  });
+
+  it("returns empty in-progress collection list on recoverable errors", async () => {
+    prismaMock.userCollectionProgress.findMany.mockRejectedValue({ code: "P2021" });
+    const spy = jest.spyOn(console, "error").mockImplementation(() => {});
+
+    const result = await listUserInProgressCollectionsSafe(
+      "user_1",
+      "quizzes/continue-collections-section"
+    );
+
+    expect(result).toEqual([]);
+    expect(spy).toHaveBeenCalledWith(
+      "[collections:fail-open]",
+      expect.objectContaining({
+        context: "quizzes/continue-collections-section",
+        code: "P2021",
+      })
+    );
+    spy.mockRestore();
   });
 });

@@ -12,7 +12,7 @@ import React from "react";
 import { GoogleAnalytics } from "@next/third-parties/google";
 import { ShowcaseThemeProvider } from "@/components/showcase/ShowcaseThemeProvider";
 import { cn } from "@/lib/utils";
-import { auth } from "@/lib/auth";
+import { getOptionalSession } from "@/lib/services/app-session.service";
 
 const barlow = Barlow({
   subsets: ["latin"],
@@ -106,7 +106,7 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const session = await auth();
+  const session = await getOptionalSession("root-layout");
 
   return (
     <html lang="en" suppressHydrationWarning className="scroll-smooth">

@@ -1,9 +1,8 @@
 import { requireAdmin } from "@/lib/auth-helpers";
-import { listBackgroundTasksForUser } from "@/lib/services/background-task.service";
+import { countBackgroundTasksForUser, listBackgroundTasksForUser } from "@/lib/services/background-task.service";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { AdminAiTasksClient } from "./AdminAiTasksClient";
 import { AdminPaginationClient } from "@/components/admin/AdminPaginationClient";
-import { prisma } from "@/lib/db";
 
 interface AiTasksPageProps {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
@@ -20,7 +19,7 @@ export default async function AiTasksPage({ searchParams }: AiTasksPageProps) {
     200,
     Math.max(1, Number(typeof params?.limit === "string" ? params.limit : "50") || 50)
   );
-  const total = await prisma.adminBackgroundTask.count({ where: { userId: admin.id } });
+  const total = await countBackgroundTasksForUser(admin.id);
   const totalPages = Math.max(1, Math.ceil(total / limit));
   const safePage = Math.min(page, totalPages);
   const skip = (safePage - 1) * limit;

@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { createClient } from "@supabase/supabase-js";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,19 +20,113 @@ type ValidationResponse = {
   errors: string[];
 };
 
+type UploadSessionResponse = {
+  uploadSessionId: string;
+  bucket: string;
+  objectPath: string;
+  uploadToken: string;
+  signedUploadUrl: string;
+  expiresAt: string;
+  maxBytes: number;
+};
+
+function getFileFingerprint(file: File): string {
+  return `${file.name}:${file.size}:${file.lastModified}`;
+}
+
 export function BackupsClient() {
   const { toast } = useToast();
   const [creating, setCreating] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [validating, setValidating] = useState(false);
   const [restoring, setRestoring] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [confirmation, setConfirmation] = useState("");
   const [validation, setValidation] = useState<ValidationResponse | null>(null);
+  const [uploadSession, setUploadSession] = useState<UploadSessionResponse | null>(null);
+  const [uploadedFileFingerprint, setUploadedFileFingerprint] = useState<string | null>(null);
 
   const totalRows = useMemo(() => {
     if (!validation?.rowCounts) return 0;
     return Object.values(validation.rowCounts).reduce((acc, value) => acc + value, 0);
   }, [validation]);
+  const hasActiveUploadSession = useMemo(() => {
+    return Boolean(uploadSession && new Date(uploadSession.expiresAt).getTime() > Date.now());
+  }, [uploadSession]);
+  const isValidatedSessionReady = Boolean(validation?.valid && hasActiveUploadSession);
+
+  async function ensureUploadedBackup(): Promise<string> {
+    if (hasActiveUploadSession && uploadSession) {
+      if (!file) {
+        return uploadSession.uploadSessionId;
+      }
+      const fileFingerprint = getFileFingerprint(file);
+      if (uploadedFileFingerprint === fileFingerprint) {
+        return uploadSession.uploadSessionId;
+      }
+    }
+
+    if (!file) {
+      throw new Error("Choose a backup file first.");
+    }
+
+    const fileFingerprint = getFileFingerprint(file);
+    if (uploadSession && uploadedFileFingerprint === fileFingerprint && hasActiveUploadSession) {
+      return uploadSession.uploadSessionId;
+    }
+
+    setUploading(true);
+    try {
+      const createSessionResponse = await fetch("/api/admin/backups/upload-session", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          fileName: file.name,
+          fileSizeBytes: file.size,
+          contentType: file.type || "application/octet-stream",
+        }),
+      });
+
+      const createSessionPayload = await createSessionResponse.json().catch(() => ({}));
+      if (!createSessionResponse.ok) {
+        throw new Error(createSessionPayload?.error || "Unable to create backup upload session");
+      }
+
+      const session = createSessionPayload?.data as UploadSessionResponse;
+      if (!session?.uploadToken || !session?.bucket || !session?.objectPath) {
+        throw new Error("Upload session response is missing required fields");
+      }
+
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+      const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+      if (!supabaseUrl || !supabaseAnonKey) {
+        throw new Error("Supabase public credentials are not configured in this environment.");
+      }
+
+      const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+        auth: { persistSession: false },
+      });
+
+      const { error: uploadError } = await supabase.storage
+        .from(session.bucket)
+        .uploadToSignedUrl(session.objectPath, session.uploadToken, file, {
+          upsert: false,
+          contentType: file.type || "application/octet-stream",
+        });
+
+      if (uploadError) {
+        throw new Error(uploadError.message || "Failed to upload backup file");
+      }
+
+      setUploadSession(session);
+      setUploadedFileFingerprint(fileFingerprint);
+      return session.uploadSessionId;
+    } finally {
+      setUploading(false);
+    }
+  }
 
   async function handleCreateBackup() {
     setCreating(true);
@@ -86,15 +181,22 @@ export function BackupsClient() {
 
     setValidating(true);
     try {
-      const formData = new FormData();
-      formData.append("file", file);
-
+      const uploadSessionId = await ensureUploadedBackup();
       const response = await fetch("/api/admin/backups/validate", {
         method: "POST",
-        body: formData,
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ uploadSessionId }),
       });
-      const result = await response.json();
-      const report = result.data as ValidationResponse;
+      let report: ValidationResponse;
+      try {
+        const result = await response.json();
+        report = result.data as ValidationResponse;
+      } catch {
+        throw new Error(`Server returned ${response.status}: ${response.statusText}. Please check the server logs.`);
+      }
+
       setValidation(report);
 
       if (!response.ok || !report.valid) {
@@ -122,10 +224,10 @@ export function BackupsClient() {
   }
 
   async function handleRestore() {
-    if (!file) {
+    if (!isValidatedSessionReady) {
       toast({
-        title: "File required",
-        description: "Choose a backup file before restore.",
+        title: "Validation required",
+        description: "Validate a backup first, then restore the validated upload session.",
         variant: "destructive",
       });
       return;
@@ -133,24 +235,33 @@ export function BackupsClient() {
 
     setRestoring(true);
     try {
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("confirmation", confirmation);
-
+      const uploadSessionId = await ensureUploadedBackup();
       const response = await fetch("/api/admin/backups/restore", {
         method: "POST",
-        body: formData,
+        headers: {
+          "Content-Type": "application/json",
+          "X-Restore-Confirmation": confirmation,
+        },
+        body: JSON.stringify({
+          uploadSessionId,
+          confirmation,
+        }),
       });
-      const result = await response.json();
+      let result;
+      try {
+        result = await response.json();
+      } catch {
+        throw new Error(`Server returned ${response.status}: ${response.statusText}. Please check the server logs.`);
+      }
       const report = result.data;
 
-      if (!response.ok || !report?.success) {
-        throw new Error(report?.errors?.[0] || result.error || "Restore failed");
+      if (!response.ok) {
+        throw new Error(report?.errors?.[0] || report?.message || result.error || "Restore failed");
       }
 
       toast({
-        title: "Restore completed",
-        description: "Full database and storage restore completed successfully.",
+        title: "Restore enqueued",
+        description: `Restore task started (${report?.taskId || "task pending"}). Track progress in Admin AI Tasks.`,
       });
     } catch (error) {
       toast({
@@ -189,11 +300,16 @@ export function BackupsClient() {
           <Input
             type="file"
             accept=".strbk,application/octet-stream"
-            onChange={(event) => setFile(event.target.files?.[0] || null)}
+            onChange={(event) => {
+              setFile(event.target.files?.[0] || null);
+              setValidation(null);
+              setUploadSession(null);
+              setUploadedFileFingerprint(null);
+            }}
           />
-          <Button variant="outline" onClick={handleValidate} disabled={validating || !file}>
-            {validating ? <RefreshCw className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
-            {validating ? "Validating..." : "Validate Backup"}
+          <Button variant="outline" onClick={handleValidate} disabled={validating || uploading || !file}>
+            {validating || uploading ? <RefreshCw className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
+            {uploading ? "Uploading..." : validating ? "Validating..." : "Validate Backup"}
           </Button>
 
           {validation && (
@@ -251,12 +367,17 @@ export function BackupsClient() {
           />
           <Button
             variant="destructive"
-            disabled={restoring || !file || confirmation !== "RESTORE DATABASE"}
+            disabled={restoring || uploading || !isValidatedSessionReady || confirmation !== "RESTORE DATABASE"}
             onClick={handleRestore}
           >
-            {restoring ? <RefreshCw className="mr-2 h-4 w-4 animate-spin" /> : <ShieldCheck className="mr-2 h-4 w-4" />}
-            {restoring ? "Restoring..." : "Restore Backup"}
+            {restoring || uploading ? <RefreshCw className="mr-2 h-4 w-4 animate-spin" /> : <ShieldCheck className="mr-2 h-4 w-4" />}
+            {uploading ? "Uploading..." : restoring ? "Queueing Restore..." : "Restore Backup"}
           </Button>
+          <p className="text-xs text-muted-foreground">
+            {isValidatedSessionReady
+              ? "Validated backup is ready to restore."
+              : "Validate a backup first to enable restore."}
+          </p>
           <p className="text-xs text-muted-foreground">
             Download-only mode is enabled. Keep your latest 7 backups locally (manual retention).
           </p>
@@ -265,4 +386,3 @@ export function BackupsClient() {
     </div>
   );
 }
-

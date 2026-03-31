@@ -2,7 +2,7 @@
 
 **Source PRD**: `docs/features/topic-entity-graph-prd.md`  
 **Date**: 2026-03-22  
-**Status**: Proposed  
+**Status**: Active (Partially Implemented)  
 **Owner**: Product + Platform
 
 ## 1. Purpose
@@ -64,8 +64,12 @@ Hierarchy remains useful for browsing. Cross-entity semantics must be modeled se
 ### D5. V1 relations represent current state only
 Do not model historical memberships, date-ranged relations, or seasonal validity in v1.
 
-### D6. `entityStatus` is an admin quality signal only
-In v1, `entityStatus` is used for admin validation and operational review. It does not directly gate public rendering, search eligibility, follows, or recommendations.
+### D6. `entityStatus` semantics are split by consumer
+In current implementation:
+- `entityStatus` is an operational/admin quality signal overall.
+- follows and explicit interests enforce `entityStatus = READY` as a hard gate.
+- onboarding interest precheck for sports also requires `entityStatus = READY`.
+- search remains allowed to treat `entityStatus` as a ranking/quality signal rather than universal hard exclusion.
 
 ### D7. Target the current Prisma/Postgres stack explicitly
 This spec should be implemented against the current application stack. Search-related decisions should assume the existing Prisma/Postgres-backed architecture, not a future dedicated search system.
@@ -401,7 +405,7 @@ Search indexing rules:
 - Down-rank `DRAFT` entities.
 - Exclude `NONE` from entity result groups.
 
-`entityStatus` is an admin signal. Search may use it only as a soft ranking hint, not as a hard inclusion gate.
+`entityStatus` is an operational signal. Search may use it as a soft ranking hint, while follow/interest mutation APIs enforce `READY` as a hard eligibility rule.
 
 ## 10. Admin UI Changes
 

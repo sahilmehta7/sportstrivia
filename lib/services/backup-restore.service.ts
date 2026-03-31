@@ -14,6 +14,8 @@ import { PrismaClient } from "@prisma/client";
 
 const INT_SEQUENCE_TABLES = ["Level", "Tier", "UserLevel", "UserTierHistory", "VerificationToken"] as const;
 const RESTORE_EXCLUDED_TABLES = new Set<string>(["AdminBackgroundTask"]);
+const RESTORE_TRANSACTION_MAX_WAIT_MS = Number(process.env.BACKUP_RESTORE_TX_MAX_WAIT_MS || 15_000);
+const RESTORE_TRANSACTION_TIMEOUT_MS = Number(process.env.BACKUP_RESTORE_TX_TIMEOUT_MS || 10 * 60 * 1000);
 
 function parseBackupPayload(fileBuffer: Buffer): BackupPayloadV1 {
   const plaintext = decryptBackupPayload(fileBuffer);
@@ -95,6 +97,47 @@ async function resetIntSequences(db: PrismaLike): Promise<void> {
       )
     `);
   }
+}
+
+type PreservedBackgroundTask = {
+  id: string;
+  type: string;
+  status: string;
+  attempt: number;
+  cancelledAt: Date | null;
+  cancelledAttempt: number | null;
+  label: string;
+  input: unknown;
+  result: unknown;
+  errorMessage: string | null;
+  startedAt: Date | null;
+  completedAt: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+async function restorePreservedBackgroundTasks(
+  db: PrismaLike,
+  tasks: PreservedBackgroundTask[]
+): Promise<number> {
+  if (!tasks.length) return 0;
+
+  let restored = 0;
+  const chunkSize = 250;
+  for (let i = 0; i < tasks.length; i += chunkSize) {
+    const chunk = tasks.slice(i, i + chunkSize);
+    const result = await db.adminBackgroundTask.createMany({
+      data: chunk.map((task) => ({
+        ...task,
+        // Restore can replace the User table; nullable owner keeps tasks queryable by admins.
+        userId: null,
+      })),
+      skipDuplicates: true,
+    });
+    restored += result.count;
+  }
+
+  return restored;
 }
 
 async function insertTableData(db: PrismaLike, payload: BackupPayloadV1): Promise<Record<string, number>> {
@@ -187,6 +230,24 @@ export async function restoreBackupFromBuffer(input: {
   }
 
   const payload = parseBackupPayload(input.fileBuffer);
+  const preservedBackgroundTasks = await prisma.adminBackgroundTask.findMany({
+    select: {
+      id: true,
+      type: true,
+      status: true,
+      attempt: true,
+      cancelledAt: true,
+      cancelledAttempt: true,
+      label: true,
+      input: true,
+      result: true,
+      errorMessage: true,
+      startedAt: true,
+      completedAt: true,
+      createdAt: true,
+      updatedAt: true,
+    },
+  });
   if (RESTORE_EXCLUDED_TABLES.size > 0) {
     warnings.push(
       `Skipped restore for tables: ${Array.from(RESTORE_EXCLUDED_TABLES).join(", ")} to preserve live task tracking.`
@@ -198,11 +259,23 @@ export async function restoreBackupFromBuffer(input: {
   });
 
   try {
-    await prisma.$transaction(async (tx) => {
-      await truncateAllRestorableTables(tx);
-      reportBase.restoredRows = await insertTableData(tx, payload);
-      await resetIntSequences(tx);
-    });
+    await prisma.$transaction(
+      async (tx) => {
+        await truncateAllRestorableTables(tx);
+        reportBase.restoredRows = await insertTableData(tx, payload);
+        await resetIntSequences(tx);
+        const restoredTaskCount = await restorePreservedBackgroundTasks(tx, preservedBackgroundTasks);
+        if (restoredTaskCount !== preservedBackgroundTasks.length) {
+          warnings.push(
+            `Restored ${restoredTaskCount}/${preservedBackgroundTasks.length} preserved background tasks after database truncate.`
+          );
+        }
+      },
+      {
+        maxWait: RESTORE_TRANSACTION_MAX_WAIT_MS,
+        timeout: RESTORE_TRANSACTION_TIMEOUT_MS,
+      }
+    );
 
     reportBase.restoredStorageObjects = await restoreStorageObjects(payload);
     const completedAt = new Date().toISOString();

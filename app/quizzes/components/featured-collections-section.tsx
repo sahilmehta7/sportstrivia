@@ -1,12 +1,15 @@
 import { CollectionRail } from "@/components/collections/CollectionRail";
-import { listPublishedCollections } from "@/lib/services/collection.service";
+import { listPublishedCollectionsSafe } from "@/lib/services/collection.service";
 
 export async function FeaturedCollectionsSection() {
-  const payload = await listPublishedCollections({
-    page: 1,
-    limit: 6,
-    featured: true,
-  });
+  const payload = await listPublishedCollectionsSafe(
+    {
+      page: 1,
+      limit: 6,
+      featured: true,
+    },
+    "quizzes/featured-collections-section"
+  );
 
   return (
     <CollectionRail

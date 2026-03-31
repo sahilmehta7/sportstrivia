@@ -4,6 +4,7 @@ import { requireAdmin } from "@/lib/auth-helpers";
 import { handleError } from "@/lib/errors";
 import { createEncryptedBackupSnapshot } from "@/lib/services/backup-export.service";
 import {
+  assertBackgroundTaskTypesSupported,
   createBackgroundTask,
   markBackgroundTaskCompleted,
   markBackgroundTaskFailed,
@@ -18,6 +19,7 @@ export async function POST(_request: NextRequest) {
   let taskId: string | null = null;
   try {
     const admin = await requireAdmin();
+    await assertBackgroundTaskTypesSupported([BackgroundTaskType.BACKUP_CREATE]);
     const task = await createBackgroundTask({
       userId: admin.id,
       type: BackgroundTaskType.BACKUP_CREATE,

@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import { requireAdmin } from "@/lib/auth-helpers";
 import { handleError, successResponse, BadRequestError, ConflictError } from "@/lib/errors";
 import {
-  getOwnedBackgroundTaskOrThrow,
+  getAdminBackgroundTaskOrThrow,
   updateBackgroundTask,
   markBackgroundTaskCompletedFromFailed,
 } from "@/lib/services/background-task.service";
@@ -24,10 +24,10 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const admin = await requireAdmin();
+    await requireAdmin();
     const { id } = await params;
 
-    const task = await getOwnedBackgroundTaskOrThrow(id, admin.id);
+    const task = await getAdminBackgroundTaskOrThrow(id);
     const attempt = (task as any).attempt ?? 1;
     if ((task as any).cancelledAttempt === attempt || task.status === "CANCELLED") {
       throw new BadRequestError("Cannot retry parsing for a cancelled task attempt.");

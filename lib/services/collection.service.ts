@@ -32,6 +32,15 @@ const PLAYABLE_QUIZ_FILTER = {
   status: "PUBLISHED" as const,
 };
 
+const COLLECTION_FAIL_OPEN_CODES = new Set([
+  "P2021", // table missing
+  "P2022", // column missing
+  "P1001", // db unavailable
+  "P1002", // timeout
+  "P1008", // operation timeout
+  "P1017", // server closed connection
+]);
+
 export type PublicCollectionListFilters = {
   page?: number;
   limit?: number;
@@ -39,6 +48,29 @@ export type PublicCollectionListFilters = {
   topicId?: string;
   featured?: boolean;
 };
+
+function getPrismaLikeErrorCode(error: unknown): string | null {
+  if (error && typeof error === "object" && "code" in error) {
+    const code = (error as { code?: unknown }).code;
+    return typeof code === "string" ? code : null;
+  }
+  return null;
+}
+
+export function isCollectionFailOpenError(error: unknown): boolean {
+  const code = getPrismaLikeErrorCode(error);
+  return Boolean(code && COLLECTION_FAIL_OPEN_CODES.has(code));
+}
+
+function logCollectionFailOpen(context: string, error: unknown) {
+  const code = getPrismaLikeErrorCode(error);
+  console.error("[collections:fail-open]", {
+    context,
+    code,
+    name: error instanceof Error ? error.name : "UnknownError",
+    message: error instanceof Error ? error.message : String(error),
+  });
+}
 
 function parsePagination(input: { page?: number; limit?: number }) {
   const page = input.page && input.page > 0 ? input.page : 1;
@@ -655,6 +687,34 @@ export async function listPublishedCollections(filters: PublicCollectionListFilt
   };
 }
 
+export async function listPublishedCollectionsSafe(
+  filters: PublicCollectionListFilters,
+  context: string
+) {
+  try {
+    return await listPublishedCollections(filters);
+  } catch (error) {
+    if (isCollectionFailOpenError(error)) {
+      logCollectionFailOpen(context, error);
+      const page = filters.page && filters.page > 0 ? filters.page : 1;
+      const limit =
+        filters.limit && filters.limit > 0 ? Math.min(filters.limit, 50) : 12;
+      return {
+        collections: [],
+        pagination: {
+          page,
+          limit,
+          total: 0,
+          totalPages: 1,
+          hasNext: false,
+          hasPrevious: page > 1,
+        },
+      };
+    }
+    throw error;
+  }
+}
+
 export async function getPublishedCollectionDetail(
   slug: string,
   userId?: string
@@ -905,6 +965,21 @@ export async function listUserInProgressCollections(userId: string) {
       };
     })
   ).then((rows) => rows.filter((row): row is NonNullable<typeof row> => row !== null));
+}
+
+export async function listUserInProgressCollectionsSafe(
+  userId: string,
+  context: string
+) {
+  try {
+    return await listUserInProgressCollections(userId);
+  } catch (error) {
+    if (isCollectionFailOpenError(error)) {
+      logCollectionFailOpen(context, error);
+      return [];
+    }
+    throw error;
+  }
 }
 
 export async function touchCollectionProgressOnQuizCompletion(

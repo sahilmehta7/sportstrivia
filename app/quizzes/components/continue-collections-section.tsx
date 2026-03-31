@@ -1,13 +1,16 @@
 import { auth } from "@/lib/auth";
 import { ContinueCollectionRail } from "@/components/collections/CollectionRail";
-import { listUserInProgressCollections } from "@/lib/services/collection.service";
+import { listUserInProgressCollectionsSafe } from "@/lib/services/collection.service";
 
 export async function ContinueCollectionsSection() {
   const session = await auth();
   const userId = session?.user?.id;
   if (!userId) return null;
 
-  const items = await listUserInProgressCollections(userId);
+  const items = await listUserInProgressCollectionsSafe(
+    userId,
+    "quizzes/continue-collections-section"
+  );
   if (items.length === 0) return null;
 
   return (

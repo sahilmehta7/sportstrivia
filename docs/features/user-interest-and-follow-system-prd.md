@@ -2,7 +2,7 @@
 
 **Author**: Sahil + Codex  
 **Date**: 2026-03-22  
-**Status**: Draft
+**Status**: Active (Partially Implemented)
 
 ---
 
@@ -107,8 +107,7 @@ Recommended additions:
 - `UserInterestPreference`
   - `userId`
   - `topicId`
-  - `preferenceType` (`SPORT`, `TEAM`, `ATHLETE`, `TOURNAMENT`, `ORG`)
-  - `source` (`ONBOARDING`, `PROFILE_EDIT`, `IMPORT`)
+  - `source` (`ONBOARDING`, `PROFILE`, `ADMIN`, `IMPORT`)
   - `weight`
 
 ### 7.2 Follow model
@@ -142,6 +141,11 @@ Rules:
 - must be skippable
 - must feel lightweight
 - must improve the next screen immediately
+
+Implementation note (2026-03-30):
+- current shipped onboarding interest flow is lightweight and skippable
+- current flow captures sports first, then optional entities
+- explicit interest save validates followable topics with `entityStatus = READY`
 
 ### Profile/Settings
 Users must be able to:

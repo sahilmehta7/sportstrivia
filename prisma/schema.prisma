@@ -960,6 +960,31 @@ model AdminBackgroundTask {
   @@index([createdAt])
 }
 
+model BackupUploadSession {
+  id            String                    @id @default(cuid())
+  actorId       String
+  bucket        String
+  objectPath    String
+  status        BackupUploadSessionStatus @default(PENDING_UPLOAD)
+  maxBytes      Int
+  fileSizeBytes Int?
+  fileChecksum  String?
+  taskId        String?
+  lastError     String?
+  expiresAt     DateTime
+  uploadedAt    DateTime?
+  validatedAt   DateTime?
+  restoredAt    DateTime?
+  deletedAt     DateTime?
+  createdAt     DateTime                  @default(now())
+  updatedAt     DateTime                  @updatedAt
+
+  @@unique([bucket, objectPath])
+  @@index([actorId, status])
+  @@index([status, expiresAt])
+  @@index([expiresAt])
+}
+
 enum UserRole {
   USER
   ADMIN
@@ -1061,6 +1086,16 @@ enum BackgroundTaskStatus {
   COMPLETED
   FAILED
   CANCELLED
+}
+
+enum BackupUploadSessionStatus {
+  PENDING_UPLOAD
+  UPLOADED
+  VALIDATED
+  RESTORE_IN_PROGRESS
+  RESTORED
+  EXPIRED
+  FAILED
 }
 
 /// Daily Wordle-Style Games

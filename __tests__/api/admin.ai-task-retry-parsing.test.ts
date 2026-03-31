@@ -5,7 +5,7 @@ jest.mock("@/lib/auth-helpers", () => ({
 }));
 
 jest.mock("@/lib/services/background-task.service", () => ({
-  getOwnedBackgroundTaskOrThrow: jest.fn(),
+  getAdminBackgroundTaskOrThrow: jest.fn(),
   updateBackgroundTask: jest.fn(),
   markBackgroundTaskCompletedFromFailed: jest.fn(),
 }));
@@ -15,7 +15,7 @@ import { requireAdmin } from "@/lib/auth-helpers";
 import { NotFoundError } from "@/lib/errors";
 
 const {
-  getOwnedBackgroundTaskOrThrow,
+  getAdminBackgroundTaskOrThrow,
   updateBackgroundTask,
   markBackgroundTaskCompletedFromFailed,
 } = require("@/lib/services/background-task.service");
@@ -29,7 +29,7 @@ describe("/api/admin/ai-tasks/[id]/retry-parsing", () => {
   });
 
   it("completes a FAILED AI quiz task after successful parse retry", async () => {
-    getOwnedBackgroundTaskOrThrow.mockResolvedValue({
+    getAdminBackgroundTaskOrThrow.mockResolvedValue({
       id: "task_1",
       userId: "admin_1",
       type: "AI_QUIZ_GENERATION",
@@ -74,7 +74,7 @@ describe("/api/admin/ai-tasks/[id]/retry-parsing", () => {
   });
 
   it("completes a FAILED AI topic-question task after successful parse retry", async () => {
-    getOwnedBackgroundTaskOrThrow.mockResolvedValue({
+    getAdminBackgroundTaskOrThrow.mockResolvedValue({
       id: "task_2",
       userId: "admin_1",
       type: "AI_TOPIC_QUESTION_GENERATION",
@@ -123,7 +123,7 @@ describe("/api/admin/ai-tasks/[id]/retry-parsing", () => {
   });
 
   it("rejects cancelled attempts", async () => {
-    getOwnedBackgroundTaskOrThrow.mockResolvedValue({
+    getAdminBackgroundTaskOrThrow.mockResolvedValue({
       id: "task_3",
       userId: "admin_1",
       type: "AI_QUIZ_GENERATION",
@@ -145,7 +145,7 @@ describe("/api/admin/ai-tasks/[id]/retry-parsing", () => {
   });
 
   it("returns conflict when guarded completion write is rejected", async () => {
-    getOwnedBackgroundTaskOrThrow.mockResolvedValue({
+    getAdminBackgroundTaskOrThrow.mockResolvedValue({
       id: "task_4",
       userId: "admin_1",
       type: "AI_QUIZ_GENERATION",
@@ -181,8 +181,8 @@ describe("/api/admin/ai-tasks/[id]/retry-parsing", () => {
     expect(body.error).toContain("state changed");
   });
 
-  it("enforces ownership check on mutation", async () => {
-    getOwnedBackgroundTaskOrThrow.mockRejectedValue(new NotFoundError("Task not found"));
+  it("returns 404 when task is missing", async () => {
+    getAdminBackgroundTaskOrThrow.mockRejectedValue(new NotFoundError("Task not found"));
 
     const response = await POST(new Request("http://localhost") as any, {
       params: Promise.resolve({ id: "task_unauthorized" }),
@@ -192,4 +192,3 @@ describe("/api/admin/ai-tasks/[id]/retry-parsing", () => {
     expect(markBackgroundTaskCompletedFromFailed).not.toHaveBeenCalled();
   });
 });
-
