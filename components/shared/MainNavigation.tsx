@@ -31,7 +31,7 @@ import {
 
 export function MainNavigation() {
   const pathname = usePathname();
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const { theme, setTheme } = useTheme();
   const [unreadCount, setUnreadCount] = useState(0);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -87,6 +87,30 @@ export function MainNavigation() {
   ];
 
   const isActive = (href: string) => pathname.startsWith(href);
+
+  // Loading state skeleton to prevent CLS during session hydration
+  if (status === "loading") {
+    return (
+      <nav 
+        data-testid="nav-skeleton"
+        className="sticky top-0 z-50 border-b-2 border-foreground/5 bg-background/80 backdrop-blur-md"
+      >
+        <div className="mx-auto max-w-7xl px-4 h-20 flex items-center justify-between gap-6 sm:px-6 lg:px-8">
+          <div className="flex items-center gap-3 shrink-0">
+            <div className="h-10 w-10 sm:h-12 sm:w-12 bg-muted animate-pulse" />
+            <div className="h-8 w-32 sm:w-48 bg-muted animate-pulse" />
+          </div>
+          <div className="flex-1 max-w-xl mx-2 hidden md:block">
+            <div className="h-10 w-full bg-muted animate-pulse" />
+          </div>
+          <div className="flex items-center gap-4">
+            <div className="h-10 w-10 bg-muted animate-pulse rounded-none" />
+            <div className="h-10 w-10 bg-muted animate-pulse rounded-none" />
+          </div>
+        </div>
+      </nav>
+    );
+  }
 
   if (!session?.user) {
     return (
