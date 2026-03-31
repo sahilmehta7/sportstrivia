@@ -12,6 +12,7 @@ import React from "react";
 import { GoogleAnalytics } from "@next/third-parties/google";
 import { ShowcaseThemeProvider } from "@/components/showcase/ShowcaseThemeProvider";
 import { cn } from "@/lib/utils";
+import { PWALifecycleListener } from "@/components/shared/PWALifecycleListener";
 
 const barlow = Barlow({
   subsets: ["latin"],
@@ -88,6 +89,11 @@ export const metadata: Metadata = {
     // google: "your-google-verification-code",
     // yandex: "your-yandex-verification-code",
   },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Sports Trivia",
+  },
   category: "Sports & Recreation",
 };
 
@@ -111,6 +117,7 @@ export default async function RootLayout({
       <body className={cn(barlow.className, barlowCondensed.variable, "antialiased")}>
         <ThemeColorInit />
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
+          <PWALifecycleListener />
           <AppSessionProvider>
             <ShowcaseThemeProvider>
               <LayoutWrapper>{children}</LayoutWrapper>

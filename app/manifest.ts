@@ -8,7 +8,8 @@ export default function manifest(): MetadataRoute.Manifest {
         description: 'Compete with friends, climb the leaderboards, and become a sports trivia champion',
         start_url: '/',
         display: 'standalone',
-        background_color: '#304152',
+        display_override: ['standalone', 'minimal-ui', 'browser'],
+        background_color: '#0a0a0a',
         theme_color: '#304152',
         orientation: 'portrait',
         icons: [

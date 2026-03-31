@@ -12,6 +12,7 @@ import { useTheme } from "next-themes";
 import { signOut, useSession } from "next-auth/react";
 import { cn } from "@/lib/utils";
 import { GlobalQuizSearch } from "@/components/shared/GlobalQuizSearch";
+import { InstallPWAButton } from "@/components/shared/InstallPWAButton";
 import {
   Sheet,
   SheetContent,
@@ -138,6 +139,7 @@ export function MainNavigation() {
             </span>
           </Link>
           <div className="ml-auto flex shrink-0 items-center gap-2 sm:gap-6">
+            <InstallPWAButton className="hidden md:flex" />
             <Link href="/auth/signin" className="hidden sm:block">
               <span className="text-xs font-bold uppercase tracking-widest hover:text-accent transition-colors">Member Access</span>
             </Link>
@@ -211,6 +213,7 @@ export function MainNavigation() {
 
           {/* Right Section */}
           <div className="flex items-center gap-4">
+            <InstallPWAButton className="hidden md:flex ml-2" />
             <Link href="/random-quiz" className="hidden sm:block">
               <Button variant="ghost" size="icon" className="rounded-none hover:bg-muted" title="Random Quiz">
                 <Shuffle className="h-5 w-5" />
@@ -251,6 +254,7 @@ export function MainNavigation() {
                   </div>
 
                   <div className="flex flex-col gap-4">
+                    <InstallPWAButton className="w-full justify-start py-6 text-lg border-2" />
                     <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-accent mb-2">Primary Channels</p>
                     {navLinks.map((link) => (
                       <Link
