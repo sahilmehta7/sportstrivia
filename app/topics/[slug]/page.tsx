@@ -412,14 +412,15 @@ export default async function TopicDetailPage({
             />
           </div>
           <div className="flex flex-wrap gap-2">
-            {heroPrimaryQuiz && (
-              <Link
-                href={`/quizzes/${heroPrimaryQuiz.slug}`}
-                className="inline-flex items-center rounded-none bg-foreground px-3 py-2 text-xs font-bold uppercase tracking-[0.2em] text-background"
-              >
-                Start quiz
-              </Link>
-            )}
+            <TopicFollowButton
+              topicId={topic.id}
+              topicName={topic.name}
+              schemaType={topic.schemaType as TopicSchemaTypeValue}
+              entityStatus={topic.entityStatus}
+              initialIsFollowing={Boolean(followRecord)}
+              isAuthenticated={Boolean(user)}
+              layout="desktop"
+            />
             <Link
               href="#topic-quizzes"
               className="inline-flex items-center rounded-none border border-border px-3 py-2 text-xs font-bold uppercase tracking-[0.2em] text-foreground"
@@ -453,14 +454,15 @@ export default async function TopicDetailPage({
             />
           </div>
           <div className="space-y-3">
-            {heroPrimaryQuiz && (
-              <Link
-                href={`/quizzes/${heroPrimaryQuiz.slug}`}
-                className="flex w-full min-h-[48px] items-center justify-center rounded-none bg-foreground px-4 py-3 text-sm font-bold uppercase tracking-[0.2em] text-background shadow-md transition-transform active:scale-[0.98]"
-              >
-                Start quiz
-              </Link>
-            )}
+            <TopicFollowButton
+              topicId={topic.id}
+              topicName={topic.name}
+              schemaType={topic.schemaType as TopicSchemaTypeValue}
+              entityStatus={topic.entityStatus}
+              initialIsFollowing={Boolean(followRecord)}
+              isAuthenticated={Boolean(user)}
+              layout="mobile"
+            />
             <div className="flex overflow-x-auto no-scrollbar snap-x snap-mandatory gap-3 pb-2 pt-1 -mx-4 px-4">
               <Link
                 href="#topic-quizzes"
@@ -483,17 +485,6 @@ export default async function TopicDetailPage({
             </div>
           </div>
         </section>
-
-        <div className="flex justify-end md:-mt-4">
-          <TopicFollowButton
-            topicId={topic.id}
-            topicName={topic.name}
-            schemaType={topic.schemaType as TopicSchemaTypeValue}
-            entityStatus={topic.entityStatus}
-            initialIsFollowing={Boolean(followRecord)}
-            isAuthenticated={Boolean(user)}
-          />
-        </div>
 
         {topicCollections.collections.length > 0 ? (
           <CollectionRail
