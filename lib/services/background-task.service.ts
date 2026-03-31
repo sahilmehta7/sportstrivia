@@ -164,8 +164,8 @@ async function createBackgroundTaskWithResolvedType(
   } catch (error) {
     const isUserFkViolation =
       (error as any)?.code === "P2003" &&
-      typeof (error.meta as any)?.field_name === "string" &&
-      String((error.meta as any).field_name).includes("AdminBackgroundTask_userId_fkey");
+      typeof ((error as any).meta as any)?.field_name === "string" &&
+      String(((error as any).meta as any).field_name).includes("AdminBackgroundTask_userId_fkey");
 
     if (isUserFkViolation && input.userId) {
       console.warn(

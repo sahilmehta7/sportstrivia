@@ -25,6 +25,7 @@ import { ModernFilterBar } from "@/components/quizzes/modern-filter-bar";
 import { QuizCard } from "@/components/quizzes/quiz-card";
 import { QuizPagination } from "@/components/quizzes/quiz-pagination";
 import { StreakIndicator } from "@/components/shared/StreakIndicator";
+import { TopicDescription } from "@/components/topics/TopicDescription";
 
 import { ChevronRight, ShieldCheck } from "lucide-react";
 import { PageContainer } from "@/components/shared/PageContainer";
@@ -405,9 +406,10 @@ export default async function TopicDetailPage({
             <h1 className="text-6xl font-bold tracking-tighter lg:text-8xl uppercase leading-[0.85] font-['Barlow_Condensed',sans-serif] text-foreground">
               {topic.name}
             </h1>
-            <p className="max-w-xl mx-auto lg:mx-0 text-xl text-muted-foreground font-semibold uppercase tracking-tight leading-tight">
-              {topic.description || `Discover quizzes, stats, and storylines for ${topic.name}.`}
-            </p>
+            <TopicDescription 
+              description={topic.description || `Discover quizzes, stats, and storylines for ${topic.name}.`}
+              className="mx-auto lg:mx-0 text-xl text-muted-foreground font-semibold tracking-tight leading-tight"
+            />
           </div>
           <div className="flex flex-wrap gap-2">
             {heroPrimaryQuiz && (
@@ -439,43 +441,46 @@ export default async function TopicDetailPage({
           </div>
         </section>
 
-        <section className="space-y-4 rounded-xl border border-border/60 bg-card/80 p-4 shadow-sm md:hidden">
-          <div className="space-y-3">
+        <section className="space-y-6 md:hidden">
+          <div className="space-y-4">
             <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-muted-foreground">Topic Intelligence</p>
-            <h1 className="text-4xl font-bold uppercase leading-[0.9] tracking-tighter font-['Barlow_Condensed',sans-serif] text-foreground">
+            <h1 className="text-5xl font-bold uppercase leading-[0.85] tracking-tighter font-['Barlow_Condensed',sans-serif] text-foreground">
               {topic.name}
             </h1>
-            <p className="text-sm font-medium uppercase leading-tight tracking-tight text-muted-foreground">
-              {topic.description || `Discover quizzes, stats, and storylines for ${topic.name}.`}
-            </p>
+            <TopicDescription 
+              description={topic.description || `Discover quizzes, stats, and storylines for ${topic.name}.`}
+              className="text-base font-medium leading-relaxed tracking-tight text-muted-foreground"
+            />
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="space-y-3">
             {heroPrimaryQuiz && (
               <Link
                 href={`/quizzes/${heroPrimaryQuiz.slug}`}
-                className="inline-flex items-center rounded-md bg-foreground px-3 py-2 text-xs font-bold uppercase tracking-[0.2em] text-background"
+                className="flex w-full min-h-[48px] items-center justify-center rounded-md bg-foreground px-4 py-3 text-sm font-bold uppercase tracking-[0.2em] text-background shadow-md transition-transform active:scale-[0.98]"
               >
                 Start quiz
               </Link>
             )}
-            <Link
-              href="#topic-quizzes"
-              className="inline-flex items-center rounded-md border border-border px-3 py-2 text-xs font-bold uppercase tracking-[0.2em] text-foreground"
-            >
-              Browse all
-            </Link>
-            <Link
-              href="#topic-key-facts"
-              className="inline-flex items-center rounded-md border border-border px-3 py-2 text-xs font-bold uppercase tracking-[0.2em] text-foreground"
-            >
-              Key facts
-            </Link>
-            <Link
-              href="#topic-faq"
-              className="inline-flex items-center rounded-md border border-border px-3 py-2 text-xs font-bold uppercase tracking-[0.2em] text-foreground"
-            >
-              FAQ
-            </Link>
+            <div className="flex overflow-x-auto no-scrollbar snap-x snap-mandatory gap-3 pb-2 pt-1 -mx-4 px-4">
+              <Link
+                href="#topic-quizzes"
+                className="shrink-0 snap-start inline-flex min-h-[44px] items-center justify-center rounded-md border border-border px-5 py-2 text-xs font-bold uppercase tracking-[0.2em] text-foreground bg-background/50 backdrop-blur-sm transition-transform active:scale-[0.98]"
+              >
+                Browse all
+              </Link>
+              <Link
+                href="#topic-key-facts"
+                className="shrink-0 snap-start inline-flex min-h-[44px] items-center justify-center rounded-md border border-border px-5 py-2 text-xs font-bold uppercase tracking-[0.2em] text-foreground bg-background/50 backdrop-blur-sm transition-transform active:scale-[0.98]"
+              >
+                Key facts
+              </Link>
+              <Link
+                href="#topic-faq"
+                className="shrink-0 snap-start inline-flex min-h-[44px] items-center justify-center rounded-md border border-border px-5 py-2 text-xs font-bold uppercase tracking-[0.2em] text-foreground bg-background/50 backdrop-blur-sm transition-transform active:scale-[0.98]"
+              >
+                FAQ
+              </Link>
+            </div>
           </div>
         </section>
 

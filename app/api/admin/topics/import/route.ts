@@ -249,6 +249,8 @@ async function importTopics(
             schemaCanonicalUrl: schemaCanonicalUrl,
             schemaSameAs,
             schemaEntityData: schemaEntityDataValue,
+            alternateNames: [],
+            seoKeywords: []
           },
         });
 

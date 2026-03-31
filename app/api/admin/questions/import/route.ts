@@ -59,6 +59,9 @@ export async function POST(request: NextRequest) {
                         slug: "general",
                         description: "General questions",
                         level: 0,
+                        schemaSameAs: [],
+                        alternateNames: [],
+                        seoKeywords: []
                     },
                 });
             }
@@ -84,7 +87,10 @@ export async function POST(request: NextRequest) {
                         data: {
                             name,
                             slug: await generateUniqueSlug(name, "topic"),
-                            level: 0
+                            level: 0,
+                            schemaSameAs: [],
+                            alternateNames: [],
+                            seoKeywords: []
                         }
                     });
                 }

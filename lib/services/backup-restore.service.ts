@@ -99,26 +99,9 @@ async function resetIntSequences(db: PrismaLike): Promise<void> {
   }
 }
 
-type PreservedBackgroundTask = {
-  id: string;
-  type: string;
-  status: string;
-  attempt: number;
-  cancelledAt: Date | null;
-  cancelledAttempt: number | null;
-  label: string;
-  input: unknown;
-  result: unknown;
-  errorMessage: string | null;
-  startedAt: Date | null;
-  completedAt: Date | null;
-  createdAt: Date;
-  updatedAt: Date;
-};
-
 async function restorePreservedBackgroundTasks(
   db: PrismaLike,
-  tasks: PreservedBackgroundTask[]
+  tasks: any[]
 ): Promise<number> {
   if (!tasks.length) return 0;
 

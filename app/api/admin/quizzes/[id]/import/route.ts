@@ -58,6 +58,9 @@ export async function POST(
                         slug: "general",
                         description: "General questions",
                         level: 0,
+                        schemaSameAs: [],
+                        alternateNames: [],
+                        seoKeywords: []
                     },
                 });
             }
@@ -101,6 +104,9 @@ export async function POST(
                         name: topicName,
                         slug,
                         level: 0,
+                        schemaSameAs: [],
+                        alternateNames: [],
+                        seoKeywords: []
                     },
                 });
                 topicNameMap.set(normalizedName, newTopic.id);

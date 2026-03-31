@@ -167,6 +167,7 @@ export async function POST(request: NextRequest) {
         schemaCanonicalUrl,
         schemaSameAs,
         alternateNames,
+        seoKeywords: [],
         schemaEntityData: schemaEntityDataValue,
         entityStatus: "DRAFT",
         entityValidatedAt: null,

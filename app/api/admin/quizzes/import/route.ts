@@ -140,6 +140,9 @@ export async function POST(request: NextRequest) {
             slug: "general",
             description: "General questions",
             level: 0,
+            schemaSameAs: [],
+            alternateNames: [],
+            seoKeywords: []
           },
         });
       }
@@ -200,6 +203,9 @@ export async function POST(request: NextRequest) {
               name: topicName,
               slug,
               level: 0,
+              schemaSameAs: [],
+              alternateNames: [],
+              seoKeywords: []
             },
           });
           topicNameMap.set(normalizedName, { id: topic.id, name: topic.name });
@@ -242,6 +248,9 @@ export async function POST(request: NextRequest) {
               name: sportToResolve,
               slug,
               level: 0,
+              schemaSameAs: [],
+              alternateNames: [],
+              seoKeywords: []
             },
             select: { name: true }
           });
