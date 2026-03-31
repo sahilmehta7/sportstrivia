@@ -30,7 +30,7 @@ import { TopicDescription } from "@/components/topics/TopicDescription";
 
 import { ChevronRight, ShieldCheck } from "lucide-react";
 import { PageContainer } from "@/components/shared/PageContainer";
-import { getFAQSchema, getTopicGraphSchema, getBreadcrumbSchema, getTopicPageGraphSchema } from "@/lib/schema-utils";
+import { getFAQSchema, getTopicGraphSchema, getBreadcrumbSchema, getItemListSchema } from "@/lib/schema-utils";
 import type { TopicSchemaTypeValue } from "@/lib/topic-schema-options";
 import { parseFaqMarkdown } from "@/lib/faq-utils";
 import { listPublishedCollectionsSafe } from "@/lib/services/collection.service";
@@ -358,7 +358,7 @@ export default async function TopicDetailPage({
     { name: topic.name, url: `/topics/${topic.slug}` },
   ];
 
-  const fullTopicGraph = getTopicPageGraphSchema({
+  const topicGraphSchema = getTopicGraphSchema({
     topic: {
       id: topic.id,
       name: topic.name,
@@ -379,10 +379,21 @@ export default async function TopicDetailPage({
           }
         : null,
     },
-    quizzes: listing.quizzes,
-    breadcrumbs,
-    faqs: showAuthority && publishedSnapshot ? parseFaqMarkdown(publishedSnapshot.faqMd) : null,
+    quizUrls: listing.quizzes.map((quiz) => getCanonicalUrl(`/quizzes/${quiz.slug}`)),
   });
+  const breadcrumbSchema = getBreadcrumbSchema(breadcrumbs);
+  const itemListSchema = getItemListSchema(
+    listing.quizzes.map((quiz) => ({
+      id: quiz.id,
+      title: quiz.title,
+      slug: quiz.slug,
+      description: quiz.description,
+      descriptionImageUrl: quiz.descriptionImageUrl,
+    })),
+    `${topic.name} Quizzes`
+  );
+  const faqItems = showAuthority && publishedSnapshot ? parseFaqMarkdown(publishedSnapshot.faqMd) : [];
+  const faqSchema = faqItems.length > 0 ? getFAQSchema(faqItems) : null;
 
   return (
     <main className="min-h-screen pb-24">
@@ -671,8 +682,10 @@ export default async function TopicDetailPage({
         </div>
       </PageContainer>
 
-      {/* Unified Structured Data Graph */}
-      <StructuredData id={`topic-full-graph-${topic.id}`} data={fullTopicGraph} />
+      <StructuredData id={`topic-graph-${topic.id}`} data={topicGraphSchema} />
+      <StructuredData id={`topic-breadcrumb-${topic.id}`} data={breadcrumbSchema} />
+      <StructuredData id={`topic-item-list-${topic.id}`} data={itemListSchema} />
+      {faqSchema ? <StructuredData id={`topic-faq-${topic.id}`} data={faqSchema} /> : null}
     </main>
   );
 }
