@@ -1,0 +1,13 @@
+# Sports Trivia Platform
+> Modern multi-player sports trivia experience built with Next.js 15, Prisma, and Supabase.
+
+## Documentation
+- [README](README.md): Project overview, platform modules, and setup instructions.
+- [Product Requirements](docs/sportstrivia.md): Core platform logic, PRD, and feature roadmap.
+- [API Reference](docs/API_REFERENCE.md): Exhaustive breakdown of public, player, and admin REST endpoints.
+
+## Notes for AI Agents
+- The platform uses **Next.js 15 App Router** and **Prisma ORM**.
+- Authentication is handled via **NextAuth v5**.
+- Administrative endpoints and internal configurations are restricted and excluded from this public index.
+- For deep integration context, see [llms-full.txt](llms-full.txt).

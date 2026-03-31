@@ -1,0 +1,117 @@
+# Sports Trivia Platform - Full Knowledge Base (Public)
+
+This document contains a consolidated overview of the Sports Trivia platform for LLMs and AI agents. It includes the project readme, public API reference, and conceptual data models.
+
+---
+## SECTION 1: Project Overview (README.md)
+---
+
+# Sports Trivia Platform
+
+Modern multi-player sports trivia experience built with Next.js 15, Prisma, and Supabase.
+
+## Current Status
+
+- ✅ Production-ready admin console, player experience, and public marketing site
+- ✅ 70 API handlers covering quiz authoring, attempts, reviews, social graphs, leaderboards, notifications, AI helpers, and gamification
+- ✅ Fully responsive App Router UI with landing, discovery, quiz play, dashboards, social, and notifications flows
+- 🔄 Roadmap: push notifications, extended analytics exports, native mobile companion
+
+## Platform Modules
+
+**Quiz Engine**
+- Configurable quiz types (fixed pools, topic-random, recurring events, single-attempt challenges)
+- Weighted scoring, streak and time bonuses, per-question timers, practice mode, attempt limits with resets
+- Rich media support (images/video/audio), hints, explanations, review and rating pipeline
+
+**Player Experience**
+- SEO-ready landing page, quiz discovery & filters, topic hubs, search suggestions
+- Quiz play, results, review prompts, player dashboard with stats, streaks, badges, challenge history
+- Leaderboard views (daily & all-time), random challenge flow, profile pages, structured data for SEO
+
+**Social & Gamification**
+- Friend graph, requests, declines, removals
+- Head-to-head challenges with score tracking and expiry
+- Badge progress, levels and tier history, completion bonus awards, notifications center
+- Web push notifications for challenges/streaks plus configurable email digests
+
+**Tech Stack**
+
+- Framework: Next.js 15 (App Router) + React 19
+- Language: TypeScript 5.7
+- Styling: Tailwind CSS, Shadcn UI, CSS modules
+- Data: Prisma ORM + PostgreSQL (Supabase)
+- Auth: NextAuth v5 (Google OAuth provider)
+
+---
+## SECTION 2: Public API Reference
+---
+
+# Sports Trivia Public API Reference
+
+This document outlines the public and player-facing endpoints for the Sports Trivia platform.
+
+## 🔓 Public Endpoints
+These endpoints are accessible without authentication.
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/api/quizzes` | List published quizzes with filtering, sorting, pagination |
+| GET | `/api/quizzes/[slug]` | Fetch published quiz detail (metadata, counts, featured info) |
+| GET | `/api/quizzes/[slug]/reviews` | Paginated reviews with sort and rating filters |
+| GET | `/api/topics` | Hierarchical topic tree with quiz/question counts |
+| GET | `/api/topics/top` | Trending topics snapshot |
+| GET | `/api/leaderboards/global` | Global leaderboard (supports `period=daily|weekly|monthly|all-time`, `limit`) |
+| GET | `/api/leaderboards/quiz/[id]` | Leaderboard for a single quiz |
+| GET | `/api/leaderboards/topic/[id]` | Leaderboard filtered by topic |
+| GET | `/api/badges` | Public badge catalog |
+| GET | `/api/search/suggestions` | Search term suggestions (trending & personalized) |
+| GET | `/api/users/[id]` | Public profile information |
+| GET | `/api/users/[id]/stats` | Public aggregate player stats |
+| GET | `/api/users/[id]/badges` | Earned and available badges for a player |
+
+
+---
+## SECTION 3: Conceptual Data Model
+---
+
+# Sports Trivia Conceptual Data Model
+
+This document provides a high-level overview of the core entities in the Sports Trivia platform.
+
+## Core Entities
+
+### User
+Represents a player on the platform.
+- **Profile**: Name, Image, Bio, Favorite Teams.
+- **Stats**: Total Points, Current/Longest Streak, Experience Tier.
+- **Relations**: Friends, Badges, Quiz Attempts, Challenges.
+
+### Topic
+A hierarchical category for quizzes and questions.
+- **Properties**: Name, Slug, Description, Emoji, Image.
+- **Hierarchy**: Topics can have parents and children (e.g., "Sports" -> "Basketball" -> "NBA").
+
+### Quiz
+A collection of questions or a template for random question generation.
+- **Properties**: Title, Slug, Description, Difficulty, Duration.
+- **Configuration**: Passing score, timing rules, random/fixed question pools.
+- **Stats**: Average Rating, Total Reviews, Popularity.
+
+### Question
+The building block of a quiz.
+- **Properties**: Text, Difficulty, Type (Multiple Choice, etc.), Hint, Explanation.
+- **Media**: Support for images, video, and audio in questions and explanations.
+- **Answers**: Multiple choices with one or more correct options.
+
+### Quiz Attempt
+A single instance of a user playing a quiz.
+- **Metrics**: Score, Accuracy, Time Spent, Streak length.
+- **Responses**: Individual answers provided during the attempt.
+
+### Gamification & Social
+- **Badges**: Rewards for specific achievements or milestones.
+- **Levels & Tiers**: Player progression system based on points earned.
+- **Friendships**: Social links between users.
+- **Challenges**: Head-to-head quiz competitions between friends.
+- **Notifications**: Updates on challenges, friendship requests, and rewards.
