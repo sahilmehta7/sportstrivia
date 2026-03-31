@@ -494,7 +494,6 @@ export function getTopicPageGraphSchema(input: Omit<TopicSchemaGraphInput, "quiz
     }
   );
 
-  const breadcrumbs = getBreadcrumbSchema(input.breadcrumbs);
   const itemList = getItemListSchema(
     input.quizzes.map((q, index) => ({
       id: `quiz-${index}`,
@@ -503,8 +502,11 @@ export function getTopicPageGraphSchema(input: Omit<TopicSchemaGraphInput, "quiz
       description: q.description,
       descriptionImageUrl: q.descriptionImageUrl,
     })),
-    `${input.topic.name} Quizzes`
+    `${input.topic.name} Quizzes`,
+    false
   );
+
+  const breadcrumbs = getBreadcrumbSchema(input.breadcrumbs, false);
 
   // We need to fix the itemList to use the provided URLs correctly
   // Instead of re-parsing URLs, let's use a better approach if possible, 
@@ -520,7 +522,7 @@ export function getTopicPageGraphSchema(input: Omit<TopicSchemaGraphInput, "quiz
   ];
 
   if (input.faqs && input.faqs.length > 0) {
-    graph.push(getFAQSchema(input.faqs));
+    graph.push(getFAQSchema(input.faqs, false));
   }
 
   return {
@@ -535,9 +537,9 @@ export function getTopicPageGraphSchema(input: Omit<TopicSchemaGraphInput, "quiz
 export function getBreadcrumbSchema(items: Array<{
   name: string;
   url?: string;
-}>) {
+}>, includeContext = true) {
   return {
-    "@context": "https://schema.org",
+    ...(includeContext ? { "@context": "https://schema.org" } : {}),
     "@type": "BreadcrumbList",
     itemListElement: items.map((item, index) => ({
       "@type": "ListItem",
@@ -611,9 +613,9 @@ export function getReviewSchema(review: {
 export function getFAQSchema(faqs: Array<{
   question: string;
   answer: string;
-}>) {
+}>, includeContext = true) {
   return {
-    "@context": "https://schema.org",
+    ...(includeContext ? { "@context": "https://schema.org" } : {}),
     "@type": "FAQPage",
     mainEntity: faqs.map((faq) => ({
       "@type": "Question",
@@ -635,9 +637,9 @@ export function getItemListSchema(quizzes: Array<{
   slug: string;
   description?: string | null;
   descriptionImageUrl?: string | null;
-}>, listName: string = "Sports Trivia Quizzes") {
+}>, listName: string = "Sports Trivia Quizzes", includeContext = true) {
   return {
-    "@context": "https://schema.org",
+    ...(includeContext ? { "@context": "https://schema.org" } : {}),
     "@type": "ItemList",
     name: listName,
     itemListElement: quizzes.map((quiz, index) => ({

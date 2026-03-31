@@ -340,7 +340,7 @@ export default async function TopicDetailPage({
 
   const leaderboards = await buildTopicDatasets(topic.id);
   const publishedSnapshot = await fetchPublishedSnapshot(topic.id);
-  const showAuthority = Boolean(topic.contentStatus === "PUBLISHED" && topic.indexEligible && publishedSnapshot);
+  const showAuthority = Boolean(topic.contentStatus === "PUBLISHED" && publishedSnapshot);
   const listingQuizIds = new Set(listing.quizzes.map((quiz) => quiz.id));
   const dedupedHeroFeatured = heroFeaturedQuizzes.filter((quiz) => !listingQuizIds.has(quiz.id));
   const dedupedTopRated = topRatedListing.quizzes.filter((quiz) => !listingQuizIds.has(quiz.id)).slice(0, 6);

@@ -29,14 +29,38 @@ function mdParagraphs(md: string): string[] {
 }
 
 function parseSources(md: string): Array<{ label: string; url: string }> {
-  const links = md.match(/\[([^\]]+)\]\(([^)]+)\)/g) ?? [];
-  return links
-    .map((raw) => {
-      const m = raw.match(/\[([^\]]+)\]\(([^)]+)\)/);
-      if (!m) return null;
-      return { label: m[1], url: m[2] };
-    })
-    .filter((v): v is { label: string; url: string } => Boolean(v));
+  const result: Array<{ label: string; url: string }> = [];
+  const processedUrls = new Set<string>();
+
+  // 1. First extract all markdown links [Label](URL)
+  const markdownLinks = md.matchAll(/\[([^\]]+)\]\(([^)]+)\)/g);
+  for (const match of markdownLinks) {
+    const label = match[1];
+    const url = match[2];
+    result.push({ label, url });
+    processedUrls.add(url);
+  }
+
+  // 2. Then look for any other URLs that aren't inside markdown links
+  const urlRegex = /(https?:\/\/[^\s\)]+)/g;
+  const allUrls = md.matchAll(urlRegex);
+  for (const match of allUrls) {
+    const url = match[1].replace(/[.,]$/, ""); // Strip trailing punctuation
+    if (!processedUrls.has(url)) {
+      // For plain URLs, use a cleaned up label from the URL itself or "Source"
+      let label = "Source";
+      try {
+        const urlObj = new URL(url);
+        label = urlObj.hostname.replace("www.", "");
+      } catch (e) {
+        // Fallback to "Source"
+      }
+      result.push({ label, url });
+      processedUrls.add(url);
+    }
+  }
+
+  return result;
 }
 
 export function TopicAuthoritySection({
