@@ -29,12 +29,23 @@ export async function GET(request: NextRequest) {
     }
 
     const includeHierarchy = searchParams.get("hierarchy") === "true";
+    const levelParam = searchParams.get("level");
+    const level = levelParam ? parseInt(levelParam, 10) : undefined;
+    const schemaType = searchParams.get("schemaType");
     const skip = (page - 1) * limit;
+
+    const where: any = {};
+    if (level !== undefined && !Number.isNaN(level)) {
+      where.level = level;
+    }
+    if (schemaType) {
+      where.schemaType = schemaType;
+    }
 
     if (includeHierarchy) {
       // Get full hierarchy tree (optimized with select and limits)
       const topics = await prisma.topic.findMany({
-        where: { parentId: null },
+        where: { parentId: null, ...where },
         orderBy: { name: "asc" },
         skip,
         take: limit,
@@ -106,6 +117,7 @@ export async function GET(request: NextRequest) {
     } else {
       // Get flat list
       const topics = await prisma.topic.findMany({
+        where,
         orderBy: [{ level: "asc" }, { name: "asc" }],
         skip,
         take: limit,

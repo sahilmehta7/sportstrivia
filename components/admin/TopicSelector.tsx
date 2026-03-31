@@ -33,17 +33,21 @@ interface TopicSelectorProps {
     disabled?: boolean;
     className?: string;
     valueKey?: "id" | "name";
+    showNone?: boolean;
+    noneLabel?: string;
 }
 
 export function TopicSelector({
     topics,
     value,
     onChange,
-    placeholder = "Select topic",
+    placeholder = "Select topic...",
     searchPlaceholder = "Search topics...",
     disabled = false,
     className,
     valueKey = "id",
+    showNone = false,
+    noneLabel = "None (root topic)",
 }: TopicSelectorProps) {
     const [open, setOpen] = useState(false);
 
@@ -64,22 +68,38 @@ export function TopicSelector({
                 >
                     {value && selectedTopic
                         ? selectedTopic.name
-                        : placeholder}
+                        : showNone ? noneLabel : placeholder}
                     <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                 </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
+            <PopoverContent className="w-[400px] p-0" align="start">
                 <Command>
                     <CommandInput placeholder={searchPlaceholder} />
                     <CommandList>
                         <CommandEmpty>No topic found.</CommandEmpty>
                         <CommandGroup>
+                            {showNone && (
+                                <CommandItem
+                                    value="none"
+                                    onSelect={() => {
+                                        onChange("");
+                                        setOpen(false);
+                                    }}
+                                >
+                                    <Check
+                                        className={cn(
+                                            "mr-2 h-4 w-4",
+                                            !value ? "opacity-100" : "opacity-0"
+                                        )}
+                                    />
+                                    {noneLabel}
+                                </CommandItem>
+                            )}
                             {topics.map((topic) => (
                                 <CommandItem
                                     key={topic.id}
                                     value={topic.name}
-                                    onSelect={(_currentValue) => {
-                                        // Check is handled nicely by CommandItem but we want to ensure we emit the correct value
+                                    onSelect={() => {
                                         const valToEmit = valueKey === "id" ? topic.id : topic.name;
                                         onChange(valToEmit);
                                         setOpen(false);
@@ -91,7 +111,7 @@ export function TopicSelector({
                                             (value === (valueKey === "id" ? topic.id : topic.name)) ? "opacity-100" : "opacity-0"
                                         )}
                                     />
-                                    {"— ".repeat(topic.level ?? 0)}{topic.name}
+                                    {"  ".repeat(topic.level ?? 0)}{topic.name}
                                 </CommandItem>
                             ))}
                         </CommandGroup>

@@ -41,7 +41,7 @@ export default function EditQuestionPage({ params }: EditQuestionPageProps) {
       try {
         // Load topics and question in parallel
         const [topicsResponse, questionResponse] = await Promise.all([
-          fetch("/api/topics"),
+          fetch("/api/admin/topics?flat=true"),
           fetch(`/api/admin/questions/${resolvedParams.id}`),
         ]);
 
@@ -54,8 +54,12 @@ export default function EditQuestionPage({ params }: EditQuestionPageProps) {
           throw new Error("Failed to load data");
         }
 
-        setTopics(topicsResult.data.topics);
-        setQuestion(questionResult.data);
+        if (topicsResponse.ok) {
+          setTopics(topicsResult.data?.topics || []);
+        }
+        if (questionResponse.ok) {
+          setQuestion(questionResult.data);
+        }
       } catch (error: any) {
         toast({
           title: "Error",

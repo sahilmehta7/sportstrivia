@@ -23,10 +23,10 @@ export default function NewQuestionPage() {
 
   const loadTopics = async () => {
     try {
-      const response = await fetch("/api/topics");
+      const response = await fetch("/api/admin/topics?flat=true");
       const result = await response.json();
       if (response.ok) {
-        setTopics(result.data.topics);
+        setTopics(result.data?.topics || []);
       }
     } catch (error) {
       console.error("Failed to load topics:", error);

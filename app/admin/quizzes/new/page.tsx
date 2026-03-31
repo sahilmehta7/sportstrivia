@@ -53,13 +53,11 @@ export default function NewQuizPage() {
   useEffect(() => {
     async function fetchSports() {
       try {
-        const response = await fetch("/api/topics");
+        const response = await fetch("/api/topics?level=1&limit=100");
         if (response.ok) {
           const result = await response.json();
-          const topics: RootTopic[] = result.data?.topics || [];
-          const levelOneTopics = topics.filter((t) => t.level === 1);
-          const fallbackRootTopics = topics.filter((t) => t.parentId === null);
-          setSports(levelOneTopics.length > 0 ? levelOneTopics : fallbackRootTopics);
+          const topicsValue: RootTopic[] = result.data?.topics || [];
+          setSports(topicsValue);
         }
       } catch (error) {
         console.error("Failed to fetch sports:", error);

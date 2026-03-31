@@ -55,6 +55,7 @@ import { cn } from "@/lib/utils";
 import { TOPIC_SCHEMA_TYPE_LABELS, type TopicSchemaTypeValue } from "@/lib/topic-schema-options";
 import { computeAdminQualityFailures } from "@/lib/services/topic-content/admin-quality.service";
 import { TopicGraphAdminPanel } from "@/components/admin/TopicGraphAdminPanel";
+import { TopicSelector } from "@/components/admin/TopicSelector";
 import {
   Dialog,
   DialogContent,
@@ -1015,64 +1016,14 @@ export default function EditTopicPage({ params }: EditTopicPageProps) {
 
             <div className="space-y-2">
               <Label htmlFor="parentId">Parent Topic</Label>
-              <Popover open={parentComboboxOpen} onOpenChange={setParentComboboxOpen}>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    role="combobox"
-                    aria-expanded={parentComboboxOpen}
-                    className="w-full justify-between"
-                  >
-                    {formData.parentId
-                      ? topics.find((t) => t.id === formData.parentId)?.name || "Select parent topic..."
-                      : "None (root topic)"}
-                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-[400px] p-0">
-                  <Command>
-                    <CommandInput placeholder="Search topics..." />
-                    <CommandList>
-                      <CommandEmpty>No topic found.</CommandEmpty>
-                      <CommandGroup>
-                        <CommandItem
-                          value="none"
-                          onSelect={() => {
-                            updateField("parentId", "");
-                            setParentComboboxOpen(false);
-                          }}
-                        >
-                          <Check
-                            className={cn(
-                              "mr-2 h-4 w-4",
-                              !formData.parentId ? "opacity-100" : "opacity-0"
-                            )}
-                          />
-                          None (root topic)
-                        </CommandItem>
-                        {topics.map((topic) => (
-                          <CommandItem
-                            key={topic.id}
-                            value={topic.name}
-                            onSelect={() => {
-                              updateField("parentId", topic.id);
-                              setParentComboboxOpen(false);
-                            }}
-                          >
-                            <Check
-                              className={cn(
-                                "mr-2 h-4 w-4",
-                                formData.parentId === topic.id ? "opacity-100" : "opacity-0"
-                              )}
-                            />
-                            {"  ".repeat(topic.level)}{topic.name}
-                          </CommandItem>
-                        ))}
-                      </CommandGroup>
-                    </CommandList>
-                  </Command>
-                </PopoverContent>
-              </Popover>
+              <TopicSelector
+                topics={topics}
+                value={formData.parentId}
+                onChange={(val: string) => updateField("parentId", val)}
+                showNone={true}
+                noneLabel="None (root topic)"
+                placeholder="Select parent topic..."
+              />
               <p className="text-xs text-muted-foreground">
                 Changing parent will update this topic&apos;s level and all descendants
               </p>

@@ -526,9 +526,11 @@ export default function NewTopicPage() {
             <div className="space-y-2">
               <Label htmlFor="parentId">Parent Topic</Label>
               <TopicSelector
-                topics={[{ id: "none", name: "None (root topic)", level: 0 }, ...topics]}
-                value={formData.parentId || "none"}
-                onChange={(val) => updateField("parentId", val === "none" ? "" : val)}
+                topics={topics}
+                value={formData.parentId}
+                onChange={(val) => updateField("parentId", val)}
+                showNone={true}
+                noneLabel="None (root topic)"
                 placeholder="Select parent topic (optional)"
               />
               <p className="text-xs text-muted-foreground">
