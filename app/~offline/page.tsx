@@ -1,4 +1,5 @@
 import { Metadata } from 'next';
+import OfflineReloadButton from './OfflineReloadButton';
 
 export const metadata: Metadata = {
     title: 'Offline | Sports Trivia',
@@ -34,12 +35,7 @@ export default function OfflinePage() {
             <p className="text-muted-foreground max-w-[400px] mb-8">
                 It looks like you&apos;ve lost your internet connection. Please check your network and try again.
             </p>
-            <button
-                onClick={() => window.location.reload()}
-                className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors font-medium text-sm"
-            >
-                Try Again
-            </button>
+            <OfflineReloadButton />
         </div>
     );
 }
