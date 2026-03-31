@@ -56,9 +56,11 @@ Before you begin, ensure you have:
 
 ```bash
 # Database (from Supabase)
-DATABASE_URL="postgresql://postgres:[YOUR-PASSWORD]@db.[YOUR-PROJECT].supabase.co:5432/postgres"
+DATABASE_URL="postgresql://postgres:[YOUR-PASSWORD]@db.[YOUR-PROJECT].supabase.co:6543/postgres?pgbouncer=true"
+DIRECT_URL="postgresql://postgres:[YOUR-PASSWORD]@db.[YOUR-PROJECT].supabase.co:5432/postgres"
 
 # NextAuth
+NEXT_PUBLIC_APP_URL="http://localhost:3200"
 NEXTAUTH_URL="http://localhost:3200"
 NEXTAUTH_SECRET="run: openssl rand -base64 32"
 

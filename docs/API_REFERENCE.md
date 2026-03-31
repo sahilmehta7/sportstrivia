@@ -36,6 +36,11 @@ Authentication is session-based via NextAuth. Include the browser session cookie
 | GET | `/api/users/[id]` | Public profile information |
 | GET | `/api/users/[id]/stats` | Public aggregate player stats |
 | GET | `/api/users/[id]/badges` | Earned and available badges for a player |
+| GET | `/api/collections` | List quiz collections/series |
+| GET | `/api/collections/[slug]` | Detail for a specific collection |
+| POST | `/api/collections/[slug]/start-or-resume` | Start/Resume a collection journey |
+| GET | `/api/grids` | Search and list Grid-style games (Inmaculate Grid) |
+| GET | `/api/grids/[slug]` | Fetch specific grid detail |
 
 ### Quiz Listing Filters (`GET /api/quizzes`)
 
@@ -86,6 +91,11 @@ Authentication is session-based via NextAuth. Include the browser session cookie
 | PATCH | `/api/notifications/[id]` | Mark notification as read |
 | DELETE | `/api/notifications/[id]` | Delete notification |
 | PATCH | `/api/notifications/read-all` | Mark all notifications as read |
+| GET | `/api/notifications/preferences` | Get user notification settings |
+| PUT | `/api/notifications/preferences` | Update notification settings |
+| POST | `/api/notifications/subscriptions` | Register web push subscription |
+| POST | `/api/topics/by-id/[id]/follow` | Follow a topic by ID |
+| POST | `/api/topics/by-slug/[slug]/follow` | Follow a topic by slug |
 | GET | `/api/daily-quizzes/user-ranks` | Recurring daily quiz standings for current user |
 | POST | `/api/questions/[id]/report` | File a content report (duplicates, errors, etc.) |
 
@@ -136,10 +146,16 @@ All require `role === ADMIN`. These routes live under `/api/admin/**`.
 | GET | `/api/admin/topics` | List topics (search, pagination, hierarchy) |
 | POST | `/api/admin/topics` | Create topic |
 | GET | `/api/admin/topics/[id]` | Fetch topic detail |
-| PATCH/PUT | `/api/admin/topics/[id]` | Update topic |
-| DELETE | `/api/admin/topics/[id]` | Delete topic (with safeguards) |
+| PATCH/PUT | `/api/admin/topics/[id]` | Update topic (auto-updates hierarchy levels) |
+| DELETE | `/api/admin/topics/[id]` | Delete topic (with safeguards for questions/children) |
 | POST | `/api/admin/topics/import` | Bulk import JSON structure |
 | POST | `/api/admin/topics/[id]/ai/generate-questions` | Suggest questions via AI |
+
+#### Topic Hierarchy Management
+Topics support a parent-child structure. The API automatically calculates `level` (root = 0, child = 1, etc.) and handles cascading updates when a parent is changed. Circular reference protection is built-in.
+
+**Example: Get Topic Tree**
+`GET /api/topics?hierarchy=true` returns a nested JSON structure of all topics.
 
 ### Users & Reports
 

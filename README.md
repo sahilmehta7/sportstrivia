@@ -1,161 +1,160 @@
 # Sports Trivia Platform
 
-Modern multi-player sports trivia experience built with Next.js 15, Prisma, and Supabase.
+> A modern, high-performance multi-player sports trivia experience built with Next.js 16, Prisma 7, and Supabase.
 
-## Current Status
+The Sports Trivia Platform is a comprehensive suite for sport fans to test their knowledge, challenge friends, and climb global leaderboards. It features AI-powered content generation, a robust hierarchical topic system, and a deep gamification layer (badges, streaks, levels).
 
-- ✅ Production-ready admin console, player experience, and public marketing site
-- ✅ 70 API handlers covering quiz authoring, attempts, reviews, social graphs, leaderboards, notifications, AI helpers, and gamification
-- ✅ Fully responsive App Router UI with landing, discovery, quiz play, dashboards, social, and notifications flows
-- 🔄 Roadmap: push notifications, extended analytics exports, native mobile companion
+## Key Features
 
-## Platform Modules
-
-**Quiz Engine**
-- Configurable quiz types (fixed pools, topic-random, recurring events, single-attempt challenges)
-- Weighted scoring, streak and time bonuses, per-question timers, practice mode, attempt limits with resets
-- Rich media support (images/video/audio), hints, explanations, review and rating pipeline
-
-**Player Experience**
-- SEO-ready landing page, quiz discovery & filters, topic hubs, search suggestions
-- Quiz play, results, review prompts, player dashboard with stats, streaks, badges, challenge history
-- Leaderboard views (daily & all-time), random challenge flow, profile pages, structured data for SEO
-
-**Social & Gamification**
-- Friend graph, requests, declines, removals
-- Head-to-head challenges with score tracking and expiry
-- Badge progress, levels and tier history, completion bonus awards, notifications center
-- Web push notifications for challenges/streaks plus configurable email digests
-
-**Admin & Operations**
-- Dashboard analytics, quiz/question/topic CRUD, question pool manager, JSON import/export
-- User management, flag/report resolution, AI-assisted quiz/metadata generation, image upload pipeline
-- Gamification configuration (levels, tiers), sitemap generation, admin settings management
+- **Dynamic Quizzes**: Support for standard, time-pressured, and "Immaculate Grid" style games.
+- **Hierarchical Topic System**: 70+ sports and sub-topics with automatic parent-child relationships and SEO-optimized snapshots.
+- **Competitions & Social**: Head-to-head challenges, friend systems, and real-time global leaderboards.
+- **Gamification**: 50+ unlockable meta-badges, experience tiers (Rookies to Legends), and daily reward streaks.
+- **AI-Powered Content**: Automated question generation and topic enrichment via Google Gemini integration.
+- **Admin Suite**: Full control over content moderation, user management, and platform analytics.
 
 ## Tech Stack
 
-- Framework: Next.js 15 (App Router) + React 19
-- Language: TypeScript 5.7
-- Styling: Tailwind CSS, Shadcn UI, CSS modules
-- Data: Prisma ORM + PostgreSQL (Supabase)
-- Auth: NextAuth v5 (Google OAuth provider)
-- Validation: Zod
-- Charts & Visualization: Recharts
-- Testing: Jest, Testing Library, Supertest
-- Tooling: ESLint, Next lint, TSX scripts
+- **Core**: [Next.js 16 (App Router)](https://nextjs.org), [React 19](https://react.dev)
+- **Styling**: [Tailwind CSS 3.4](https://tailwindcss.com), [Framer Motion](https://www.framer.com/motion/), [Shadcn UI](https://ui.shadcn.com)
+- **Database**: [PostgreSQL (Supabase)](https://supabase.com), [Prisma 7.6.0](https://prisma.io)
+- **Authentication**: [NextAuth v5 (Auth.js)](https://authjs.dev) with Google OAuth
+- **AI/ML**: [Google Generative AI (Gemini)](https://ai.google.dev)
+- **Media**: [Supabase Storage](https://supabase.com/storage)
+- **Real-time/PWA**: [next-pwa](https://github.com/ducanh2912/next-pwa), [Web Push](https://web.dev/push-notifications/)
+- **Testing**: [Jest](https://jestjs.io), [Playwright](https://playwright.dev), [Supertest](https://github.com/ladjs/supertest)
+
+## Prerequisites
+
+- **Node.js**: 24.x or higher (check `.nvmrc`)
+- **Package Manager**: `pnpm` (recommended) or `npm`
+- **Database**: A PostgreSQL instance (local or Supabase)
+- **Cloud Accounts**:
+    - [Supabase](https://supabase.com) (DB + Storage)
+    - [Google Cloud Console](https://console.cloud.google.com) (OAuth 2.0 Credentials)
+    - [Upstash](https://upstash.com) (Redis for rate limiting)
+    - [Resend](https://resend.com) (Transactional Email)
 
 ## Getting Started
 
-1. **Install dependencies**
-   ```bash
-   npm install
-   ```
-2. **Configure environment**
-   ```bash
-   cp .env.example .env.local
-   # fill in database, Supabase, NextAuth, Google OAuth, and service role values
-   ```
-3. **Setup database**
-   ```bash
-   npx prisma generate
-   npm run prisma:migrate:dev
-   npm run prisma:seed
-   ```
-4. **Run the app**
-   ```bash
-   npm run dev
-   ```
-   Visit `http://localhost:3200`.
-
-## Database Schema
-
-Prisma models cover the whole platform:
-
-- Accounts, sessions, verification tokens, and user profile metadata
-- Quizzes with configuration, pools, tags, recurring schedules, featured flags
-- Questions, answers, explanations, media, question stats
-- Topics hierarchy, search queries, review & report records
-- Quiz attempts, question responses, completion bonuses, leaderboards
-- Friends, challenges, notifications, badges, user topic stats
-- Gamification tiers, levels, tier history, admin background tasks, AI jobs
-- Media uploads and SEO assets
-
-See `prisma/schema.prisma` for complete definitions.
-
-## API Surface
-
-- **Public**: quizzes, topics, badges, leaderboards, search suggestions, public profiles and stats
-- **Authenticated players**: attempts lifecycle, reviews, notifications, friends, challenges, user stats & badges, gamification status
-- **Admins**: quizzes, questions, topics, pools, users, reports, settings, sitemap, uploads, gamification, AI tooling
-- **AI & utilities**: quiz generation, topic question generation, suggestion endpoints
-
-Full details live in `docs/API_REFERENCE.md`. Quick commands in `docs/API_QUICK_REFERENCE.md`.
-
-## Project Structure
-
-```
-app/                     # App Router pages and layouts
-│ ├── page.tsx           # Landing page
-│ ├── quizzes/           # Quiz discovery, detail, play, results
-│ ├── topics/            # Topic hubs and taxonomy exploration
-│ ├── random-quiz/       # Single-attempt daily challenge
-│ ├── search/            # Search results experience
-│ ├── leaderboard/       # Global leaderboard page
-│ ├── friends/, challenges/, notifications/, profile/  # Social & player dashboards
-│ └── admin/             # Admin console (dashboard, quizzes, questions, topics, users)
-├── app/api/             # 70 REST handlers (public, player, admin, AI)
-├── components/          # Shared UI, showcase system, quiz experience widgets
-├── constants/, hooks/, lib/  # Business logic, services, helpers, schemas
-├── prisma/              # Prisma schema, seed data, migrations
-├── docs/                # Authoritative documentation & playbooks
-└── scripts/             # Operational & data scripts
-```
-
-## Scripts
-
+### 1. Clone the Repository
 ```bash
-npm run dev                 # Start dev server
-npm run build               # Production build
-npm run start               # Start compiled app
-npm run lint                # ESLint
-npm test                    # Jest test suite
-npm run test:watch          # Jest watch mode
-npm run prisma:generate     # Generate Prisma client
-npm run prisma:migrate      # Apply committed migrations to shared/remote DBs
-npm run prisma:migrate:dev  # Create/apply migrations on a local dev DB
-npm run prisma:migrate:status  # Show migration status
-npm run prisma:studio       # Open Prisma Studio
-npm run prisma:seed         # Seed sample data
-npm run scripts:backfill:emojis  # Populate topic emoji defaults
+git clone https://github.com/sahilmehta7/sportstrivia.git
+cd sportstrivia-2
 ```
 
-## Testing & Quality
+### 2. Install Dependencies
+```bash
+pnpm install
+```
 
-- Unit & integration tests live under `__tests__/`
-- Supertest suite covers attempts, challenges, topics, auth, and content flows
-- Jest configured via `jest.config.js`, `jest.setup.js` for Testing Library matchers
+### 3. Environment Setup
+Copy the local environment template:
+```bash
+cp .env.example .env.local
+```
+
+| Variable | Description | Example |
+| :--- | :--- | :--- |
+| `DATABASE_URL` | Pooled connection for App | `postgres://user:pass@host:6543/db?pgbouncer=true` |
+| `DIRECT_URL` | Direct connection for Migrations | `postgres://user:pass@host:5432/db` |
+| `NEXTAUTH_SECRET` | Auth secret | `openssl rand -base64 32` |
+| `GOOGLE_ID` | Google OAuth Client ID | `xxx.apps.googleusercontent.com` |
+| `GOOGLE_SECRET` | Google OAuth Client Secret | `GOCSPX-xxx` |
+| `NEXT_PUBLIC_VAPID_PUB` | Web Push Public Key | `pnpm notifications:vapid` |
+| `RESEND_API_KEY` | Transactional Email Key | `re_xxx` |
+
+### 4. Database Initialization
+```bash
+# Generate Prisma Client
+pnpm prisma:generate
+
+# Run Migrations (Warning: Resets local DB)
+pnpm prisma:migrate:dev
+
+# Seed Sample Data (Quizzes, Topics, Badges)
+pnpm prisma:seed
+```
+
+### 5. Launch Development Server
+```bash
+pnpm dev
+```
+Open [http://localhost:3200](http://localhost:3200) in your browser.
+
+## Architecture
+
+### Directory Structure
+```text
+├── app/             # Next.js 16 App Router (Routes & Layouts)
+│   ├── (public)/    # User-facing routes (Quizzes, Topics)
+│   ├── admin/       # Management dashboard (Protected)
+│   └── api/         # 70+ REST API Route Handlers
+├── components/      # UI Components (Shadcn + Shared)
+├── lib/             # Core Core Logic
+│   ├── services/    # Business logic (Quiz, Gamification, AI)
+│   ├── validations/ # Zod schemas for API safety
+│   ├── dto/         # Data Transfer Objects
+│   └── prisma.ts    # Prisma Client Singleton
+├── prisma/          # Database schema and seed scripts
+├── public/          # Static assets and PWA manifest
+└── scripts/         # Operational and build-time utilities
+```
+
+### Business Logic (Services)
+The platform follows a **Services-First** pattern. Route Handlers call isolated services in `lib/services/`:
+- **QuizService**: Handles scoring, attempts, and passing logic.
+- **GamificationService**: Manages badge awards and level-ups.
+- **TopicService**: Manages hierarchical topic data and in-memory caching.
+- **AIService**: Orchestrates Gemini for content generation.
+
+## Available Scripts
+
+| Command | Description |
+| :--- | :--- |
+| `pnpm dev` | Start dev server on port 3200 |
+| `pnpm build` | Production build (Next.js) |
+| `pnpm lint` | Run ESLint static analysis |
+| `pnpm test` | Run Jest unit and integration tests |
+| `pnpm prisma:studio` | Open interactive database UI |
+| `pnpm prisma:seed` | Re-seed database with sample content |
+| `pnpm db:health` | Run database optimization/health check |
+| `pnpm lighthouse:audit` | Run standard performance audits |
+| `pnpm notifications:vapid` | Generate new Web Push keys |
+
+## Testing
+
+### Unit & Integration (Jest)
+Minitest-style tests covering core service logic:
+```bash
+pnpm test
+```
+
+### End-to-End (Playwright)
+Browser-based flows for authentication and quiz completion:
+```bash
+pnpm exec playwright test
+```
+
+## Deployment (Vercel)
+
+1. Connect your GitHub repository to Vercel.
+2. Configure **Environment Variables** (see `Environment Setup`).
+3. Ensure **OIDC** is enabled if using Supabase protection.
+4. Deployment settings:
+    - **Build Command**: `next build`
+    - **Output Directory**: `.next`
+
+For more details, see [VERCEL_DEPLOYMENT.md](docs/VERCEL_DEPLOYMENT.md).
 
 ## Documentation
 
-- `docs/CURRENT_PROJECT_STATUS.md` — live status, roadmap, metrics
-- `docs/FEATURE_IMPLEMENTATION_STATUS.md` — feature matrix & ownership
-- `docs/API_REFERENCE.md` — exhaustive endpoint docs
-- `docs/API_QUICK_REFERENCE.md` — copy-paste friendly commands
-- `docs/LATEST_UPDATES.md` — changelog of major milestones
-- Additional focused guides for admin, quiz engine, AI tooling, and troubleshooting live in `docs/`
+Comprehensive guides are available in the [docs/](docs/) folder:
+- [API_REFERENCE.md](docs/API_REFERENCE.md) - Exhaustive endpoint documentation.
+- [ARCHITECTURE.md](docs/ARCHITECTURE.md) - Deep dive into system flows.
+- [QUICK_START.md](docs/QUICK_START.md) - 5-minute setup guide.
+- [sportstrivia.md](docs/sportstrivia.md) - Product Requirements (PRD).
 
-## Documentation
+---
 
-Comprehensive documentation is available in the `/docs` folder:
-- `API_REFERENCE.md` - Complete API documentation
-- `ADMIN_PANEL_COMPLETE.md` - Admin panel guide
-- `QUICK_START.md` - Setup instructions
-- `AUTH_SETUP.md` - Authentication configuration
-
-## License
-
-MIT
-
-## Support
-
-For questions or issues, please open a GitHub issue or check the documentation in `/docs`.
+Built with ❤️ by the Sports Trivia Team.
