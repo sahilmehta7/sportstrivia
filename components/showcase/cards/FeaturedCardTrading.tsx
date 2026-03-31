@@ -30,6 +30,8 @@ export function FeaturedCardTrading({ quiz }: FeaturedCardTradingProps) {
                         src={quiz.descriptionImageUrl || "https://images.unsplash.com/photo-1517649763962-0c623066013b?q=80&w=1000&auto=format&fit=crop"}
                         alt={quiz.title}
                         fill
+                        priority={true}
+                        sizes="(max-width: 768px) 100vw, 50vw"
                         className="object-cover grayscale transition-all duration-700 group-hover:grayscale-0 group-hover:scale-105"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent opacity-60" />

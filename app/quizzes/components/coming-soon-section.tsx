@@ -16,6 +16,19 @@ export async function ComingSoonSection() {
 
 export function ComingSoonSkeleton() {
     return (
-        <div className="w-full h-24 bg-muted/5 rounded-xl animate-pulse border border-border/50" />
+        <section className="space-y-12 block w-full overflow-hidden">
+            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-8 border-b-2 border-foreground/5 pb-8">
+                <div className="space-y-4">
+                    <div className="h-6 w-32 bg-muted/10 animate-pulse" />
+                    <div className="h-10 w-64 sm:w-96 bg-muted/10 animate-pulse" />
+                </div>
+                <div className="h-12 w-48 bg-muted/10 animate-pulse" />
+            </div>
+            <div className="grid gap-px bg-foreground/5 border border-foreground/5 sm:grid-cols-2 lg:grid-cols-3">
+                {Array.from({ length: 3 }).map((_, i) => (
+                    <div key={i} className="bg-muted/5 p-10 h-[300px] animate-pulse" />
+                ))}
+            </div>
+        </section>
     );
 }

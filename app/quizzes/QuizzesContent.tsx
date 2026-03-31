@@ -13,13 +13,11 @@ import { cn } from "@/lib/utils";
 import { getGradientText } from "@/lib/showcase-theme";
 import { Search } from "lucide-react";
 import { buildQuizzesPath } from "@/app/quizzes/client-query-utils";
-import type { ContinuePlayingRailItem } from "@/app/quizzes/quiz-utils";
 
 interface QuizzesContentProps {
   quizzes: PublicQuizListItem[];
   filterGroups: ShowcaseFilterGroup[];
   difficultyOptions: string[];
-  continuePlayingItems?: ContinuePlayingRailItem[];
   pagination: {
     page: number;
     pages: number;
@@ -41,7 +39,6 @@ export function QuizzesContent({
   quizzes,
   filterGroups,
   difficultyOptions,
-  continuePlayingItems = [],
   pagination,
 }: QuizzesContentProps) {
   const router = useRouter();
@@ -302,67 +299,7 @@ export function QuizzesContent({
         </div>
       </div>
 
-      {continuePlayingItems.length > 0 ? (
-        <div className="relative overflow-hidden border border-foreground/15 bg-background">
-          <div className="pointer-events-none absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-transparent via-foreground/40 to-transparent" />
-          <div className="flex items-center justify-between border-b border-foreground/10 px-4 py-3 sm:px-5">
-            <div>
-              <h3 className="text-sm font-black uppercase tracking-[0.22em] text-foreground">
-                Continue Playing
-              </h3>
-              <p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground">
-                Pick up your active recurring runs
-              </p>
-            </div>
-            <span className="border border-foreground/20 px-2 py-1 text-[9px] font-black uppercase tracking-[0.18em] text-foreground/80">
-              {continuePlayingItems.length} Active
-            </span>
-          </div>
-          <div className="flex gap-2 overflow-x-auto px-4 py-4 no-scrollbar sm:px-5">
-            {continuePlayingItems.map((item) => (
-              <Link
-                key={item.id}
-                href={`/quizzes/${item.slug}`}
-                className="group relative w-[240px] shrink-0 border border-foreground/15 bg-muted/10 p-3 transition-colors hover:border-foreground/35"
-                aria-label={`Resume ${item.title}`}
-              >
-                <div className="mb-2 flex items-center justify-between">
-                  <span className="text-[9px] font-black uppercase tracking-[0.18em] text-muted-foreground">
-                    Recurring
-                  </span>
-                  <span className="text-[10px] font-black uppercase tracking-[0.15em] text-foreground/80">
-                    {item.lastPlayedLabel}
-                  </span>
-                </div>
-                <p className="truncate text-xs font-black uppercase tracking-[0.14em] text-foreground">
-                  {item.title}
-                </p>
-                <div className="mt-3 flex items-center justify-between">
-                  <span className="text-[10px] font-black uppercase tracking-[0.16em] text-foreground">
-                    {item.streak > 0 ? `Streak ${item.streak}d` : "No Streak"}
-                  </span>
-                  <span className="text-[10px] font-black uppercase tracking-[0.18em] text-accent group-hover:text-foreground">
-                    Resume →
-                  </span>
-                </div>
-                {item.daysOfWeek && item.daysOfWeek.length === 7 ? (
-                  <div className="mt-3 flex items-center gap-1">
-                    {item.daysOfWeek.map((completed, index) => (
-                      <span
-                        key={`${item.id}-day-${index}`}
-                        className={cn(
-                          "h-1.5 w-full",
-                          completed ? "bg-foreground/80" : "bg-foreground/10"
-                        )}
-                      />
-                    ))}
-                  </div>
-                ) : null}
-              </Link>
-            ))}
-          </div>
-        </div>
-      ) : null}
+
 
       {quizzes.length > 0 ? (
         <div className={cn(

@@ -67,6 +67,30 @@ export async function DailyChallengeSection() {
 
 export function DailyChallengeSkeleton() {
     return (
-        <div className="w-full h-[400px] bg-muted/5 rounded-xl animate-pulse border border-border/50" />
+        <section>
+            <div className="md:hidden rounded-[2rem] border border-border/60 bg-card/80 p-5 shadow-sm space-y-4">
+                <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-2xl bg-muted/20 animate-pulse" />
+                    <div className="space-y-1">
+                        <div className="h-3 w-16 bg-muted/20 animate-pulse" />
+                        <div className="h-6 w-32 bg-muted/20 animate-pulse" />
+                    </div>
+                </div>
+                <div className="h-16 w-full rounded-2xl bg-muted/10 animate-pulse" />
+                <div className="h-12 w-full rounded-2xl bg-muted/10 animate-pulse" />
+            </div>
+
+            <div className="hidden md:block border border-border bg-card p-6 sm:p-8">
+                <div className="flex justify-between mb-6">
+                    <div className="space-y-3">
+                        <div className="flex gap-3"><div className="h-4 w-12 bg-muted/20 animate-pulse" /></div>
+                        <div className="h-8 w-48 bg-muted/20 animate-pulse" />
+                        <div className="h-4 w-64 bg-muted/20 animate-pulse" />
+                    </div>
+                </div>
+                <div className="h-px bg-border mb-6" />
+                <div className="h-14 w-full bg-muted/10 animate-pulse" />
+            </div>
+        </section>
     );
 }

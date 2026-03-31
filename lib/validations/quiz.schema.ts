@@ -102,7 +102,7 @@ const baseQuizSchema = z.object({
   // SEO
   seoTitle: z.string().max(100).optional(),
   seoDescription: z.string().max(160).optional(),
-  seoKeywords: z.array(z.string()).optional(),
+  seoKeywords: z.array(z.string()).optional().default([]),
 
   // Visibility
   isFeatured: z.boolean().optional(),

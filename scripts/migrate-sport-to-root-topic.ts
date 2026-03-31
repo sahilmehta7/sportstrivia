@@ -46,6 +46,9 @@ async function main() {
             name: sportName,
             slug: await generateUniqueSlug(sportName, "topic"),
             level: 0,
+            schemaSameAs: [],
+            alternateNames: [],
+            seoKeywords: [],
           },
           select: { name: true },
         });

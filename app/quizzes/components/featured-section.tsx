@@ -32,6 +32,10 @@ export async function FeaturedSection() {
 
 export function FeaturedSectionSkeleton() {
     return (
-        <div className="w-full h-[300px] bg-muted/5 rounded-xl animate-pulse border border-border/50" />
+        <section className="mb-12 w-full lg:mb-24 flex gap-8 overflow-hidden">
+            {Array.from({ length: 2 }).map((_, i) => (
+                <div key={i} className="w-full md:basis-1/2 lg:basis-1/2 shrink-0 aspect-[4/5] bg-muted/5 border border-border/50 animate-pulse" />
+            ))}
+        </section>
     );
 }

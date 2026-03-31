@@ -24,6 +24,9 @@ async function main() {
                 name: "Football",
                 slug: "football",
                 description: "Football quizzes",
+                schemaSameAs: [],
+                alternateNames: [],
+                seoKeywords: [],
             },
         });
     }

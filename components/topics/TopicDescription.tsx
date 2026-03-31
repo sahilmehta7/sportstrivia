@@ -29,7 +29,7 @@ export function TopicDescription({ description, className, maxLength = 160 }: To
         <span className="inline-block whitespace-nowrap align-middle">
           <button
             onClick={() => setIsExpanded(!isExpanded)}
-            className="inline-flex items-center gap-1 ml-2 font-bold uppercase tracking-[0.2em] text-[10px] sm:text-[11px] text-foreground bg-foreground/10 hover:bg-foreground/20 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-sm transition-colors duration-200"
+            className="inline-flex items-center gap-1 ml-2 font-bold uppercase tracking-[0.2em] text-[10px] sm:text-[11px] text-foreground bg-foreground/10 hover:bg-foreground/20 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-none transition-colors duration-200"
             aria-expanded={isExpanded}
           >
             {isExpanded ? "Show Less" : "Read More"}

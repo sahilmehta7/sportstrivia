@@ -415,26 +415,26 @@ export default async function TopicDetailPage({
             {heroPrimaryQuiz && (
               <Link
                 href={`/quizzes/${heroPrimaryQuiz.slug}`}
-                className="inline-flex items-center rounded-md bg-foreground px-3 py-2 text-xs font-bold uppercase tracking-[0.2em] text-background"
+                className="inline-flex items-center rounded-none bg-foreground px-3 py-2 text-xs font-bold uppercase tracking-[0.2em] text-background"
               >
                 Start quiz
               </Link>
             )}
             <Link
               href="#topic-quizzes"
-              className="inline-flex items-center rounded-md border border-border px-3 py-2 text-xs font-bold uppercase tracking-[0.2em] text-foreground"
+              className="inline-flex items-center rounded-none border border-border px-3 py-2 text-xs font-bold uppercase tracking-[0.2em] text-foreground"
             >
               Browse all
             </Link>
             <Link
               href="#topic-key-facts"
-              className="inline-flex items-center rounded-md border border-border px-3 py-2 text-xs font-bold uppercase tracking-[0.2em] text-foreground"
+              className="inline-flex items-center rounded-none border border-border px-3 py-2 text-xs font-bold uppercase tracking-[0.2em] text-foreground"
             >
               Key facts
             </Link>
             <Link
               href="#topic-faq"
-              className="inline-flex items-center rounded-md border border-border px-3 py-2 text-xs font-bold uppercase tracking-[0.2em] text-foreground"
+              className="inline-flex items-center rounded-none border border-border px-3 py-2 text-xs font-bold uppercase tracking-[0.2em] text-foreground"
             >
               FAQ
             </Link>
@@ -456,7 +456,7 @@ export default async function TopicDetailPage({
             {heroPrimaryQuiz && (
               <Link
                 href={`/quizzes/${heroPrimaryQuiz.slug}`}
-                className="flex w-full min-h-[48px] items-center justify-center rounded-md bg-foreground px-4 py-3 text-sm font-bold uppercase tracking-[0.2em] text-background shadow-md transition-transform active:scale-[0.98]"
+                className="flex w-full min-h-[48px] items-center justify-center rounded-none bg-foreground px-4 py-3 text-sm font-bold uppercase tracking-[0.2em] text-background shadow-md transition-transform active:scale-[0.98]"
               >
                 Start quiz
               </Link>
@@ -464,19 +464,19 @@ export default async function TopicDetailPage({
             <div className="flex overflow-x-auto no-scrollbar snap-x snap-mandatory gap-3 pb-2 pt-1 -mx-4 px-4">
               <Link
                 href="#topic-quizzes"
-                className="shrink-0 snap-start inline-flex min-h-[44px] items-center justify-center rounded-md border border-border px-5 py-2 text-xs font-bold uppercase tracking-[0.2em] text-foreground bg-background/50 backdrop-blur-sm transition-transform active:scale-[0.98]"
+                className="shrink-0 snap-start inline-flex min-h-[44px] items-center justify-center rounded-none border border-border px-5 py-2 text-xs font-bold uppercase tracking-[0.2em] text-foreground bg-background/50 backdrop-blur-sm transition-transform active:scale-[0.98]"
               >
                 Browse all
               </Link>
               <Link
                 href="#topic-key-facts"
-                className="shrink-0 snap-start inline-flex min-h-[44px] items-center justify-center rounded-md border border-border px-5 py-2 text-xs font-bold uppercase tracking-[0.2em] text-foreground bg-background/50 backdrop-blur-sm transition-transform active:scale-[0.98]"
+                className="shrink-0 snap-start inline-flex min-h-[44px] items-center justify-center rounded-none border border-border px-5 py-2 text-xs font-bold uppercase tracking-[0.2em] text-foreground bg-background/50 backdrop-blur-sm transition-transform active:scale-[0.98]"
               >
                 Key facts
               </Link>
               <Link
                 href="#topic-faq"
-                className="shrink-0 snap-start inline-flex min-h-[44px] items-center justify-center rounded-md border border-border px-5 py-2 text-xs font-bold uppercase tracking-[0.2em] text-foreground bg-background/50 backdrop-blur-sm transition-transform active:scale-[0.98]"
+                className="shrink-0 snap-start inline-flex min-h-[44px] items-center justify-center rounded-none border border-border px-5 py-2 text-xs font-bold uppercase tracking-[0.2em] text-foreground bg-background/50 backdrop-blur-sm transition-transform active:scale-[0.98]"
               >
                 FAQ
               </Link>
@@ -551,7 +551,7 @@ export default async function TopicDetailPage({
                   />
                 )}
 
-                <Card className="rounded-xl border border-border/60 bg-card/80 shadow-sm">
+                <Card className="rounded-none border border-border/60 bg-card/80 shadow-sm">
                   <CardHeader>
                     <CardTitle className="text-lg">Top fans (all-time)</CardTitle>
                     <CardDescription>Correct answers in this topic</CardDescription>
@@ -561,10 +561,10 @@ export default async function TopicDetailPage({
                       leaderboards.allTime.map((entry) => (
                         <div
                           key={entry.userId}
-                          className="flex items-center justify-between rounded-md border border-border/60 bg-background px-3 py-2 text-sm"
+                          className="flex items-center justify-between rounded-none border border-border/60 bg-background px-3 py-2 text-sm"
                         >
                           <div className="flex items-center gap-2">
-                            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/15 text-xs font-semibold text-primary">
+                            <span className="flex h-7 w-7 items-center justify-center rounded-none bg-primary/15 text-xs font-semibold text-primary">
                               {entry.rank}
                             </span>
                             <span className="font-medium text-foreground">{entry.name}</span>
@@ -585,7 +585,7 @@ export default async function TopicDetailPage({
                 </Card>
 
                 {userStreak && (
-                  <Card className="rounded-xl border border-border/60 bg-card/80 shadow-sm">
+                  <Card className="rounded-none border border-border/60 bg-card/80 shadow-sm">
                     <CardHeader>
                       <CardTitle className="text-lg">Your streak</CardTitle>
                       <CardDescription>Keep the momentum going</CardDescription>
@@ -608,7 +608,7 @@ export default async function TopicDetailPage({
         </section>
 
         {showAuthority && publishedSnapshot && (
-          <TopicAuthorityContainer className="rounded-xl border-border/60 bg-card/80">
+          <TopicAuthorityContainer className="rounded-none border-border/60 bg-card/80">
             <TopicAuthoritySection
               topicName={topic.name}
               introMd={publishedSnapshot.introMd}
@@ -634,7 +634,7 @@ export default async function TopicDetailPage({
               <div className="flex gap-4">
                 {topic.children.map((child) => (
                   <Link key={child.id} href={`/topics/${child.slug}`} className="flex-none">
-                    <Card className="h-full w-72 overflow-hidden rounded-xl border border-border/60 bg-card/80 shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
+                    <Card className="h-full w-72 overflow-hidden rounded-none border border-border/60 bg-card/80 shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
                       <CardHeader className="space-y-2 p-5">
                         <CardTitle className="truncate text-lg uppercase tracking-tight font-['Barlow_Condensed',sans-serif]">{child.name}</CardTitle>
                         <CardDescription className="line-clamp-3 text-sm text-muted-foreground">

@@ -10,11 +10,6 @@ import { FeaturedSection, FeaturedSectionSkeleton } from "./components/featured-
 import { DailyRecurringSection, DailyRecurringSkeleton } from "./components/daily-recurring-section";
 import { ComingSoonSection, ComingSoonSkeleton } from "./components/coming-soon-section";
 import { QuizListSection, QuizListSectionSkeleton } from "./components/quiz-list-section";
-import { StickyPickRailSection, StickyPickRailSectionSkeleton } from "./components/sticky-pick-rail-section";
-import {
-  ContinueCollectionsSection,
-  ContinueCollectionsSectionSkeleton,
-} from "./components/continue-collections-section";
 import {
   FeaturedCollectionsSection,
   FeaturedCollectionsSectionSkeleton,
@@ -57,9 +52,7 @@ export default async function QuizzesPage({
         <QuizzesPageHeader />
 
         <div className="mt-4 space-y-10 md:mt-12 md:space-y-16">
-          <Suspense fallback={<StickyPickRailSectionSkeleton />}>
-            <StickyPickRailSection searchParams={params} />
-          </Suspense>
+
 
           <Suspense fallback={<AllSportsTopicsWidgetSectionSkeleton />}>
             <AllSportsTopicsWidgetSection />
@@ -70,9 +63,7 @@ export default async function QuizzesPage({
             <DailyChallengeSection />
           </Suspense>
 
-          <Suspense fallback={<ContinueCollectionsSectionSkeleton />}>
-            <ContinueCollectionsSection />
-          </Suspense>
+
 
           <Suspense fallback={<FeaturedCollectionsSectionSkeleton />}>
             <FeaturedCollectionsSection />

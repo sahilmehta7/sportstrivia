@@ -1,12 +1,10 @@
 
 import { auth } from "@/lib/auth";
 import { getPublicQuizFilterOptions, getPublicQuizList } from "@/lib/services/public-quiz.service";
-import { getUserProfileStats } from "@/lib/services/user-profile.service";
 import { QuizzesContent } from "@/app/quizzes/QuizzesContent";
 import {
     parsePublicFilters,
     getFilterGroups,
-    buildContinuePlayingItemsFromAttempts,
     SearchParams,
 } from "@/app/quizzes/quiz-utils";
 import { ItemListStructuredData } from "@/components/seo/ItemListStructuredData";
@@ -22,16 +20,13 @@ export async function QuizListSection({
     const userId = session?.user?.id;
 
     // We fetch filter groups and quiz list in parallel
-    const [listing, filterGroups, filterOptions, statsData] = await Promise.all([
+    const [listing, filterGroups, filterOptions] = await Promise.all([
         getPublicQuizList(filters, { telemetryUserId: userId }),
         getFilterGroups(searchParams),
         getPublicQuizFilterOptions(),
-        userId ? getUserProfileStats(userId).catch(() => null) : Promise.resolve(null),
     ]);
 
-    const continuePlayingItems = statsData
-        ? buildContinuePlayingItemsFromAttempts(statsData.recentAttempts)
-        : [];
+
 
     const baseUrl =
         process.env.NEXT_PUBLIC_APP_URL ||
@@ -51,7 +46,7 @@ export async function QuizListSection({
                 quizzes={listing.quizzes}
                 filterGroups={filterGroups}
                 difficultyOptions={filterOptions.difficulties}
-                continuePlayingItems={continuePlayingItems}
+
                 pagination={listing.pagination}
             />
             <ItemListStructuredData itemListElements={itemList} name="Sports Trivia Quizzes" />
@@ -61,11 +56,21 @@ export async function QuizListSection({
 
 export function QuizListSectionSkeleton() {
     return (
-        <div className="space-y-12 pt-8">
-            <div className="h-10 w-full max-w-2xl bg-muted/5 rounded animate-pulse" />
+        <div className="space-y-16">
+            <div className="flex flex-col gap-12">
+                <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 border-b-2 border-foreground/5 pb-8">
+                    <div className="space-y-4">
+                        <div className="h-12 w-64 bg-muted/10 animate-pulse" />
+                        <div className="h-6 w-96 bg-muted/10 animate-pulse" />
+                    </div>
+                </div>
+                <div className="h-16 w-full border border-foreground/5 bg-muted/5 animate-pulse" />
+                <div className="h-24 w-full border-y border-foreground/10 bg-muted/5 animate-pulse" />
+            </div>
+            
             <div className="grid gap-x-8 gap-y-12 sm:grid-cols-2 lg:grid-cols-3">
                 {Array.from({ length: 9 }).map((_, i) => (
-                    <div key={i} className="h-[320px] bg-muted/5 rounded-xl animate-pulse" />
+                    <div key={i} className="aspect-[16/10] bg-muted/5 border-2 border-foreground/5 animate-pulse" />
                 ))}
             </div>
         </div>
