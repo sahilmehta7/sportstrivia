@@ -36,8 +36,8 @@ describe("user-interest.service", () => {
 
   it("replaces interests for a single source and upserts preferences", async () => {
     prismaMock.topic.findMany.mockResolvedValue([
-      { id: "sport_cricket", schemaType: "SPORT" },
-      { id: "team_india", schemaType: "SPORTS_TEAM" },
+      { id: "sport_cricket", schemaType: "SPORT", entityStatus: "READY" },
+      { id: "team_india", schemaType: "SPORTS_TEAM", entityStatus: "READY" },
     ]);
 
     const result = await replaceUserInterestsBySource({
@@ -58,25 +58,24 @@ describe("user-interest.service", () => {
     expect(result.droppedTopicIds).toEqual([]);
   });
 
-  it("drops non-followable topics", async () => {
-    prismaMock.topic.findMany.mockResolvedValue([{ id: "topic_misc", schemaType: "NONE" }]);
+  it("throws error for non-followable topics", async () => {
+    prismaMock.topic.findMany.mockResolvedValue([{ id: "topic_misc", schemaType: "NONE", entityStatus: "READY" }]);
 
-    const result = await replaceUserInterestsBySource({
-      userId: "user_1",
-      topicIds: ["topic_misc", "missing"],
-      source: "ONBOARDING",
-      preferences: {
-        preferredDifficulty: null,
-        preferredPlayModes: [],
-      },
-    });
-
-    expect(prismaMock.userInterestPreference.upsert).not.toHaveBeenCalled();
-    expect(result.droppedTopicIds).toEqual(["topic_misc", "missing"]);
+    await expect(
+      replaceUserInterestsBySource({
+        userId: "user_1",
+        topicIds: ["topic_misc", "missing"],
+        source: "ONBOARDING",
+        preferences: {
+          preferredDifficulty: null,
+          preferredPlayModes: [],
+        },
+      })
+    ).rejects.toThrow("One or more topics are not eligible for interests");
   });
 
   it("takes over a topic from another source without unique-key collisions", async () => {
-    prismaMock.topic.findMany.mockResolvedValue([{ id: "sport_cricket", schemaType: "SPORT" }]);
+    prismaMock.topic.findMany.mockResolvedValue([{ id: "sport_cricket", schemaType: "SPORT", entityStatus: "READY" }]);
 
     await expect(
       replaceUserInterestsBySource({

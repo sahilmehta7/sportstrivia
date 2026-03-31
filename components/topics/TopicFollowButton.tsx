@@ -28,6 +28,11 @@ export function TopicFollowButton({
   const [isFollowing, setIsFollowing] = useState(initialIsFollowing);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Topics that are not READY should not be followable in the UI
+  if (entityStatus && entityStatus !== "READY") {
+    return null;
+  }
+
   const handleToggle = async () => {
     if (!isAuthenticated) {
       toast({
