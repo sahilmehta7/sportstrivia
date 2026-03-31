@@ -18,10 +18,17 @@ import { cn } from "@/lib/utils";
 
 interface FeaturedTradingCardsCarouselProps {
     quizzes: PublicQuizListItem[];
+    title?: string;
+    subtitle?: string;
     embedded?: boolean;
 }
 
-export function FeaturedTradingCardsCarousel({ quizzes, embedded = false }: FeaturedTradingCardsCarouselProps) {
+export function FeaturedTradingCardsCarousel({ 
+    quizzes, 
+    title,
+    subtitle,
+    embedded = false 
+}: FeaturedTradingCardsCarouselProps) {
     const [api, setApi] = useState<CarouselApi>();
     const [selectedIndex, setSelectedIndex] = useState(0);
 
@@ -49,7 +56,13 @@ export function FeaturedTradingCardsCarousel({ quizzes, embedded = false }: Feat
     }
 
     return (
-        <section className={cn("mb-12 w-full lg:mb-24", !embedded && "mx-auto max-w-7xl px-4 md:px-8")}>
+        <section className={cn("mb-12 w-full lg:mb-24 flex flex-col gap-8", !embedded && "mx-auto max-w-7xl px-4 md:px-8")}>
+            {(title || subtitle) && (
+                <div className="space-y-1">
+                    {title && <h3 className="text-2xl font-bold uppercase tracking-tight font-['Barlow_Condensed',sans-serif]">{title}</h3>}
+                    {subtitle && <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">{subtitle}</p>}
+                </div>
+            )}
             <Carousel
                 setApi={setApi}
                 opts={{

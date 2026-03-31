@@ -563,10 +563,11 @@ export default async function TopicDetailPage({
                 )}
 
                 {dedupedTopRated.length > 0 && (
-                  <FeaturedRow
+                  <FeaturedTradingCardsCarousel
                     title="Top rated by fans"
-                    description="Quizzes the community keeps replaying"
+                    subtitle="Quizzes the community keeps replaying"
                     quizzes={dedupedTopRated}
+                    embedded
                   />
                 )}
 
