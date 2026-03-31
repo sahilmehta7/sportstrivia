@@ -22,7 +22,8 @@ import { TopicAuthorityContainer } from "@/components/topics/topic-authority-con
 import { FeaturedRow } from "@/components/quizzes/featured-row";
 import { FeaturedTradingCardsCarousel } from "@/components/quizzes/featured-trading-cards-carousel";
 import { ModernFilterBar } from "@/components/quizzes/modern-filter-bar";
-import { QuizCard } from "@/components/quizzes/quiz-card";
+import { ShowcaseQuizCard } from "@/components/quiz/ShowcaseQuizCard";
+import { getSportGradient } from "@/lib/quiz-formatters";
 import { QuizPagination } from "@/components/quizzes/quiz-pagination";
 import { StreakIndicator } from "@/components/shared/StreakIndicator";
 import { TopicDescription } from "@/components/topics/TopicDescription";
@@ -121,6 +122,15 @@ async function fetchFeaturedQuizzesForTopic(topicIds: string[]): Promise<PublicQ
     select: publicQuizCardSelect,
     take: 6,
   });
+}
+
+function hashString(value: string): number {
+  let hash = 0;
+  for (let i = 0; i < value.length; i += 1) {
+    hash = (hash << 5) - hash + value.charCodeAt(i);
+    hash |= 0;
+  }
+  return Math.abs(hash);
 }
 
 function sanitizeTopicSnippet(raw: string | null | undefined, topicName: string): string {
@@ -504,9 +514,27 @@ export default async function TopicDetailPage({
           <div className="space-y-10">
             {listing.quizzes.length > 0 ? (
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {listing.quizzes.map((quiz) => (
-                  <QuizCard key={quiz.id} quiz={quiz as any} />
-                ))}
+                {listing.quizzes.map((quiz) => {
+                  const gradient = getSportGradient(quiz.sport, hashString(`${quiz.title}`));
+                  const durationLabel = quiz.duration ? `${Math.round(quiz.duration / 60)} MIN` : "FLEX";
+                  const playersLabel = `${(quiz._count?.attempts || 0).toLocaleString()} PLAYERS`;
+                  const difficultyLabel = (quiz.difficulty || "MEDIUM").toString();
+
+                  return (
+                    <ShowcaseQuizCard
+                      key={quiz.id}
+                      id={quiz.id}
+                      title={quiz.title}
+                      badgeLabel={quiz.sport || quiz.difficulty || "Quiz"}
+                      durationLabel={durationLabel}
+                      playersLabel={playersLabel}
+                      difficultyLabel={difficultyLabel}
+                      accent={gradient}
+                      coverImageUrl={quiz.descriptionImageUrl}
+                      href={`/quizzes/${quiz.slug}`}
+                    />
+                  );
+                })}
               </div>
             ) : (
               <Card>
