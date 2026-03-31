@@ -23,21 +23,39 @@ const globalForPrisma = globalThis as unknown as {
 function createPrismaClient(): PrismaClient {
   const directUrl = process.env.DIRECT_URL;
   const databaseUrl = process.env.DATABASE_URL;
-  
-  // Use DIRECT_URL for the adapter if available, otherwise DATABASE_URL
-  const connectionString = directUrl || databaseUrl;
-  
+
+  // Runtime traffic should use DATABASE_URL (typically pooled/transaction mode).
+  // DIRECT_URL is intended for migrations and maintenance commands.
+  const forceDirect = process.env.PRISMA_RUNTIME_USE_DIRECT_URL === "true";
+  const connectionString = forceDirect
+    ? directUrl || databaseUrl
+    : databaseUrl || directUrl;
+
+  if (forceDirect && directUrl) {
+    console.warn(
+      "[db] PRISMA_RUNTIME_USE_DIRECT_URL=true; using DIRECT_URL for runtime Prisma traffic"
+    );
+  } else if (!databaseUrl && directUrl) {
+    console.warn("[db] DATABASE_URL missing; falling back to DIRECT_URL for runtime");
+  }
+
   if (!connectionString) {
     throw new Error(
       "DATABASE_URL or DIRECT_URL environment variable is not defined."
     );
   }
 
-  const pool = new Pool({ 
+  const isServerless =
+    !!process.env.VERCEL ||
+    !!process.env.AWS_LAMBDA_FUNCTION_NAME ||
+    !!process.env.K_SERVICE;
+  const defaultPoolMax = isServerless ? 1 : 3;
+
+  const pool = new Pool({
     connectionString,
-    max: parseInt(process.env.DB_MAX_CONNECTIONS || "3"), 
-    connectionTimeoutMillis: 30000, 
-    idleTimeoutMillis: 10000, 
+    max: parseInt(process.env.DB_MAX_CONNECTIONS || String(defaultPoolMax), 10),
+    connectionTimeoutMillis: 30000,
+    idleTimeoutMillis: 10000,
   });
   const adapter = new PrismaPg(pool);
 
