@@ -133,14 +133,23 @@ export function BackupsClient() {
     try {
       const response = await fetch("/api/admin/backups/create", {
         method: "POST",
+        cache: "no-store",
       });
 
       if (!response.ok) {
-        const err = await response.json().catch(() => ({}));
-        throw new Error(err.error || "Failed to create backup");
+        const errPayload = await response.json().catch(() => null);
+        const errText = errPayload ? "" : await response.text().catch(() => "");
+        throw new Error(
+          errPayload?.error ||
+            errText ||
+            `Failed to create backup (HTTP ${response.status})`
+        );
       }
 
       const blob = await response.blob();
+      if (!blob || blob.size === 0) {
+        throw new Error("Backup response was empty.");
+      }
       const disposition = response.headers.get("Content-Disposition");
       const match = disposition?.match(/filename="(.+?)"/);
       const filename = match?.[1] || `sportstrivia-backup-${Date.now()}.strbk`;
@@ -152,7 +161,7 @@ export function BackupsClient() {
       document.body.appendChild(anchor);
       anchor.click();
       anchor.remove();
-      URL.revokeObjectURL(url);
+      setTimeout(() => URL.revokeObjectURL(url), 30_000);
 
       toast({
         title: "Backup ready",
