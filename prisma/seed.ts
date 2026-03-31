@@ -1,5 +1,4 @@
 import {
-  PrismaClient,
   Difficulty,
   QuestionType,
   BadgeCategory,
@@ -14,8 +13,7 @@ import {
   pointsForLevel,
   slugifyTierName,
 } from "../lib/config/gamification";
-
-const prisma = new PrismaClient();
+import { prisma } from "../lib/db";
 
 async function main() {
   console.log("Starting database seeding...");
@@ -54,6 +52,9 @@ async function main() {
       description: "General sports knowledge",
       displayEmoji: "🏅",
       level: 0,
+      seoKeywords: [],
+      schemaSameAs: [],
+      alternateNames: [],
     } as any,
   });
 
@@ -67,6 +68,9 @@ async function main() {
       parentId: sports.id,
       displayEmoji: "🏏",
       level: 1,
+      seoKeywords: [],
+      schemaSameAs: [],
+      alternateNames: [],
     } as any,
   });
 
@@ -80,6 +84,9 @@ async function main() {
       parentId: cricket.id,
       displayEmoji: "🏏",
       level: 2,
+      seoKeywords: [],
+      schemaSameAs: [],
+      alternateNames: [],
     } as any,
   });
 
@@ -93,6 +100,9 @@ async function main() {
       parentId: cricket.id,
       displayEmoji: "🏏",
       level: 2,
+      seoKeywords: [],
+      schemaSameAs: [],
+      alternateNames: [],
     } as any,
   });
 
@@ -106,6 +116,9 @@ async function main() {
       parentId: sports.id,
       displayEmoji: "🏀",
       level: 1,
+      seoKeywords: [],
+      schemaSameAs: [],
+      alternateNames: [],
     } as any,
   });
 
@@ -119,6 +132,9 @@ async function main() {
       parentId: basketball.id,
       displayEmoji: "🏀",
       level: 2,
+      seoKeywords: [],
+      schemaSameAs: [],
+      alternateNames: [],
     } as any,
   });
 

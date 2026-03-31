@@ -12,9 +12,19 @@ const withPWA = require("@ducanh2912/next-pwa").default({
 });
 
 const nextConfig: NextConfig = {
-  // Silence Turbopack warning about webpack config (from PWA plugin)
-  // We use Turbopack for dev where PWA is disabled anyway
-  // @ts-ignore - The type definition might not be updated yet in all next versions
+  transpilePackages: [
+    "recharts",
+    "victory-vendor",
+    "d3-array",
+    "d3-color",
+    "d3-format",
+    "d3-interpolate",
+    "d3-path",
+    "d3-scale",
+    "d3-shape",
+    "d3-time",
+    "d3-timer"
+  ],
   turbopack: {},
 
 

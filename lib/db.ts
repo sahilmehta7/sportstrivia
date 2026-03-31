@@ -12,44 +12,37 @@ import { PrismaClient } from "@prisma/client";
  * - Logging is more verbose in development
  */
 
+import { PrismaPg } from "@prisma/adapter-pg";
+import { Pool } from "pg";
+
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
 };
 
-function resolveRuntimeDatabaseUrl(): string | undefined {
-  const directUrl = process.env.DIRECT_URL;
-  const runtimeUrl = process.env.DATABASE_URL;
-  const forceDirect = process.env.PRISMA_RUNTIME_USE_DIRECT_URL === "true";
-
-  if (forceDirect && directUrl) {
-    console.warn(
-      "[db] PRISMA_RUNTIME_USE_DIRECT_URL=true; using DIRECT_URL for runtime Prisma traffic"
-    );
-    process.env.DATABASE_URL = directUrl;
-    return directUrl;
-  }
-
-  if (!runtimeUrl && directUrl) {
-    console.warn("[db] DATABASE_URL missing; falling back to DIRECT_URL");
-    process.env.DATABASE_URL = directUrl;
-    return directUrl;
-  }
-
-  return runtimeUrl;
-}
-
 // Create Prisma client with appropriate configuration
 function createPrismaClient(): PrismaClient {
-  // Validate DATABASE_URL (or DIRECT_URL fallback) is present
-  const resolvedDbUrl = resolveRuntimeDatabaseUrl();
-  if (!resolvedDbUrl) {
+  const directUrl = process.env.DIRECT_URL;
+  const databaseUrl = process.env.DATABASE_URL;
+  
+  // Use DIRECT_URL for the adapter if available, otherwise DATABASE_URL
+  const connectionString = directUrl || databaseUrl;
+  
+  if (!connectionString) {
     throw new Error(
-      "DATABASE_URL environment variable is not defined (and DIRECT_URL fallback is unavailable). " +
-      "Please set it in your .env file or environment configuration."
+      "DATABASE_URL or DIRECT_URL environment variable is not defined."
     );
   }
 
+  const pool = new Pool({ 
+    connectionString,
+    max: parseInt(process.env.DB_MAX_CONNECTIONS || "3"), 
+    connectionTimeoutMillis: 30000, 
+    idleTimeoutMillis: 10000, 
+  });
+  const adapter = new PrismaPg(pool);
+
   return new PrismaClient({
+    adapter,
     log: process.env.NODE_ENV === "development"
       ? ["error", "warn"]
       : ["error"],
