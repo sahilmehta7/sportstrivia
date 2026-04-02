@@ -42,7 +42,8 @@
     "play:assets:overlays": "node scripts/play-store/apply-screenshot-overlays.mjs",
     "play:assets:qa": "node scripts/play-store/qa-screenshot-content.mjs",
     "play:assets:validate": "node scripts/play-store/validate-assets.mjs",
-    "play:assets:capture:prod": "node scripts/play-store/capture-screenshots-prod.mjs"
+    "play:assets:capture:prod": "node scripts/play-store/capture-screenshots-prod.mjs",
+    "db:questions:long": "tsx scripts/export-long-questions.ts"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.7.4",
@@ -102,6 +103,7 @@
     "sharp": "^0.34.5",
     "tailwind-merge": "^2.6.0",
     "web-push": "^3.6.3",
+    "xlsx": "0.18.5",
     "zod": "^3.25.76"
   },
   "browserslist": [
