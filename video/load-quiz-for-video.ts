@@ -94,11 +94,20 @@ export const sanitizeQuestionForVideo = (args: {
   quizSlug: string;
   questionTimeLimitOverrideSeconds?: number;
   fallbackQuizTimePerQuestion?: number | null;
+  answerShuffleSeed?: string;
 }) => {
-  const { order, question, questionTimeLimitOverrideSeconds, fallbackQuizTimePerQuestion, quizSlug } = args;
+  const {
+    order,
+    question,
+    questionTimeLimitOverrideSeconds,
+    fallbackQuizTimePerQuestion,
+    quizSlug,
+    answerShuffleSeed,
+  } = args;
   const candidateAnswers = question.answers.slice(0, 4);
-  const options = candidateAnswers.map((answer) => answer.answerText);
-  const correctAnswerIndex = candidateAnswers.findIndex((answer) => answer.isCorrect);
+  const shuffledAnswers = answerShuffleSeed ? seededShuffle(candidateAnswers, answerShuffleSeed) : candidateAnswers;
+  const options = shuffledAnswers.map((answer) => answer.answerText);
+  const correctAnswerIndex = shuffledAnswers.findIndex((answer) => answer.isCorrect);
 
   if (!options.length) {
     throw new Error(`Question "${question.id}" has no answer options.`);
@@ -303,6 +312,7 @@ export const loadQuizForVideo = async (rawInput: QuizVideoRenderInputRaw): Promi
       quizSlug: quiz.slug,
       questionTimeLimitOverrideSeconds: input.questionTimeLimitSeconds,
       fallbackQuizTimePerQuestion: quiz.timePerQuestion,
+      answerShuffleSeed: `${selectionSeed}:answers:${question.id}:${index}`,
     })
   );
 

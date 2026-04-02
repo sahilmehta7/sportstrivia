@@ -49,6 +49,48 @@ describe("load-quiz-for-video helpers", () => {
     expect((sanitized as Record<string, unknown>).isCorrect).toBeUndefined();
   });
 
+  it("shuffles answer options deterministically when answerShuffleSeed is provided", () => {
+    const seeded = sanitizeQuestionForVideo({
+      order: 0,
+      quizSlug: "legends-of-the-ipl-quiz",
+      fallbackQuizTimePerQuestion: 25,
+      answerShuffleSeed: "episode-42:answers:q_1:0",
+      question: {
+        id: "q_1",
+        questionText: "Who won the 2019 Cricket World Cup?",
+        timeLimit: null,
+        answers: [
+          { id: "a1", answerText: "England", isCorrect: true },
+          { id: "a2", answerText: "New Zealand", isCorrect: false },
+          { id: "a3", answerText: "India", isCorrect: false },
+          { id: "a4", answerText: "Australia", isCorrect: false },
+        ],
+      },
+    });
+
+    const seededAgain = sanitizeQuestionForVideo({
+      order: 0,
+      quizSlug: "legends-of-the-ipl-quiz",
+      fallbackQuizTimePerQuestion: 25,
+      answerShuffleSeed: "episode-42:answers:q_1:0",
+      question: {
+        id: "q_1",
+        questionText: "Who won the 2019 Cricket World Cup?",
+        timeLimit: null,
+        answers: [
+          { id: "a1", answerText: "England", isCorrect: true },
+          { id: "a2", answerText: "New Zealand", isCorrect: false },
+          { id: "a3", answerText: "India", isCorrect: false },
+          { id: "a4", answerText: "Australia", isCorrect: false },
+        ],
+      },
+    });
+
+    expect(seeded.options).toEqual(seededAgain.options);
+    expect(seeded.correctAnswerIndex).toBe(seededAgain.correctAnswerIndex);
+    expect(seeded.options[seeded.correctAnswerIndex]).toBe("England");
+  });
+
   it("uses only the first four options when computing correctAnswerIndex", () => {
     expect(() =>
       sanitizeQuestionForVideo({
