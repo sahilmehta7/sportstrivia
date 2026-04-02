@@ -25,6 +25,8 @@ type QuestionSceneProps = {
   showAnswerReveal: boolean;
 };
 
+const TICK_SFX_COUNTDOWN_WINDOW_SECONDS = 5;
+
 export const QuestionScene: React.FC<QuestionSceneProps> = ({
   fps,
   question,
@@ -282,7 +284,11 @@ export const QuestionScene: React.FC<QuestionSceneProps> = ({
         ) : null}
       </div>
 
-      {Array.from({ length: activeSeconds }).map((_, secondIndex) => (
+      {Array.from({
+        length: Math.min(activeSeconds, TICK_SFX_COUNTDOWN_WINDOW_SECONDS),
+      }).map((_, tickIndex) => {
+        const secondIndex = Math.max(0, activeSeconds - TICK_SFX_COUNTDOWN_WINDOW_SECONDS) + tickIndex;
+        return (
         <Sequence
           key={`tick-${question.id}-${secondIndex}`}
           from={entranceFrames + secondIndex * fps}
@@ -291,7 +297,8 @@ export const QuestionScene: React.FC<QuestionSceneProps> = ({
         >
           <Audio src={staticFile("video/sfx/tick-soft.wav")} />
         </Sequence>
-      ))}
+        );
+      })}
 
       <Sequence
         from={entranceFrames + activeFrames}
