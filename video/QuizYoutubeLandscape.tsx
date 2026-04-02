@@ -1,5 +1,5 @@
 import React from "react";
-import { AbsoluteFill, Series } from "remotion";
+import { AbsoluteFill, Audio, Series, staticFile } from "remotion";
 import { CoverScene } from "./components/CoverScene";
 import { CornerLogo } from "./components/CornerLogo";
 import { IntroScene } from "./components/IntroScene";
@@ -10,7 +10,7 @@ import { getCoverFrames, getIntroFrames, getOutroFrames, getQuestionBlockFrames 
 import type { QuizYoutubeLandscapeProps } from "./types";
 
 export const QuizYoutubeLandscape: React.FC<QuizYoutubeLandscapeProps> = (props) => {
-  const { fps, quiz, questions, ctaUrl, showAnswerReveal } = props;
+  const { fps, videoFormat, quiz, questions, ctaUrl, showAnswerReveal } = props;
   const coverFrames = getCoverFrames(fps);
   const introFrames = getIntroFrames(fps);
   const outroFrames = getOutroFrames(fps);
@@ -18,13 +18,23 @@ export const QuizYoutubeLandscape: React.FC<QuizYoutubeLandscapeProps> = (props)
   return (
     <AbsoluteFill>
       <LayeredBackground />
-      <CornerLogo />
+      <CornerLogo videoFormat={videoFormat} />
+      <Audio src={staticFile("video/music/quiz-bed.mp3")} volume={0.12} loop />
       <Series>
-        <Series.Sequence durationInFrames={coverFrames} premountFor={fps}>
-          <CoverScene fps={fps} title={quiz.title} coverImageUrl={quiz.coverImageUrl} />
-        </Series.Sequence>
+        {videoFormat === "landscape" ? (
+          <Series.Sequence durationInFrames={coverFrames} premountFor={fps}>
+            <CoverScene fps={fps} title={quiz.title} coverImageUrl={quiz.coverImageUrl} videoFormat={videoFormat} />
+          </Series.Sequence>
+        ) : null}
         <Series.Sequence durationInFrames={introFrames} premountFor={fps}>
-          <IntroScene fps={fps} title={quiz.title} sport={quiz.sport} difficulty={quiz.difficulty} />
+          <IntroScene
+            fps={fps}
+            title={quiz.title}
+            sport={quiz.sport}
+            difficulty={quiz.difficulty}
+            coverImageUrl={quiz.coverImageUrl}
+            videoFormat={videoFormat}
+          />
         </Series.Sequence>
         {questions.map((question, index) => (
           <Series.Sequence
@@ -38,11 +48,12 @@ export const QuizYoutubeLandscape: React.FC<QuizYoutubeLandscapeProps> = (props)
               index={index}
               total={questions.length}
               showAnswerReveal={showAnswerReveal}
+              videoFormat={videoFormat}
             />
           </Series.Sequence>
         ))}
         <Series.Sequence durationInFrames={outroFrames} premountFor={fps}>
-          <OutroScene fps={fps} ctaUrl={ctaUrl} quizTitle={quiz.title} />
+          <OutroScene fps={fps} ctaUrl={ctaUrl} quizTitle={quiz.title} videoFormat={videoFormat} />
         </Series.Sequence>
       </Series>
     </AbsoluteFill>

@@ -1,4 +1,5 @@
 import { CalculateMetadataFunction } from "remotion";
+import { VIDEO_HEIGHT, VIDEO_SHORTS_HEIGHT, VIDEO_SHORTS_WIDTH, VIDEO_WIDTH } from "./constants";
 import { getVideoDurationInFrames } from "./timing";
 import type { QuizYoutubeLandscapeProps } from "./types";
 
@@ -16,6 +17,8 @@ export const calculateCompositionMetadata: CalculateMetadataFunction<QuizYoutube
       props.questions.map((question) => question.timeLimitSeconds),
       props.fps
     ),
+    width: props.videoFormat === "shorts" ? VIDEO_SHORTS_WIDTH : VIDEO_WIDTH,
+    height: props.videoFormat === "shorts" ? VIDEO_SHORTS_HEIGHT : VIDEO_HEIGHT,
     defaultOutName: `${safeOutName(props.quiz.slug || props.quiz.title)}-youtube-quiz.mp4`,
   };
 };

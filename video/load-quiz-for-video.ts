@@ -8,10 +8,12 @@ const MIN_TIME_LIMIT_SECONDS = 5;
 const DEFAULT_TIME_PER_QUESTION_SECONDS = 30;
 
 export const resolveQuestionTimeLimit = (
+  overrideTimeLimitSeconds?: number | null,
   questionTimeLimit?: number | null,
   fallbackQuizTimePerQuestion?: number | null
 ) => {
-  const resolved = questionTimeLimit ?? fallbackQuizTimePerQuestion ?? DEFAULT_TIME_PER_QUESTION_SECONDS;
+  const resolved =
+    overrideTimeLimitSeconds ?? questionTimeLimit ?? fallbackQuizTimePerQuestion ?? DEFAULT_TIME_PER_QUESTION_SECONDS;
   return Math.max(MIN_TIME_LIMIT_SECONDS, resolved);
 };
 
@@ -90,9 +92,10 @@ export const sanitizeQuestionForVideo = (args: {
   order: number;
   question: RawQuestion;
   quizSlug: string;
+  questionTimeLimitOverrideSeconds?: number;
   fallbackQuizTimePerQuestion?: number | null;
 }) => {
-  const { order, question, fallbackQuizTimePerQuestion, quizSlug } = args;
+  const { order, question, questionTimeLimitOverrideSeconds, fallbackQuizTimePerQuestion, quizSlug } = args;
   const candidateAnswers = question.answers.slice(0, 4);
   const options = candidateAnswers.map((answer) => answer.answerText);
   const correctAnswerIndex = candidateAnswers.findIndex((answer) => answer.isCorrect);
@@ -108,7 +111,11 @@ export const sanitizeQuestionForVideo = (args: {
     id: question.id,
     order,
     questionText: question.questionText,
-    timeLimitSeconds: resolveQuestionTimeLimit(question.timeLimit, fallbackQuizTimePerQuestion),
+    timeLimitSeconds: resolveQuestionTimeLimit(
+      questionTimeLimitOverrideSeconds,
+      question.timeLimit,
+      fallbackQuizTimePerQuestion
+    ),
     options,
     correctAnswerIndex,
     voiceoverSrc: `/video/voiceovers/${quizSlug}/q-${String(order + 1).padStart(2, "0")}.mp3`,
@@ -294,6 +301,7 @@ export const loadQuizForVideo = async (rawInput: QuizVideoRenderInputRaw): Promi
       order: index,
       question,
       quizSlug: quiz.slug,
+      questionTimeLimitOverrideSeconds: input.questionTimeLimitSeconds,
       fallbackQuizTimePerQuestion: quiz.timePerQuestion,
     })
   );
@@ -329,7 +337,7 @@ export const loadQuizForVideo = async (rawInput: QuizVideoRenderInputRaw): Promi
       coverImageUrl: quiz.descriptionImageUrl,
     },
     defaults: {
-      timePerQuestion: resolveQuestionTimeLimit(undefined, quiz.timePerQuestion),
+      timePerQuestion: resolveQuestionTimeLimit(input.questionTimeLimitSeconds, undefined, quiz.timePerQuestion),
     },
     selectionSeed,
     questions: questionsWithVoiceovers,

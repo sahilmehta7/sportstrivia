@@ -17,6 +17,8 @@ Exactly one source is required:
 Optional:
 
 - `--questionLimit=<n>`
+- `--questionTimeLimitSeconds=<n>` (optional override for all selected questions)
+- `--videoFormat=landscape|shorts` (default: `landscape`)
 - `--fps=<n>` (default: 30)
 - `--showAnswerReveal=<true|false>` (default: true)
 - `--seed=<value>` (optional; if omitted, uses deterministic daily seed)
@@ -24,7 +26,7 @@ Optional:
 
 ## Notes
 
-- 16:9 output (`1920x1080`) is fixed in v1.
+- Output format can be `landscape` (`1920x1080`) or `shorts` (`1080x1920`).
 - Questions are loaded from Prisma with options and correct answer index for reveal.
 - Question timer duration follows each question's `timeLimitSeconds` (with quiz/default fallback when needed).
 - Logo is fixed at top-right (`public/logo.png`).
@@ -39,6 +41,7 @@ Important npm syntax:
 Examples:
 - `npm run video:quick -- --quizSlug=legends-of-the-ipl-quiz`
 - `npm run video:quick -- --quizSlug=legends-of-the-ipl-quiz --questionLimit=8 --showAnswerReveal=false --seed=episode-01`
+- `npm run video:quick -- --quizSlug=legends-of-the-ipl-quiz --videoFormat=shorts --questionTimeLimitSeconds=12`
 - `npm run video:render -- --quizSlug=legends-of-the-ipl-quiz --out=./out/legends.mp4`
 - `npm run video:metadata -- --quizSlug=legends-of-the-ipl-quiz --seed=episode-01`
 

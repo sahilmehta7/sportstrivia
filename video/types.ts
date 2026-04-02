@@ -9,7 +9,9 @@ export const quizVideoRenderInputSchema = z
     quizSlug: nonEmptyString.optional(),
     seed: nonEmptyString.optional(),
     questionLimit: z.number().int().positive().max(200).optional(),
+    questionTimeLimitSeconds: z.number().int().min(5).max(120).optional(),
     fps: z.number().int().min(24).max(60).default(DEFAULT_FPS),
+    videoFormat: z.enum(["landscape", "shorts"]).default("landscape"),
     showAnswerReveal: z.boolean().default(true),
     themeVariant: z.literal(DEFAULT_THEME_VARIANT).default(DEFAULT_THEME_VARIANT),
     logoCorner: z.literal(DEFAULT_LOGO_CORNER).default(DEFAULT_LOGO_CORNER),
@@ -57,6 +59,7 @@ export type QuizVideoData = {
 
 export type QuizYoutubeLandscapeProps = {
   fps: number;
+  videoFormat: "landscape" | "shorts";
   showAnswerReveal: boolean;
   themeVariant: "dark";
   logoCorner: "top-right";

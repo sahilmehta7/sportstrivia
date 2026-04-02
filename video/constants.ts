@@ -1,5 +1,7 @@
 export const VIDEO_WIDTH = 1920;
 export const VIDEO_HEIGHT = 1080;
+export const VIDEO_SHORTS_WIDTH = 1080;
+export const VIDEO_SHORTS_HEIGHT = 1920;
 export const DEFAULT_FPS = 30;
 
 export const COVER_DURATION_SECONDS = 2.0;

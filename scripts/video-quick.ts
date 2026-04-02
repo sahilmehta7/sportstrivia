@@ -30,6 +30,8 @@ export const buildQuickRenderArgs = (args: {
   if (input.quizSlug) renderArgs.push(`--quizSlug=${input.quizSlug}`);
   if (input.quizId) renderArgs.push(`--quizId=${input.quizId}`);
   if (input.questionLimit) renderArgs.push(`--questionLimit=${input.questionLimit}`);
+  if (input.questionTimeLimitSeconds) renderArgs.push(`--questionTimeLimitSeconds=${input.questionTimeLimitSeconds}`);
+  renderArgs.push(`--videoFormat=${input.videoFormat}`);
   renderArgs.push(`--showAnswerReveal=${input.showAnswerReveal}`);
 
   return renderArgs;
@@ -39,8 +41,8 @@ const usage = `
 Quick video generator for SportsTrivia quiz videos.
 
 Usage:
-  npm run video:quick -- --quizSlug=<slug> [--questionLimit=10] [--fps=30] [--showAnswerReveal=true] [--seed=my-seed]
-  npm run video:quick -- --quizId=<id> [--questionLimit=10] [--fps=30] [--showAnswerReveal=true] [--seed=my-seed]
+  npm run video:quick -- --quizSlug=<slug> [--questionLimit=10] [--questionTimeLimitSeconds=12] [--videoFormat=landscape|shorts] [--fps=30] [--showAnswerReveal=true] [--seed=my-seed]
+  npm run video:quick -- --quizId=<id> [--questionLimit=10] [--questionTimeLimitSeconds=12] [--videoFormat=landscape|shorts] [--fps=30] [--showAnswerReveal=true] [--seed=my-seed]
 
 Optional:
   --outputDir=./out/videos
@@ -48,7 +50,7 @@ Optional:
 
 Examples:
   npm run video:quick -- --quizSlug=daily-fc-barcelona-quiz
-  npm run video:quick -- --quizSlug=daily-fc-barcelona-quiz --questionLimit=8 --fps=30 --showAnswerReveal=false --seed=episode-01
+  npm run video:quick -- --quizSlug=daily-fc-barcelona-quiz --questionLimit=8 --questionTimeLimitSeconds=12 --videoFormat=shorts --fps=30 --showAnswerReveal=false --seed=episode-01
   npm run video:quick -- --quizId=cm123abc... --outputDir=./out/youtube
 `;
 
@@ -94,6 +96,8 @@ const parseArgs = (argv: string[]): QuickArgs => {
     quizId: globalThis.process.env.npm_config_quizid,
     seed: globalThis.process.env.npm_config_seed,
     questionLimit: globalThis.process.env.npm_config_questionlimit,
+    questionTimeLimitSeconds: globalThis.process.env.npm_config_questiontimelimitseconds,
+    videoFormat: globalThis.process.env.npm_config_videoformat,
     fps: globalThis.process.env.npm_config_fps,
     showAnswerReveal: globalThis.process.env.npm_config_showanswerreveal,
     outputDir: globalThis.process.env.npm_config_outputdir,
@@ -112,6 +116,8 @@ const parseArgs = (argv: string[]): QuickArgs => {
         quizSlug: "help-placeholder",
         seed: "help-seed",
         fps: 30,
+        videoFormat: "landscape",
+        questionTimeLimitSeconds: 12,
         showAnswerReveal: true,
         themeVariant: "dark",
         logoCorner: "top-right",
@@ -127,6 +133,8 @@ const parseArgs = (argv: string[]): QuickArgs => {
     quizSlug: map.get("quizSlug"),
     seed: map.get("seed"),
     questionLimit: parseIntArg(map.get("questionLimit"), "questionLimit"),
+    questionTimeLimitSeconds: parseIntArg(map.get("questionTimeLimitSeconds"), "questionTimeLimitSeconds"),
+    videoFormat: (map.get("videoFormat") as "landscape" | "shorts" | undefined) ?? "landscape",
     fps: parseIntArg(map.get("fps"), "fps"),
     showAnswerReveal: parseBooleanArg(map.get("showAnswerReveal"), "showAnswerReveal"),
     themeVariant: "dark",

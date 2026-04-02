@@ -60,6 +60,7 @@ describe("QuestionScene answer reveal", () => {
         question={buildQuestion()}
         index={0}
         total={10}
+        videoFormat="landscape"
         showAnswerReveal={false}
       />
     );
@@ -67,7 +68,7 @@ describe("QuestionScene answer reveal", () => {
     expect(screen.queryByText(/^Answer:/i)).not.toBeInTheDocument();
     expect(screen.getByText("Think fast. Pick your answer before timer ends.")).toBeInTheDocument();
 
-    const optionCard = screen.getByText("Option A").parentElement;
+    const optionCard = screen.getByText("OPTION A").parentElement;
     expect(optionCard).not.toBeNull();
     expect(optionCard).toHaveStyle("background: #FFFFFF");
 
@@ -82,13 +83,14 @@ describe("QuestionScene answer reveal", () => {
         question={buildQuestion()}
         index={0}
         total={10}
+        videoFormat="landscape"
         showAnswerReveal={true}
       />
     );
 
     expect(screen.getByText("Answer: A")).toBeInTheDocument();
 
-    const optionCard = screen.getByText("Option A").parentElement;
+    const optionCard = screen.getByText("OPTION A").parentElement;
     expect(optionCard).not.toBeNull();
     expect(optionCard).toHaveStyle("background: rgba(15,118,110,0.12)");
 

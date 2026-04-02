@@ -45,6 +45,7 @@ async function main() {
   const durationInSeconds = (metadata.durationInFrames / metadata.props.fps).toFixed(2);
   console.log("[video:render] Render completed.");
   console.log(`[video:render] Output: ${outputPath}`);
+  console.log(`[video:render] Format: ${metadata.props.videoFormat}`);
   console.log(`[video:render] Duration: ${durationInSeconds}s (${metadata.durationInFrames} frames)`);
 }
 

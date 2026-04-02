@@ -56,9 +56,10 @@ describe("calculateVideoMetadata", () => {
 
     // cover 60 + intro 75 + questions (2 * 990) + outro 90
     expect(metadata.durationInFrames).toBe(2205);
-    expect(metadata.defaultOutName).toBe("football-icons-youtube-quiz.mp4");
+    expect(metadata.defaultOutName).toBe("football-icons-youtube-landscape.mp4");
     expect(metadata.props.questions).toHaveLength(2);
     expect(metadata.props.showAnswerReveal).toBe(true);
+    expect(metadata.props.videoFormat).toBe("landscape");
   });
 
   it("propagates showAnswerReveal when explicitly disabled", async () => {
@@ -71,6 +72,19 @@ describe("calculateVideoMetadata", () => {
     });
 
     expect(metadata.props.showAnswerReveal).toBe(false);
+  });
+
+  it("supports shorts format in metadata props and output name", async () => {
+    const metadata = await calculateVideoMetadata({
+      quizSlug: "football-icons",
+      fps: 30,
+      videoFormat: "shorts",
+      themeVariant: "dark",
+      logoCorner: "top-right",
+    });
+
+    expect(metadata.props.videoFormat).toBe("shorts");
+    expect(metadata.defaultOutName).toBe("football-icons-youtube-shorts.mp4");
   });
 
   it("computes duration from per-question time limits", async () => {

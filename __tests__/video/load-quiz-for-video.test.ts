@@ -9,11 +9,15 @@ import {
 
 describe("load-quiz-for-video helpers", () => {
   it("falls back to quiz time-per-question when question timeLimit is missing", () => {
-    expect(resolveQuestionTimeLimit(undefined, 22)).toBe(22);
+    expect(resolveQuestionTimeLimit(undefined, undefined, 22)).toBe(22);
   });
 
   it("falls back to default when both question and quiz time limits are missing", () => {
-    expect(resolveQuestionTimeLimit(undefined, undefined)).toBe(30);
+    expect(resolveQuestionTimeLimit(undefined, undefined, undefined)).toBe(30);
+  });
+
+  it("uses CLI override when questionTimeLimitSeconds is provided", () => {
+    expect(resolveQuestionTimeLimit(12, 30, 20)).toBe(12);
   });
 
   it("sanitizes into scene-safe payload while keeping options and correct answer index", () => {

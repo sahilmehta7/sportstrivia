@@ -18,6 +18,7 @@ export const calculateVideoMetadata = async (rawInput: QuizVideoRenderInputRaw) 
 
   const props: QuizYoutubeLandscapeProps = {
     fps: input.fps,
+    videoFormat: input.videoFormat,
     showAnswerReveal: input.showAnswerReveal,
     themeVariant: input.themeVariant,
     logoCorner: input.logoCorner,
@@ -30,7 +31,7 @@ export const calculateVideoMetadata = async (rawInput: QuizVideoRenderInputRaw) 
     props.questions.map((question) => question.timeLimitSeconds),
     props.fps
   );
-  const defaultOutName = `${safeOutName(props.quiz.slug || props.quiz.title)}-youtube-quiz.mp4`;
+  const defaultOutName = `${safeOutName(props.quiz.slug || props.quiz.title)}-youtube-${props.videoFormat}.mp4`;
 
   return {
     durationInFrames,

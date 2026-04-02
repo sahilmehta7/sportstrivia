@@ -13,6 +13,7 @@ describe("video cli args", () => {
     const parsed = parseCliArgs(["--quizSlug=my-quiz", "--fps=30"]);
     expect(parsed.input.quizSlug).toBe("my-quiz");
     expect(parsed.input.fps).toBe(30);
+    expect(parsed.input.videoFormat).toBe("landscape");
     expect(parsed.input.showAnswerReveal).toBe(true);
   });
 
@@ -26,9 +27,25 @@ describe("video cli args", () => {
     expect(parsed.input.seed).toBe("episode-01");
   });
 
+  it("parses questionTimeLimitSeconds and shorts format", () => {
+    const parsed = parseCliArgs([
+      "--quizSlug=my-quiz",
+      "--questionTimeLimitSeconds=12",
+      "--videoFormat=shorts",
+    ]);
+    expect(parsed.input.questionTimeLimitSeconds).toBe(12);
+    expect(parsed.input.videoFormat).toBe("shorts");
+  });
+
   it("throws on invalid showAnswerReveal value", () => {
     expect(() => parseCliArgs(["--quizSlug=my-quiz", "--showAnswerReveal=nope"])).toThrow(
       /expected "true" or "false"/i
+    );
+  });
+
+  it("throws on invalid videoFormat value", () => {
+    expect(() => parseCliArgs(["--quizSlug=my-quiz", "--videoFormat=square"])).toThrow(
+      /expected "landscape" or "shorts"/i
     );
   });
 });

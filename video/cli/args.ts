@@ -24,11 +24,20 @@ const parseBooleanArg = (value: string | undefined, name: string) => {
   throw new Error(`Invalid value for ${name}: "${value}". Expected "true" or "false".`);
 };
 
+const parseVideoFormatArg = (value: string | undefined) => {
+  if (!value) return "landscape" as const;
+  const normalized = value.trim().toLowerCase();
+  if (normalized === "landscape" || normalized === "shorts") {
+    return normalized;
+  }
+  throw new Error(`Invalid value for videoFormat: "${value}". Expected "landscape" or "shorts".`);
+};
+
 export const getCliHelpText = () => `
 Usage:
-  npm run video:render -- --quizSlug=<slug> [--questionLimit=10] [--fps=30] [--showAnswerReveal=true] [--seed=my-seed] [--out=./out/video.mp4]
-  npm run video:render -- --quizId=<id> [--questionLimit=10] [--fps=30] [--showAnswerReveal=true] [--seed=my-seed] [--out=./out/video.mp4]
-  npm run video:metadata -- --quizSlug=<slug> [--questionLimit=10] [--fps=30] [--showAnswerReveal=true] [--seed=my-seed]
+  npm run video:render -- --quizSlug=<slug> [--questionLimit=10] [--questionTimeLimitSeconds=12] [--videoFormat=landscape|shorts] [--fps=30] [--showAnswerReveal=true] [--seed=my-seed] [--out=./out/video.mp4]
+  npm run video:render -- --quizId=<id> [--questionLimit=10] [--questionTimeLimitSeconds=12] [--videoFormat=landscape|shorts] [--fps=30] [--showAnswerReveal=true] [--seed=my-seed] [--out=./out/video.mp4]
+  npm run video:metadata -- --quizSlug=<slug> [--questionLimit=10] [--questionTimeLimitSeconds=12] [--videoFormat=landscape|shorts] [--fps=30] [--showAnswerReveal=true] [--seed=my-seed]
 `;
 
 export const parseCliArgs = (argv: string[]): ParsedCliArgs => {
@@ -56,6 +65,8 @@ export const parseCliArgs = (argv: string[]): ParsedCliArgs => {
     quizId: globalThis.process.env.npm_config_quizid,
     seed: globalThis.process.env.npm_config_seed,
     questionLimit: globalThis.process.env.npm_config_questionlimit,
+    questionTimeLimitSeconds: globalThis.process.env.npm_config_questiontimelimitseconds,
+    videoFormat: globalThis.process.env.npm_config_videoformat,
     fps: globalThis.process.env.npm_config_fps,
     showAnswerReveal: globalThis.process.env.npm_config_showanswerreveal,
     out: globalThis.process.env.npm_config_out,
@@ -72,7 +83,9 @@ export const parseCliArgs = (argv: string[]): ParsedCliArgs => {
     quizSlug: map.get("quizSlug"),
     seed: map.get("seed"),
     questionLimit: parseIntArg(map.get("questionLimit"), "questionLimit"),
+    questionTimeLimitSeconds: parseIntArg(map.get("questionTimeLimitSeconds"), "questionTimeLimitSeconds"),
     fps: parseIntArg(map.get("fps"), "fps") ?? DEFAULT_FPS,
+    videoFormat: parseVideoFormatArg(map.get("videoFormat")),
     showAnswerReveal: parseBooleanArg(map.get("showAnswerReveal"), "showAnswerReveal") ?? true,
     themeVariant: "dark",
     logoCorner: "top-right",

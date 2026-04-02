@@ -13,9 +13,13 @@ Usage:
 
 Optional:
   --questionLimit=10
+  --questionTimeLimitSeconds=12
+  --videoFormat=landscape|shorts
   --seed=my-seed
-  --voice=alloy
+  --voice=onyx
   --model=gpt-4o-mini-tts
+  --speed=1.35
+  --includeOptions=false
 `;
 
 type Args = {
@@ -23,8 +27,12 @@ type Args = {
   quizId?: string;
   seed?: string;
   questionLimit?: number;
+  questionTimeLimitSeconds?: number;
+  videoFormat: "landscape" | "shorts";
   voice: string;
   model: string;
+  speed: number;
+  includeOptions: boolean;
   help: boolean;
 };
 
@@ -35,6 +43,23 @@ const parseIntArg = (value: string | undefined) => {
     throw new Error(`Invalid number: "${value}"`);
   }
   return parsed;
+};
+
+const parseFloatArg = (value: string | undefined, fallback: number) => {
+  if (!value) return fallback;
+  const parsed = Number.parseFloat(value);
+  if (!Number.isFinite(parsed)) {
+    throw new Error(`Invalid number: "${value}"`);
+  }
+  return parsed;
+};
+
+const parseBooleanArg = (value: string | undefined, fallback: boolean) => {
+  if (!value) return fallback;
+  const normalized = value.trim().toLowerCase();
+  if (normalized === "true") return true;
+  if (normalized === "false") return false;
+  throw new Error(`Invalid boolean: "${value}". Expected true or false.`);
 };
 
 const parseArgs = (argv: string[]): Args => {
@@ -62,8 +87,12 @@ const parseArgs = (argv: string[]): Args => {
     quizId: globalThis.process.env.npm_config_quizid,
     seed: globalThis.process.env.npm_config_seed,
     questionLimit: globalThis.process.env.npm_config_questionlimit,
+    questionTimeLimitSeconds: globalThis.process.env.npm_config_questiontimelimitseconds,
+    videoFormat: globalThis.process.env.npm_config_videoformat,
     voice: globalThis.process.env.npm_config_voice,
     model: globalThis.process.env.npm_config_model,
+    speed: globalThis.process.env.npm_config_speed,
+    includeOptions: globalThis.process.env.npm_config_includeoptions,
   };
 
   for (const [key, value] of Object.entries(npmArgsFallback)) {
@@ -77,8 +106,12 @@ const parseArgs = (argv: string[]): Args => {
     quizId: map.get("quizId"),
     seed: map.get("seed"),
     questionLimit: parseIntArg(map.get("questionLimit")),
-    voice: map.get("voice") ?? "alloy",
+    questionTimeLimitSeconds: parseIntArg(map.get("questionTimeLimitSeconds")),
+    videoFormat: (map.get("videoFormat") as "landscape" | "shorts" | undefined) ?? "landscape",
+    voice: map.get("voice") ?? "onyx",
     model: map.get("model") ?? "gpt-4o-mini-tts",
+    speed: parseFloatArg(map.get("speed"), 1.35),
+    includeOptions: parseBooleanArg(map.get("includeOptions"), false),
     help,
   };
 };
@@ -103,6 +136,8 @@ async function main() {
     quizId: args.quizId,
     seed: args.seed,
     questionLimit: args.questionLimit,
+    questionTimeLimitSeconds: args.questionTimeLimitSeconds,
+    videoFormat: args.videoFormat,
     fps: 30,
     themeVariant: "dark",
     logoCorner: "top-right",
@@ -120,9 +155,11 @@ async function main() {
   for (const question of quizData.questions) {
     const fileName = `q-${String(question.order + 1).padStart(2, "0")}.mp3`;
     const outputPath = path.join(outDir, fileName);
-    const prompt = `Question ${question.order + 1}. ${question.questionText}. Options: ${question.options
-      .map((opt, i) => `${String.fromCharCode(65 + i)}. ${opt}`)
-      .join(", ")}.`;
+    const prompt = args.includeOptions
+      ? `Question ${question.order + 1}. ${question.questionText}. Options: ${question.options
+          .map((opt, i) => `${String.fromCharCode(65 + i)}. ${opt}`)
+          .join(", ")}.`
+      : `Question ${question.order + 1}. ${question.questionText}`;
 
     const response = await fetch("https://api.openai.com/v1/audio/speech", {
       method: "POST",
@@ -135,6 +172,7 @@ async function main() {
         voice: args.voice,
         input: prompt,
         format: "mp3",
+        speed: args.speed,
       }),
     });
 

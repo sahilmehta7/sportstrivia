@@ -6,9 +6,11 @@ type CoverSceneProps = {
   fps: number;
   title: string;
   coverImageUrl: string | null;
+  videoFormat: "landscape" | "shorts";
 };
 
-export const CoverScene: React.FC<CoverSceneProps> = ({ fps, title, coverImageUrl }) => {
+export const CoverScene: React.FC<CoverSceneProps> = ({ fps, title, coverImageUrl, videoFormat }) => {
+  const isShorts = videoFormat === "shorts";
   const frame = useCurrentFrame();
   const reveal = spring({
     frame,
@@ -49,9 +51,9 @@ export const CoverScene: React.FC<CoverSceneProps> = ({ fps, title, coverImageUr
       <div
         style={{
           position: "absolute",
-          left: 80,
-          right: 80,
-          bottom: 84,
+          left: isShorts ? 56 : 80,
+          right: isShorts ? 56 : 80,
+          bottom: isShorts ? 140 : 84,
           color: coverImageUrl ? "#FFFFFF" : "#0B1220",
           opacity: titleOpacity,
         }}
@@ -62,8 +64,8 @@ export const CoverScene: React.FC<CoverSceneProps> = ({ fps, title, coverImageUr
             textTransform: "uppercase",
             letterSpacing: "0.18em",
             fontWeight: 700,
-            fontSize: 22,
-            marginBottom: 16,
+            fontSize: isShorts ? 18 : 22,
+            marginBottom: isShorts ? 12 : 16,
           }}
         >
           SportsTrivia
@@ -76,7 +78,7 @@ export const CoverScene: React.FC<CoverSceneProps> = ({ fps, title, coverImageUr
             letterSpacing: "-0.012em",
             lineHeight: 0.95,
             fontWeight: 900,
-            fontSize: 108,
+            fontSize: isShorts ? 78 : 108,
             textWrap: "balance",
           }}
         >

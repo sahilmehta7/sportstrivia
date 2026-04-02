@@ -23,9 +23,11 @@ type QuestionSceneProps = {
   index: number;
   total: number;
   showAnswerReveal: boolean;
+  videoFormat: "landscape" | "shorts";
 };
 
 const TICK_SFX_COUNTDOWN_WINDOW_SECONDS = 5;
+const formatOptionText = (value: string) => value.trim().toUpperCase();
 
 export const QuestionScene: React.FC<QuestionSceneProps> = ({
   fps,
@@ -33,7 +35,9 @@ export const QuestionScene: React.FC<QuestionSceneProps> = ({
   index,
   total,
   showAnswerReveal,
+  videoFormat,
 }) => {
+  const isShorts = videoFormat === "shorts";
   const frame = useCurrentFrame();
   const entranceFrames = getQuestionEntranceFrames(fps);
   const activeFrames = getQuestionActiveFramesForSeconds(question.timeLimitSeconds, fps);
@@ -69,15 +73,28 @@ export const QuestionScene: React.FC<QuestionSceneProps> = ({
   const timerFillColor = isUrgent ? athleticDarkTokens.timer.urgentFill : athleticDarkTokens.timer.fill;
   const questionLabel = `Question ${index + 1} of ${total}`;
   const questionLength = question.questionText.length;
-  const questionFontSize =
-    questionLength > 120 ? 56 : questionLength > 90 ? 64 : questionLength > 60 ? 74 : 86;
+  const questionFontSize = isShorts
+    ? questionLength > 120
+      ? 42
+      : questionLength > 90
+        ? 48
+        : questionLength > 60
+          ? 54
+          : 62
+    : questionLength > 120
+      ? 52
+      : questionLength > 90
+        ? 60
+        : questionLength > 60
+          ? 70
+          : 82;
 
   return (
     <AbsoluteFill
       style={{
         justifyContent: "center",
         alignItems: "stretch",
-        padding: "0 110px",
+        padding: isShorts ? "0 34px" : "0 76px",
         color: athleticDarkTokens.text.primary,
       }}
     >
@@ -102,7 +119,7 @@ export const QuestionScene: React.FC<QuestionSceneProps> = ({
           border: `1px solid ${athleticDarkTokens.card.border}`,
           background: athleticDarkTokens.card.fill,
           boxShadow: "0 8px 22px rgba(0,0,0,0.08)",
-          padding: "52px 56px 44px",
+          padding: isShorts ? "34px 28px 26px" : "44px 46px 34px",
         }}
       >
         <div
@@ -130,7 +147,7 @@ export const QuestionScene: React.FC<QuestionSceneProps> = ({
               textTransform: "uppercase",
               color: athleticDarkTokens.text.secondary,
               fontWeight: 700,
-              fontSize: 20,
+              fontSize: isShorts ? 15 : 20,
             }}
           >
             {questionLabel}
@@ -141,7 +158,7 @@ export const QuestionScene: React.FC<QuestionSceneProps> = ({
               textAlign: "right",
               fontFamily: athleticTypography.title,
               fontWeight: 800,
-              fontSize: 74,
+              fontSize: isShorts ? 62 : 74,
               color: timerFillColor,
               letterSpacing: "-0.03em",
               lineHeight: 0.9,
@@ -173,7 +190,7 @@ export const QuestionScene: React.FC<QuestionSceneProps> = ({
 
         <h2
           style={{
-            margin: "38px 0 0",
+            margin: isShorts ? "18px 0 0" : "24px 0 0",
             fontFamily: athleticTypography.title,
             fontSize: questionFontSize,
             lineHeight: 1.05,
@@ -181,9 +198,9 @@ export const QuestionScene: React.FC<QuestionSceneProps> = ({
             textTransform: "uppercase",
             fontWeight: 800,
             textWrap: "balance",
-            maxHeight: 380,
+            maxHeight: isShorts ? 520 : 400,
             overflow: "hidden",
-            maxWidth: 1320,
+            width: "100%",
           }}
         >
           {question.questionText}
@@ -191,11 +208,11 @@ export const QuestionScene: React.FC<QuestionSceneProps> = ({
 
         <div
           style={{
-            marginTop: 24,
+            marginTop: isShorts ? 14 : 16,
             display: "grid",
-            gridTemplateColumns: "1fr 1fr",
-            gap: 12,
-            maxWidth: 1320,
+            gridTemplateColumns: isShorts ? "1fr" : "1fr 1fr",
+            gap: isShorts ? 14 : 16,
+            width: "100%",
           }}
         >
           {question.options.slice(0, 4).map((option, optionIndex) => {
@@ -207,8 +224,8 @@ export const QuestionScene: React.FC<QuestionSceneProps> = ({
                   border: `1px solid ${isRevealPhase && isCorrect ? athleticDarkTokens.timer.fill : athleticDarkTokens.card.border}`,
                   background: isRevealPhase && isCorrect ? "rgba(15,118,110,0.12)" : "#FFFFFF",
                   borderRadius: 12,
-                  padding: "12px 14px",
-                  minHeight: 64,
+                  padding: isShorts ? "12px 14px" : "12px 16px",
+                  minHeight: isShorts ? 62 : 66,
                   display: "flex",
                   alignItems: "center",
                   gap: 10,
@@ -236,12 +253,14 @@ export const QuestionScene: React.FC<QuestionSceneProps> = ({
                   style={{
                     fontFamily: athleticTypography.body,
                     fontWeight: 700,
-                    fontSize: 28,
+                    fontSize: isShorts ? 28 : 32,
+                    textTransform: "uppercase",
+                    letterSpacing: "0.01em",
                     color: isRevealPhase && isCorrect ? athleticDarkTokens.timer.fill : athleticDarkTokens.text.primary,
                     lineHeight: 1.2,
                   }}
                 >
-                  {option}
+                  {formatOptionText(option)}
                 </div>
               </div>
             );
@@ -250,11 +269,11 @@ export const QuestionScene: React.FC<QuestionSceneProps> = ({
 
         <div
           style={{
-            marginTop: 20,
+            marginTop: 14,
             color: athleticDarkTokens.text.muted,
             fontFamily: athleticTypography.body,
             fontWeight: 700,
-            fontSize: 20,
+            fontSize: isShorts ? 17 : 20,
             letterSpacing: "0.02em",
             textTransform: "uppercase",
           }}
@@ -289,14 +308,14 @@ export const QuestionScene: React.FC<QuestionSceneProps> = ({
       }).map((_, tickIndex) => {
         const secondIndex = Math.max(0, activeSeconds - TICK_SFX_COUNTDOWN_WINDOW_SECONDS) + tickIndex;
         return (
-        <Sequence
-          key={`tick-${question.id}-${secondIndex}`}
-          from={entranceFrames + secondIndex * fps}
-          durationInFrames={Math.max(1, Math.floor(0.12 * fps))}
-          premountFor={fps}
-        >
-          <Audio src={staticFile("video/sfx/tick-soft.wav")} />
-        </Sequence>
+          <Sequence
+            key={`tick-${question.id}-${secondIndex}`}
+            from={entranceFrames + secondIndex * fps}
+            durationInFrames={Math.max(1, Math.floor(0.12 * fps))}
+            premountFor={fps}
+          >
+            <Audio src={staticFile("video/sfx/tick-soft.wav")} />
+          </Sequence>
         );
       })}
 

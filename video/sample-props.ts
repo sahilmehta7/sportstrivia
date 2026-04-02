@@ -3,6 +3,7 @@ import type { QuizYoutubeLandscapeProps } from "./types";
 
 export const SAMPLE_QUIZ_VIDEO_PROPS: QuizYoutubeLandscapeProps = {
   fps: DEFAULT_FPS,
+  videoFormat: "landscape",
   showAnswerReveal: true,
   themeVariant: DEFAULT_THEME_VARIANT,
   logoCorner: DEFAULT_LOGO_CORNER,

@@ -1,5 +1,5 @@
 import React from "react";
-import { AbsoluteFill, interpolate, spring, useCurrentFrame } from "remotion";
+import { AbsoluteFill, Img, interpolate, spring, useCurrentFrame } from "remotion";
 import { athleticDarkTokens, athleticTypography } from "../style-tokens";
 
 type IntroSceneProps = {
@@ -7,9 +7,19 @@ type IntroSceneProps = {
   title: string;
   sport: string | null;
   difficulty: string;
+  coverImageUrl: string | null;
+  videoFormat: "landscape" | "shorts";
 };
 
-export const IntroScene: React.FC<IntroSceneProps> = ({ fps, title, sport, difficulty }) => {
+export const IntroScene: React.FC<IntroSceneProps> = ({
+  fps,
+  title,
+  sport,
+  difficulty,
+  coverImageUrl,
+  videoFormat,
+}) => {
+  const isShorts = videoFormat === "shorts";
   const frame = useCurrentFrame();
   const reveal = spring({
     frame,
@@ -33,15 +43,39 @@ export const IntroScene: React.FC<IntroSceneProps> = ({ fps, title, sport, diffi
     <AbsoluteFill
       style={{
         justifyContent: "center",
-        padding: "0 120px",
+        padding: isShorts ? "0 56px" : "0 120px",
         color: athleticDarkTokens.text.primary,
       }}
     >
+      {isShorts && coverImageUrl ? (
+        <>
+          <Img
+            src={coverImageUrl}
+            style={{
+              position: "absolute",
+              inset: 0,
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
+              opacity: 0.32,
+            }}
+          />
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              background:
+                "linear-gradient(180deg, rgba(248,250,252,0.72) 0%, rgba(248,250,252,0.92) 42%, rgba(248,250,252,0.96) 100%)",
+            }}
+          />
+        </>
+      ) : null}
       <div
         style={{
           opacity,
           transform: `translateY(${translateY}px)`,
-          maxWidth: 1450,
+          maxWidth: isShorts ? "100%" : 1450,
+          position: "relative",
         }}
       >
         <div
@@ -50,9 +84,9 @@ export const IntroScene: React.FC<IntroSceneProps> = ({ fps, title, sport, diffi
             textTransform: "uppercase",
             letterSpacing: "0.28em",
             color: athleticDarkTokens.text.secondary,
-            fontSize: 24,
+            fontSize: isShorts ? 18 : 24,
             fontWeight: 700,
-            marginBottom: 22,
+            marginBottom: isShorts ? 16 : 22,
           }}
         >
           SportsTrivia YouTube Challenge
@@ -63,7 +97,7 @@ export const IntroScene: React.FC<IntroSceneProps> = ({ fps, title, sport, diffi
             textTransform: "uppercase",
             letterSpacing: "-0.015em",
             lineHeight: 0.92,
-            fontSize: 112,
+            fontSize: isShorts ? 76 : 112,
             margin: 0,
             textWrap: "balance",
           }}
@@ -72,10 +106,10 @@ export const IntroScene: React.FC<IntroSceneProps> = ({ fps, title, sport, diffi
         </h1>
         <p
           style={{
-            marginTop: 28,
+            marginTop: isShorts ? 20 : 28,
             marginBottom: 0,
             fontFamily: athleticTypography.body,
-            fontSize: 36,
+            fontSize: isShorts ? 28 : 36,
             fontWeight: 700,
             color: athleticDarkTokens.text.secondary,
             lineHeight: 1.25,
@@ -87,4 +121,3 @@ export const IntroScene: React.FC<IntroSceneProps> = ({ fps, title, sport, diffi
     </AbsoluteFill>
   );
 };
-
