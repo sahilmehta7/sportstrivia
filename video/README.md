@@ -82,6 +82,12 @@ Generate question voiceovers:
 
 - `npm run video:tts -- --quizSlug=<slug> [--seed=my-seed]`
 
+Defaults:
+- model: `gpt-4o-mini-tts`
+- voice: `cedar`
+- speed: `1.02` (clamped to `0.98`-`1.08` to keep delivery natural)
+- style: strong quizmaster instructions (live host tone with controlled dramatic lift and question-ending inflection)
+
 This creates files in:
 
 - `public/video/voiceovers/<quiz-slug>/q-01.mp3`, `q-02.mp3`, etc.

@@ -16,9 +16,9 @@ Optional:
   --questionTimeLimitSeconds=12
   --videoFormat=landscape|shorts
   --seed=my-seed
-  --voice=onyx
+  --voice=cedar
   --model=gpt-4o-mini-tts
-  --speed=1.35
+  --speed=1.02
   --includeOptions=false
 `;
 
@@ -60,6 +60,20 @@ const parseBooleanArg = (value: string | undefined, fallback: boolean) => {
   if (normalized === "true") return true;
   if (normalized === "false") return false;
   throw new Error(`Invalid boolean: "${value}". Expected true or false.`);
+};
+
+const QUIZMASTER_INSTRUCTIONS =
+  "Speak like an experienced live quiz host. Natural human delivery, confident and engaging. " +
+  "Slight dramatic lift on key nouns, a small pause before the final phrase, and clear upward inflection at the end of each question. " +
+  "Keep it conversational and intelligent, not synthetic, exaggerated, or overly cheerful.";
+
+const MIN_SPEED = 0.98;
+const MAX_SPEED = 1.08;
+
+const normalizeSpeed = (value: number) => {
+  if (value < MIN_SPEED) return MIN_SPEED;
+  if (value > MAX_SPEED) return MAX_SPEED;
+  return value;
 };
 
 const parseArgs = (argv: string[]): Args => {
@@ -108,9 +122,9 @@ const parseArgs = (argv: string[]): Args => {
     questionLimit: parseIntArg(map.get("questionLimit")),
     questionTimeLimitSeconds: parseIntArg(map.get("questionTimeLimitSeconds")),
     videoFormat: (map.get("videoFormat") as "landscape" | "shorts" | undefined) ?? "landscape",
-    voice: map.get("voice") ?? "onyx",
+    voice: map.get("voice") ?? "cedar",
     model: map.get("model") ?? "gpt-4o-mini-tts",
-    speed: parseFloatArg(map.get("speed"), 1.35),
+    speed: normalizeSpeed(parseFloatArg(map.get("speed"), 1.02)),
     includeOptions: parseBooleanArg(map.get("includeOptions"), false),
     help,
   };
@@ -151,6 +165,9 @@ async function main() {
   console.log(`[video:tts] Questions: ${quizData.questions.length}`);
   console.log(`[video:tts] Selection seed: ${quizData.selectionSeed}`);
   console.log(`[video:tts] Output dir: ${outDir}`);
+  console.log(`[video:tts] Voice: ${args.voice}`);
+  console.log(`[video:tts] Model: ${args.model}`);
+  console.log(`[video:tts] Speed: ${args.speed.toFixed(2)}`);
 
   for (const question of quizData.questions) {
     const fileName = `q-${String(question.order + 1).padStart(2, "0")}.mp3`;
@@ -171,6 +188,7 @@ async function main() {
         model: args.model,
         voice: args.voice,
         input: prompt,
+        instructions: QUIZMASTER_INSTRUCTIONS,
         format: "mp3",
         speed: args.speed,
       }),
