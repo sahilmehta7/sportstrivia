@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { DEFAULT_FPS, DEFAULT_LOGO_CORNER, DEFAULT_THEME_VARIANT } from "./constants";
+import type { ShortsThemeVariant } from "./shorts/themes";
 
 const nonEmptyString = z.string().trim().min(1);
 
@@ -13,7 +14,7 @@ export const quizVideoRenderInputSchema = z
     fps: z.number().int().min(24).max(60).default(DEFAULT_FPS),
     videoFormat: z.enum(["landscape", "shorts"]).default("landscape"),
     showAnswerReveal: z.boolean().default(true),
-    themeVariant: z.literal(DEFAULT_THEME_VARIANT).default(DEFAULT_THEME_VARIANT),
+    themeVariant: z.enum(["dark", "flare", "ice"]).default(DEFAULT_THEME_VARIANT),
     logoCorner: z.literal(DEFAULT_LOGO_CORNER).default(DEFAULT_LOGO_CORNER),
   })
   .superRefine((value, ctx) => {
@@ -61,7 +62,7 @@ export type QuizYoutubeLandscapeProps = {
   fps: number;
   videoFormat: "landscape" | "shorts";
   showAnswerReveal: boolean;
-  themeVariant: "dark";
+  themeVariant: ShortsThemeVariant;
   logoCorner: "top-right";
   quiz: QuizVideoData["quiz"];
   ctaUrl: string;

@@ -54,8 +54,8 @@ describe("calculateVideoMetadata", () => {
       logoCorner: "top-right",
     });
 
-    // cover 60 + intro 75 + questions (2 * 990) + outro 90
-    expect(metadata.durationInFrames).toBe(2205);
+    // title 135 + section divider 48 + questions (2 * 993) + fact 66 + outro 126
+    expect(metadata.durationInFrames).toBe(2361);
     expect(metadata.defaultOutName).toBe("football-icons-youtube-landscape.mp4");
     expect(metadata.props.questions).toHaveLength(2);
     expect(metadata.props.showAnswerReveal).toBe(true);
@@ -84,7 +84,21 @@ describe("calculateVideoMetadata", () => {
     });
 
     expect(metadata.props.videoFormat).toBe("shorts");
-    expect(metadata.defaultOutName).toBe("football-icons-youtube-shorts.mp4");
+    // intro 75 + questions (2 * 990) + outro 90
+    expect(metadata.durationInFrames).toBe(2145);
+    expect(metadata.defaultOutName).toBe("football-icons-youtube-shorts-dark.mp4");
+  });
+
+  it("includes theme variant in shorts output name", async () => {
+    const metadata = await calculateVideoMetadata({
+      quizSlug: "football-icons",
+      fps: 30,
+      videoFormat: "shorts",
+      themeVariant: "flare",
+      logoCorner: "top-right",
+    });
+
+    expect(metadata.defaultOutName).toBe("football-icons-youtube-shorts-flare.mp4");
   });
 
   it("computes duration from per-question time limits", async () => {
@@ -140,7 +154,7 @@ describe("calculateVideoMetadata", () => {
       logoCorner: "top-right",
     });
 
-    // cover 60 + intro 75 + (390 + 690 + 990) + outro 90
-    expect(metadata.durationInFrames).toBe(2295);
+    // title 135 + section divider 48 + questions (393 + 693 + 993) + fact 66 + outro 126
+    expect(metadata.durationInFrames).toBe(2454);
   });
 });

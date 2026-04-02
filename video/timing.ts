@@ -6,6 +6,8 @@ import {
   QUESTION_BUFFER_SECONDS,
   QUESTION_ENTRANCE_SECONDS,
 } from "./constants";
+import { getLandscapeVideoDurationInFrames } from "./landscape/episode";
+import type { QuizVideoQuestion } from "./types";
 
 const toFrames = (seconds: number, fps: number) => Math.round(seconds * fps);
 
@@ -20,13 +22,35 @@ export const getQuestionBlockFrames = (fps: number, timeLimitSeconds: number) =>
   getQuestionEntranceFrames(fps) + getQuestionActiveFramesForSeconds(timeLimitSeconds, fps) + getQuestionBufferFrames(fps);
 export const getOutroFrames = (fps: number) => toFrames(OUTRO_DURATION_SECONDS, fps);
 
-export const getVideoDurationInFrames = (timeLimitSecondsList: number[], fps: number) => {
+type VideoDurationOptions = {
+  includeCover?: boolean;
+};
+
+export const getVideoDurationInFrames = (
+  timeLimitSecondsList: number[],
+  fps: number,
+  options: VideoDurationOptions = {}
+) => {
+  const includeCover = options.includeCover ?? true;
+  if (includeCover) {
+    const questions: QuizVideoQuestion[] = timeLimitSecondsList.map((timeLimitSeconds, index) => ({
+      id: `q-${index + 1}`,
+      order: index,
+      questionText: "",
+      timeLimitSeconds,
+      options: [],
+      correctAnswerIndex: 0,
+      voiceoverSrc: null,
+    }));
+    return getLandscapeVideoDurationInFrames(questions, fps, true);
+  }
+
   const questionFrames = timeLimitSecondsList.reduce((acc, timeLimitSeconds) => {
     return acc + getQuestionBlockFrames(fps, timeLimitSeconds);
   }, 0);
 
   return (
-    getCoverFrames(fps) +
+    (includeCover ? getCoverFrames(fps) : 0) +
     getIntroFrames(fps) +
     questionFrames +
     getOutroFrames(fps)

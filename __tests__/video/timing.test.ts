@@ -12,7 +12,15 @@ describe("video timing", () => {
     const fps = 30;
     const durationInFrames = getVideoDurationInFrames([10, 20, 30], fps);
 
-    // cover 60 + intro 75 + (390 + 690 + 990) + outro 90
-    expect(durationInFrames).toBe(2295);
+    // title 135 + section divider 48 + questions (393 + 693 + 993) + fact 66 + outro 126
+    expect(durationInFrames).toBe(2454);
+  });
+
+  it("can compute duration without cover for shorts flow", () => {
+    const fps = 30;
+    const durationInFrames = getVideoDurationInFrames([10, 20, 30], fps, { includeCover: false });
+
+    // intro 75 + (390 + 690 + 990) + outro 90
+    expect(durationInFrames).toBe(2235);
   });
 });

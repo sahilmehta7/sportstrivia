@@ -6,11 +6,39 @@ import { IntroScene } from "./components/IntroScene";
 import { LayeredBackground } from "./components/LayeredBackground";
 import { OutroScene } from "./components/OutroScene";
 import { QuestionScene } from "./components/QuestionScene";
+import { LandscapeQuizExperience } from "./landscape/LandscapeQuizExperience";
+import { ShortsQuizExperience } from "./shorts/ShortsQuizExperience";
 import { getCoverFrames, getIntroFrames, getOutroFrames, getQuestionBlockFrames } from "./timing";
 import type { QuizYoutubeLandscapeProps } from "./types";
 
 export const QuizYoutubeLandscape: React.FC<QuizYoutubeLandscapeProps> = (props) => {
   const { fps, videoFormat, quiz, questions, ctaUrl, showAnswerReveal } = props;
+  if (videoFormat === "shorts") {
+    return (
+      <ShortsQuizExperience
+        fps={fps}
+        quiz={quiz}
+        ctaUrl={ctaUrl}
+        questions={questions}
+        showAnswerReveal={showAnswerReveal}
+        themeVariant={props.themeVariant}
+      />
+    );
+  }
+
+  if (videoFormat === "landscape") {
+    return (
+      <LandscapeQuizExperience
+        fps={fps}
+        quiz={quiz}
+        questions={questions}
+        ctaUrl={ctaUrl}
+        showAnswerReveal={showAnswerReveal}
+        themeVariant={props.themeVariant}
+      />
+    );
+  }
+
   const coverFrames = getCoverFrames(fps);
   const introFrames = getIntroFrames(fps);
   const outroFrames = getOutroFrames(fps);

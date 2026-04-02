@@ -1,4 +1,5 @@
 import { loadQuizForVideo } from "./load-quiz-for-video";
+import { getLandscapeVideoDurationInFrames } from "./landscape/episode";
 import { getVideoDurationInFrames } from "./timing";
 import {
   quizVideoRenderInputSchema,
@@ -11,6 +12,11 @@ const safeOutName = (value: string) =>
     .toLowerCase()
     .replace(/[^a-z0-9-]+/g, "-")
     .replace(/^-+|-+$/g, "");
+
+const getDefaultOutName = (props: QuizYoutubeLandscapeProps) => {
+  const themeSuffix = props.videoFormat === "shorts" ? `-${props.themeVariant}` : "";
+  return `${safeOutName(props.quiz.slug || props.quiz.title)}-youtube-${props.videoFormat}${themeSuffix}.mp4`;
+};
 
 export const calculateVideoMetadata = async (rawInput: QuizVideoRenderInputRaw) => {
   const input = quizVideoRenderInputSchema.parse(rawInput);
@@ -27,11 +33,15 @@ export const calculateVideoMetadata = async (rawInput: QuizVideoRenderInputRaw) 
     questions: quizData.questions,
   };
 
-  const durationInFrames = getVideoDurationInFrames(
-    props.questions.map((question) => question.timeLimitSeconds),
-    props.fps
-  );
-  const defaultOutName = `${safeOutName(props.quiz.slug || props.quiz.title)}-youtube-${props.videoFormat}.mp4`;
+  const durationInFrames =
+    props.videoFormat === "landscape"
+      ? getLandscapeVideoDurationInFrames(props.questions, props.fps, props.showAnswerReveal)
+      : getVideoDurationInFrames(
+          props.questions.map((question) => question.timeLimitSeconds),
+          props.fps,
+          { includeCover: false }
+        );
+  const defaultOutName = getDefaultOutName(props);
 
   return {
     durationInFrames,

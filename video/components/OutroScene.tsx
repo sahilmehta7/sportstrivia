@@ -1,5 +1,6 @@
 import React from "react";
 import { AbsoluteFill, Img, interpolate, spring, useCurrentFrame } from "remotion";
+import qrcode from "qrcode-generator";
 import { athleticDarkTokens, athleticTypography } from "../style-tokens";
 
 type OutroSceneProps = {
@@ -11,9 +12,12 @@ type OutroSceneProps = {
 
 export const OutroScene: React.FC<OutroSceneProps> = ({ fps, ctaUrl, quizTitle, videoFormat }) => {
   const isShorts = videoFormat === "shorts";
-  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=${isShorts ? 520 : 420}x${
-    isShorts ? 520 : 420
-  }&data=${encodeURIComponent(ctaUrl)}`;
+  const qrUrl = React.useMemo(() => {
+    const qr = qrcode(0, "M");
+    qr.addData(ctaUrl);
+    qr.make();
+    return qr.createDataURL(isShorts ? 16 : 14, 0);
+  }, [ctaUrl, isShorts]);
   const frame = useCurrentFrame();
   const reveal = spring({
     frame,

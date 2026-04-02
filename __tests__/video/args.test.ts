@@ -48,4 +48,15 @@ describe("video cli args", () => {
       /expected "landscape" or "shorts"/i
     );
   });
+
+  it("throws when non-dark theme is used for landscape", () => {
+    expect(() => parseCliArgs(["--quizSlug=my-quiz", "--themeVariant=flare"])).toThrow(
+      /themevariant is only supported for shorts/i
+    );
+  });
+
+  it("parses shorts theme variants", () => {
+    const parsed = parseCliArgs(["--quizSlug=my-quiz", "--videoFormat=shorts", "--themeVariant=ice"]);
+    expect(parsed.input.themeVariant).toBe("ice");
+  });
 });

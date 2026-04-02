@@ -19,6 +19,7 @@ Optional:
 - `--questionLimit=<n>`
 - `--questionTimeLimitSeconds=<n>` (optional override for all selected questions)
 - `--videoFormat=landscape|shorts` (default: `landscape`)
+- `--themeVariant=dark|flare|ice` (default: `dark`, shorts-only)
 - `--fps=<n>` (default: 30)
 - `--showAnswerReveal=<true|false>` (default: true)
 - `--seed=<value>` (optional; if omitted, uses deterministic daily seed)
@@ -30,7 +31,11 @@ Optional:
 - Questions are loaded from Prisma with options and correct answer index for reveal.
 - Question timer duration follows each question's `timeLimitSeconds` (with quiz/default fallback when needed).
 - Logo is fixed at top-right (`public/logo.png`).
-- Visual style is fixed for v1 (`themeVariant="dark"`, `logoCorner="top-right"`). These are not runtime CLI flags.
+- `shorts` uses a dedicated cinematic motion package with theme variants:
+  - `dark` (Obsidian Arena)
+  - `flare` (Stadium Flare)
+  - `ice` (Ice Broadcast)
+- Landscape keeps the existing design system.
 
 ## Quick Usage
 
@@ -42,6 +47,7 @@ Examples:
 - `npm run video:quick -- --quizSlug=legends-of-the-ipl-quiz`
 - `npm run video:quick -- --quizSlug=legends-of-the-ipl-quiz --questionLimit=8 --showAnswerReveal=false --seed=episode-01`
 - `npm run video:quick -- --quizSlug=legends-of-the-ipl-quiz --videoFormat=shorts --questionTimeLimitSeconds=12`
+- `npm run video:quick -- --quizSlug=legends-of-the-ipl-quiz --videoFormat=shorts --themeVariant=flare`
 - `npm run video:render -- --quizSlug=legends-of-the-ipl-quiz --out=./out/legends.mp4`
 - `npm run video:metadata -- --quizSlug=legends-of-the-ipl-quiz --seed=episode-01`
 
@@ -62,7 +68,7 @@ Default quick output folder:
 - `./out/videos/YYYY-MM-DD/`
 
 Default render output folder (if `--out` is not provided):
-- `./out/<quiz-slug>-youtube-quiz.mp4`
+- `./out/<quiz-slug>-youtube-<landscape|shorts>.mp4`
 
 ## Answer Reveal Behavior
 
@@ -79,6 +85,7 @@ Generate question voiceovers:
 This creates files in:
 
 - `public/video/voiceovers/<quiz-slug>/q-01.mp3`, `q-02.mp3`, etc.
+- `public/video/voiceovers/**` is gitignored by default.
 
 If files exist, the video auto-plays them per question. If missing, video renders without voiceover.
 
