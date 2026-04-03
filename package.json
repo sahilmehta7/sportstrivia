@@ -11,6 +11,8 @@
     "video:render": "tsx video/cli/render-video.ts",
     "video:metadata": "tsx video/cli/print-metadata.ts",
     "video:quick": "tsx scripts/video-quick.ts",
+    "video:reels": "tsx scripts/video-render-reels.ts",
+    "video:reels:april": "tsx scripts/video-render-reels.ts --plan=april-2026",
     "video:tts": "tsx scripts/video-generate-tts.ts",
     "lint": "eslint .",
     "test": "jest",

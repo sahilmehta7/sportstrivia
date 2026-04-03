@@ -65,8 +65,8 @@ const DARK_THEME: ShortsTheme = {
   },
   text: {
     primary: "#ECF6FF",
-    secondary: "rgba(206,232,255,0.84)",
-    muted: "rgba(206,232,255,0.6)",
+    secondary: "rgba(220,239,255,0.9)",
+    muted: "rgba(220,239,255,0.68)",
     accent: "#67E8F9",
   },
   timer: {
@@ -110,8 +110,8 @@ const FLARE_THEME: ShortsTheme = {
   },
   text: {
     primary: "#FFF2EC",
-    secondary: "rgba(255,220,206,0.86)",
-    muted: "rgba(255,220,206,0.6)",
+    secondary: "rgba(255,229,217,0.92)",
+    muted: "rgba(255,229,217,0.7)",
     accent: "#FDBA74",
   },
   timer: {
@@ -155,8 +155,8 @@ const ICE_THEME: ShortsTheme = {
   },
   text: {
     primary: "#E6F8FF",
-    secondary: "rgba(200,238,252,0.86)",
-    muted: "rgba(200,238,252,0.6)",
+    secondary: "rgba(212,244,255,0.92)",
+    muted: "rgba(212,244,255,0.7)",
     accent: "#7DD3FC",
   },
   timer: {

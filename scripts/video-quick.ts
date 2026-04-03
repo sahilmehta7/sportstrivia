@@ -32,6 +32,7 @@ export const buildQuickRenderArgs = (args: {
   if (input.questionLimit) renderArgs.push(`--questionLimit=${input.questionLimit}`);
   if (input.questionTimeLimitSeconds) renderArgs.push(`--questionTimeLimitSeconds=${input.questionTimeLimitSeconds}`);
   renderArgs.push(`--videoFormat=${input.videoFormat}`);
+  renderArgs.push(`--themeVariant=${input.themeVariant}`);
   renderArgs.push(`--showAnswerReveal=${input.showAnswerReveal}`);
 
   return renderArgs;
@@ -41,8 +42,8 @@ const usage = `
 Quick video generator for SportsTrivia quiz videos.
 
 Usage:
-  npm run video:quick -- --quizSlug=<slug> [--questionLimit=10] [--questionTimeLimitSeconds=12] [--videoFormat=landscape|shorts] [--fps=30] [--showAnswerReveal=true] [--seed=my-seed]
-  npm run video:quick -- --quizId=<id> [--questionLimit=10] [--questionTimeLimitSeconds=12] [--videoFormat=landscape|shorts] [--fps=30] [--showAnswerReveal=true] [--seed=my-seed]
+  npm run video:quick -- --quizSlug=<slug> [--questionLimit=10] [--questionTimeLimitSeconds=12] [--videoFormat=landscape|shorts] [--themeVariant=dark|flare|ice] [--fps=30] [--showAnswerReveal=true] [--seed=my-seed]
+  npm run video:quick -- --quizId=<id> [--questionLimit=10] [--questionTimeLimitSeconds=12] [--videoFormat=landscape|shorts] [--themeVariant=dark|flare|ice] [--fps=30] [--showAnswerReveal=true] [--seed=my-seed]
 
 Optional:
   --outputDir=./out/videos
@@ -98,6 +99,7 @@ const parseArgs = (argv: string[]): QuickArgs => {
     questionLimit: globalThis.process.env.npm_config_questionlimit,
     questionTimeLimitSeconds: globalThis.process.env.npm_config_questiontimelimitseconds,
     videoFormat: globalThis.process.env.npm_config_videoformat,
+    themeVariant: globalThis.process.env.npm_config_themevariant,
     fps: globalThis.process.env.npm_config_fps,
     showAnswerReveal: globalThis.process.env.npm_config_showanswerreveal,
     outputDir: globalThis.process.env.npm_config_outputdir,
@@ -137,7 +139,7 @@ const parseArgs = (argv: string[]): QuickArgs => {
     videoFormat: (map.get("videoFormat") as "landscape" | "shorts" | undefined) ?? "landscape",
     fps: parseIntArg(map.get("fps"), "fps"),
     showAnswerReveal: parseBooleanArg(map.get("showAnswerReveal"), "showAnswerReveal"),
-    themeVariant: "dark",
+    themeVariant: (map.get("themeVariant") as "dark" | "flare" | "ice" | undefined) ?? "dark",
     logoCorner: "top-right",
   });
 

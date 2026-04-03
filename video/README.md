@@ -63,12 +63,27 @@ Examples:
    - `npm run video:quick -- --quizSlug=<slug> --outputDir=./out/youtube`
 5. Set a custom filename:
    - `npm run video:quick -- --quizSlug=<slug> --fileName=barcelona-episode-01.mp4`
+6. Render a shorts variant theme:
+   - `npm run video:quick -- --quizSlug=<slug> --videoFormat=shorts --themeVariant=flare`
 
 Default quick output folder:
 - `./out/videos/YYYY-MM-DD/`
 
 Default render output folder (if `--out` is not provided):
 - `./out/<quiz-slug>-youtube-<landscape|shorts>.mp4`
+
+## Batch Reels Rendering
+
+Render the April 2026 social reel plan:
+
+1. Dry run:
+   - `npm run video:reels -- --plan=april-2026 --dryRun=true`
+2. Render all entries:
+   - `npm run video:reels -- --plan=april-2026`
+3. Render a subset:
+   - `npm run video:reels -- --plan=april-2026 --limit=3`
+4. Use a custom output folder:
+   - `npm run video:reels -- --plan=april-2026 --outputDir=./out/reels/custom`
 
 ## Answer Reveal Behavior
 

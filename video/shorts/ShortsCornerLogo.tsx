@@ -11,14 +11,14 @@ export const ShortsCornerLogo: React.FC<ShortsCornerLogoProps> = ({ theme }) => 
     <div
       style={{
         position: "absolute",
-        top: 22,
-        right: 22,
-        width: 122,
-        height: 122,
-        borderRadius: 24,
+        top: 26,
+        right: 24,
+        width: 108,
+        height: 108,
+        borderRadius: 20,
         background: theme.brand.plate,
         border: `1px solid ${theme.brand.border}`,
-        boxShadow: "0 18px 36px rgba(0,0,0,0.38)",
+        boxShadow: "0 14px 28px rgba(0,0,0,0.34)",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
@@ -29,10 +29,10 @@ export const ShortsCornerLogo: React.FC<ShortsCornerLogoProps> = ({ theme }) => 
       <Img
         src={staticFile("logo-dark.png")}
         style={{
-          width: 86,
-          height: 86,
+          width: 72,
+          height: 72,
           objectFit: "contain",
-          opacity: 0.98,
+          opacity: 0.95,
           filter: "brightness(1.06) contrast(1.04)",
         }}
       />

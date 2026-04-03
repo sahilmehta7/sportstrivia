@@ -12,7 +12,6 @@ import type { QuizVideoQuestion } from "../types";
 import type { LandscapeTheme } from "./themes";
 import { landscapeBodyFont, landscapeHeadlineFont } from "./themes";
 
-type QuestionLayoutVariant = "split" | "spotlight" | "ticker";
 type RevealVariant = "flash" | "focus";
 
 type QuestionEditorialSceneProps = {
@@ -27,11 +26,6 @@ type QuestionEditorialSceneProps = {
   holdFrames: number;
   showAnswerReveal: boolean;
   theme: LandscapeTheme;
-};
-
-const layoutVariantFor = (index: number): QuestionLayoutVariant => {
-  const variants: QuestionLayoutVariant[] = ["split", "spotlight", "ticker"];
-  return variants[index % variants.length];
 };
 
 const revealVariantFor = (index: number): RevealVariant => {
@@ -54,7 +48,6 @@ export const QuestionEditorialScene: React.FC<QuestionEditorialSceneProps> = ({
   theme,
 }) => {
   const frame = useCurrentFrame();
-  const layoutVariant = layoutVariantFor(index);
   const revealVariant = revealVariantFor(index);
   const introProgress = spring({
     frame,
@@ -139,7 +132,7 @@ export const QuestionEditorialScene: React.FC<QuestionEditorialSceneProps> = ({
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: layoutVariant === "spotlight" ? "1fr" : "1.25fr 0.75fr",
+          gridTemplateColumns: "1fr",
           gap: 24,
           alignItems: "stretch",
           flex: 1,
@@ -158,23 +151,82 @@ export const QuestionEditorialScene: React.FC<QuestionEditorialSceneProps> = ({
         >
           <div
             style={{
-              fontFamily: landscapeBodyFont,
-              textTransform: "uppercase",
-              letterSpacing: "0.1em",
-              color: theme.text.muted,
-              fontSize: 16,
-              fontWeight: 700,
+              display: "flex",
+              alignItems: "flex-start",
+              justifyContent: "space-between",
+              gap: 20,
             }}
           >
-            Trivia prompt
+            <div
+              style={{
+                fontFamily: landscapeBodyFont,
+                textTransform: "uppercase",
+                letterSpacing: "0.1em",
+                color: theme.text.muted,
+                fontSize: 16,
+                fontWeight: 700,
+              }}
+            >
+              Trivia prompt
+            </div>
+            <div
+              style={{
+                minWidth: 260,
+                borderRadius: 14,
+                border: `1px solid ${theme.surfaces.panelBorder}`,
+                background: theme.surfaces.softPanel,
+                padding: "10px 12px",
+              }}
+            >
+              <div
+                style={{
+                  fontFamily: landscapeBodyFont,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.1em",
+                  color: theme.text.muted,
+                  fontWeight: 700,
+                  fontSize: 13,
+                }}
+              >
+                Clock
+              </div>
+              <div
+                style={{
+                  marginTop: 4,
+                  fontFamily: landscapeHeadlineFont,
+                  fontSize: 64,
+                  lineHeight: 0.84,
+                  color: isUrgent ? theme.timer.urgent : theme.timer.fill,
+                  letterSpacing: "-0.03em",
+                }}
+              >
+                {String(countdownSeconds).padStart(2, "0")}
+              </div>
+              <div
+                style={{
+                  marginTop: 8,
+                  height: 6,
+                  borderRadius: 999,
+                  background: theme.timer.track,
+                  overflow: "hidden",
+                }}
+              >
+                <div
+                  style={{
+                    height: "100%",
+                    width: `${Math.max(0, (1 - timerProgress) * 100)}%`,
+                    background: isUrgent ? theme.timer.urgent : theme.timer.fill,
+                  }}
+                />
+              </div>
+            </div>
           </div>
           <h2
             style={{
               margin: "14px 0 0",
               fontFamily: landscapeHeadlineFont,
-              textTransform: "uppercase",
-              fontSize: questionText.length > 100 ? 66 : questionText.length > 70 ? 76 : 86,
-              lineHeight: 0.92,
+              fontSize: questionText.length > 100 ? 52 : questionText.length > 70 ? 58 : 64,
+              lineHeight: 1.02,
               letterSpacing: "-0.015em",
               textWrap: "balance",
             }}
@@ -186,7 +238,7 @@ export const QuestionEditorialScene: React.FC<QuestionEditorialSceneProps> = ({
             style={{
               marginTop: 26,
               display: "grid",
-              gridTemplateColumns: layoutVariant === "ticker" ? "1fr" : "1fr 1fr",
+              gridTemplateColumns: "1fr 1fr",
               gap: 14,
             }}
           >
@@ -243,81 +295,6 @@ export const QuestionEditorialScene: React.FC<QuestionEditorialSceneProps> = ({
           </div>
         </div>
 
-        {layoutVariant === "spotlight" ? null : (
-          <div
-            style={{
-              borderRadius: 24,
-              border: `1px solid ${theme.surfaces.panelBorder}`,
-              background: theme.surfaces.panel,
-              padding: "26px 24px",
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "space-between",
-              boxShadow: "0 22px 44px rgba(0,0,0,0.28)",
-              opacity: introProgress,
-            }}
-          >
-            <div>
-              <div
-                style={{
-                  fontFamily: landscapeBodyFont,
-                  textTransform: "uppercase",
-                  letterSpacing: "0.1em",
-                  color: theme.text.muted,
-                  fontWeight: 700,
-                  fontSize: 16,
-                }}
-              >
-                Clock
-              </div>
-              <div
-                style={{
-                  marginTop: 8,
-                  fontFamily: landscapeHeadlineFont,
-                  fontSize: 120,
-                  lineHeight: 0.8,
-                  color: isUrgent ? theme.timer.urgent : theme.timer.fill,
-                  letterSpacing: "-0.03em",
-                }}
-              >
-                {String(countdownSeconds).padStart(2, "0")}
-              </div>
-              <div
-                style={{
-                  marginTop: 14,
-                  height: 8,
-                  borderRadius: 999,
-                  background: theme.timer.track,
-                  overflow: "hidden",
-                }}
-              >
-                <div
-                  style={{
-                    height: "100%",
-                    width: `${Math.max(0, (1 - timerProgress) * 100)}%`,
-                    background: isUrgent ? theme.timer.urgent : theme.timer.fill,
-                  }}
-                />
-              </div>
-            </div>
-            <div
-              style={{
-                marginTop: 20,
-                fontFamily: landscapeBodyFont,
-                textTransform: "uppercase",
-                letterSpacing: "0.08em",
-                color: theme.text.secondary,
-                fontWeight: 700,
-                fontSize: 20,
-                lineHeight: 1.3,
-              }}
-            >
-              {revealActive
-                ? `Answer: ${optionLabel(question.correctAnswerIndex)}.`
-                : "Lock your pick before time expires."}
-            </div>
-          </div>
-        )}
       </div>
 
       {revealActive ? (

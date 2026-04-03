@@ -115,7 +115,7 @@ export const TitleSequenceScene: React.FC<TitleSequenceSceneProps> = ({
             fontWeight: 650,
           }}
         >
-          {sport ?? "Mixed Sports"} | {difficulty} | {questionCount} questions | Built for 8-12 minute viewing comfort
+          {sport ?? "Mixed Sports"} | {difficulty} | {questionCount} questions
         </p>
       </div>
     </AbsoluteFill>
