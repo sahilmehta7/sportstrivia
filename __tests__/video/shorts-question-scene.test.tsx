@@ -24,6 +24,14 @@ jest.mock("remotion", () => {
     ),
     Audio: ({ src }: { src: string }) => <div data-testid="audio" data-src={src} />,
     Sequence: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+    interpolate: (value: number, input: [number, number], output: [number, number]) => {
+      const [i0, i1] = input;
+      const [o0, o1] = output;
+      if (value <= i0) return o0;
+      if (value >= i1) return o1;
+      const t = (value - i0) / (i1 - i0);
+      return o0 + (o1 - o0) * t;
+    },
     spring: () => 1,
     staticFile: (assetPath: string) => `/${assetPath.replace(/^\//, "")}`,
     useCurrentFrame: () => mockedFrame,
@@ -58,7 +66,7 @@ describe("ShortsQuestionScene", () => {
     );
 
     const container = screen.getByTestId("shorts-safe-zone");
-    expect(container).toHaveStyle("padding: 172px 40px 236px");
+    expect(container).toHaveStyle("padding: 108px 40px 150px");
     expect(container).toHaveStyle("justify-content: center");
     expect(container).toHaveStyle("overflow: hidden");
   });
@@ -119,5 +127,50 @@ describe("ShortsQuestionScene", () => {
     const optionCard = screen.getByText("Mujeeb Ur Rahman").parentElement;
     expect(optionCard).not.toBeNull();
     expect(optionCard).toHaveStyle("min-height: 58px");
+  });
+
+  it("removes timer progress bars but keeps numeric timer shell", () => {
+    render(
+      <ShortsQuestionScene
+        fps={30}
+        question={buildQuestion("Which spinner became the youngest player to take five wickets?")}
+        index={0}
+        total={10}
+        showAnswerReveal={true}
+        theme={resolveShortsTheme("dark")}
+      />
+    );
+
+    const timerShell = screen.getByTestId("shorts-timer-shell");
+    expect(timerShell).toHaveStyle("box-shadow: none");
+  });
+
+  it("renders confetti only during reveal phase", () => {
+    const { rerender } = render(
+      <ShortsQuestionScene
+        fps={30}
+        question={buildQuestion("Which spinner became the youngest player to take five wickets?")}
+        index={0}
+        total={10}
+        showAnswerReveal={true}
+        theme={resolveShortsTheme("dark")}
+      />
+    );
+
+    expect(screen.queryByTestId("shorts-confetti-layer")).not.toBeInTheDocument();
+
+    mockedFrame = 2000;
+    rerender(
+      <ShortsQuestionScene
+        fps={30}
+        question={buildQuestion("Which spinner became the youngest player to take five wickets?")}
+        index={0}
+        total={10}
+        showAnswerReveal={true}
+        theme={resolveShortsTheme("dark")}
+      />
+    );
+
+    expect(screen.getByTestId("shorts-confetti-layer")).toBeInTheDocument();
   });
 });

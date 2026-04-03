@@ -149,7 +149,7 @@ export function FriendsClient({
 
           <Tabs defaultValue="friends" className="space-y-12">
             <div className="flex justify-center">
-              <TabsList className="h-auto p-1.5 rounded-[2rem] glass border border-white/10 shadow-glass-lg">
+              <TabsList className="surface-public-raised h-auto p-1.5 glass border border-white/10 shadow-glass-lg">
                 {[
                   { value: "friends", label: "Nodes", count: friends.length, icon: Users },
                   { value: "challenges", label: "Quizzes", count: challenges.length, icon: Swords, isOrange: true },
@@ -159,13 +159,13 @@ export function FriendsClient({
                   <TabsTrigger
                     key={tab.value}
                     value={tab.value}
-                    className="rounded-[1.75rem] px-6 lg:px-8 py-3 text-[10px] font-black uppercase tracking-widest transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-neon-cyan/40 relative"
+                    className="control-public px-6 lg:px-8 py-3 text-[10px] font-black uppercase tracking-widest transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-neon-cyan/40 relative"
                   >
                     <tab.icon className="h-3.5 w-3.5 mr-2" />
                     <span className="hidden sm:inline">{tab.label}</span>
                     {tab.count !== undefined && tab.count > 0 && (
                       <span className={cn(
-                        "absolute -top-1 -right-1 h-5 w-5 rounded-full text-white text-[8px] flex items-center justify-center border-2 border-background shadow-lg",
+                        "chip-public absolute -top-1 -right-1 h-5 w-5 text-white text-[8px] flex items-center justify-center border-2 border-background shadow-lg",
                         tab.isOrange ? "bg-secondary shadow-neon-magenta-sm" : "bg-primary-foreground/20"
                       )}>
                         {tab.count}
@@ -184,7 +184,7 @@ export function FriendsClient({
                     placeholder="OPERATOR IDENTIFIER..."
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
-                    className="h-14 pl-12 rounded-2xl glass border-white/10 text-sm font-bold tracking-widest uppercase placeholder:text-white/10 focus:border-primary/40 focus:ring-primary/20 transition-all"
+                    className="control-public h-14 pl-12 glass border-white/10 text-sm font-bold tracking-widest uppercase placeholder:text-white/10 focus:border-primary/40 focus:ring-primary/20 transition-all"
                   />
                 </div>
               </div>

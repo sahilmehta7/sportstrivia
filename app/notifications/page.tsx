@@ -149,7 +149,7 @@ export default function NotificationsPage() {
               </p>
             </div>
             {unreadCount > 0 && (
-              <Button variant="accent" size="lg" onClick={markAllAsRead} className="rounded-full px-8">
+              <Button variant="accent" size="lg" onClick={markAllAsRead} className="control-public px-8">
                 <Check className="mr-2 h-5 w-5" />
                 CLEAR SIGNALS
               </Button>
@@ -175,8 +175,8 @@ export default function NotificationsPage() {
                 </div>
               </div>
             ) : notifications.length === 0 ? (
-              <div className="py-24 text-center space-y-6 rounded-[3rem] glass border border-dashed border-white/10">
-                <div className="h-16 w-16 mx-auto rounded-full glass border border-white/5 flex items-center justify-center text-muted-foreground/20">
+              <div className="surface-public-raised py-24 text-center space-y-6 glass border border-dashed border-white/10">
+                <div className="h-16 w-16 mx-auto control-public glass border border-white/5 flex items-center justify-center text-muted-foreground/20">
                   <BellOff className="h-8 w-8" />
                 </div>
                 <div className="space-y-1">
@@ -195,13 +195,13 @@ export default function NotificationsPage() {
                   return (
                     <div key={notification.id} className="relative group">
                       <div className={cn(
-                        "relative overflow-hidden rounded-2xl glass transition-all duration-300 group-hover:bg-white/5 border",
+                        "surface-public-raised relative overflow-hidden glass transition-all duration-300 group-hover:bg-white/5 border",
                         notification.read ? "border-white/5 opacity-40 grayscale" : "border-white/10 shadow-glass"
                       )}>
                         <Wrapper href={link || ""} className={cn("p-4 block", link && "cursor-pointer")}>
                           <div className="flex items-center gap-6">
                             <div className={cn(
-                              "h-12 w-12 rounded-xl glass border flex items-center justify-center flex-shrink-0 transition-transform group-hover:scale-110",
+                              "control-public h-12 w-12 glass border flex items-center justify-center flex-shrink-0 transition-transform group-hover:scale-110",
                               notification.read ? "border-white/5 text-muted-foreground" : "border-primary/20 text-primary shadow-neon-cyan/10"
                             )}>
                               <Icon className="h-6 w-6" />
@@ -213,7 +213,7 @@ export default function NotificationsPage() {
                               </h4>
                               <div className="flex items-center gap-4 mt-1">
                                 <span className="text-[10px] font-bold tracking-widest text-muted-foreground uppercase">{formatDate(notification.createdAt)}</span>
-                                {!notification.read && <Badge variant="secondary" className="px-1.5 py-0 text-[7px] tracking-widest uppercase h-4">NEW SIGNAL</Badge>}
+                                {!notification.read && <Badge variant="secondary" className="chip-public px-1.5 py-0 text-[7px] tracking-widest uppercase h-4">NEW SIGNAL</Badge>}
                               </div>
                             </div>
 
@@ -223,7 +223,7 @@ export default function NotificationsPage() {
                                   variant="glass"
                                   size="icon"
                                   onClick={(e) => { e.preventDefault(); e.stopPropagation(); markAsRead(notification.id); }}
-                                  className="h-9 w-9 rounded-lg"
+                                  className="control-public h-9 w-9"
                                 >
                                   <Check className="h-4 w-4" />
                                 </Button>
@@ -232,7 +232,7 @@ export default function NotificationsPage() {
                                 variant="ghost"
                                 size="icon"
                                 onClick={(e) => { e.preventDefault(); e.stopPropagation(); deleteNotification(notification.id); }}
-                                className="h-9 w-9 rounded-lg hover:text-red-400"
+                                className="control-public h-9 w-9 hover:text-red-400"
                               >
                                 <Trash2 className="h-4 w-4" />
                               </Button>

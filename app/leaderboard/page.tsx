@@ -83,7 +83,7 @@ export default async function LeaderboardPage() {
       <PageContainer variant="narrow" className="space-y-6 md:space-y-16 lg:space-y-24">
         <header className="hidden md:flex flex-col items-center text-center gap-6 px-4">
           <div className="space-y-4">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full glass border border-white/10 text-[10px] font-black uppercase tracking-widest text-primary shadow-neon-cyan/20">
+            <div className="chip-public inline-flex items-center gap-2 px-3 py-1 glass border border-white/10 text-[10px] font-black uppercase tracking-widest text-primary shadow-neon-cyan/20">
               <span className="relative flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>

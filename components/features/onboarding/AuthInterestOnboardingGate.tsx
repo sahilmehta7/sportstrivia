@@ -114,7 +114,7 @@ export function AuthInterestOnboardingGate() {
     window.localStorage.setItem(skippedKey, "true");
     setVisible(false);
     if (pathname === "/") {
-      router.replace("/quizzes");
+      router.replace("/");
     }
   };
 
@@ -122,7 +122,7 @@ export function AuthInterestOnboardingGate() {
     window.localStorage.setItem(completedKey, "true");
     setVisible(false);
     if (pathname === "/") {
-      router.replace("/quizzes");
+      router.replace("/");
     }
   };
 

@@ -34,6 +34,8 @@
     "db:queries:slow": "tsx scripts/monitor-query-performance.ts --slow-only",
     "db:queries:frequent": "tsx scripts/monitor-query-performance.ts --frequent-only",
     "db:test": "tsx scripts/test-optimizations.ts",
+    "audit:square-edges": "node scripts/audit-square-edges.mjs",
+    "audit:square-edges:strict": "node scripts/audit-square-edges.mjs --strict",
     "lighthouse:audit": "node scripts/run-lighthouse-audits.js localhost",
     "lighthouse:audit:prod": "node scripts/run-lighthouse-audits.js production",
     "lighthouse:audit:all": "node scripts/run-lighthouse-audits.js all",

@@ -5,17 +5,34 @@ import Image from "next/image";
 import { useMemo } from "react";
 import { cn } from "@/lib/utils";
 import { generatePattern } from "@/lib/pattern-generator";
-import { Clock, Users, Play, ShieldAlert, Zap } from "lucide-react";
+import { Clock, Users, Play, Zap } from "lucide-react";
 
 interface ShowcaseQuizCardProps {
   id: string;
   title: string;
   badgeLabel?: string;
-  durationLabel: string;
-  playersLabel: string;
+  metaPrimaryLabel?: string;
+  metaPrimaryValue?: string;
+  metaSecondaryLabel?: string;
+  metaSecondaryValue?: string;
+  metaTertiaryLabel?: string;
+  metaTertiaryValue?: string;
+  /**
+   * @deprecated Use metaPrimaryValue.
+   */
+  durationLabel?: string;
+  /**
+   * @deprecated Use metaSecondaryValue.
+   */
+  playersLabel?: string;
+  /**
+   * @deprecated Use metaTertiaryValue.
+   */
   difficultyLabel?: string;
+  contextLabel?: string;
   accent?: string;
   coverImageUrl?: string | null;
+  ctaLabel?: string;
   className?: string;
   href?: string;
   priority?: boolean;
@@ -24,19 +41,43 @@ interface ShowcaseQuizCardProps {
 export function ShowcaseQuizCard({
   id,
   title,
-  badgeLabel,
+  metaPrimaryLabel,
+  metaPrimaryValue,
+  metaSecondaryLabel,
+  metaSecondaryValue,
+  metaTertiaryLabel,
+  metaTertiaryValue,
   durationLabel,
   playersLabel,
   difficultyLabel,
+  contextLabel,
   accent,
   coverImageUrl,
+  ctaLabel = "PLAY NOW",
   className,
   href,
   priority = false,
 }: ShowcaseQuizCardProps) {
   const pattern = useMemo(() => generatePattern(title), [title]);
-  const label = (badgeLabel ?? "Quiz").toUpperCase();
   const linkHref = href || `/quizzes/${id}`;
+  void ctaLabel;
+  const stats = [
+    {
+      label: metaPrimaryLabel ?? "Duration",
+      value: metaPrimaryValue ?? durationLabel ?? "",
+      icon: Clock,
+    },
+    {
+      label: metaSecondaryLabel ?? "Players",
+      value: metaSecondaryValue ?? playersLabel ?? "",
+      icon: Users,
+    },
+    {
+      label: metaTertiaryLabel ?? "Difficulty",
+      value: metaTertiaryValue ?? difficultyLabel,
+      icon: Zap,
+    },
+  ].filter((entry) => Boolean(entry.value));
 
   return (
     <Link href={linkHref} className={cn("relative group block transition-all duration-300", className)}>
@@ -75,14 +116,6 @@ export function ShowcaseQuizCard({
           {/* Overlay Gradients */}
           <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent opacity-60" />
 
-          {/* Badge */}
-          <div className="absolute top-0 left-0 z-10">
-            <div className="flex items-center gap-2 px-4 py-2 bg-foreground text-background text-[10px] font-bold uppercase tracking-[0.2em]">
-              <ShieldAlert className="h-3 w-3 text-accent" />
-              {label}
-            </div>
-          </div>
-
           {/* Play/Join Indicator */}
           <div className="absolute bottom-4 right-4 z-10 translate-y-2 opacity-0 transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100">
             <div className="bg-accent p-3 text-white shadow-athletic">
@@ -93,25 +126,27 @@ export function ShowcaseQuizCard({
 
         <div className="flex flex-1 flex-col justify-between p-8">
           <div className="space-y-4">
-            <h3 className="text-2xl font-bold uppercase tracking-tighter leading-none font-['Barlow_Condensed',sans-serif] group-hover:text-accent transition-colors line-clamp-2">
-              {title}
-            </h3>
+            <div className="flex items-start justify-between gap-3">
+              <h3 className="text-2xl font-bold uppercase tracking-tighter leading-none font-['Barlow_Condensed',sans-serif] group-hover:text-accent transition-colors line-clamp-2">
+                {title}
+              </h3>
+              {contextLabel ? (
+                <span className="shrink-0 border border-foreground/10 px-2 py-1 text-[8px] font-black uppercase tracking-[0.18em] text-muted-foreground">
+                  {contextLabel}
+                </span>
+              ) : null}
+            </div>
 
-            <div className="flex items-center gap-6">
-              <div className="flex items-center gap-2">
-                <Clock className="h-3.5 w-3.5 text-muted-foreground" />
-                <span className="text-[10px] font-bold tracking-widest uppercase text-muted-foreground">{durationLabel}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Users className="h-3.5 w-3.5 text-muted-foreground" />
-                <span className="text-[10px] font-bold tracking-widest uppercase text-muted-foreground">{playersLabel}</span>
-              </div>
-              {difficultyLabel && (
-                <div className="flex items-center gap-2">
-                  <Zap className="h-3.5 w-3.5 text-muted-foreground" />
-                  <span className="text-[10px] font-bold tracking-widest uppercase text-muted-foreground">{difficultyLabel}</span>
+            <div className="flex flex-wrap items-center gap-4">
+              {stats.map(({ label: statLabel, value, icon: StatIcon }) => (
+                <div key={statLabel} className="flex items-center gap-2">
+                  <StatIcon className="h-3.5 w-3.5 text-muted-foreground" />
+                  <span className="sr-only">{statLabel}</span>
+                  <span className="text-[10px] font-bold tracking-widest uppercase text-muted-foreground">
+                    {value}
+                  </span>
                 </div>
-              )}
+              ))}
             </div>
           </div>
         </div>

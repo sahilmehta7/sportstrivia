@@ -2,6 +2,7 @@ import React from "react";
 import { AbsoluteFill, Img, interpolate, spring, useCurrentFrame } from "remotion";
 import qrcode from "qrcode-generator";
 import type { ShortsTheme } from "./themes";
+const MODERN_SANS = "'Plus Jakarta Sans', 'Manrope', 'Inter', 'Segoe UI', sans-serif";
 
 type ShortsOutroSceneProps = {
   fps: number;
@@ -76,7 +77,7 @@ export const ShortsOutroScene: React.FC<ShortsOutroSceneProps> = ({ fps, ctaUrl,
         <div>
           <div
             style={{
-              fontFamily: "'Barlow Condensed', 'Oswald', 'Arial Narrow', sans-serif",
+              fontFamily: MODERN_SANS,
               textTransform: "uppercase",
               letterSpacing: "0.2em",
               fontWeight: 700,
@@ -89,7 +90,7 @@ export const ShortsOutroScene: React.FC<ShortsOutroSceneProps> = ({ fps, ctaUrl,
           <h2
             style={{
               margin: "12px 0 0 0",
-              fontFamily: "'Barlow Condensed', 'Oswald', 'Arial Narrow', sans-serif",
+              fontFamily: MODERN_SANS,
               fontSize: 94,
               lineHeight: 0.88,
               letterSpacing: "-0.015em",
@@ -103,7 +104,7 @@ export const ShortsOutroScene: React.FC<ShortsOutroSceneProps> = ({ fps, ctaUrl,
           <p
             style={{
               margin: "16px 0 0 0",
-              fontFamily: "'Inter', 'Segoe UI', sans-serif",
+              fontFamily: MODERN_SANS,
               fontSize: 30,
               lineHeight: 1.15,
               color: theme.text.secondary,
@@ -120,7 +121,7 @@ export const ShortsOutroScene: React.FC<ShortsOutroSceneProps> = ({ fps, ctaUrl,
               borderRadius: 999,
               border: `1px solid ${theme.card.border}`,
               padding: "10px 16px",
-              fontFamily: "'Inter', 'Segoe UI', sans-serif",
+              fontFamily: MODERN_SANS,
               fontSize: 18,
               color: theme.text.accent,
               fontWeight: 700,

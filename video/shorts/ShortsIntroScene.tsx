@@ -1,6 +1,7 @@
 import React from "react";
 import { AbsoluteFill, Img, interpolate, spring, useCurrentFrame } from "remotion";
 import type { ShortsTheme } from "./themes";
+const MODERN_SANS = "'Plus Jakarta Sans', 'Manrope', 'Inter', 'Segoe UI', sans-serif";
 
 type ShortsIntroSceneProps = {
   fps: number;
@@ -88,7 +89,7 @@ export const ShortsIntroScene: React.FC<ShortsIntroSceneProps> = ({
       >
         <div
           style={{
-            fontFamily: "'Barlow Condensed', 'Oswald', 'Arial Narrow', sans-serif",
+            fontFamily: MODERN_SANS,
             fontSize: 42,
             fontWeight: 800,
             textTransform: "uppercase",
@@ -102,7 +103,7 @@ export const ShortsIntroScene: React.FC<ShortsIntroSceneProps> = ({
         <div
           style={{
             marginTop: 8,
-            fontFamily: "'Inter', 'Segoe UI', sans-serif",
+            fontFamily: MODERN_SANS,
             fontSize: 26,
             fontWeight: 700,
             color: theme.text.secondary,
@@ -120,7 +121,7 @@ export const ShortsIntroScene: React.FC<ShortsIntroSceneProps> = ({
       >
         <div
           style={{
-            fontFamily: "'Barlow Condensed', 'Oswald', 'Arial Narrow', sans-serif",
+            fontFamily: MODERN_SANS,
             fontSize: 24,
             letterSpacing: "0.28em",
             textTransform: "uppercase",
@@ -133,7 +134,7 @@ export const ShortsIntroScene: React.FC<ShortsIntroSceneProps> = ({
         <h1
           style={{
             margin: "16px 0 0 0",
-            fontFamily: "'Barlow Condensed', 'Oswald', 'Arial Narrow', sans-serif",
+            fontFamily: MODERN_SANS,
             fontSize: titleSize,
             lineHeight: 0.88,
             letterSpacing: "-0.02em",
@@ -157,7 +158,7 @@ export const ShortsIntroScene: React.FC<ShortsIntroSceneProps> = ({
           border: `1px solid ${theme.card.border}`,
           background: "rgba(0,0,0,0.32)",
           color: theme.text.secondary,
-          fontFamily: "'Inter', 'Segoe UI', sans-serif",
+          fontFamily: MODERN_SANS,
           fontWeight: 700,
           fontSize: 22,
           backdropFilter: "blur(8px)",

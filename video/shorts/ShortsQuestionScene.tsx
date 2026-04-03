@@ -13,9 +13,10 @@ import type { QuizVideoQuestion } from "../types";
 import type { ShortsTheme } from "./themes";
 
 const TICK_SFX_COUNTDOWN_WINDOW_SECONDS = 5;
-const SHORTS_SAFE_TOP = 172;
-const SHORTS_SAFE_BOTTOM = 236;
+const SHORTS_SAFE_TOP = 108;
+const SHORTS_SAFE_BOTTOM = 150;
 const SHORTS_SAFE_SIDE = 40;
+const MODERN_SANS = "'Plus Jakarta Sans', 'Manrope', 'Inter', 'Segoe UI', sans-serif";
 
 const PRESERVE_LOWER_PARTICLES = new Set(["de", "da", "del", "van", "von", "bin", "ibn", "ul", "al", "el"]);
 const UPPERCASE_INITIALISMS = new Set([
@@ -71,15 +72,15 @@ const optionLabel = (optionIndex: number) => String.fromCharCode(65 + optionInde
 const getQuestionTier = (length: number) => {
   if (length > 210) {
     return {
-      questionSize: 33,
+      questionSize: 43,
       lineClamp: 10,
-      maxHeight: 440,
+      maxHeight: 520,
       timerSize: 126,
       timerNumberSize: 62,
-      headerLabelSize: 18,
+      headerLabelSize: 22,
       optionMinHeight: 58,
       optionPadding: "6px 12px",
-      optionFontSize: 27,
+      optionFontSize: 35,
       optionGap: 4,
       optionBadgeSize: 28,
       optionBadgeFontSize: 17,
@@ -87,15 +88,15 @@ const getQuestionTier = (length: number) => {
   }
   if (length > 165) {
     return {
-      questionSize: 37,
+      questionSize: 48,
       lineClamp: 9,
-      maxHeight: 408,
+      maxHeight: 500,
       timerSize: 136,
       timerNumberSize: 66,
-      headerLabelSize: 19,
+      headerLabelSize: 23,
       optionMinHeight: 62,
       optionPadding: "7px 13px",
-      optionFontSize: 29,
+      optionFontSize: 38,
       optionGap: 5,
       optionBadgeSize: 30,
       optionBadgeFontSize: 18,
@@ -103,30 +104,30 @@ const getQuestionTier = (length: number) => {
   }
   if (length > 130) {
     return {
-      questionSize: 41,
+      questionSize: 53,
       lineClamp: 8,
-      maxHeight: 370,
+      maxHeight: 470,
       timerSize: 148,
       timerNumberSize: 72,
-      headerLabelSize: 20,
+      headerLabelSize: 24,
       optionMinHeight: 68,
       optionPadding: "8px 14px",
-      optionFontSize: 31,
+      optionFontSize: 40,
       optionGap: 6,
       optionBadgeSize: 32,
       optionBadgeFontSize: 20,
     };
   }
   return {
-    questionSize: 45,
+    questionSize: 58,
     lineClamp: 7,
-    maxHeight: 336,
+    maxHeight: 430,
     timerSize: 158,
     timerNumberSize: 76,
-    headerLabelSize: 20,
+    headerLabelSize: 25,
     optionMinHeight: 74,
     optionPadding: "9px 15px",
-    optionFontSize: 33,
+    optionFontSize: 43,
     optionGap: 8,
     optionBadgeSize: 34,
     optionBadgeFontSize: 20,
@@ -183,6 +184,19 @@ export const ShortsQuestionScene: React.FC<ShortsQuestionSceneProps> = ({
   const tier = getQuestionTier(questionTextLength);
   const points = (index + 1) * 10;
   const revealVariant = index % 2 === 0 ? "flash" : "focus";
+  const confettiParticles = React.useMemo(
+    () =>
+      Array.from({ length: 22 }).map((_, i) => {
+        const seed = (index + 1) * 101 + (question.id.length + 7) * (i + 1);
+        const x = ((Math.sin(seed * 1.13) + 1) / 2) * 100;
+        const drift = (Math.cos(seed * 0.77) * 2 + 2.2) * 26;
+        const size = 5 + ((seed * 13) % 6);
+        const delay = (i % 6) * 0.025;
+        const hueShift = i % 3;
+        return { x, drift, size, delay, hueShift };
+      }),
+    [index, question.id]
+  );
 
   return (
     <AbsoluteFill
@@ -232,7 +246,7 @@ export const ShortsQuestionScene: React.FC<ShortsQuestionSceneProps> = ({
         >
           <div
             style={{
-              fontFamily: "'Inter', 'Segoe UI', sans-serif",
+              fontFamily: MODERN_SANS,
               textTransform: "uppercase",
               letterSpacing: "0.12em",
               color: theme.text.secondary,
@@ -249,7 +263,7 @@ export const ShortsQuestionScene: React.FC<ShortsQuestionSceneProps> = ({
                 borderRadius: 999,
                 border: `1px solid ${theme.card.border}`,
                 background: "rgba(0,0,0,0.34)",
-                fontFamily: "'Inter', 'Segoe UI', sans-serif",
+                fontFamily: MODERN_SANS,
                 fontWeight: 700,
                 fontSize: 15,
                 color: theme.text.secondary,
@@ -265,7 +279,7 @@ export const ShortsQuestionScene: React.FC<ShortsQuestionSceneProps> = ({
                 borderRadius: 999,
                 border: `1px solid ${theme.card.borderStrong}`,
                 background: "rgba(0,0,0,0.34)",
-                fontFamily: "'Inter', 'Segoe UI', sans-serif",
+                fontFamily: MODERN_SANS,
                 fontWeight: 800,
                 fontSize: 15,
                 color: theme.text.accent,
@@ -285,7 +299,7 @@ export const ShortsQuestionScene: React.FC<ShortsQuestionSceneProps> = ({
             border: `1px solid ${theme.card.border}`,
             boxShadow: theme.card.shadow,
             background: `linear-gradient(160deg, rgba(8,14,28,0.9) 0%, rgba(8,14,28,0.8) 42%, rgba(6,11,22,0.88) 100%), ${theme.card.fill}`,
-            padding: "20px 22px 16px",
+            padding: "20px 22px 10px",
             overflow: "hidden",
           }}
         >
@@ -298,18 +312,7 @@ export const ShortsQuestionScene: React.FC<ShortsQuestionSceneProps> = ({
                 "linear-gradient(180deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.01) 34%, rgba(0,0,0,0.25) 100%)",
             }}
           />
-          <div
-            style={{
-              position: "absolute",
-              top: 0,
-              left: 0,
-              right: 0,
-              height: 3,
-              background: theme.card.accentLine,
-              transform: `scaleX(${0.3 + timerProgress * 0.7})`,
-              transformOrigin: "left center",
-            }}
-          />
+          <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 3, background: theme.card.accentLine }} />
 
           <div
             style={{
@@ -322,7 +325,7 @@ export const ShortsQuestionScene: React.FC<ShortsQuestionSceneProps> = ({
             <div>
               <div
                 style={{
-                  fontFamily: "'Barlow Condensed', 'Oswald', 'Arial Narrow', sans-serif",
+                  fontFamily: MODERN_SANS,
                   textTransform: "uppercase",
                   letterSpacing: "0.15em",
                   color: theme.text.secondary,
@@ -336,10 +339,10 @@ export const ShortsQuestionScene: React.FC<ShortsQuestionSceneProps> = ({
               <h2
                 style={{
                   margin: 0,
-                  fontFamily: "'Barlow Condensed', 'Oswald', 'Arial Narrow', sans-serif",
+                  fontFamily: MODERN_SANS,
                   fontSize: tier.questionSize,
-                  lineHeight: 1.03,
-                  letterSpacing: "-0.015em",
+                  lineHeight: 1.06,
+                  letterSpacing: "-0.01em",
                   fontWeight: 800,
                   maxHeight: tier.maxHeight,
                   overflow: "hidden",
@@ -353,6 +356,7 @@ export const ShortsQuestionScene: React.FC<ShortsQuestionSceneProps> = ({
             </div>
 
             <div
+              data-testid="shorts-timer-shell"
               style={{
                 width: tier.timerSize,
                 height: tier.timerSize,
@@ -363,14 +367,14 @@ export const ShortsQuestionScene: React.FC<ShortsQuestionSceneProps> = ({
                 flexDirection: "column",
                 alignItems: "center",
                 justifyContent: "center",
-                boxShadow: `0 0 0 9px ${theme.timer.track}`,
+                boxShadow: "none",
                 transform: `scale(${tensionPulse})`,
                 flexShrink: 0,
               }}
             >
               <div
                 style={{
-                  fontFamily: "'Inter', 'Segoe UI', sans-serif",
+                  fontFamily: MODERN_SANS,
                   fontSize: 14,
                   textTransform: "uppercase",
                   fontWeight: 700,
@@ -382,7 +386,7 @@ export const ShortsQuestionScene: React.FC<ShortsQuestionSceneProps> = ({
               </div>
               <div
                 style={{
-                  fontFamily: "'Barlow Condensed', 'Oswald', 'Arial Narrow', sans-serif",
+                  fontFamily: MODERN_SANS,
                   fontSize: tier.timerNumberSize,
                   lineHeight: 0.84,
                   fontWeight: 800,
@@ -396,25 +400,6 @@ export const ShortsQuestionScene: React.FC<ShortsQuestionSceneProps> = ({
             </div>
           </div>
 
-          <div
-            style={{
-              marginTop: 10,
-              height: 8,
-              width: "100%",
-              borderRadius: 9999,
-              overflow: "hidden",
-              background: theme.timer.track,
-            }}
-          >
-            <div
-              style={{
-                width: `${(1 - timerProgress) * 100}%`,
-                height: "100%",
-                background: timerColor,
-                boxShadow: `0 0 18px ${timerColor}`,
-              }}
-            />
-          </div>
         </div>
 
         <div
@@ -436,6 +421,8 @@ export const ShortsQuestionScene: React.FC<ShortsQuestionSceneProps> = ({
               config: { damping: 18, stiffness: 120, mass: 0.9 },
             });
             const revealBoost = isRevealPhase && isCorrect ? revealProgress : 0;
+            const incorrectDim = isRevealPhase && !isCorrect ? Math.min(1, revealProgress) : 0;
+            const incorrectShift = isRevealPhase && !isCorrect ? Math.min(1, revealProgress) * 8 : 0;
             const optionBg = isRevealPhase && isCorrect ? theme.answer.correctBg : theme.answer.idleBg;
             const optionBorder = isRevealPhase && isCorrect ? theme.answer.correctBorder : theme.answer.idleBorder;
 
@@ -451,8 +438,9 @@ export const ShortsQuestionScene: React.FC<ShortsQuestionSceneProps> = ({
                   alignItems: "center",
                   gap: 12,
                   padding: tier.optionPadding,
-                  transform: `translateY(${(1 - optionIn) * 18}px) scale(${0.99 + optionIn * 0.01 + revealBoost * 0.02})`,
-                  opacity: Math.min(1, optionIn + 0.05),
+                  transform: `translateY(${(1 - optionIn) * 18}px) translateX(${incorrectShift}px) scale(${0.99 + optionIn * 0.01 + revealBoost * 0.02})`,
+                  opacity: Math.min(1, optionIn + 0.05) * (1 - incorrectDim * 0.38),
+                  filter: incorrectDim > 0 ? `saturate(${1 - incorrectDim * 0.5}) brightness(${1 - incorrectDim * 0.16})` : "none",
                   boxShadow: isRevealPhase && isCorrect ? theme.answer.pulseGlow : "0 8px 20px rgba(0,0,0,0.18)",
                   position: "relative",
                   overflow: "hidden",
@@ -468,6 +456,17 @@ export const ShortsQuestionScene: React.FC<ShortsQuestionSceneProps> = ({
                     background: isRevealPhase && isCorrect ? timerColor : "rgba(255,255,255,0.16)",
                   }}
                 />
+                {isRevealPhase && !isCorrect ? (
+                  <div
+                    style={{
+                      position: "absolute",
+                      inset: 0,
+                      background: "linear-gradient(120deg, rgba(244,63,94,0.12), rgba(2,6,23,0.04))",
+                      opacity: incorrectDim,
+                      pointerEvents: "none",
+                    }}
+                  />
+                ) : null}
                 <div
                   style={{
                     width: tier.optionBadgeSize,
@@ -479,7 +478,7 @@ export const ShortsQuestionScene: React.FC<ShortsQuestionSceneProps> = ({
                     alignItems: "center",
                     justifyContent: "center",
                     flexShrink: 0,
-                    fontFamily: "'Barlow Condensed', 'Oswald', 'Arial Narrow', sans-serif",
+                    fontFamily: MODERN_SANS,
                     fontSize: tier.optionBadgeFontSize,
                     letterSpacing: "0.03em",
                     fontWeight: 800,
@@ -490,7 +489,7 @@ export const ShortsQuestionScene: React.FC<ShortsQuestionSceneProps> = ({
                 </div>
                 <div
                   style={{
-                    fontFamily: "'Inter', 'Segoe UI', sans-serif",
+                    fontFamily: MODERN_SANS,
                     fontSize: tier.optionFontSize,
                     lineHeight: 1.02,
                     fontWeight: 800,
@@ -519,7 +518,7 @@ export const ShortsQuestionScene: React.FC<ShortsQuestionSceneProps> = ({
         >
           <div
             style={{
-              fontFamily: "'Inter', 'Segoe UI', sans-serif",
+              fontFamily: MODERN_SANS,
               fontWeight: 700,
               fontSize: 19,
               letterSpacing: "0.02em",
@@ -536,7 +535,7 @@ export const ShortsQuestionScene: React.FC<ShortsQuestionSceneProps> = ({
           {isBufferSection ? (
             <div
               style={{
-                fontFamily: "'Barlow Condensed', 'Oswald', 'Arial Narrow', sans-serif",
+                fontFamily: MODERN_SANS,
                 fontWeight: 700,
                 fontSize: 24,
                 letterSpacing: "0.1em",
@@ -577,7 +576,7 @@ export const ShortsQuestionScene: React.FC<ShortsQuestionSceneProps> = ({
           >
             <div
               style={{
-                fontFamily: "'Barlow Condensed', 'Oswald', 'Arial Narrow', sans-serif",
+                fontFamily: MODERN_SANS,
                 textTransform: "uppercase",
                 fontSize: 38,
                 lineHeight: 0.9,
@@ -589,7 +588,7 @@ export const ShortsQuestionScene: React.FC<ShortsQuestionSceneProps> = ({
             </div>
             <div
               style={{
-                fontFamily: "'Inter', 'Segoe UI', sans-serif",
+                fontFamily: MODERN_SANS,
                 textTransform: "uppercase",
                 letterSpacing: "0.1em",
                 fontWeight: 800,
@@ -599,6 +598,53 @@ export const ShortsQuestionScene: React.FC<ShortsQuestionSceneProps> = ({
             >
               Great reveal pacing
             </div>
+          </div>
+        ) : null}
+        {isRevealPhase ? (
+          <div
+            data-testid="shorts-confetti-layer"
+            style={{
+              position: "absolute",
+              inset: 0,
+              pointerEvents: "none",
+              overflow: "hidden",
+              opacity: Math.max(0, 1 - revealProgress * 0.35),
+            }}
+          >
+            {confettiParticles.map((particle, particleIndex) => {
+              const travel = interpolate(revealProgress, [0, 1], [0, particle.drift], {
+                extrapolateLeft: "clamp",
+                extrapolateRight: "clamp",
+              });
+              const spin = interpolate(revealProgress, [0, 1], [0, 260], {
+                extrapolateLeft: "clamp",
+                extrapolateRight: "clamp",
+              });
+              const top = `${16 + particle.delay * 60}%`;
+              const color =
+                particle.hueShift === 0
+                  ? theme.text.accent
+                  : particle.hueShift === 1
+                    ? timerColor
+                    : theme.text.secondary;
+              return (
+                <div
+                  key={`shorts-confetti-${particleIndex}`}
+                  style={{
+                    position: "absolute",
+                    left: `${particle.x}%`,
+                    top,
+                    width: particle.size,
+                    height: Math.max(4, particle.size - 1),
+                    borderRadius: 2,
+                    background: color,
+                    boxShadow: `0 0 10px ${color}`,
+                    transform: `translate(-50%, ${travel}px) rotate(${spin + particleIndex * 17}deg)`,
+                    opacity: Math.max(0, 1 - revealProgress * 1.4),
+                  }}
+                />
+              );
+            })}
           </div>
         ) : null}
       </div>

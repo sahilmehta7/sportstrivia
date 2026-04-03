@@ -3,6 +3,7 @@ import { AbsoluteFill, Audio, Series, staticFile } from "remotion";
 import { getIntroFrames, getOutroFrames, getQuestionBlockFrames } from "../timing";
 import type { QuizYoutubeLandscapeProps } from "../types";
 import { ShortsCornerLogo } from "./ShortsCornerLogo";
+import { ShortsHookScene } from "./ShortsHookScene";
 import { ShortsIntroScene } from "./ShortsIntroScene";
 import { ShortsLayeredBackground } from "./ShortsLayeredBackground";
 import { ShortsOutroScene } from "./ShortsOutroScene";
@@ -14,6 +15,15 @@ type ShortsQuizExperienceProps = Pick<
   "fps" | "themeVariant" | "quiz" | "ctaUrl" | "questions" | "showAnswerReveal"
 >;
 
+export const SHORTS_HOOK_DEFAULTS = {
+  hookEnabled: true,
+  hookDurationMs: 800,
+  hookStyle: "sport-aware-template" as const,
+};
+
+export const getShortsHookFrames = (fps: number) =>
+  Math.max(1, Math.round((SHORTS_HOOK_DEFAULTS.hookDurationMs / 1000) * fps));
+
 export const ShortsQuizExperience: React.FC<ShortsQuizExperienceProps> = ({
   fps,
   quiz,
@@ -22,7 +32,9 @@ export const ShortsQuizExperience: React.FC<ShortsQuizExperienceProps> = ({
   showAnswerReveal,
   themeVariant,
 }) => {
+  const hookFrames = getShortsHookFrames(fps);
   const introFrames = getIntroFrames(fps);
+  const trimmedIntroFrames = Math.max(1, introFrames - Math.floor(hookFrames * 0.5));
   const outroFrames = getOutroFrames(fps);
   const theme = resolveShortsTheme(themeVariant);
 
@@ -32,7 +44,18 @@ export const ShortsQuizExperience: React.FC<ShortsQuizExperienceProps> = ({
       <ShortsCornerLogo theme={theme} />
       <Audio src={staticFile("video/music/quiz-bed.mp3")} volume={0.15} loop />
       <Series>
-        <Series.Sequence durationInFrames={introFrames} premountFor={fps}>
+        {SHORTS_HOOK_DEFAULTS.hookEnabled ? (
+          <Series.Sequence durationInFrames={hookFrames} premountFor={fps}>
+            <ShortsHookScene
+              fps={fps}
+              title={quiz.title}
+              sport={quiz.sport}
+              theme={theme}
+              durationInFrames={hookFrames}
+            />
+          </Series.Sequence>
+        ) : null}
+        <Series.Sequence durationInFrames={trimmedIntroFrames} premountFor={fps}>
           <ShortsIntroScene
             fps={fps}
             title={quiz.title}

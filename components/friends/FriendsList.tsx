@@ -25,8 +25,8 @@ interface FriendsListProps {
 export function FriendsList({ friends, onChallenge, onRemove }: FriendsListProps) {
   if (friends.length === 0) {
     return (
-      <div className="py-24 text-center space-y-6 rounded-[3rem] glass border border-dashed border-white/10">
-        <div className="h-16 w-16 mx-auto rounded-full glass border border-white/5 flex items-center justify-center text-muted-foreground/20">
+      <div className="surface-public-raised py-24 text-center space-y-6 glass border border-dashed border-white/10">
+        <div className="h-16 w-16 mx-auto control-public glass border border-white/5 flex items-center justify-center text-muted-foreground/20">
           <Users className="h-8 w-8" />
         </div>
         <div className="space-y-1">

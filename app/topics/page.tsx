@@ -198,23 +198,23 @@ function TopicsFallback() {
           <div className="space-y-4">
             <div className="flex items-center gap-4">
               <div className="h-10 w-1 rounded-full bg-primary/20" />
-              <div className="h-12 w-48 rounded bg-muted animate-pulse" />
+              <div className="h-12 w-48 bg-muted animate-pulse" />
             </div>
           </div>
           <div className="max-w-md w-full">
-            <div className="h-14 rounded-2xl bg-muted animate-pulse" />
+            <div className="h-14 bg-muted animate-pulse" />
           </div>
         </div>
 
         <section className="space-y-10">
           <div className="flex items-center gap-4">
             <div className="h-4 w-1 rounded-full bg-secondary/20" />
-            <div className="h-8 w-64 rounded bg-muted animate-pulse" />
+            <div className="h-8 w-64 bg-muted animate-pulse" />
           </div>
 
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {Array.from({ length: 3 }).map((_, index) => (
-              <div key={index} className="h-64 rounded-[2.5rem] bg-muted animate-pulse" />
+              <div key={index} className="h-64 bg-muted animate-pulse" />
             ))}
           </div>
         </section>
@@ -222,12 +222,12 @@ function TopicsFallback() {
         <section className="space-y-10">
           <div className="flex items-center gap-4">
             <div className="h-4 w-1 rounded-full bg-primary/20" />
-            <div className="h-8 w-48 rounded bg-muted animate-pulse" />
+            <div className="h-8 w-48 bg-muted animate-pulse" />
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {Array.from({ length: 8 }).map((_, index) => (
-              <div key={index} className="h-24 rounded-[2rem] bg-muted animate-pulse" />
+              <div key={index} className="h-24 bg-muted animate-pulse" />
             ))}
           </div>
         </section>

@@ -40,12 +40,12 @@ export function AddFriendForm({ onSuccess }: AddFriendFormProps) {
 
   return (
     <div className="relative group">
-      <div className="absolute -inset-1 bg-gradient-to-r from-primary to-secondary blur-2xl opacity-5 group-hover:opacity-10 transition-opacity rounded-[3rem]" />
+      <div className="absolute -inset-1 bg-gradient-to-r from-primary to-secondary blur-2xl opacity-5 group-hover:opacity-10 transition-opacity" />
 
-      <div className="relative overflow-hidden rounded-[3rem] p-10 lg:p-14 glass-elevated border border-white/10">
+      <div className="surface-public-raised relative overflow-hidden p-10 lg:p-14 glass-elevated border border-white/10">
         <div className="max-w-xl mx-auto space-y-10">
           <div className="text-center space-y-4">
-            <div className="inline-flex h-16 w-16 items-center justify-center rounded-3xl glass border border-white/20 text-primary shadow-neon-cyan/20">
+            <div className="control-public inline-flex h-16 w-16 items-center justify-center glass border border-white/20 text-primary shadow-neon-cyan/20">
               <UserPlus className="h-8 w-8" />
             </div>
             <div className="space-y-1">
@@ -65,9 +65,9 @@ export function AddFriendForm({ onSuccess }: AddFriendFormProps) {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  className="h-16 rounded-[1.5rem] glass border-white/10 pl-6 text-lg font-bold tracking-tight focus:border-primary/40 focus:ring-primary/20 placeholder:text-white/10 transition-all"
+                  className="control-public h-16 glass border-white/10 pl-6 text-lg font-bold tracking-tight focus:border-primary/40 focus:ring-primary/20 placeholder:text-white/10 transition-all"
                 />
-                <div className="absolute right-4 top-1/2 -translate-y-1/2 h-8 w-8 rounded-lg glass border border-white/5 flex items-center justify-center opacity-20">
+                <div className="control-public absolute right-4 top-1/2 -translate-y-1/2 h-8 w-8 glass border border-white/5 flex items-center justify-center opacity-20">
                   <Target className="h-4 w-4" />
                 </div>
               </div>

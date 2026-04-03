@@ -260,6 +260,36 @@
   .blur-circle-lime {
     background: hsl(var(--neon-lime) / 0.3);
   }
+
+  /*
+    Public square-edge tokens for user-facing routes.
+    Use these classes explicitly on surfaces/controls/chips.
+  */
+  .surface-public {
+    border-radius: 0;
+    border: 1px solid hsl(var(--border));
+    background: hsl(var(--card));
+  }
+
+  .surface-public-raised {
+    border-radius: 0;
+    border: 1px solid hsl(var(--border));
+    background: hsl(var(--card-elevated));
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  }
+
+  .control-public {
+    border-radius: 0;
+    border: 1px solid hsl(var(--border));
+    background: hsl(var(--background));
+  }
+
+  .chip-public {
+    border-radius: 0;
+    border: 1px solid hsl(var(--border));
+    background: hsl(var(--muted));
+    color: hsl(var(--foreground));
+  }
 }
 
 /* ===================

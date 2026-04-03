@@ -30,7 +30,8 @@ type EventName =
     | 'pre_onboarding_completed'
     | 'pre_onboarding_cta_clicked'
     | 'pre_onboarding_swipe_navigated'
-    | 'pre_onboarding_abandon';
+    | 'pre_onboarding_abandon'
+    | 'personalized_home_exposure';
 
 export const trackEvent = (eventName: EventName, params?: Record<string, any>) => {
     sendGAEvent('event', eventName, params || {});

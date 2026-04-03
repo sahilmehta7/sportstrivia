@@ -318,6 +318,12 @@ export function QuizzesContent({
                 id={quiz.id}
                 title={quiz.title}
                 badgeLabel={quiz.sport || quiz.difficulty || "Quiz"}
+                metaPrimaryLabel="Duration"
+                metaPrimaryValue={durationLabel}
+                metaSecondaryLabel="Players"
+                metaSecondaryValue={playersLabel}
+                metaTertiaryLabel="Difficulty"
+                metaTertiaryValue={difficultyLabel}
                 durationLabel={durationLabel}
                 playersLabel={playersLabel}
                 difficultyLabel={difficultyLabel}

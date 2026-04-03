@@ -10,8 +10,15 @@ interface CarouselItem {
   id: string;
   title: string;
   badgeLabel?: string;
-  durationLabel: string;
-  playersLabel: string;
+  durationLabel?: string;
+  playersLabel?: string;
+  difficultyLabel?: string;
+  metaPrimaryLabel?: string;
+  metaPrimaryValue?: string;
+  metaSecondaryLabel?: string;
+  metaSecondaryValue?: string;
+  metaTertiaryLabel?: string;
+  metaTertiaryValue?: string;
   accent: string;
   coverImageUrl?: string | null;
   href?: string;
@@ -64,8 +71,15 @@ export function ShowcaseQuizCarousel({ items, className }: ShowcaseQuizCarouselP
               id={item.id}
               title={item.title}
               badgeLabel={item.badgeLabel}
+              metaPrimaryLabel={item.metaPrimaryLabel}
+              metaPrimaryValue={item.metaPrimaryValue}
+              metaSecondaryLabel={item.metaSecondaryLabel}
+              metaSecondaryValue={item.metaSecondaryValue}
+              metaTertiaryLabel={item.metaTertiaryLabel}
+              metaTertiaryValue={item.metaTertiaryValue}
               durationLabel={item.durationLabel}
               playersLabel={item.playersLabel}
+              difficultyLabel={item.difficultyLabel}
               accent={item.accent}
               coverImageUrl={item.coverImageUrl}
               href={item.href}

@@ -61,17 +61,17 @@ export function FriendRequests({
   return (
     <Tabs defaultValue="received" className="space-y-8">
       <div className="flex justify-center">
-        <TabsList className="h-auto p-1.5 rounded-2xl glass border border-white/10 shadow-glass">
-          <TabsTrigger value="received" className="rounded-xl px-6 py-2.5 text-[10px] font-black uppercase tracking-widest relative data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+        <TabsList className="surface-public-raised h-auto p-1.5 glass border border-white/10 shadow-glass">
+          <TabsTrigger value="received" className="control-public px-6 py-2.5 text-[10px] font-black uppercase tracking-widest relative data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
             <Inbox className="h-3.5 w-3.5 mr-2" />
             Incoming
             {received.length > 0 && (
-              <span className="ml-2 bg-secondary text-white px-1.5 rounded-full text-[8px] animate-pulse">
+              <span className="chip-public ml-2 bg-secondary text-white px-1.5 text-[8px] animate-pulse">
                 {received.length}
               </span>
             )}
           </TabsTrigger>
-          <TabsTrigger value="sent" className="rounded-xl px-6 py-2.5 text-[10px] font-black uppercase tracking-widest data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+          <TabsTrigger value="sent" className="control-public px-6 py-2.5 text-[10px] font-black uppercase tracking-widest data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
             <Send className="h-3.5 w-3.5 mr-2" />
             Outbound
           </TabsTrigger>
@@ -118,10 +118,10 @@ export function FriendRequests({
 function RequestItem({ user, date, isProcessing, onAccept, onDecline, onCancel, isSent }: any) {
   return (
     <div className="relative group">
-      <div className="relative overflow-hidden rounded-[2rem] p-5 glass-elevated border border-white/5 transition-all group-hover:bg-white/5 group-hover:border-white/10">
+      <div className="surface-public-raised relative overflow-hidden p-5 glass-elevated border border-white/5 transition-all group-hover:bg-white/5 group-hover:border-white/10">
         <div className="flex flex-col sm:flex-row items-center gap-6">
-          <div className="p-1 rounded-2xl glass border border-white/10">
-            <UserAvatar src={user.image} alt={user.name || "User"} size="md" className="h-14 w-14 rounded-xl" />
+          <div className="control-public p-1 glass border border-white/10">
+            <UserAvatar src={user.image} alt={user.name || "User"} size="md" className="h-14 w-14 rounded-full" />
           </div>
 
           <div className="flex-1 text-center sm:text-left min-w-0">
@@ -135,17 +135,17 @@ function RequestItem({ user, date, isProcessing, onAccept, onDecline, onCancel, 
 
           <div className="flex gap-3 w-full sm:w-auto">
             {isSent ? (
-              <Button variant="glass" size="sm" onClick={onCancel} disabled={isProcessing} className="flex-1 sm:flex-none h-11 rounded-xl uppercase font-black text-[10px] tracking-widest text-muted-foreground hover:text-red-400">
+              <Button variant="glass" size="sm" onClick={onCancel} disabled={isProcessing} className="control-public flex-1 sm:flex-none h-11 uppercase font-black text-[10px] tracking-widest text-muted-foreground hover:text-red-400">
                 <X className="mr-2 h-3.5 w-3.5" />
                 ABORT
               </Button>
             ) : (
               <>
-                <Button variant="accent" size="sm" onClick={onAccept} disabled={isProcessing} className="flex-1 sm:flex-none h-11 rounded-xl uppercase font-black text-[10px] tracking-widest">
+                <Button variant="accent" size="sm" onClick={onAccept} disabled={isProcessing} className="control-public flex-1 sm:flex-none h-11 uppercase font-black text-[10px] tracking-widest">
                   <Check className="mr-2 h-4 w-4" />
                   SYNC
                 </Button>
-                <Button variant="glass" size="sm" onClick={onDecline} disabled={isProcessing} className="flex-1 sm:flex-none h-11 rounded-xl uppercase font-black text-[10px] tracking-widest text-muted-foreground hover:text-red-400">
+                <Button variant="glass" size="sm" onClick={onDecline} disabled={isProcessing} className="control-public flex-1 sm:flex-none h-11 uppercase font-black text-[10px] tracking-widest text-muted-foreground hover:text-red-400">
                   <X className="mr-2 h-3.5 w-3.5" />
                   REJECT
                 </Button>
@@ -160,8 +160,10 @@ function RequestItem({ user, date, isProcessing, onAccept, onDecline, onCancel, 
 
 function EmptyRequests({ icon: Icon, title, desc }: any) {
   return (
-    <div className="py-20 text-center space-y-4 rounded-[2.5rem] glass border border-dashed border-white/5">
-      <Icon className="h-10 w-10 mx-auto text-muted-foreground/10" />
+    <div className="surface-public-raised py-20 text-center space-y-4 glass border border-dashed border-white/5">
+      <div className="control-public mx-auto flex h-10 w-10 items-center justify-center text-muted-foreground/10">
+        <Icon className="h-6 w-6" />
+      </div>
       <div className="space-y-1">
         <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/30">{title}</p>
         <p className="text-[10px] font-bold tracking-widest text-muted-foreground/20 uppercase">{desc}</p>

@@ -55,7 +55,7 @@ export function MobileAppPreOnboardingGate({
   }
 
   const navigateToQuizFeed = () => {
-    router.replace("/quizzes");
+    router.replace("/");
   };
 
   const handleSkip = () => {
@@ -66,7 +66,7 @@ export function MobileAppPreOnboardingGate({
 
   const handleFinish = () => {
     trackEvent("pre_onboarding_completed", { path: pathname });
-    trackEvent("pre_onboarding_cta_clicked", { destination: "/quizzes", step: 3 });
+    trackEvent("pre_onboarding_cta_clicked", { destination: "/", step: 3 });
     markCompleted();
     navigateToQuizFeed();
   };

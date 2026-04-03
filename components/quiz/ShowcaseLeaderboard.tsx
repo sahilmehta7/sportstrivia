@@ -47,9 +47,9 @@ export function ShowcaseLeaderboard({ title, datasets, initialRange = "daily", c
 
   return (
     <div className={cn("relative mx-auto w-full max-w-[580px] group", className)}>
-      <div className="absolute -inset-1 bg-gradient-to-r from-primary/20 via-transparent to-secondary/20 blur-3xl opacity-40 group-hover:opacity-70 transition-opacity rounded-[3.5rem]" />
+      <div className="absolute -inset-1 bg-gradient-to-r from-primary/20 via-transparent to-secondary/20 blur-3xl opacity-40 group-hover:opacity-70 transition-opacity" />
 
-      <div className="relative h-full w-full rounded-[3.5rem] glass-elevated border border-white/10 overflow-hidden flex flex-col pt-10 pb-14 px-6 sm:px-12 shadow-2xl">
+      <div className="surface-public-raised relative h-full w-full glass-elevated border border-white/10 overflow-hidden flex flex-col pt-10 pb-14 px-6 sm:px-12 shadow-2xl">
         {/* Header Section */}
         <header className="space-y-8">
           <div className="flex items-center justify-between">
@@ -60,7 +60,7 @@ export function ShowcaseLeaderboard({ title, datasets, initialRange = "daily", c
             <div className="h-10 w-1 rounded-full bg-secondary shadow-neon-magenta" />
           </div>
 
-          <div className="flex rounded-3xl glass border border-white/5 p-2">
+          <div className="surface-public flex glass border border-white/5 p-2">
             {orderedRanges.map((range) => {
               const disabled = (datasets[range]?.length ?? 0) === 0;
               const isActive = activeRange === range;
@@ -71,7 +71,7 @@ export function ShowcaseLeaderboard({ title, datasets, initialRange = "daily", c
                   disabled={disabled}
                   onClick={() => !disabled && setActiveRange(range)}
                   className={cn(
-                    "flex-1 rounded-2xl px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-500",
+                    "control-public flex-1 px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-500",
                     disabled && "opacity-10 cursor-not-allowed",
                     isActive && "bg-primary text-primary-foreground shadow-neon-cyan/50 scale-[1.05] z-10",
                     !isActive && !disabled && "text-muted-foreground hover:bg-white/5 hover:text-primary"
@@ -86,7 +86,7 @@ export function ShowcaseLeaderboard({ title, datasets, initialRange = "daily", c
 
         {entries.length === 0 ? (
           <div className="mt-20 py-24 text-center space-y-6">
-            <div className="h-24 w-24 mx-auto rounded-[2rem] glass border border-dashed border-white/10 flex items-center justify-center text-4xl text-white/5">
+            <div className="control-public h-24 w-24 mx-auto glass border border-dashed border-white/10 flex items-center justify-center text-4xl text-white/5">
               <Zap className="h-12 w-12" />
             </div>
             <p className="text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground/40">NO SIGNAL DETECTED</p>
@@ -104,9 +104,9 @@ export function ShowcaseLeaderboard({ title, datasets, initialRange = "daily", c
             {/* List Section */}
             <div className="space-y-3">
               {rest.map((entry) => (
-                <div key={entry.id} className="group/item flex items-center justify-between rounded-2xl glass border border-white/5 px-6 py-5 hover:border-primary/30 hover:bg-white/5 transition-all duration-500">
+                <div key={entry.id} className="surface-public group/item flex items-center justify-between glass border border-white/5 px-6 py-5 hover:border-primary/30 hover:bg-white/5 transition-all duration-500">
                   <div className="flex items-center gap-6">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-xl glass border border-white/5 text-[10px] font-black text-muted-foreground group-hover/item:text-primary transition-colors">
+                    <div className="control-public flex h-12 w-12 items-center justify-center glass border border-white/5 text-[10px] font-black text-muted-foreground group-hover/item:text-primary transition-colors">
                       #{entry.position}
                     </div>
                     <div className="relative h-12 w-12 rounded-full overflow-hidden border-2 border-white/5 group-hover/item:border-primary/40 transition-colors">
@@ -162,7 +162,7 @@ function PodiumItem({ entry, rank, height, color, isCenter = false }: { entry: L
         <div className={cn("absolute -inset-4 rounded-full blur-2xl opacity-20 -z-10 bg-gradient-to-tr to-transparent", colorMap.glow)} />
 
         <div className={cn(
-          "absolute -bottom-3 left-1/2 -translate-x-1/2 h-10 w-10 rounded-2xl glass border border-white/20 flex items-center justify-center text-sm font-black shadow-2xl transition-transform group-hover/pod:scale-110",
+          "control-public absolute -bottom-3 left-1/2 -translate-x-1/2 h-10 w-10 glass border border-white/20 flex items-center justify-center text-sm font-black shadow-2xl transition-transform group-hover/pod:scale-110",
           colorMap.bg, colorMap.shadow, "text-white"
         )}>
           {rank}

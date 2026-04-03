@@ -47,7 +47,7 @@ export default async function SearchPage({
           </div>
           <PageContainer className="max-w-2xl px-4 py-20 text-center space-y-12">
             <div className="space-y-6">
-              <div className="h-20 w-20 mx-auto rounded-[2rem] glass border border-white/10 flex items-center justify-center text-primary shadow-neon-cyan/20">
+              <div className="h-20 w-20 mx-auto control-public glass border border-white/10 flex items-center justify-center text-primary shadow-neon-cyan/20">
                 <Search className="h-10 w-10 animate-pulse" />
               </div>
               <div className="space-y-4">
@@ -71,8 +71,23 @@ export default async function SearchPage({
     const durationLabel = formatQuizDuration(quiz.duration ?? null);
     const playersLabel = `${formatPlayerCount(quiz._count?.attempts)} Players`;
     const badgeLabel = quiz.sport ?? quiz.difficulty ?? "Quiz";
+    const difficultyLabel = (quiz.difficulty ?? "MEDIUM").toString();
     const accent = getSportGradient(quiz.sport);
-    return { title: quiz.title, badgeLabel, durationLabel, playersLabel, accent, coverImageUrl: quiz.descriptionImageUrl || undefined } as const;
+    return {
+      title: quiz.title,
+      badgeLabel,
+      metaPrimaryLabel: "Duration",
+      metaPrimaryValue: durationLabel,
+      metaSecondaryLabel: "Players",
+      metaSecondaryValue: playersLabel,
+      metaTertiaryLabel: "Difficulty",
+      metaTertiaryValue: difficultyLabel,
+      durationLabel,
+      playersLabel,
+      difficultyLabel,
+      accent,
+      coverImageUrl: quiz.descriptionImageUrl || undefined,
+    } as const;
   };
 
   return (
@@ -100,7 +115,7 @@ export default async function SearchPage({
           </div>
 
           {topicResults.topics && topicResults.topics.length > 0 && (
-            <section className="space-y-8 p-10 rounded-[3rem] glass border border-white/5">
+            <section className="surface-public-raised space-y-8 p-10 glass border border-white/5">
               <div className="flex items-center gap-4">
                 <div className="h-4 w-1 rounded-full bg-secondary shadow-neon-magenta" />
                 <h2 className="text-2xl font-black uppercase tracking-tight">Relevant Sectors</h2>
@@ -108,7 +123,7 @@ export default async function SearchPage({
               <div className="flex flex-wrap gap-3">
                 {topicResults.topics.map((t) => (
                   <Link key={t.id} href={`/topics/${t.slug}`}>
-                    <div className="px-6 py-2.5 rounded-full glass border border-white/10 text-[10px] font-black uppercase tracking-widest hover:bg-primary hover:text-primary-foreground hover:shadow-neon-cyan transition-all">
+                    <div className="chip-public px-6 py-2.5 glass border border-white/10 text-[10px] font-black uppercase tracking-widest hover:bg-primary hover:text-primary-foreground hover:shadow-neon-cyan transition-all">
                       {t.name}
                     </div>
                   </Link>
@@ -136,8 +151,8 @@ export default async function SearchPage({
               </div>
             </div>
           ) : (
-            <div className="py-32 text-center space-y-8 rounded-[3rem] glass border border-dashed border-white/10">
-              <div className="h-20 w-20 mx-auto rounded-[2.5rem] glass border border-white/5 flex items-center justify-center text-red-400/20">
+            <div className="surface-public-raised py-32 text-center space-y-8 glass border border-dashed border-white/10">
+              <div className="h-20 w-20 mx-auto control-public glass border border-white/5 flex items-center justify-center text-red-400/20">
                 <Binary className="h-10 w-10" />
               </div>
               <div className="space-y-4 max-w-md mx-auto px-6">

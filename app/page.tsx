@@ -1,8 +1,13 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { LandingPage } from "@/components/home/LandingPage";
+import { AuthenticatedPersonalizedHome } from "@/components/home/AuthenticatedPersonalizedHome";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { auth } from "@/lib/auth";
+import { isPersonalizedHomeEnabled } from "@/lib/feature-flags";
+import { getPersonalizedHomeBucket, getPersonalizedHomeVariantForUser } from "@/lib/personalized-home-experiment";
+import { emitPersonalizedHomeExposure } from "@/lib/server-analytics";
+import { getPersonalizedHomePayload } from "@/lib/services/personalized-home.service";
 import { redirect } from "next/navigation";
 
 export const metadata: Metadata = {
@@ -32,8 +37,40 @@ const stats = {
 export default async function Home() {
   const session = await auth();
 
-  if (session?.user) {
-    redirect("/quizzes");
+  const userId = session?.user?.id;
+  if (userId) {
+    if (!isPersonalizedHomeEnabled()) {
+      redirect("/quizzes");
+    }
+
+    const bucket = getPersonalizedHomeBucket(userId);
+    const variant = getPersonalizedHomeVariantForUser(userId);
+    if (variant === "control") {
+      await emitPersonalizedHomeExposure({
+        userId,
+        variant,
+        bucket,
+        renderedModuleKinds: ["CONTROL_REDIRECT_TO_QUIZZES"],
+        renderedRailKinds: [],
+      });
+      redirect("/quizzes");
+    }
+
+    const payload = await getPersonalizedHomePayload(userId);
+    const renderedModuleKinds = [
+      ...(payload.continuePlaying.length > 0 ? ["CONTINUE_PLAYING"] : []),
+      ...(payload.dailyChallenge ? ["DAILY_CHALLENGE"] : []),
+      ...payload.rails.map((rail) => `RAIL_${rail.kind}`),
+      ...(payload.starterCollections.length > 0 ? ["STARTER_COLLECTIONS"] : []),
+    ];
+    await emitPersonalizedHomeExposure({
+      userId,
+      variant,
+      bucket,
+      renderedModuleKinds,
+      renderedRailKinds: payload.rails.map((rail) => rail.kind),
+    });
+    return <AuthenticatedPersonalizedHome payload={payload} variant={variant} />;
   }
 
   return (

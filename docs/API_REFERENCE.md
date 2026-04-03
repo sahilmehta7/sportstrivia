@@ -76,6 +76,7 @@ Authentication is session-based via NextAuth. Include the browser session cookie
 | GET | `/api/users/me/topic-stats` | Topic-specific performance |
 | GET | `/api/users/me/badges` | Earned badges and progress towards locked badges |
 | GET | `/api/users/me/gamification` | Level, tier, and completion bonus summaries |
+| GET | `/api/users/me/home` | Aggregated personalized home payload (continue, daily, rails, fallbacks) |
 | GET | `/api/friends` | Friend dashboard (friends, sent, received requests) |
 | POST | `/api/friends` | Send friend request (by email) |
 | GET | `/api/friends/[id]` | Fetch a single friendship/request |

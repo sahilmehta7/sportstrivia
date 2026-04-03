@@ -11,7 +11,7 @@ import Link from "next/link";
 
 export function SignInForm() {
     const searchParams = useSearchParams();
-    const callbackUrl = searchParams.get("callbackUrl") || "/quizzes";
+    const callbackUrl = searchParams.get("callbackUrl") || "/";
     const [mounted, setMounted] = useState(false);
 
     useEffect(() => {

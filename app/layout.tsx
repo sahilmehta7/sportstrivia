@@ -4,7 +4,6 @@ import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 import { LayoutWrapper } from "@/components/LayoutWrapper";
 import { ThemeProvider } from "@/components/ThemeProvider";
-import { ThemeColorInit } from "@/components/ThemeColorInit";
 import { AppSessionProvider } from "@/components/providers/AppSessionProvider";
 import { OrganizationJsonLd, JsonLdScript } from "next-seo";
 import { defaultSeoConfig } from "@/lib/next-seo-config";
@@ -27,6 +26,29 @@ const barlowCondensed = Barlow_Condensed({
   variable: "--font-barlow-condensed",
   display: "swap",
 });
+
+const themeInitScript = `(function () {
+  try {
+    const storageKey = "theme";
+    const classList = document.documentElement.classList;
+    const stored = window.localStorage.getItem(storageKey);
+    let resolved;
+
+    if (stored === "light" || stored === "dark") {
+      resolved = stored;
+    } else {
+      resolved = window.matchMedia("(prefers-color-scheme: dark)").matches
+        ? "dark"
+        : "light";
+    }
+
+    classList.remove("light", "dark");
+    classList.add(resolved);
+    document.documentElement.style.colorScheme = resolved;
+  } catch (error) {
+    // If anything fails we fall back to the default browser paint.
+  }
+})();`;
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "https://www.sportstrivia.in"),
@@ -113,9 +135,10 @@ export default async function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning className="scroll-smooth">
-      <head />
+      <head>
+        <script id="theme-color-init" dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+      </head>
       <body className={cn(barlow.className, barlowCondensed.variable, "antialiased")}>
-        <ThemeColorInit />
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
           <PWALifecycleListener />
           <AppSessionProvider>
