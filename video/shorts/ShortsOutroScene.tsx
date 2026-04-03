@@ -1,5 +1,5 @@
 import React from "react";
-import { AbsoluteFill, Img, interpolate, spring, useCurrentFrame } from "remotion";
+import { AbsoluteFill, Img, spring, useCurrentFrame } from "remotion";
 import qrcode from "qrcode-generator";
 import type { ShortsTheme } from "./themes";
 const MODERN_SANS = "'Plus Jakarta Sans', 'Manrope', 'Inter', 'Segoe UI', sans-serif";

@@ -3,6 +3,7 @@ import type { Difficulty, InterestPreferenceSource, PlayMode } from "@prisma/cli
 import { isFollowableTopicSchemaType } from "@/lib/topic-followability";
 import { invalidateInterestProfileCache } from "@/lib/services/interest-profile.service";
 import { BadRequestError } from "@/lib/errors";
+import type { TopicSchemaTypeValue } from "@/lib/topic-schema-options";
 
 export type ReplaceUserInterestsInput = {
   userId: string;
@@ -14,6 +15,144 @@ export type ReplaceUserInterestsInput = {
   };
   defaultStrength?: number;
 };
+
+export type FollowableTopic = {
+  id: string;
+  slug: string;
+  name: string;
+  schemaType: TopicSchemaTypeValue;
+  entityStatus: string;
+};
+
+const GROUP_BY_SCHEMA_TYPE: Record<
+  Exclude<TopicSchemaTypeValue, "NONE">,
+  "sports" | "teams" | "athletes" | "events" | "organizations"
+> = {
+  SPORT: "sports",
+  SPORTS_TEAM: "teams",
+  ATHLETE: "athletes",
+  SPORTS_EVENT: "events",
+  SPORTS_ORGANIZATION: "organizations",
+};
+
+export async function assertEligibleInterestTopic(topicId: string): Promise<FollowableTopic> {
+  const topic = await prisma.topic.findUnique({
+    where: { id: topicId },
+    select: {
+      id: true,
+      slug: true,
+      name: true,
+      schemaType: true,
+      entityStatus: true,
+    },
+  });
+
+  if (!topic) {
+    throw new BadRequestError("Topic not found");
+  }
+
+  if (!isFollowableTopicSchemaType(topic.schemaType)) {
+    throw new BadRequestError("Topic is not followable");
+  }
+  if (topic.entityStatus !== "READY") {
+    throw new BadRequestError("Topic is not ready to follow");
+  }
+
+  return topic;
+}
+
+export async function addInterestTopic(
+  userId: string,
+  topicId: string,
+  source: InterestPreferenceSource = "PROFILE",
+  strength = 1
+) {
+  const topic = await assertEligibleInterestTopic(topicId);
+
+  await prisma.userInterestPreference.upsert({
+    where: {
+      userId_topicId: {
+        userId,
+        topicId: topic.id,
+      },
+    },
+    update: {
+      source,
+      strength,
+      updatedAt: new Date(),
+    },
+    create: {
+      userId,
+      topicId: topic.id,
+      source,
+      strength,
+    },
+  });
+
+  invalidateInterestProfileCache(userId);
+
+  return {
+    following: true,
+    topicId: topic.id,
+  };
+}
+
+export async function removeInterestTopic(userId: string, topicId: string) {
+  await prisma.userInterestPreference.deleteMany({
+    where: {
+      userId,
+      topicId,
+    },
+  });
+
+  invalidateInterestProfileCache(userId);
+
+  return {
+    following: false,
+    topicId,
+  };
+}
+
+export async function listDerivedFollowsForUser(userId: string) {
+  const interests = await prisma.userInterestPreference.findMany({
+    where: { userId },
+    include: {
+      topic: {
+        select: {
+          id: true,
+          name: true,
+          slug: true,
+          schemaType: true,
+          entityStatus: true,
+        },
+      },
+    },
+    orderBy: { createdAt: "asc" },
+  });
+
+  const flat = interests.filter((interest) =>
+    isFollowableTopicSchemaType(interest.topic.schemaType)
+  );
+
+  const grouped = {
+    sports: [] as typeof flat,
+    teams: [] as typeof flat,
+    athletes: [] as typeof flat,
+    events: [] as typeof flat,
+    organizations: [] as typeof flat,
+  };
+
+  for (const interest of flat) {
+    if (!isFollowableTopicSchemaType(interest.topic.schemaType)) continue;
+    const bucket = GROUP_BY_SCHEMA_TYPE[interest.topic.schemaType];
+    grouped[bucket].push(interest);
+  }
+
+  return {
+    grouped,
+    flat,
+  };
+}
 
 export async function replaceUserInterestsBySource(input: ReplaceUserInterestsInput) {
   const uniqueRequestedTopicIds = Array.from(new Set(input.topicIds));
@@ -55,7 +194,6 @@ export async function replaceUserInterestsBySource(input: ReplaceUserInterestsIn
     await tx.userInterestPreference.deleteMany({
       where: {
         userId: input.userId,
-        source: input.source,
         topicId: {
           notIn: savedTopicIds,
         },
@@ -121,6 +259,7 @@ export async function getUserInterestsAndPreferences(userId: string) {
             name: true,
             slug: true,
             schemaType: true,
+            entityStatus: true,
           },
         },
       },

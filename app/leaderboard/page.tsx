@@ -68,7 +68,7 @@ export default async function LeaderboardPage() {
   const { circle1, circle2, circle3 } = getBlurCircles();
 
   return (
-    <main className="relative min-h-screen overflow-hidden pt-6 pb-24 md:pt-12 lg:pt-24">
+    <main className="relative min-h-screen overflow-hidden pt-4 pb-12 md:pt-8 lg:pt-12">
       {/* Background Animated Elements */}
       <div className="absolute inset-0 -z-10">
         <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none">
@@ -80,8 +80,8 @@ export default async function LeaderboardPage() {
         {circle3}
       </div>
 
-      <PageContainer variant="narrow" className="space-y-6 md:space-y-16 lg:space-y-24">
-        <header className="hidden md:flex flex-col items-center text-center gap-6 px-4">
+      <PageContainer variant="narrow" className="space-y-4 md:space-y-10 lg:space-y-12">
+        <header className="hidden md:flex flex-col items-center text-center gap-4 px-4">
           <div className="space-y-4">
             <div className="chip-public inline-flex items-center gap-2 px-3 py-1 glass border border-white/10 text-[10px] font-black uppercase tracking-widest text-primary shadow-neon-cyan/20">
               <span className="relative flex h-2 w-2">
@@ -99,7 +99,7 @@ export default async function LeaderboardPage() {
           </p>
         </header>
 
-        <div className="relative px-2 sm:px-0">
+        <div className="relative px-1 sm:px-0">
           {/* Decorative accents for the leaderboard container */}
           <div className="absolute -top-12 -left-12 h-64 w-64 bg-primary/5 blur-3xl rounded-full -z-10" />
           <div className="absolute -bottom-12 -right-12 h-64 w-64 bg-secondary/5 blur-3xl rounded-full -z-10" />

@@ -46,23 +46,6 @@ describe("ProfileDiscoverabilityPanel", () => {
         ok: true,
         json: async () => ({
           data: {
-            follows: [
-              {
-                topic: {
-                  id: "team_india",
-                  name: "India",
-                  slug: "india-cricket-team",
-                  schemaType: "SPORTS_TEAM",
-                },
-              },
-            ],
-          },
-        }),
-      })
-      .mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({
-          data: {
             topics: [
               {
                 id: "sport_cricket",
@@ -94,7 +77,7 @@ describe("ProfileDiscoverabilityPanel", () => {
 
     render(<ProfileDiscoverabilityPanel />);
 
-    expect(await screen.findByText("India")).toBeInTheDocument();
+    expect(await screen.findByText("Cricket")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /remove cricket/i })).toBeInTheDocument();
 
     fireEvent.change(screen.getByLabelText(/add interests/i), {

@@ -9,7 +9,6 @@ const TEST_BACKUP_TABLES = [
   { model: "Quiz", delegate: "quiz" },
   { model: "TopicRelation", delegate: "topicRelation" },
   { model: "UserInterestPreference", delegate: "userInterestPreference" },
-  { model: "UserFollowedTopic", delegate: "userFollowedTopic" },
   { model: "UserDiscoveryPreference", delegate: "userDiscoveryPreference" },
   { model: "Collection", delegate: "collection" },
   { model: "CollectionQuiz", delegate: "collectionQuiz" },
@@ -26,7 +25,6 @@ const store: TableStore = {
   Quiz: [],
   TopicRelation: [],
   UserInterestPreference: [],
-  UserFollowedTopic: [],
   UserDiscoveryPreference: [],
   Collection: [],
   CollectionQuiz: [],
@@ -78,7 +76,6 @@ jest.mock("@/lib/backup/table-config", () => ({
     { model: "Quiz", delegate: "quiz" },
     { model: "TopicRelation", delegate: "topicRelation" },
     { model: "UserInterestPreference", delegate: "userInterestPreference" },
-    { model: "UserFollowedTopic", delegate: "userFollowedTopic" },
     { model: "UserDiscoveryPreference", delegate: "userDiscoveryPreference" },
     { model: "Collection", delegate: "collection" },
     { model: "CollectionQuiz", delegate: "collectionQuiz" },
@@ -93,7 +90,6 @@ jest.mock("@/lib/db", () => {
     quiz: createDelegate("Quiz"),
     topicRelation: createDelegate("TopicRelation"),
     userInterestPreference: createDelegate("UserInterestPreference"),
-    userFollowedTopic: createDelegate("UserFollowedTopic"),
     userDiscoveryPreference: createDelegate("UserDiscoveryPreference"),
     collection: createDelegate("Collection"),
     collectionQuiz: createDelegate("CollectionQuiz"),
@@ -228,16 +224,6 @@ describe("backup export/restore integration for topic + collection models", () =
         topicId: "topic_1",
         source: "PROFILE",
         strength: 0.8,
-        createdAt: now,
-        updatedAt: now,
-      },
-    ];
-
-    store.UserFollowedTopic = [
-      {
-        id: "follow_1",
-        userId: "user_1",
-        topicId: "topic_1",
         createdAt: now,
         updatedAt: now,
       },

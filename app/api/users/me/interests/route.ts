@@ -92,7 +92,11 @@ export async function GET() {
 
     return successResponse({
       interests: payload.interests
-        .filter((interest) => groupedFollowableTypes.has(interest.topic.schemaType))
+        .filter(
+          (interest) =>
+            groupedFollowableTypes.has(interest.topic.schemaType) &&
+            interest.topic.entityStatus === "READY"
+        )
         .map(toInterestResponseRow),
       preferences: payload.preferences,
       meta: {

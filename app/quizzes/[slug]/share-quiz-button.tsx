@@ -1,7 +1,7 @@
 "use client";
 
 import { Share2 } from "lucide-react";
-import { ShowcaseButton } from "@/components/showcase/ui/buttons/Button";
+import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 
 interface ShareQuizButtonProps {
@@ -54,14 +54,14 @@ export function ShareQuizButton({ title, url }: ShareQuizButtonProps) {
     };
 
     return (
-        <ShowcaseButton
-            variant="glass"
+        <Button
+            variant="outline"
             size="xl"
             className="w-full sm:w-auto"
             onClick={handleShare}
         >
             <Share2 className="mr-3 h-5 w-5" />
             SHARE
-        </ShowcaseButton>
+        </Button>
     );
 }

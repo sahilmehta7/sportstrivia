@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
-import type { ShowcaseTheme } from "@/components/showcase/ShowcaseThemeProvider";
 import type { LeaderboardEntry } from "@/lib/services/leaderboard.service";
+
+export type QuizResultsTheme = "light" | "dark";
 
 export interface QuizResultsSummaryData {
   quizTitle: string;
@@ -25,30 +26,29 @@ export interface QuizResultsLeaderboardEntry extends LeaderboardEntry {
 
 export interface QuizResultsSummaryProps {
   data: QuizResultsSummaryData;
-  theme?: ShowcaseTheme;
+  theme?: QuizResultsTheme;
   confetti?: boolean;
   children?: ReactNode;
 }
 
 export interface QuizResultsLeaderboardProps {
   entries: QuizResultsLeaderboardEntry[];
-  theme?: ShowcaseTheme;
+  theme?: QuizResultsTheme;
   highlightUserId?: string | null;
   showExtraPlayer?: boolean;
 }
 
 export interface QuizResultsCardProps {
-  theme?: ShowcaseTheme;
+  theme?: QuizResultsTheme;
   className?: string;
   children: ReactNode;
 }
 
 export interface QuizResultsSectionProps {
-  theme?: ShowcaseTheme;
+  theme?: QuizResultsTheme;
   title: string;
   description?: string;
   children: ReactNode;
   className?: string;
 }
-
 

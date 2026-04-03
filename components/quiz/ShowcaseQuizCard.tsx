@@ -80,7 +80,7 @@ export function ShowcaseQuizCard({
   ].filter((entry) => Boolean(entry.value));
 
   return (
-    <Link href={linkHref} className={cn("relative group block transition-all duration-300", className)}>
+    <Link href={linkHref} className={cn("relative group block h-full transition-all duration-300", className)}>
       <div className={cn(
         "relative h-full flex flex-col overflow-hidden border-2 border-foreground/5 bg-background",
         "transition-all duration-300 group-hover:border-foreground group-hover:shadow-athletic",
@@ -127,7 +127,7 @@ export function ShowcaseQuizCard({
         <div className="flex flex-1 flex-col justify-between p-8">
           <div className="space-y-4">
             <div className="flex items-start justify-between gap-3">
-              <h3 className="text-2xl font-bold uppercase tracking-tighter leading-none font-['Barlow_Condensed',sans-serif] group-hover:text-accent transition-colors line-clamp-2">
+              <h3 className="line-clamp-2 min-h-[2em] text-2xl font-bold uppercase tracking-tighter leading-none font-['Barlow_Condensed',sans-serif] group-hover:text-accent transition-colors">
                 {title}
               </h3>
               {contextLabel ? (
@@ -137,12 +137,12 @@ export function ShowcaseQuizCard({
               ) : null}
             </div>
 
-            <div className="flex flex-wrap items-center gap-4">
+            <div className="flex items-center gap-2 sm:gap-3 whitespace-nowrap">
               {stats.map(({ label: statLabel, value, icon: StatIcon }) => (
-                <div key={statLabel} className="flex items-center gap-2">
-                  <StatIcon className="h-3.5 w-3.5 text-muted-foreground" />
+                <div key={statLabel} className="flex items-center gap-1.5 min-w-0">
+                  <StatIcon className="h-3 w-3 text-muted-foreground shrink-0" />
                   <span className="sr-only">{statLabel}</span>
-                  <span className="text-[10px] font-bold tracking-widest uppercase text-muted-foreground">
+                  <span className="truncate text-[9px] font-bold tracking-[0.12em] uppercase text-muted-foreground">
                     {value}
                   </span>
                 </div>

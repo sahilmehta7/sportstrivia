@@ -19,8 +19,6 @@ type ExplicitInterest = InterestTopic & {
   strength: number;
 };
 
-type FollowedTopic = InterestTopic;
-
 type TopicStatSignal = InterestTopic & {
   questionsAnswered: number;
   successRate: number;
@@ -40,7 +38,6 @@ type DiscoveryPreferences = {
 type InterestProfileInput = {
   userId: string;
   explicitInterests: ExplicitInterest[];
-  follows: FollowedTopic[];
   topicStats: TopicStatSignal[];
   searchSignals: SearchSignal[];
   preferences: DiscoveryPreferences;
@@ -148,10 +145,13 @@ export function clearInterestProfileCache() {
 export function computeInterestProfile(input: InterestProfileInput): InterestProfile {
   const follows = scoreAndSort(
     uniqueByTopicId(
-      input.follows
+      input.explicitInterests
         .filter((topic) => isFollowableTopicSchemaType(topic.schemaType))
         .map((topic) => ({
-          ...topic,
+          topicId: topic.topicId,
+          slug: topic.slug,
+          name: topic.name,
+          schemaType: topic.schemaType,
           score: 100,
         }))
     )
@@ -177,11 +177,15 @@ export function computeInterestProfile(input: InterestProfileInput): InterestPro
     searchSignals: input.searchSignals,
   });
 
-  const topEntities = scoreAndSort([...follows, ...explicit, ...inferred])
+  const summaryCandidates = scoreAndSort(
+    uniqueByTopicId([...follows, ...explicit, ...inferred])
+  );
+
+  const topEntities = summaryCandidates
     .slice(0, 5)
     .map((topic) => topic.name);
 
-  const topSports = scoreAndSort([...follows, ...explicit, ...inferred])
+  const topSports = summaryCandidates
     .filter((topic) => topic.schemaType === "SPORT")
     .slice(0, 3)
     .map((topic) => topic.name);
@@ -413,21 +417,8 @@ export async function getInterestProfileForUser(
     return cached.profile;
   }
 
-  const [explicitInterests, follows, topicStats, userSearchEntries, preferences] = await Promise.all([
+  const [explicitInterests, topicStats, userSearchEntries, preferences] = await Promise.all([
     prisma.userInterestPreference.findMany({
-      where: { userId },
-      include: {
-        topic: {
-          select: {
-            id: true,
-            slug: true,
-            name: true,
-            schemaType: true,
-          },
-        },
-      },
-    }),
-    prisma.userFollowedTopic.findMany({
       where: { userId },
       include: {
         topic: {
@@ -486,12 +477,6 @@ export async function getInterestProfileForUser(
       schemaType: entry.topic.schemaType,
       source: entry.source,
       strength: entry.strength,
-    })),
-    follows: follows.map((entry) => ({
-      topicId: entry.topic.id,
-      slug: entry.topic.slug,
-      name: entry.topic.name,
-      schemaType: entry.topic.schemaType,
     })),
     topicStats: topicStats.map((entry) => ({
       topicId: entry.topic.id,

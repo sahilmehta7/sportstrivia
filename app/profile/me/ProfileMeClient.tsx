@@ -1,7 +1,10 @@
 "use client";
 
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { JsonLdScript } from "next-seo";
+import { Save, Target, Trophy, TrendingUp } from "lucide-react";
 import { ProfileHeader } from "@/components/profile/ProfileHeader";
 import { StatsCard } from "@/components/profile/StatsCard";
 import { BadgeShowcase } from "@/components/profile/BadgeShowcase";
@@ -11,31 +14,16 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
-import {
-  Trophy,
-  TrendingUp,
-  Save,
-  Activity,
-  LayoutDashboard,
-  Settings,
-  Award,
-  Zap,
-  Target
-} from "lucide-react";
 import { cn } from "@/lib/utils";
-import { ShowcaseTopicWiseStats, ShowcaseContinuePlayingQueue } from "@/showcase/components";
-import { ShowcaseProgressTrackerRibbon } from "@/components/showcase/ui/ProgressTrackerRibbon";
 import { pointsForLevel } from "@/lib/config/gamification";
-import { ShowcaseThemeProvider } from "@/components/showcase/ShowcaseThemeProvider";
-import Link from "next/link";
 import { PushSubscriptionCard } from "@/components/notifications/PushSubscriptionCard";
 import { DigestPreferencesCard } from "@/components/notifications/DigestPreferencesCard";
 import { DeleteAccountSection } from "@/components/profile/DeleteAccountSection";
 import { ProfileDiscoverabilityPanel } from "@/components/profile/ProfileDiscoverabilityPanel";
-import { JsonLdScript } from "next-seo";
 import { PageContainer } from "@/components/shared/PageContainer";
-import { getBlurCircles, getGradientText } from "@/lib/showcase-theme";
 
 interface ProfileData {
   id: string;
@@ -115,16 +103,59 @@ interface BadgeProgress {
   earnedAt: string | null;
 }
 
+interface TopicTag {
+  topicId: string;
+  name: string;
+  slug: string;
+  schemaType: string;
+}
+
+interface TopicOption {
+  id: string;
+  name: string;
+  slug: string;
+  schemaType: string;
+  entityStatus?: string;
+  level?: number;
+  parentId?: string | null;
+}
+
+type FollowableSchemaType =
+  | "SPORT"
+  | "SPORTS_TEAM"
+  | "ATHLETE"
+  | "SPORTS_EVENT"
+  | "SPORTS_ORGANIZATION";
+
+const FOLLOWABLE_SCHEMA_TYPES = new Set<FollowableSchemaType>([
+  "SPORT",
+  "SPORTS_TEAM",
+  "ATHLETE",
+  "SPORTS_EVENT",
+  "SPORTS_ORGANIZATION",
+]);
+
+function isEligibleInterestTopic(topic: TopicOption): boolean {
+  return (
+    FOLLOWABLE_SCHEMA_TYPES.has(topic.schemaType as FollowableSchemaType) &&
+    topic.entityStatus === "READY"
+  );
+}
+
 interface ProfileMeClientProps {
   profile: ProfileData;
   stats: ProfileStats | null;
   badges: BadgeProgress[];
+  interests: TopicTag[];
+  followedTopics: TopicTag[];
 }
 
 export function ProfileMeClient({
   profile: initialProfile,
   stats,
   badges,
+  interests,
+  followedTopics,
 }: ProfileMeClientProps) {
   const router = useRouter();
   const { toast } = useToast();
@@ -137,6 +168,18 @@ export function ProfileMeClient({
     bio: initialProfile.bio ?? "",
     favoriteTeams: initialProfile.favoriteTeams.join(", "),
   });
+  const [interestEditOpen, setInterestEditOpen] = useState(false);
+  const [interestSaving, setInterestSaving] = useState(false);
+  const [interestSearch, setInterestSearch] = useState("");
+  const [interestOptions, setInterestOptions] = useState<TopicOption[]>([]);
+  const [interestDraft, setInterestDraft] = useState<TopicTag[]>(interests);
+  const [interestPreferences, setInterestPreferences] = useState<{
+    preferredDifficulty: "EASY" | "MEDIUM" | "HARD" | null;
+    preferredPlayModes: string[];
+  }>({
+    preferredDifficulty: null,
+    preferredPlayModes: [],
+  });
 
   useEffect(() => {
     setProfile(initialProfile);
@@ -147,6 +190,10 @@ export function ProfileMeClient({
     });
   }, [initialProfile]);
 
+  useEffect(() => {
+    setInterestDraft(interests);
+  }, [interests]);
+
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setSaving(true);
@@ -155,7 +202,10 @@ export function ProfileMeClient({
         name: formData.name,
         bio: formData.bio || null,
         favoriteTeams: formData.favoriteTeams
-          ? formData.favoriteTeams.split(",").map((t) => t.trim()).filter(Boolean)
+          ? formData.favoriteTeams
+              .split(",")
+              .map((t) => t.trim())
+              .filter(Boolean)
           : [],
       };
       const response = await fetch("/api/users/me", {
@@ -168,7 +218,11 @@ export function ProfileMeClient({
       if (result.data?.user) {
         const u = result.data.user;
         setProfile({ ...profile, ...u, favoriteTeams: u.favoriteTeams ?? [] });
-        setFormData({ name: u.name ?? "", bio: u.bio ?? "", favoriteTeams: (u.favoriteTeams ?? []).join(", ") });
+        setFormData({
+          name: u.name ?? "",
+          bio: u.bio ?? "",
+          favoriteTeams: (u.favoriteTeams ?? []).join(", "),
+        });
       }
       toast({ title: "Success", description: "Profile updated successfully" });
       setEditOpen(false);
@@ -180,238 +234,468 @@ export function ProfileMeClient({
     }
   };
 
-  const mappedTopTopics = (stats?.topTopics ?? []).map((t) => ({
-    id: t.id,
-    label: t.topic.name,
-    accuracyPercent: Math.round(t.successRate),
-    quizzesTaken: t.questionsAnswered,
-    icon: t.topic.emoji ?? "🏷️",
-  }));
+  const xpSnapshot = useMemo(() => {
+    const totalPoints = profile.totalPoints ?? 0;
+    const level = profile.level ?? 0;
+    const currentReq = profile.levelCurrentPointsRequired ?? pointsForLevel(level);
+    const nextReq = profile.nextLevelPoints ?? (level < 100 ? pointsForLevel(level + 1) : null);
+    const span = profile.levelSpanPoints ?? (nextReq ? Math.max(nextReq - currentReq, 1) : 1);
+    const progressPoints = profile.levelProgressPoints ?? (nextReq ? Math.min(Math.max(totalPoints - currentReq, 0), span) : span);
+    const progressPercent = Math.min(100, Math.max(0, Math.round((progressPoints / Math.max(span, 1)) * 100)));
+    const pointsToNext = nextReq ? Math.max(nextReq - totalPoints, 0) : 0;
 
-  const continueItems = (() => {
-    const attempts = (stats?.recentAttempts ?? []).filter(
-      (a) => a.quiz && (a.quiz as any).recurringType && (a.quiz as any).recurringType !== "NONE" && a.completedAt
-    );
-    const map = new Map<string, any>();
-    for (const a of attempts) {
-      const dayTs = new Date(a.completedAt as any).setHours(0, 0, 0, 0);
-      const ts = new Date(a.completedAt as any).getTime();
-      const entry = map.get(a.quiz.slug) ?? { id: a.quiz.slug, title: a.quiz.title, slug: a.quiz.slug, dates: [], lastCompletedAt: 0 };
-      entry.dates.push(dayTs);
-      entry.lastCompletedAt = Math.max(entry.lastCompletedAt, ts);
-      map.set(a.quiz.slug, entry);
+    return {
+      totalPoints,
+      level,
+      span,
+      progressPoints,
+      progressPercent,
+      pointsToNext,
+      nextReq,
+      tierName: profile.tierName || profile.experienceTier || "ROOKIE",
+    };
+  }, [profile]);
+
+  const filteredInterestOptions = useMemo(() => {
+    const selectedIds = new Set(interestDraft.map((item) => item.topicId));
+    const q = interestSearch.trim().toLowerCase();
+    const unselected = interestOptions.filter((topic) => !selectedIds.has(topic.id));
+
+    // First-time suggestions: only Level 1 SPORTS topics.
+    if (interestDraft.length === 0) {
+      return unselected
+        .filter((topic) => topic.schemaType === "SPORT" && topic.level === 1)
+        .filter((topic) => {
+          if (!q) return true;
+          return topic.name.toLowerCase().includes(q) || topic.slug.toLowerCase().includes(q);
+        })
+        .slice(0, 10);
     }
-    const last7 = Array.from({ length: 7 }).map((_, i) => {
-      const d = new Date(); d.setDate(d.getDate() - (6 - i)); d.setHours(0, 0, 0, 0); return d.getTime();
+
+    // Graph-based related suggestions after initial interests are set.
+    const optionsById = new Map(interestOptions.map((topic) => [topic.id, topic]));
+    const selectedParentIds = new Set(
+      interestDraft
+        .map((item) => optionsById.get(item.topicId)?.parentId)
+        .filter((parentId): parentId is string => Boolean(parentId))
+    );
+
+    const related = unselected.filter((topic) => {
+      const isParent = selectedParentIds.has(topic.id);
+      const isChild = Boolean(topic.parentId && selectedIds.has(topic.parentId));
+      const isSibling = Boolean(topic.parentId && selectedParentIds.has(topic.parentId));
+      return isParent || isChild || isSibling;
     });
-    return Array.from(map.values())
-      .sort((a, b) => b.lastCompletedAt - a.lastCompletedAt)
-      .slice(0, 5)
-      .map((g) => {
-        const uniqueDaysDesc = Array.from(new Set(g.dates)).sort((a: any, b: any) => b - a);
-        const daysOfWeek = last7.map((t) => (uniqueDaysDesc as any).includes(t));
-        let streak = 0; if (uniqueDaysDesc.length > 0) { streak = 1; for (let i = 1; i < uniqueDaysDesc.length; i++) { if ((uniqueDaysDesc[i - 1] as any) - (uniqueDaysDesc[i] as any) === 86400000) streak += 1; else break; } }
-        return {
-          id: g.id, title: g.title, progress: 0,
-          lastPlayedLabel: new Intl.DateTimeFormat("en-US", { dateStyle: "medium" }).format(new Date(g.lastCompletedAt)),
-          slug: g.slug, daysOfWeek, streak,
-        };
+
+    const pool = related.length > 0 ? related : unselected;
+    return pool
+      .filter((topic) => {
+        if (!q) return true;
+        return topic.name.toLowerCase().includes(q) || topic.slug.toLowerCase().includes(q);
+      })
+      .slice(0, 10);
+  }, [interestDraft, interestOptions, interestSearch]);
+
+  const openInterestsEditor = async () => {
+    try {
+      const [topicsRes, interestsRes] = await Promise.all([
+        fetch("/api/topics?limit=300"),
+        fetch("/api/users/me/interests"),
+      ]);
+      const [topicsPayload, interestsPayload] = await Promise.all([topicsRes.json(), interestsRes.json()]);
+      if (!topicsRes.ok || !interestsRes.ok) {
+        throw new Error("Failed to load interest editor data");
+      }
+      const eligibleTopics = ((topicsPayload?.data?.topics ?? []) as TopicOption[]).filter(
+        isEligibleInterestTopic
+      );
+      setInterestOptions(eligibleTopics);
+      const prefs = interestsPayload?.data?.preferences;
+      setInterestPreferences({
+        preferredDifficulty: prefs?.preferredDifficulty ?? null,
+        preferredPlayModes: prefs?.preferredPlayModes ?? [],
       });
-  })();
+      setInterestEditOpen(true);
+    } catch (error: any) {
+      toast({
+        title: "Unable to open editor",
+        description: error.message || "Could not load topics",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const saveInterests = async () => {
+    setInterestSaving(true);
+    try {
+      const response = await fetch("/api/users/me/interests", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          topicIds: interestDraft.map((item) => item.topicId),
+          source: "PROFILE",
+          preferences: {
+            preferredDifficulty: interestPreferences.preferredDifficulty,
+            preferredPlayModes: interestPreferences.preferredPlayModes,
+          },
+        }),
+      });
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(result.error || "Failed to save interests");
+      }
+      toast({ title: "Saved", description: "Interests updated successfully." });
+      setInterestEditOpen(false);
+      router.refresh();
+    } catch (error: any) {
+      toast({
+        title: "Save failed",
+        description: error.message || "Could not update interests",
+        variant: "destructive",
+      });
+    } finally {
+      setInterestSaving(false);
+    }
+  };
 
   return (
-    <ShowcaseThemeProvider>
-      <main className="relative min-h-screen overflow-hidden pt-12 pb-24 lg:pt-20">
-        {(() => {
-          const { circle1, circle2, circle3 } = getBlurCircles();
-          return (
-            <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none">
-              <div className={cn("absolute -left-[10%] top-[10%] h-[40%] w-[40%] rounded-full opacity-20 blur-[120px]", circle1)} />
-              <div className={cn("absolute -right-[10%] top-[20%] h-[40%] w-[40%] rounded-full opacity-20 blur-[120px]", circle2)} />
-              <div className={cn("absolute left-[20%] -bottom-[10%] h-[40%] w-[40%] rounded-full opacity-20 blur-[120px]", circle3)} />
-            </div>
-          );
-        })()}
+    <main className="min-h-screen bg-background py-6 sm:py-8">
+      <PageContainer className="space-y-6">
+        <ProfileHeader user={profile as any} isOwnProfile showEditButton={false} compact flat />
 
-        <PageContainer className="space-y-16">
-          <ProfileHeader user={profile as any} isOwnProfile showEditButton={false} />
+        <Tabs defaultValue="overview" className="space-y-4">
+          <TabsList className="grid h-auto grid-cols-4 gap-1 rounded-none border border-border bg-card p-1">
+            {[
+              { value: "overview", label: "Overview" },
+              { value: "activity", label: "History" },
+              { value: "achievements", label: "Badges" },
+              { value: "settings", label: "Settings" },
+            ].map((tab) => (
+              <TabsTrigger
+                key={tab.value}
+                value={tab.value}
+                className="rounded-none px-2 py-2 text-[10px] font-black uppercase tracking-wider data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+              >
+                <span className="hidden sm:inline">{tab.label}</span>
+                <span className="sm:hidden">{tab.label.slice(0, 4)}</span>
+              </TabsTrigger>
+            ))}
+          </TabsList>
 
-          <Tabs defaultValue="overview" className="space-y-12">
-            <div className="flex justify-center">
-              <TabsList className="h-auto p-1.5 rounded-[2rem] glass border border-white/10 shadow-glass-lg">
-                {[
-                  { value: "overview", label: "Overview", icon: LayoutDashboard },
-                  { value: "activity", label: "Chronicle", icon: Activity },
-                  { value: "achievements", label: "Matrix", icon: Award },
-                  { value: "settings", label: "Settings", icon: Settings },
-                ].map((tab) => (
-                  <TabsTrigger
-                    key={tab.value}
-                    value={tab.value}
-                    className="rounded-[1.75rem] px-6 py-3 text-[10px] font-black uppercase tracking-widest transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-neon-cyan/40"
-                  >
-                    <tab.icon className="h-3.5 w-3.5 mr-2" />
-                    {tab.label}
-                  </TabsTrigger>
-                ))}
-              </TabsList>
-            </div>
-
-            <TabsContent value="overview" className="space-y-16">
-              {stats && (
-                <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-                  <StatsCard title="RECORDS" value={stats.stats.totalAttempts} variant="cyan" icon={Trophy} subtitle={`${stats.stats.passedQuizzes} MISSIONS SUCCESS`} />
-                  <StatsCard title="ACCURACY" value={`${stats.stats.averageScore.toFixed(0)}%`} variant="magenta" icon={Target} subtitle={`${stats.stats.passRate.toFixed(0)}% RATE`} />
-                  <StatsCard title="STREAK" value={`${stats.stats.currentStreak} DAYS`} variant="lime" icon={TrendingUp} subtitle={`BEST: ${stats.stats.longestStreak} D`} />
-                  {(() => {
-                    const totalPoints = profile.totalPoints ?? 0;
-                    const level = profile.level ?? 0;
-                    const currentReq = profile.levelCurrentPointsRequired ?? pointsForLevel(level);
-                    const nextReq = profile.nextLevelPoints ?? (level < 100 ? pointsForLevel(level + 1) : null);
-                    const span = profile.levelSpanPoints ?? (nextReq ? Math.max(nextReq - currentReq, 1) : 1);
-                    const progress = profile.levelProgressPoints ?? (nextReq ? Math.min(Math.max(totalPoints - currentReq, 0), span) : span);
-                    return (
-                      <div className="flex flex-col gap-1 p-6 rounded-[2rem] glass-elevated border border-white/5 shadow-neon-cyan/5">
-                        <div className="flex items-center justify-between mb-4">
-                          <Zap className="h-5 w-5 text-primary" />
-                          <div className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground/60">TIER {level}</div>
-                        </div>
-                        <ShowcaseProgressTrackerRibbon
-                          label={`${profile.tierName || profile.experienceTier || "ROOKIE"}`}
-                          current={progress}
-                          goal={span}
-                          rightTitle="XP"
-                          rightValue={totalPoints.toLocaleString()}
-                          milestoneLabel={undefined}
-                          footerRight={<Link href="/profile/me/points" className="text-[10px] font-black text-primary hover:underline">HISTORY →</Link>}
-                        />
-                      </div>
-                    );
-                  })()}
-                </div>
-              )}
-
-              <div className="grid gap-12 lg:grid-cols-2">
-                {stats && mappedTopTopics.length > 0 && (
-                  <div className="space-y-8">
-                    <div className="flex items-center gap-4 px-2">
-                      <div className="h-6 w-1 rounded-full bg-primary shadow-neon-cyan" />
-                      <h1 className={cn("text-5xl lg:text-8xl font-bold uppercase tracking-tighter leading-[0.8]", getGradientText("editorial"))}>Sector Insights</h1>
-                    </div>
-                    <ShowcaseTopicWiseStats
-                      title=""
-                      description=""
-                      topics={mappedTopTopics}
-                      limit={5}
-                      className="bg-transparent border-0 p-0 shadow-none"
-                    />
-                  </div>
-                )}
-                {continueItems.length > 0 && (
-                  <div className="space-y-8">
-                    <div className="flex items-center gap-4 px-2">
-                      <div className="h-6 w-1 rounded-full bg-secondary shadow-neon-magenta" />
-                      <h4 className="text-2xl font-black uppercase tracking-tight">Active Quizzes</h4>
-                    </div>
-                    <div className="rounded-[2.5rem] p-8 glass-elevated border border-white/10">
-                      <ShowcaseContinuePlayingQueue
-                        embedded
-                        items={continueItems}
-                        onResume={(item: any) => router.push(`/quizzes/${item.slug}`)}
-                      />
-                    </div>
-                  </div>
-                )}
+          <TabsContent value="overview" className="space-y-4">
+            {stats && (
+              <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
+                <StatsCard
+                  title="Records"
+                  value={stats.stats.totalAttempts}
+                  variant="cyan"
+                  icon={Trophy}
+                  subtitle={`${stats.stats.passedQuizzes} SUCCESS`}
+                  flat
+                  compact
+                />
+                <StatsCard
+                  title="Accuracy"
+                  value={`${stats.stats.averageScore.toFixed(0)}%`}
+                  variant="magenta"
+                  icon={Target}
+                  subtitle={`${stats.stats.passRate.toFixed(0)}% RATE`}
+                  flat
+                  compact
+                />
+                <StatsCard
+                  title="Streak"
+                  value={`${stats.stats.currentStreak}D`}
+                  variant="lime"
+                  icon={TrendingUp}
+                  subtitle={`BEST ${stats.stats.longestStreak}D`}
+                  className="col-span-2 md:col-span-1"
+                  flat
+                  compact
+                />
               </div>
-            </TabsContent>
+            )}
 
-            <TabsContent value="activity">
-              {stats && <ActivityFeed attempts={stats.recentAttempts || []} />}
-            </TabsContent>
-
-            <TabsContent value="achievements">
-              <BadgeShowcase badges={badges as any} />
-            </TabsContent>
-
-            <TabsContent value="settings" className="space-y-12 shrink-0">
-              <ProfileDiscoverabilityPanel />
-
-              <div className="grid gap-12 lg:grid-cols-2">
-                <div className="space-y-8">
-                  <div className="flex items-center gap-4 px-2">
-                    <div className="h-6 w-1 rounded-full bg-primary shadow-neon-cyan" />
-                    <h4 className="text-2xl font-black uppercase tracking-tight">System Access</h4>
-                  </div>
-                  <div className="space-y-6">
-                    <PushSubscriptionCard />
-                    <DigestPreferencesCard />
-                  </div>
+            <section className="border border-border bg-card p-4 sm:p-5">
+              <div className="mb-3 flex flex-wrap items-end justify-between gap-3">
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">Tier</p>
+                  <p className="text-2xl font-black uppercase tracking-tight">{xpSnapshot.tierName}</p>
                 </div>
+                <div className="text-right">
+                  <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">Level</p>
+                  <p className="text-3xl font-black">{xpSnapshot.level}</p>
+                </div>
+              </div>
 
-                <div className="space-y-8">
-                  <div className="flex items-center gap-4 px-2 flex-row justify-between">
-                    <div className="flex items-center gap-4">
-                      <div className="h-6 w-1 rounded-full bg-secondary shadow-neon-magenta" />
-                      <h4 className="text-2xl font-black uppercase tracking-tight">Profile Config</h4>
-                    </div>
-                    {!editOpen && (
-                      <Button variant="glass" size="sm" onClick={() => setEditOpen(true)} className="rounded-2xl">CONFIGURE</Button>
+              <div className="grid gap-2 text-sm sm:grid-cols-3">
+                <div>
+                  <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Total XP</p>
+                  <p className="text-lg font-bold">{xpSnapshot.totalPoints.toLocaleString()}</p>
+                </div>
+                <div>
+                  <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Current Level</p>
+                  <p className="text-lg font-bold">{xpSnapshot.progressPoints.toLocaleString()} / {xpSnapshot.span.toLocaleString()}</p>
+                </div>
+                <div>
+                  <p className="text-[11px] uppercase tracking-wide text-muted-foreground">To Next Level</p>
+                  <p className="text-lg font-bold">{xpSnapshot.nextReq ? xpSnapshot.pointsToNext.toLocaleString() : "MAX"}</p>
+                </div>
+              </div>
+
+              <div className="mt-3 space-y-1">
+                <Progress value={xpSnapshot.progressPercent} className="h-2 rounded-none" />
+                <div className="flex items-center justify-between text-xs text-muted-foreground">
+                  <span>{xpSnapshot.progressPercent}% complete</span>
+                  <Link href="/profile/me/points" className="font-semibold uppercase tracking-wide text-primary hover:underline">
+                    Points History
+                  </Link>
+                </div>
+              </div>
+            </section>
+
+            <div className="grid gap-4 lg:grid-cols-2">
+              <Card className="rounded-none">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base font-bold uppercase tracking-wide">Topic Insights</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  {stats && stats.topTopics.length > 0 ? (
+                    stats.topTopics.slice(0, 6).map((item) => (
+                      <Link
+                        key={item.id}
+                        href={`/topics/${item.topic.slug}`}
+                        className="flex items-center justify-between border border-border px-3 py-2 text-sm hover:bg-muted/40"
+                      >
+                        <span className="truncate font-medium">{item.topic.name}</span>
+                        <span className="ml-3 shrink-0 font-semibold text-primary">{Math.round(item.successRate)}%</span>
+                      </Link>
+                    ))
+                  ) : (
+                    <p className="text-sm text-muted-foreground">No topic stats yet.</p>
+                  )}
+                </CardContent>
+              </Card>
+
+              <Card className="rounded-none">
+                <CardHeader className="pb-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <CardTitle className="text-base font-bold uppercase tracking-wide">User Interests & Followed Topics</CardTitle>
+                    {interestEditOpen ? (
+                      <Button variant="outline" size="sm" className="rounded-none" onClick={() => setInterestEditOpen(false)}>
+                        Cancel
+                      </Button>
+                    ) : (
+                      <Button variant="outline" size="sm" className="rounded-none" onClick={openInterestsEditor}>
+                        Edit
+                      </Button>
                     )}
                   </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <p className="mb-2 text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">Interests</p>
+                    <TopicTagList
+                      items={interestDraft}
+                      emptyLabel="No explicit interests yet"
+                    />
+                  </div>
 
-                  {editOpen ? (
-                    <div className="rounded-[2.5rem] p-8 glass-elevated border border-primary/20 shadow-neon-cyan/5">
-                      <form onSubmit={handleSubmit} className="space-y-8">
-                        <div className="grid gap-6 sm:grid-cols-2">
+                  {interestEditOpen && (
+                    <div className="space-y-3 border border-border p-3">
+                      <Input
+                        value={interestSearch}
+                        onChange={(e) => setInterestSearch(e.target.value)}
+                        placeholder="Search topics to add"
+                        className="rounded-none h-10"
+                      />
+                      <div className="grid gap-2">
+                        {filteredInterestOptions.map((topic) => (
+                          <button
+                            key={topic.id}
+                            type="button"
+                            className="flex items-center justify-between border border-border px-3 py-2 text-left text-sm hover:bg-muted/40"
+                            onClick={() =>
+                              setInterestDraft((current) => [
+                                ...current,
+                                {
+                                  topicId: topic.id,
+                                  name: topic.name,
+                                  slug: topic.slug,
+                                  schemaType: topic.schemaType,
+                                },
+                              ])
+                            }
+                          >
+                            <span className="truncate font-medium">{topic.name}</span>
+                            <span className="ml-2 text-[10px] uppercase tracking-wide text-muted-foreground">
+                              {topic.schemaType.replace("SPORTS_", "")}
+                            </span>
+                          </button>
+                        ))}
+                        {filteredInterestOptions.length === 0 && (
+                          <p className="text-xs text-muted-foreground">No matching topics.</p>
+                        )}
+                      </div>
+
+                      <div className="space-y-2">
+                        <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">Selected Interests</p>
+                        <div className="flex flex-wrap gap-2">
+                          {interestDraft.map((item) => (
+                            <button
+                              key={`edit-${item.topicId}`}
+                              type="button"
+                              className="border border-primary/40 px-2.5 py-1 text-xs font-medium text-primary hover:bg-primary/10"
+                              onClick={() =>
+                                setInterestDraft((current) =>
+                                  current.filter((entry) => entry.topicId !== item.topicId)
+                                )
+                              }
+                            >
+                              {item.name} ×
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      <Button
+                        type="button"
+                        onClick={saveInterests}
+                        disabled={interestSaving}
+                        className="rounded-none"
+                      >
+                        {interestSaving ? "Saving..." : "Save Interests"}
+                      </Button>
+                    </div>
+                  )}
+
+                  <div>
+                    <p className="mb-2 text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">Followed Topics</p>
+                    <TopicTagList
+                      items={followedTopics}
+                      emptyLabel="No followed topics yet"
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="activity">
+            {stats && <ActivityFeed attempts={stats.recentAttempts || []} />}
+          </TabsContent>
+
+          <TabsContent value="achievements">
+            <BadgeShowcase badges={badges as any} />
+          </TabsContent>
+
+          <TabsContent value="settings" className="space-y-6 shrink-0">
+            <ProfileDiscoverabilityPanel />
+
+            <div className="grid gap-6 lg:grid-cols-2">
+              <div className="space-y-3">
+                <h4 className="text-base font-black uppercase tracking-wide">System Access</h4>
+                <div className="space-y-4">
+                  <PushSubscriptionCard />
+                  <DigestPreferencesCard />
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-base font-black uppercase tracking-wide">Profile Config</h4>
+                  {!editOpen && (
+                    <Button variant="outline" size="sm" onClick={() => setEditOpen(true)} className="rounded-none">
+                      Configure
+                    </Button>
+                  )}
+                </div>
+
+                {editOpen ? (
+                  <Card className="rounded-none border-primary/30">
+                    <CardContent className="pt-6">
+                      <form onSubmit={handleSubmit} className="space-y-6">
+                        <div className="grid gap-4 sm:grid-cols-2">
                           <div className="space-y-2">
-                            <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">IDENTIFIER</Label>
-                            <Input value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} className="rounded-2xl glass h-12" />
+                            <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Identifier</Label>
+                            <Input value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} className="rounded-none h-11" />
                           </div>
                           <div className="space-y-2">
-                            <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">AFFILIATED TEAMS</Label>
-                            <Input value={formData.favoriteTeams} onChange={(e) => setFormData({ ...formData, favoriteTeams: e.target.value })} className="rounded-2xl glass h-12" />
+                            <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Affiliated Teams</Label>
+                            <Input value={formData.favoriteTeams} onChange={(e) => setFormData({ ...formData, favoriteTeams: e.target.value })} className="rounded-none h-11" />
                           </div>
                         </div>
                         <div className="space-y-2">
-                          <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">BIOGRAPHICAL DATA</Label>
-                          <Textarea value={formData.bio} onChange={(e) => setFormData({ ...formData, bio: e.target.value })} rows={4} className="rounded-2xl glass" />
+                          <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Biographical Data</Label>
+                          <Textarea value={formData.bio} onChange={(e) => setFormData({ ...formData, bio: e.target.value })} rows={4} className="rounded-none" />
                         </div>
-                        <div className="flex gap-4">
-                          <Button type="submit" variant="accent" size="lg" disabled={saving} className="flex-1">
-                            <Save className="mr-3 h-4 w-4" />
-                            {saving ? "UPLOADING..." : "SYNC PROFILE"}
+                        <div className="flex gap-3">
+                          <Button type="submit" size="lg" disabled={saving} className="flex-1 rounded-none">
+                            <Save className="mr-2 h-4 w-4" />
+                            {saving ? "Uploading..." : "Sync Profile"}
                           </Button>
-                          <Button type="button" variant="glass" size="lg" onClick={() => setEditOpen(false)}>ABORT</Button>
+                          <Button type="button" variant="outline" size="lg" onClick={() => setEditOpen(false)} className="rounded-none">Abort</Button>
                         </div>
                       </form>
-                    </div>
-                  ) : (
-                    <div className="rounded-[2.5rem] p-8 glass-elevated border border-white/10 space-y-8">
-                      <div className="grid gap-8 sm:grid-cols-2">
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <Card className="rounded-none">
+                    <CardContent className="space-y-6 pt-6">
+                      <div className="grid gap-6 sm:grid-cols-2">
                         <InfoItem label="EMAIL" value={profile.email} />
                         <InfoItem label="ROLE" value={profile.role} />
                         <InfoItem label="JOINED" value={new Intl.DateTimeFormat("en-US", { month: "long", year: "numeric" }).format(new Date(profile.createdAt))} />
-                        <InfoItem label="STATUS" value="ONLINE - SECURE" color="text-emerald-400" />
+                        <InfoItem label="STATUS" value="ONLINE" color="text-emerald-500" />
                       </div>
                       {profile.bio && <InfoItem label="BIO" value={profile.bio} fullWidth />}
                       {profile.favoriteTeams.length > 0 && <InfoItem label="TEAMS" value={profile.favoriteTeams.join(", ")} fullWidth />}
-                    </div>
-                  )}
-                </div>
+                    </CardContent>
+                  </Card>
+                )}
               </div>
+            </div>
 
-              <DeleteAccountSection />
-            </TabsContent>
-          </Tabs>
-        </PageContainer>
+            <DeleteAccountSection />
+          </TabsContent>
+        </Tabs>
+      </PageContainer>
 
-        <JsonLdScript scriptKey="person-jsonld" data={{ "@context": "https://schema.org", "@type": "Person", name: profile.name || "UNREGISTERED", image: profile.image, description: profile.bio }} />
-      </main>
-    </ShowcaseThemeProvider>
+      <JsonLdScript
+        scriptKey="person-jsonld"
+        data={{
+          "@context": "https://schema.org",
+          "@type": "Person",
+          name: profile.name || "UNREGISTERED",
+          image: profile.image,
+          description: profile.bio,
+        }}
+      />
+    </main>
   );
 }
 
-function InfoItem({ label, value, color, fullWidth }: { label: string, value: string, color?: string, fullWidth?: boolean }) {
+function TopicTagList({ items, emptyLabel }: { items: TopicTag[]; emptyLabel: string }) {
+  if (items.length === 0) {
+    return <p className="text-sm text-muted-foreground">{emptyLabel}</p>;
+  }
+
+  return (
+    <div className="flex flex-wrap gap-2">
+      {items.slice(0, 16).map((item) => (
+        <Link
+          key={`${item.topicId}-${item.slug}`}
+          href={`/topics/${item.slug}`}
+          className="border border-border px-2.5 py-1.5 text-xs font-medium hover:bg-muted/40"
+        >
+          {item.name}
+        </Link>
+      ))}
+    </div>
+  );
+}
+
+function InfoItem({ label, value, color, fullWidth }: { label: string; value: string; color?: string; fullWidth?: boolean }) {
   return (
     <div className={cn("space-y-1.5", fullWidth && "sm:col-span-2")}>
       <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">{label}</p>

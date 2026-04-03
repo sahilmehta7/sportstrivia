@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ShowcaseButton } from "@/components/showcase/ui/buttons/Button";
+import { Button } from "@/components/ui/button";
 import { ReviewModal } from "@/components/quiz/ReviewModal";
 
 interface QuizResultsReviewButtonProps {
@@ -24,14 +24,14 @@ export function QuizResultsReviewButton({
 
   return (
     <>
-      <ShowcaseButton
+      <Button
         variant="outline"
-        size="md"
+        size="default"
         onClick={() => setIsOpen(true)}
-        ariaLabel="Rate this quiz"
+        aria-label="Rate this quiz"
       >
         Rate This Quiz
-      </ShowcaseButton>
+      </Button>
 
       {isOpen ? (
         <ReviewModal
@@ -48,5 +48,3 @@ export function QuizResultsReviewButton({
     </>
   );
 }
-
-

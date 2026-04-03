@@ -159,7 +159,6 @@ export const ShortsQuestionScene: React.FC<ShortsQuestionSceneProps> = ({
   const elapsedSeconds = Math.floor(timerFrame / fps);
   const activeSeconds = Math.max(1, question.timeLimitSeconds);
   const countdownSeconds = Math.max(0, activeSeconds - elapsedSeconds);
-  const timerProgress = Math.min(timerFrame / activeFrames, 1);
   const revealFrame = Math.max(0, frame - (entranceFrames + activeFrames));
   const revealProgress = spring({
     frame: revealFrame,

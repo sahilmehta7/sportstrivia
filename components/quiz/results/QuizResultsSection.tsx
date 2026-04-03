@@ -1,25 +1,23 @@
 import type { QuizResultsSectionProps } from "./types";
 import { cn } from "@/lib/utils";
-import { getTextColor } from "@/lib/showcase-theme";
 
 export function QuizResultsSection({
-  theme,
+  theme: _theme,
   title,
   description,
   children,
   className,
 }: QuizResultsSectionProps) {
   return (
-    <section className={cn("rounded-[1.5rem] p-6", className)}>
+    <section className={cn("rounded-md border border-border/60 bg-background p-6", className)}>
       <header className="mb-4 space-y-1">
-        <h3 className={cn("text-lg font-bold", getTextColor(theme, "primary"))}>{title}</h3>
+        <h3 className="text-lg font-bold text-foreground">{title}</h3>
         {description ? (
-          <p className={cn("text-sm", getTextColor(theme, "secondary"))}>{description}</p>
+          <p className="text-sm text-muted-foreground">{description}</p>
         ) : null}
       </header>
       {children}
     </section>
   );
 }
-
 

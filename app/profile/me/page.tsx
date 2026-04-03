@@ -5,6 +5,8 @@ import {
   getUserProfileStats,
   getUserBadgeProgressData,
 } from "@/lib/services/user-profile.service";
+import { getUserInterestsAndPreferences } from "@/lib/services/user-interest.service";
+import { isFollowableTopicSchemaType } from "@/lib/topic-followability";
 import { ProfileMeClient } from "./ProfileMeClient";
 
 export default async function MyProfilePage() {
@@ -13,10 +15,11 @@ export default async function MyProfilePage() {
   // Middleware ensures session exists, so we can safely use it
   const userId = session!.user!.id;
 
-  const [profileInfo, statsData, badgeProgress] = await Promise.all([
+  const [profileInfo, statsData, badgeProgress, interestsData] = await Promise.all([
     getUserProfileInfo(userId),
     getUserProfileStats(userId).catch(() => null),
     getUserBadgeProgressData(userId).catch(() => []),
+    getUserInterestsAndPreferences(userId).catch(() => null),
   ]);
 
   if (!profileInfo) {
@@ -63,12 +66,28 @@ export default async function MyProfilePage() {
     earnedAt: progress.earnedAt ? new Date(progress.earnedAt).toISOString() : null,
   }));
 
+  const interests = (interestsData?.interests ?? [])
+    .filter(
+      (interest) =>
+        isFollowableTopicSchemaType(interest.topic.schemaType) &&
+        interest.topic.entityStatus === "READY"
+    )
+    .map((interest) => ({
+      topicId: interest.topic.id,
+      name: interest.topic.name,
+      slug: interest.topic.slug,
+      schemaType: interest.topic.schemaType,
+    }));
+
+  const followedTopics = interests;
+
   return (
     <ProfileMeClient
       profile={profile}
       stats={stats}
       badges={badges}
+      interests={interests}
+      followedTopics={followedTopics}
     />
   );
 }
-

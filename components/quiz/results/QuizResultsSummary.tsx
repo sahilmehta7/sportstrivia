@@ -4,17 +4,14 @@ import type { ReactNode } from "react";
 import { Clock, Zap, Star } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
-import {
-  getTextColor as _getTextColor,
-} from "@/lib/showcase-theme";
-import type { ShowcaseTheme } from "@/components/showcase/ShowcaseThemeProvider";
 import type { QuizResultsSummaryData } from "./types";
+import type { QuizResultsTheme } from "./types";
 
 const CONFETTI_COLORS = ["#10b981", "#fbbf24", "#f43f5e", "#3b82f6", "#8b5cf6"];
 
 interface QuizResultsSummaryProps {
   data: QuizResultsSummaryData;
-  theme?: ShowcaseTheme;
+  theme?: QuizResultsTheme;
   confetti?: boolean;
   footer?: ReactNode;
   className?: string;
@@ -156,7 +153,7 @@ export function QuizResultsSummary({ data, theme: _theme, confetti = false, foot
 
 interface QuizResultsStatsGridProps {
   data: QuizResultsSummaryData;
-  theme?: ShowcaseTheme;
+  theme?: QuizResultsTheme;
   className?: string;
 }
 
@@ -216,4 +213,3 @@ export function QuizResultsStatsGrid({ data, className }: QuizResultsStatsGridPr
     </div>
   );
 }
-

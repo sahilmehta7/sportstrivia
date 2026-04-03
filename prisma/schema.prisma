@@ -90,7 +90,6 @@ model User {
   searchQueries           UserSearchQuery[]
   topicStats              UserTopicStats[]
   interestPreferences     UserInterestPreference[]
-  followedTopics          UserFollowedTopic[]
   discoveryPreference     UserDiscoveryPreference?
   collectionProgress      UserCollectionProgress[]
   completionAwards        QuizCompletionBonusAward[]
@@ -177,7 +176,6 @@ model Topic {
   children               Topic[]                  @relation("TopicHierarchy")
   userStats              UserTopicStats[]
   interestedUsers        UserInterestPreference[]
-  followers              UserFollowedTopic[]
   outgoingRelations      TopicRelation[]          @relation("TopicRelationsFrom")
   incomingRelations      TopicRelation[]          @relation("TopicRelationsTo")
   primaryCollections     Collection[]             @relation("CollectionPrimaryTopic")
@@ -392,20 +390,6 @@ model UserInterestPreference {
   updatedAt DateTime                 @updatedAt
   user      User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
   topic     Topic                    @relation(fields: [topicId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, topicId])
-  @@index([userId])
-  @@index([topicId])
-}
-
-model UserFollowedTopic {
-  id        String   @id @default(cuid())
-  userId    String
-  topicId   String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  topic     Topic    @relation(fields: [topicId], references: [id], onDelete: Cascade)
 
   @@unique([userId, topicId])
   @@index([userId])

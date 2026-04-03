@@ -12,14 +12,13 @@ import {
   type PublicQuizListItem,
 } from "@/lib/services/public-quiz.service";
 import { buildTopicLeaderboard, type LeaderboardPeriod } from "@/lib/services/leaderboard.service";
-import { getCanonicalUrl, BASE_URL } from "@/lib/next-seo-config";
+import { getCanonicalUrl } from "@/lib/next-seo-config";
 import { StructuredData } from "@/components/seo/StructuredData";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { TopicFollowButton } from "@/components/topics/TopicFollowButton";
 import { CollectionRail } from "@/components/collections/CollectionRail";
 import { TopicAuthoritySection } from "@/components/topics/topic-authority-section";
 import { TopicAuthorityContainer } from "@/components/topics/topic-authority-container";
-import { FeaturedRow } from "@/components/quizzes/featured-row";
 import { FeaturedTradingCardsCarousel } from "@/components/quizzes/featured-trading-cards-carousel";
 import { ModernFilterBar } from "@/components/quizzes/modern-filter-bar";
 import { ShowcaseQuizCard } from "@/components/quiz/ShowcaseQuizCard";
@@ -182,8 +181,6 @@ export async function generateMetadata({
     : `Explore trivia quizzes, key facts, and highlights for ${topic.name} on Sports Trivia.`);
   const keywords = topic.seoKeywords.length > 0 ? topic.seoKeywords : [topic.name.toLowerCase(), "trivia", "quiz", "sports"];
 
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://www.sportstrivia.in";
-
   return {
     title,
     description,
@@ -229,7 +226,7 @@ export default async function TopicDetailPage({
     })
     : null;
   const followRecord = user
-    ? await prisma.userFollowedTopic.findUnique({
+    ? await prisma.userInterestPreference.findUnique({
         where: {
           userId_topicId: {
             userId: user.id,
@@ -344,12 +341,6 @@ export default async function TopicDetailPage({
   const listingQuizIds = new Set(listing.quizzes.map((quiz) => quiz.id));
   const dedupedHeroFeatured = heroFeaturedQuizzes.filter((quiz) => !listingQuizIds.has(quiz.id));
   const dedupedTopRated = topRatedListing.quizzes.filter((quiz) => !listingQuizIds.has(quiz.id)).slice(0, 6);
-
-  const heroPrimaryQuiz =
-    listing.quizzes[0] ??
-    dedupedHeroFeatured[0] ??
-    topRatedListing.quizzes[0] ??
-    null;
 
   // Generate centralized structured data graph
   const breadcrumbs = [

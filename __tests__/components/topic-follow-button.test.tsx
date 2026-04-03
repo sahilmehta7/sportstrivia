@@ -44,7 +44,7 @@ describe("TopicFollowButton", () => {
     fireEvent.click(screen.getByRole("button", { name: /follow india/i }));
 
     await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalledWith("/api/topics/team_india/follow", {
+      expect(global.fetch).toHaveBeenCalledWith("/api/users/me/interests/team_india", {
         method: "POST",
       });
     });
@@ -74,7 +74,7 @@ describe("TopicFollowButton", () => {
     fireEvent.click(screen.getByRole("button", { name: /following india/i }));
 
     await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalledWith("/api/topics/team_india/follow", {
+      expect(global.fetch).toHaveBeenCalledWith("/api/users/me/interests/team_india", {
         method: "DELETE",
       });
     });

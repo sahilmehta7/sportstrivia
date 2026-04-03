@@ -1,10 +1,9 @@
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
-import { getGlassCard } from "@/lib/showcase-theme";
-import type { ShowcaseTheme } from "@/components/showcase/ShowcaseThemeProvider";
+import type { QuizResultsTheme } from "./types";
 
 interface QuizResultsCardProps {
-  theme?: ShowcaseTheme;
+  theme?: QuizResultsTheme;
   className?: string;
   children: ReactNode;
 }
@@ -13,8 +12,7 @@ export function QuizResultsCard({ theme: _theme, className, children }: QuizResu
   return (
     <div
       className={cn(
-        "relative rounded-[1.75rem] border backdrop-blur-xl overflow-hidden",
-        getGlassCard(),
+        "relative overflow-hidden rounded-lg border border-border/60 bg-card",
         className,
       )}
     >
@@ -22,4 +20,3 @@ export function QuizResultsCard({ theme: _theme, className, children }: QuizResu
     </div>
   );
 }
-

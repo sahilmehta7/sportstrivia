@@ -110,7 +110,7 @@ export function QuizPlayUI({
     <LazyMotion features={domAnimation}>
       <m.div
         className={cn(
-          "relative flex min-h-[500px] w-full flex-col overflow-hidden rounded-[40px] border px-0 py-4 sm:px-8 sm:py-8 lg:min-h-[600px]",
+          "relative flex min-h-[500px] w-full flex-col overflow-hidden rounded-lg border px-0 py-4 sm:px-8 sm:py-8 lg:min-h-[600px]",
           styles.wrapper,
           className
         )}
@@ -149,7 +149,7 @@ export function QuizPlayUI({
                   opacity: { duration: 0.3 }
                 }}
                 className={cn(
-                  "flex flex-col gap-4 sm:gap-6 rounded-[32px] p-4 sm:p-6",
+                  "flex flex-col gap-4 sm:gap-6 rounded-md p-4 sm:p-6",
                   styles.card
                 )}
               >
@@ -171,7 +171,7 @@ export function QuizPlayUI({
                   {!hasQuestionImage && showAnswerPreview && (
                     <div className={cn("relative flex w-full flex-wrap justify-center gap-4 py-4 sm:py-8", styles.imageFrame)}>
                       {answerImageUrls.slice(0, 4).map((url, index) => (
-                        <div key={index} className="relative h-16 w-16 sm:h-24 sm:w-24 overflow-hidden rounded-xl border border-white/10 shadow-lg">
+                        <div key={index} className="relative h-16 w-16 sm:h-24 sm:w-24 overflow-hidden rounded-md border border-border/60 shadow-sm">
                           <Image src={url} alt={`Option ${index + 1}`} fill className="object-cover" />
                         </div>
                       ))}
@@ -216,7 +216,7 @@ export function QuizPlayUI({
               whileTap={!isNextDisabled ? { scale: 0.95 } : {}}
               animate={isNextDisabled ? { opacity: 0.5 } : { opacity: 1 }}
               className={cn(
-                "relative overflow-hidden rounded-full px-10 py-4 text-lg font-bold tracking-wide transition-colors",
+                "relative overflow-hidden rounded-sm px-10 py-4 text-lg font-bold tracking-wide transition-colors",
                 isNextDisabled ? styles.nextDisabled : styles.nextButton
               )}
             >

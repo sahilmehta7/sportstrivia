@@ -1,10 +1,8 @@
 import { NextRequest } from "next/server";
 import { requireAuth } from "@/lib/auth-helpers";
 import { handleError, successResponse } from "@/lib/errors";
-import { followTopicForUser, unfollowTopicForUser } from "@/lib/services/user-follow.service";
+import { addInterestTopic, removeInterestTopic } from "@/lib/services/user-interest.service";
 
-// Canonical follow endpoint during migration.
-// Compatibility aliases: /api/topics/by-id/[id]/follow and /api/topics/by-slug/[slug]/follow.
 export async function POST(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -12,12 +10,12 @@ export async function POST(
   try {
     const user = await requireAuth();
     const { id } = await params;
-    const result = await followTopicForUser(user.id, id);
+    const result = await addInterestTopic(user.id, id, "PROFILE", 1);
     return successResponse({
       ...result,
       meta: {
         gateBSignals: {
-          followMutationSuccess: true,
+          interestMutationSuccess: true,
           validationPolicy: "FOLLOWABLE_AND_READY",
           action: "FOLLOW",
         },
@@ -35,12 +33,12 @@ export async function DELETE(
   try {
     const user = await requireAuth();
     const { id } = await params;
-    const result = await unfollowTopicForUser(user.id, id);
+    const result = await removeInterestTopic(user.id, id);
     return successResponse({
       ...result,
       meta: {
         gateBSignals: {
-          followMutationSuccess: true,
+          interestMutationSuccess: true,
           validationPolicy: "FOLLOWABLE_AND_READY",
           action: "UNFOLLOW",
         },
@@ -50,3 +48,4 @@ export async function DELETE(
     return handleError(error);
   }
 }
+

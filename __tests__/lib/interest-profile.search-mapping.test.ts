@@ -4,7 +4,6 @@ import { SearchContext } from "@prisma/client";
 
 var prismaMock: {
   userInterestPreference: { findMany: jest.Mock };
-  userFollowedTopic: { findMany: jest.Mock };
   userTopicStats: { findMany: jest.Mock };
   userSearchQuery: { findMany: jest.Mock };
   userDiscoveryPreference: { findUnique: jest.Mock };
@@ -14,7 +13,6 @@ var prismaMock: {
 jest.mock("@/lib/db", () => {
   prismaMock = {
     userInterestPreference: { findMany: jest.fn() },
-    userFollowedTopic: { findMany: jest.fn() },
     userTopicStats: { findMany: jest.fn() },
     userSearchQuery: { findMany: jest.fn() },
     userDiscoveryPreference: { findUnique: jest.fn() },
@@ -35,7 +33,6 @@ describe("interest-profile search mapping", () => {
     clearInterestProfileCache();
 
     prismaMock.userInterestPreference.findMany.mockResolvedValue([]);
-    prismaMock.userFollowedTopic.findMany.mockResolvedValue([]);
     prismaMock.userTopicStats.findMany.mockResolvedValue([]);
     prismaMock.userDiscoveryPreference.findUnique.mockResolvedValue(null);
   });

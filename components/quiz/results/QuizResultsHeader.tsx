@@ -1,10 +1,9 @@
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
-import { getTextColor } from "@/lib/showcase-theme";
-import type { ShowcaseTheme } from "@/components/showcase/ShowcaseThemeProvider";
+import type { QuizResultsTheme } from "./types";
 
 interface QuizResultsHeaderProps {
-  theme?: ShowcaseTheme;
+  theme?: QuizResultsTheme;
   title: string;
   subtitle?: string;
   leading?: ReactNode;
@@ -37,9 +36,9 @@ export function QuizResultsHeader({
                 Mission Report
               </span>
             </div>
-            <h1 className={cn("text-5xl font-black uppercase tracking-tighter text-white sm:text-6xl lg:text-7xl", getTextColor("primary"))}>{title}</h1>
+            <h1 className="text-5xl font-black uppercase tracking-tighter text-foreground sm:text-6xl lg:text-7xl">{title}</h1>
             {subtitle ? (
-              <p className={cn("max-w-2xl text-lg font-medium text-zinc-400", getTextColor("secondary"))}>{subtitle}</p>
+              <p className="max-w-2xl text-lg font-medium text-muted-foreground">{subtitle}</p>
             ) : null}
           </div>
         </div>
@@ -49,4 +48,3 @@ export function QuizResultsHeader({
     </div>
   );
 }
-

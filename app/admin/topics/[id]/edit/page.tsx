@@ -34,24 +34,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Save, Trash2, Wand2, Loader2, Upload, Check, ChevronsUpDown, List, Search } from "lucide-react";
+import { ArrowLeft, Save, Trash2, Wand2, Loader2, Upload, List, Search } from "lucide-react";
 import Link from "next/link";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { Badge } from "@/components/ui/badge";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { cn } from "@/lib/utils";
 import { TOPIC_SCHEMA_TYPE_LABELS, type TopicSchemaTypeValue } from "@/lib/topic-schema-options";
 import { computeAdminQualityFailures } from "@/lib/services/topic-content/admin-quality.service";
 import { TopicGraphAdminPanel } from "@/components/admin/TopicGraphAdminPanel";
@@ -125,8 +111,6 @@ export default function EditTopicPage({ params }: EditTopicPageProps) {
   const [importing, setImporting] = useState(false);
   const [generatedQuestions, setGeneratedQuestions] = useState<any[] | null>(null);
   const [lastTaskId, setLastTaskId] = useState<string | null>(null);
-  const [parentComboboxOpen, setParentComboboxOpen] = useState(false);
-
   const [formData, setFormData] = useState({
     name: "",
     slug: "",

@@ -18,7 +18,7 @@ type TopicFollowButtonProps = {
 export function TopicFollowButton({
   topicId,
   topicName,
-  schemaType,
+  schemaType: _schemaType,
   entityStatus,
   initialIsFollowing,
   isAuthenticated,
@@ -47,7 +47,7 @@ export function TopicFollowButton({
     setIsSubmitting(true);
     try {
       const method = isFollowing ? "DELETE" : "POST";
-      const response = await fetch(`/api/topics/${topicId}/follow`, { method });
+      const response = await fetch(`/api/users/me/interests/${topicId}`, { method });
       const result = await response.json();
 
       if (!response.ok) {

@@ -53,6 +53,8 @@ next-env.d.ts
 !/prisma/migrations/20260330143000_reconcile_collections_schema/migration.sql
 !/prisma/migrations/20260330190000_backup_upload_sessions/
 !/prisma/migrations/20260330190000_backup_upload_sessions/migration.sql
+!/prisma/migrations/20260403193000_single_model_interests_cutover/
+!/prisma/migrations/20260403193000_single_model_interests_cutover/migration.sql
 
 # test
 /test-results/

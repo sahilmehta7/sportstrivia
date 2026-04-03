@@ -1,9 +1,9 @@
 import type { ReactNode } from "react";
-import type { ShowcaseTheme } from "@/components/showcase/ShowcaseThemeProvider";
 import { cn } from "@/lib/utils";
+import type { QuizResultsTheme } from "./types";
 
 interface QuizResultsActionsProps {
-  theme?: ShowcaseTheme;
+  theme?: QuizResultsTheme;
   primaryAction?: ReactNode;
   secondaryAction?: ReactNode;
   extraActions?: ReactNode;
@@ -35,5 +35,4 @@ export function QuizResultsActions({
     </div>
   );
 }
-
 

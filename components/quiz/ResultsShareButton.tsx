@@ -2,7 +2,7 @@
 
 import { Share2 } from "lucide-react";
 import { useShareResults } from "@/components/quiz/ShareResults";
-import { ShowcaseButton } from "@/components/showcase/ui/buttons/Button";
+import { Button } from "@/components/ui/button";
 
 interface ResultsShareButtonProps {
   quizTitle: string;
@@ -20,19 +20,18 @@ interface ResultsShareButtonProps {
 export function ResultsShareButton(props: ResultsShareButtonProps) {
   const { shareResults, isGenerating } = useShareResults(props);
 
-  return (
+    return (
     <div className={props.className}>
-      <ShowcaseButton
+      <Button
         onClick={shareResults}
         disabled={isGenerating}
-        variant="primary"
-        size="md"
-        icon={<Share2 className="h-4 w-4" />}
+        variant="athletic"
+        size="default"
         className="w-full"
       >
+        <Share2 className="mr-2 h-4 w-4" />
         {isGenerating ? "Generating..." : (props.children || "Share Results")}
-      </ShowcaseButton>
+      </Button>
     </div>
   );
 }
-

@@ -1,3 +1,5 @@
+/** @jest-environment node */
+
 import {
   computeInterestProfile,
 } from "@/lib/services/interest-profile.service";
@@ -13,10 +15,18 @@ describe("interest profile service", () => {
     expect(isFollowableTopicSchemaType("NONE")).toBe(false);
   });
 
-  it("ranks follows above explicit interests and inferred behavior", () => {
+  it("derives follows from explicit interests and ranks inferred behavior below explicit", () => {
     const profile = computeInterestProfile({
       userId: "user_1",
       explicitInterests: [
+        {
+          topicId: "team_india",
+          slug: "india-cricket-team",
+          name: "India",
+          schemaType: "SPORTS_TEAM",
+          source: "PROFILE",
+          strength: 1,
+        },
         {
           topicId: "sport_cricket",
           slug: "cricket",
@@ -24,14 +34,6 @@ describe("interest profile service", () => {
           schemaType: "SPORT",
           source: "ONBOARDING",
           strength: 1,
-        },
-      ],
-      follows: [
-        {
-          topicId: "team_india",
-          slug: "india-cricket-team",
-          name: "India",
-          schemaType: "SPORTS_TEAM",
         },
       ],
       topicStats: [
@@ -52,8 +54,11 @@ describe("interest profile service", () => {
       },
     });
 
-    expect(profile.summary.topEntities[0]).toBe("India");
-    expect(profile.follows[0].score).toBeGreaterThan(profile.explicit[0].score);
+    expect(profile.summary.topEntities).toEqual(expect.arrayContaining(["India", "Cricket"]));
+    expect(profile.follows.map((entry) => entry.topicId)).toEqual(
+      expect.arrayContaining(["team_india", "sport_cricket"])
+    );
+    expect(profile.follows.every((entry) => entry.score === 100)).toBe(true);
     expect(profile.explicit[0].score).toBeGreaterThan(profile.inferred[0].score);
     expect(profile.contractVersion).toBe("interest-profile/v1");
     expect(profile.summary.preferredDifficulty).toBe("MEDIUM");
@@ -64,7 +69,6 @@ describe("interest profile service", () => {
     const profile = computeInterestProfile({
       userId: "user_1",
       explicitInterests: [],
-      follows: [],
       topicStats: Array.from({ length: 25 }).map((_, index) => ({
         topicId: `topic_${index}`,
         slug: `topic-${index}`,
@@ -82,5 +86,39 @@ describe("interest profile service", () => {
     });
 
     expect(profile.inferred).toHaveLength(20);
+  });
+
+  it("does not double-count explicit interests in summary ranking", () => {
+    const profile = computeInterestProfile({
+      userId: "user_1",
+      explicitInterests: [
+        {
+          topicId: "sport_cricket",
+          slug: "cricket",
+          name: "Cricket",
+          schemaType: "SPORT",
+          source: "PROFILE",
+          strength: 1,
+        },
+      ],
+      topicStats: [],
+      searchSignals: [
+        {
+          topicId: "sport_football",
+          slug: "football",
+          name: "Football",
+          schemaType: "SPORT",
+          timesSearched: 5,
+          lastSearchedAt: new Date().toISOString(),
+        },
+      ],
+      preferences: {
+        preferredDifficulty: null,
+        preferredPlayModes: [],
+      },
+    });
+
+    expect(profile.summary.topEntities).toEqual(["Cricket", "Football"]);
+    expect(profile.summary.topSports).toEqual(["Cricket", "Football"]);
   });
 });

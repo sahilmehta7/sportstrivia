@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { RefreshCw, Download } from "lucide-react";
+import { RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 declare global {
@@ -22,16 +22,11 @@ interface BeforeInstallPromptEvent extends Event {
 
 export function PWALifecycleListener() {
   const { toast } = useToast();
-  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
-
   useEffect(() => {
     // 1. Handle "Before Install Prompt" (Custom Install Button Support)
     const handleBeforeInstallPrompt = (e: BeforeInstallPromptEvent) => {
       // Prevent the mini-infobar from appearing on mobile
       e.preventDefault();
-      // Stash the event so it can be triggered later.
-      setDeferredPrompt(e);
-      
       // Optionally broadcast this event to other components via a custom event
       window.dispatchEvent(new CustomEvent("pwa-installavailable", { detail: e }));
     };

@@ -5,14 +5,14 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { generateQuizMetaTags } from "@/lib/seo-utils";
 import { formatPlayerCount, formatQuizDuration } from "@/lib/quiz-formatters";
-import { ShowcaseButton } from "@/components/showcase/ui/buttons/Button";
+import { Button } from "@/components/ui/button";
 import { Star, Clock, Trophy, Users, ShieldCheck, ArrowRight, Info } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth-helpers";
 import { getAttemptLimitStatus } from "@/lib/services/attempt-limit.service";
 import { JsonLdScript } from "next-seo";
 import { getCanonicalUrl } from "@/lib/next-seo-config";
 import { cn } from "@/lib/utils";
-import { getBlurCircles, getGradientText } from "@/lib/showcase-theme";
+import { getGradientText } from "@/lib/showcase-theme";
 import { PageContainer } from "@/components/shared/PageContainer";
 import { ShareQuizButton } from "./share-quiz-button";
 import { QuizCommentsSection } from "./QuizCommentsSection";
@@ -189,19 +189,11 @@ export default async function QuizDetailPage({ params }: QuizDetailPageProps) {
       },
     })),
   });
-  const { circle1, circle2, circle3 } = getBlurCircles();
-
   return (
     <>
       <JsonLdScript scriptKey={`quiz-jsonld-${quiz.id}`} data={quizSchema} />
 
-      <main className="relative min-h-screen overflow-hidden pt-12 pb-24 lg:pt-20">
-        <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none">
-          <div className={cn("absolute -left-[10%] top-[10%] h-[40%] w-[40%] rounded-full opacity-20 blur-[120px]", circle1)} />
-          <div className={cn("absolute -right-[10%] top-[20%] h-[40%] w-[40%] rounded-full opacity-20 blur-[120px]", circle2)} />
-          <div className={cn("absolute left-[20%] -bottom-[10%] h-[40%] w-[40%] rounded-full opacity-20 blur-[120px]", circle3)} />
-        </div>
-
+      <main className="relative min-h-screen pt-12 pb-24 lg:pt-20">
         <PageContainer>
           <div className="flex flex-col lg:flex-row gap-12 lg:gap-16">
 
@@ -212,8 +204,8 @@ export default async function QuizDetailPage({ params }: QuizDetailPageProps) {
               <div className="relative group">
                 {/* Hero Image for Mobile */}
                 {heroImageUrl && (
-                  <div className="relative mb-8 w-full aspect-video overflow-hidden rounded-[2.5rem] lg:hidden p-[1px] bg-white/10">
-                    <div className="h-full w-full rounded-[2.4rem] overflow-hidden relative">
+                  <div className="relative mb-8 w-full aspect-video overflow-hidden rounded-lg border border-border/60 bg-card lg:hidden">
+                    <div className="h-full w-full overflow-hidden relative">
                       <Image src={heroImageUrl} alt={quiz.title} fill className="object-cover" priority />
                       <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
                     </div>
@@ -225,12 +217,12 @@ export default async function QuizDetailPage({ params }: QuizDetailPageProps) {
                     {badgeTopicSlug ? (
                       <Link
                         href={`/topics/${badgeTopicSlug}`}
-                        className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full glass border border-white/10 text-[10px] font-black uppercase tracking-widest text-primary shadow-neon-cyan/20 transition-opacity hover:opacity-80"
+                        className="inline-flex items-center gap-2 rounded-sm border border-foreground/15 bg-background px-3 py-1 text-[10px] font-black uppercase tracking-[0.2em] text-foreground transition-colors hover:border-foreground/40"
                       >
                         {badgeLabel}
                       </Link>
                     ) : (
-                      <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full glass border border-white/10 text-[10px] font-black uppercase tracking-widest text-primary shadow-neon-cyan/20">
+                      <div className="inline-flex items-center gap-2 rounded-sm border border-foreground/15 bg-background px-3 py-1 text-[10px] font-black uppercase tracking-[0.2em] text-foreground">
                         {badgeLabel}
                       </div>
                     )}
@@ -253,17 +245,17 @@ export default async function QuizDetailPage({ params }: QuizDetailPageProps) {
                   </p>
 
                   <div className="grid grid-cols-3 gap-3 pt-4 sm:flex sm:flex-wrap sm:gap-4">
-                    <div className="flex min-w-0 flex-col gap-1 rounded-[1.6rem] border border-white/5 p-4 glass-elevated sm:min-w-[140px] sm:rounded-[2rem] sm:p-6">
+                    <div className="flex min-w-0 flex-col gap-1 rounded-lg border border-border/60 bg-card p-4 sm:min-w-[140px] sm:p-6">
                       <Clock className="mb-1 h-4 w-4 text-secondary sm:mb-2 sm:h-5 sm:w-5" />
                       <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Time</p>
                       <p className="text-xl font-black tracking-tighter sm:text-2xl">{durationLabel}</p>
                     </div>
-                    <div className="flex min-w-0 flex-col gap-1 rounded-[1.6rem] border border-white/5 p-4 glass-elevated sm:min-w-[140px] sm:rounded-[2rem] sm:p-6">
+                    <div className="flex min-w-0 flex-col gap-1 rounded-lg border border-border/60 bg-card p-4 sm:min-w-[140px] sm:p-6">
                       <ShieldCheck className="mb-1 h-4 w-4 text-primary sm:mb-2 sm:h-5 sm:w-5" />
                       <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Tier</p>
                       <p className="text-xl font-black tracking-tighter uppercase sm:text-2xl">{quiz.difficulty}</p>
                     </div>
-                    <div className="flex min-w-0 flex-col gap-1 rounded-[1.6rem] border border-white/5 p-4 glass-elevated sm:min-w-[140px] sm:rounded-[2rem] sm:p-6">
+                    <div className="flex min-w-0 flex-col gap-1 rounded-lg border border-border/60 bg-card p-4 sm:min-w-[140px] sm:p-6">
                       <Users className="mb-1 h-4 w-4 text-accent sm:mb-2 sm:h-5 sm:w-5" />
                       <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Contenders</p>
                       <p className="text-xl font-black tracking-tighter sm:text-2xl">{playersLabel}</p>
@@ -273,16 +265,16 @@ export default async function QuizDetailPage({ params }: QuizDetailPageProps) {
                   <div className="pt-8 flex flex-wrap gap-4">
                     {isLimitReached && bestAttemptId ? (
                       <Link href={`/quizzes/${quiz.slug}/results/${bestAttemptId}`} className="w-full sm:w-auto">
-                        <ShowcaseButton variant="neon" size="xl" className="w-full">VIEW RESULTS</ShowcaseButton>
+                        <Button variant="accent" size="xl" className="w-full">VIEW RESULTS</Button>
                       </Link>
                     ) : isLimitReached ? (
-                      <ShowcaseButton variant="glass" size="xl" className="w-full sm:w-auto cursor-not-allowed opacity-50" disabled>LOCKED: LIMIT REACHED</ShowcaseButton>
+                      <Button variant="outline" size="xl" className="w-full sm:w-auto" disabled>LOCKED: LIMIT REACHED</Button>
                     ) : (
                       <Link href={`/quizzes/${quiz.slug}/play`} className="w-full sm:w-auto">
-                        <ShowcaseButton variant="neon" size="xl" className="w-full group">
+                        <Button variant="athletic" size="xl" className="w-full group">
                           INITIALIZE MISSION
                           <ArrowRight className="ml-3 h-5 w-5 group-hover:translate-x-2 transition-transform" />
-                        </ShowcaseButton>
+                        </Button>
                       </Link>
                     )}
                     <ShareQuizButton title={quiz.title} url={quizUrl} />
@@ -297,8 +289,8 @@ export default async function QuizDetailPage({ params }: QuizDetailPageProps) {
 
               {/* Desktop Hero Image Container */}
               {heroImageUrl && (
-                <div className="relative hidden lg:block aspect-square overflow-hidden rounded-[3rem] p-[2px] bg-gradient-to-br from-white/20 to-transparent shadow-glass-lg">
-                  <div className="h-full w-full rounded-[2.9rem] overflow-hidden relative">
+                <div className="relative hidden lg:block aspect-square overflow-hidden rounded-lg border border-border/60 bg-card shadow-sm">
+                  <div className="h-full w-full overflow-hidden relative">
                     <Image src={heroImageUrl} alt={quiz.title} fill className="object-cover" />
                     <div className="absolute inset-0 bg-gradient-to-t from-background/40 to-transparent" />
                   </div>
@@ -306,7 +298,7 @@ export default async function QuizDetailPage({ params }: QuizDetailPageProps) {
               )}
 
               {/* Sidebar Leaderboard */}
-              <div className="rounded-[2.5rem] p-8 glass-elevated border border-white/10 space-y-6">
+              <div className="rounded-lg border border-border/60 bg-card p-6 sm:p-8 space-y-6">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <Trophy className="h-5 w-5 text-primary" />
@@ -316,9 +308,9 @@ export default async function QuizDetailPage({ params }: QuizDetailPageProps) {
 
                 <div className="space-y-3">
                   {sidebarLeaderboard.map((player, idx) => (
-                    <div key={idx} className="flex items-center justify-between p-4 rounded-2xl glass border border-white/5">
+                    <div key={idx} className="flex items-center justify-between rounded-md border border-border/60 bg-background p-4">
                       <div className="flex items-center gap-3">
-                        <div className="h-8 w-8 rounded-lg glass border border-white/5 flex items-center justify-center text-[10px] font-black text-muted-foreground">#{idx + 1}</div>
+                        <div className="h-8 w-8 rounded-sm border border-border/60 bg-muted/40 flex items-center justify-center text-[10px] font-black text-muted-foreground">#{idx + 1}</div>
                         <p className="text-xs font-black uppercase truncate max-w-[120px]">{player.name}</p>
                       </div>
                       <div className="text-right">
@@ -331,7 +323,7 @@ export default async function QuizDetailPage({ params }: QuizDetailPageProps) {
               </div>
 
               {/* Additional Info / Security */}
-              <div className="flex items-center gap-4 p-6 rounded-[2rem] border border-white/5 text-muted-foreground">
+              <div className="flex items-center gap-4 rounded-md border border-border/60 bg-card p-6 text-muted-foreground">
                 <Info className="h-5 w-5 shrink-0" />
                 <p className="text-[10px] font-black uppercase tracking-widest leading-relaxed">
                   Secure Quiz Environment. All attempts are verified for fair play and competitive integrity.

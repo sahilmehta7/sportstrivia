@@ -57,20 +57,20 @@ export const variantStyles: Record<ThemeVariant, {
         timeTrack: "bg-slate-200/50",
         timeFill: "bg-gradient-to-r from-amber-500 to-orange-600",
         answerBase:
-            "relative overflow-hidden rounded-2xl border-2 transition-all duration-200 ease-out px-4 py-4 text-sm sm:text-base font-bold tracking-tight shadow-sm active:scale-[0.98]",
+            "relative overflow-hidden rounded-md border transition-all duration-200 ease-out px-4 py-4 text-sm sm:text-base font-bold tracking-tight shadow-sm active:scale-[0.98]",
         answerIdle:
-            "border-transparent bg-white/50 text-slate-700 hover:border-amber-400/50 hover:bg-white/80",
+            "border-border/70 bg-card text-slate-700 hover:border-amber-400/50 hover:bg-muted/40",
         answerSelected:
-            "border-amber-500 bg-amber-500 text-white shadow-lg shadow-amber-500/20",
+            "border-amber-500 bg-amber-500 text-white shadow-sm",
         answerDisabled: "cursor-not-allowed opacity-60",
         answerCorrect:
-            "border-emerald-500 bg-emerald-500 text-white shadow-lg shadow-emerald-500/20",
+            "border-emerald-500 bg-emerald-500 text-white shadow-sm",
         answerIncorrect:
-            "border-rose-500 bg-rose-500 text-white shadow-lg shadow-rose-500/20",
+            "border-rose-500 bg-rose-500 text-white shadow-sm",
         imageFrame:
-            "border-2 border-white/50 bg-white/40 shadow-inner rounded-3xl",
+            "rounded-md border border-border/60 bg-card shadow-inner",
         nextButton:
-            "bg-slate-900 text-white shadow-xl shadow-slate-900/10 hover:shadow-2xl hover:shadow-slate-900/20 hover:-translate-y-0.5 active:translate-y-0.5",
+            "rounded-sm bg-slate-900 text-white shadow-sm hover:bg-slate-800",
         nextDisabled: "bg-slate-200 text-slate-400 cursor-not-allowed",
     },
     dark: {
@@ -92,20 +92,20 @@ export const variantStyles: Record<ThemeVariant, {
         // Dynamic timer color is handled in logic, this is base
         timeFill: "bg-white",
         answerBase:
-            "relative overflow-hidden rounded-2xl border lg:border-2 transition-all duration-200 ease-out px-4 py-4 text-sm sm:text-base font-bold tracking-tight active:scale-[0.98]",
+            "relative overflow-hidden rounded-md border transition-all duration-200 ease-out px-4 py-4 text-sm sm:text-base font-bold tracking-tight active:scale-[0.98]",
         answerIdle:
-            "border-white/5 bg-white/5 text-white/70 hover:border-white/20 hover:bg-white/10 hover:text-white",
+            "border-border bg-card text-white/80 hover:border-white/30 hover:bg-white/10 hover:text-white",
         answerSelected:
-            "border-transparent bg-white text-black shadow-[0_0_30px_-5px_rgba(255,255,255,0.3)]",
+            "border-white bg-white text-black shadow-sm",
         answerDisabled: "cursor-not-allowed opacity-40",
         answerCorrect:
-            "border-transparent bg-emerald-500 text-black shadow-[0_0_40px_-10px_rgba(16,185,129,0.5)]",
+            "border-emerald-400 bg-emerald-500 text-black shadow-sm",
         answerIncorrect:
-            "border-transparent bg-rose-500 text-white shadow-[0_0_40px_-10px_rgba(244,63,94,0.5)]",
+            "border-rose-400 bg-rose-500 text-white shadow-sm",
         imageFrame:
-            "border border-white/10 bg-white/5 shadow-2xl rounded-3xl",
+            "rounded-md border border-border/70 bg-card shadow-sm",
         nextButton:
-            "bg-white text-black shadow-[0_0_30px_-10px_rgba(255,255,255,0.4)] hover:shadow-[0_0_50px_-10px_rgba(255,255,255,0.5)] hover:-translate-y-0.5 active:translate-y-0.5",
+            "rounded-sm bg-white text-black shadow-sm hover:bg-white/90",
         nextDisabled: "bg-white/10 text-white/20 cursor-not-allowed",
     },
 };

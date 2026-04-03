@@ -133,6 +133,9 @@ const config = [
         ...globals.jest,
       },
     },
+    rules: {
+      "@next/next/no-img-element": "off",
+    },
   },
 ];
 

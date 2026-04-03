@@ -14,14 +14,13 @@ describe("BACKUP_TABLES topic coverage", () => {
     expect(models.has("TopicIngestionRun")).toBe(true);
   });
 
-  it("includes collection and user discovery/follow models", () => {
+  it("includes collection and user discovery models", () => {
     const models = new Set(BACKUP_TABLES.map((table) => table.model));
 
     expect(models.has("Collection")).toBe(true);
     expect(models.has("CollectionQuiz")).toBe(true);
     expect(models.has("UserCollectionProgress")).toBe(true);
     expect(models.has("UserInterestPreference")).toBe(true);
-    expect(models.has("UserFollowedTopic")).toBe(true);
     expect(models.has("UserDiscoveryPreference")).toBe(true);
   });
 

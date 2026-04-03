@@ -34,17 +34,6 @@ type InterestResponse = {
   };
 };
 
-type FollowsResponse = {
-  data: {
-    sports?: Array<{ topic: TopicOption }>;
-    teams?: Array<{ topic: TopicOption }>;
-    athletes?: Array<{ topic: TopicOption }>;
-    events?: Array<{ topic: TopicOption }>;
-    organizations?: Array<{ topic: TopicOption }>;
-    follows?: Array<{ topic: TopicOption }>;
-  };
-};
-
 type TopicsResponse = {
   data: {
     topics: TopicOption[];
@@ -60,22 +49,19 @@ export function ProfileDiscoverabilityPanel() {
   const [selectedTopics, setSelectedTopics] = useState<TopicOption[]>([]);
   const [preferredDifficulty, setPreferredDifficulty] = useState<string>("");
   const [preferredPlayModes, setPreferredPlayModes] = useState<string[]>([]);
-  const [follows, setFollows] = useState<FollowsResponse["data"]>({});
 
   useEffect(() => {
     async function load() {
       try {
-        const [interestsResponse, followsResponse, topicsResponse] = await Promise.all([
+        const [interestsResponse, topicsResponse] = await Promise.all([
           fetch("/api/users/me/interests"),
-          fetch("/api/users/me/follows"),
           fetch("/api/topics?limit=300"),
         ]);
 
         const interestsResult = (await interestsResponse.json()) as InterestResponse;
-        const followsResult = (await followsResponse.json()) as FollowsResponse;
         const topicsResult = (await topicsResponse.json()) as TopicsResponse;
 
-        if (!interestsResponse.ok || !followsResponse.ok || !topicsResponse.ok) {
+        if (!interestsResponse.ok || !topicsResponse.ok) {
           throw new Error("Failed to load discoverability preferences");
         }
 
@@ -88,7 +74,6 @@ export function ProfileDiscoverabilityPanel() {
         setSelectedTopics(explicit);
         setPreferredDifficulty(interestsResult.data.preferences.preferredDifficulty ?? "");
         setPreferredPlayModes(interestsResult.data.preferences.preferredPlayModes ?? []);
-        setFollows(followsResult.data);
       } catch (error: any) {
         toast({
           title: "Unable to load interests",
@@ -103,17 +88,7 @@ export function ProfileDiscoverabilityPanel() {
     load();
   }, [toast]);
 
-  const followedTopics = useMemo(() => {
-    if (follows.follows) return follows.follows;
-
-    return [
-      ...(follows.sports ?? []),
-      ...(follows.teams ?? []),
-      ...(follows.athletes ?? []),
-      ...(follows.events ?? []),
-      ...(follows.organizations ?? []),
-    ];
-  }, [follows]);
+  const followedTopics = useMemo(() => selectedTopics, [selectedTopics]);
 
   const filteredOptions = useMemo(() => {
     const selectedIds = new Set(selectedTopics.map((topic) => topic.id));
@@ -193,8 +168,8 @@ export function ProfileDiscoverabilityPanel() {
               <span className="text-sm text-muted-foreground">Loading...</span>
             ) : followedTopics.length > 0 ? (
               followedTopics.map((entry) => (
-                <Badge key={entry.topic.id} variant="outline" className="rounded-full px-3 py-1">
-                  {entry.topic.name}
+                <Badge key={entry.id} variant="outline" className="rounded-full px-3 py-1">
+                  {entry.name}
                 </Badge>
               ))
             ) : (

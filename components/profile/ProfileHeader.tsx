@@ -24,6 +24,8 @@ interface ProfileHeaderProps {
   onRemoveFriend?: () => void;
   onChallenge?: () => void;
   showEditButton?: boolean;
+  compact?: boolean;
+  flat?: boolean;
 }
 
 export function ProfileHeader({
@@ -34,6 +36,8 @@ export function ProfileHeader({
   onRemoveFriend,
   onChallenge,
   showEditButton = true,
+  compact = false,
+  flat = false,
 }: ProfileHeaderProps) {
   const getRoleBadgeStyles = (role: string) => {
     switch (role) {
@@ -47,56 +51,80 @@ export function ProfileHeader({
   };
 
   return (
-    <div className="relative group">
-      {/* Glow behind the header */}
-      <div className="absolute -inset-4 bg-primary/5 blur-3xl rounded-full opacity-50 -z-10" />
+    <div className={cn("relative group", compact && "group-static")}>
+      {!compact && !flat && (
+        <div className="absolute -inset-4 bg-primary/5 blur-3xl rounded-full opacity-50 -z-10" />
+      )}
 
       <div className={cn(
-        "relative overflow-hidden rounded-[3rem] border border-white/10 p-10 lg:p-14 glass-elevated shadow-glass-lg",
+        "relative overflow-hidden border",
+        compact
+          ? "p-4 sm:p-5"
+          : "rounded-[3rem] p-10 lg:p-14",
+        flat
+          ? "rounded-none bg-card border-border shadow-none"
+          : "border-white/10 glass-elevated shadow-glass-lg"
       )}>
-        <div className="relative flex flex-col items-center gap-10 lg:flex-row lg:items-center">
+        <div className={cn(
+          "relative flex flex-col items-center lg:flex-row lg:items-center",
+          compact ? "gap-4" : "gap-10"
+        )}>
 
           {/* Avatar Section */}
           <div className="relative">
-            <div className="relative p-2 rounded-full glass border border-white/20 shadow-neon-cyan/10">
+            <div className={cn(
+              "relative p-2 border",
+              flat ? "rounded-none bg-muted/40 border-border shadow-none" : "rounded-full glass border-white/20 shadow-neon-cyan/10"
+            )}>
               <UserAvatar
                 src={user.image}
                 alt={user.name || "User"}
                 size="xl"
-                className="h-32 w-32 sm:h-40 sm:w-40"
+                className={cn(
+                  compact ? "h-20 w-20 sm:h-24 sm:w-24" : "h-32 w-32 sm:h-40 sm:w-40"
+                )}
               />
             </div>
             {/* Level/Tier indicator overlay */}
-            <div className="absolute -bottom-2 -right-2 h-12 w-12 rounded-2xl glass border border-white/20 shadow-lg flex items-center justify-center text-primary">
+            <div className={cn(
+              "absolute -bottom-2 -right-2 h-10 w-10 border flex items-center justify-center text-primary",
+              flat ? "rounded-none bg-card border-border shadow-none" : "rounded-2xl glass border-white/20 shadow-lg",
+              !compact && "h-12 w-12"
+            )}>
               <Verified className="h-6 w-6" />
             </div>
           </div>
 
           {/* Info Section */}
-          <div className="flex-1 space-y-6 text-center lg:text-left">
-            <div className="space-y-4">
-              <div className="flex flex-col items-center gap-4 lg:flex-row">
+          <div className={cn("flex-1 text-center lg:text-left", compact ? "space-y-3" : "space-y-6")}>
+            <div className={cn(compact ? "space-y-2" : "space-y-4")}>
+              <div className={cn("flex flex-col items-center lg:flex-row", compact ? "gap-2" : "gap-4")}>
                 <h1 className={cn(
-                  "text-4xl sm:text-6xl font-black uppercase tracking-tighter",
-                  getGradientText("neon")
+                  compact ? "text-3xl sm:text-4xl" : "text-4xl sm:text-6xl",
+                  "font-black uppercase tracking-tighter",
+                  flat ? "text-foreground" : getGradientText("neon")
                 )}>
                   {user.name || "UNREGISTERED"}
                 </h1>
                 <Badge className={cn(
-                  "rounded-full px-4 py-1.5 text-[10px] font-black uppercase tracking-widest border",
+                  "px-4 py-1.5 text-[10px] font-black uppercase tracking-widest border",
+                  flat ? "rounded-none" : "rounded-full",
                   getRoleBadgeStyles(user.role)
                 )}>
                   {user.role}
                 </Badge>
               </div>
 
-              <div className="flex flex-wrap justify-center lg:justify-start gap-4">
+              <div className={cn("flex flex-wrap justify-center lg:justify-start", compact ? "gap-2" : "gap-4")}>
                 <StreakIndicator
                   currentStreak={user.currentStreak}
                   longestStreak={user.longestStreak}
                   size="md"
                 />
-                <div className="flex items-center gap-2 px-3 py-1.5 rounded-full glass border border-white/5 text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">
+                <div className={cn(
+                  "flex items-center gap-2 px-3 py-1.5 border text-[10px] font-black uppercase tracking-widest text-muted-foreground/60",
+                  flat ? "rounded-none bg-muted/40 border-border" : "rounded-full glass border-white/5"
+                )}>
                   <Calendar className="h-3.5 w-3.5" />
                   EST. {user.createdAt ? new Date(user.createdAt).getFullYear() : '2024'}
                 </div>
@@ -110,7 +138,7 @@ export function ProfileHeader({
             )}
 
             {/* Actions */}
-            <div className="flex flex-wrap justify-center lg:justify-start gap-4 pt-4">
+            <div className={cn("flex flex-wrap justify-center lg:justify-start", compact ? "gap-2 pt-2" : "gap-4 pt-4")}>
               {isOwnProfile ? (
                 showEditButton && (
                   <Link href="/profile/me">
@@ -157,9 +185,11 @@ export function ProfileHeader({
         </div>
 
         {/* Decorative background elements inside card */}
-        <div className="absolute top-0 right-0 p-8 opacity-5">
-          <Sparkles className="h-32 w-32" />
-        </div>
+        {!compact && !flat && (
+          <div className="absolute top-0 right-0 p-8 opacity-5">
+            <Sparkles className="h-32 w-32" />
+          </div>
+        )}
       </div>
     </div>
   );

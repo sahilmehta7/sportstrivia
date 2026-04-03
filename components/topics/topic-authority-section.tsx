@@ -42,7 +42,7 @@ function parseSources(md: string): Array<{ label: string; url: string }> {
   }
 
   // 2. Then look for any other URLs that aren't inside markdown links
-  const urlRegex = /(https?:\/\/[^\s\)]+)/g;
+  const urlRegex = /(https?:\/\/[^\s)]+)/g;
   const allUrls = md.matchAll(urlRegex);
   for (const match of allUrls) {
     const url = match[1].replace(/[.,]$/, ""); // Strip trailing punctuation
@@ -52,7 +52,7 @@ function parseSources(md: string): Array<{ label: string; url: string }> {
       try {
         const urlObj = new URL(url);
         label = urlObj.hostname.replace("www.", "");
-      } catch (e) {
+      } catch {
         // Fallback to "Source"
       }
       result.push({ label, url });

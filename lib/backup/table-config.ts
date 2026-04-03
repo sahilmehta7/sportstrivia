@@ -18,7 +18,6 @@ export const BACKUP_TABLES: TableConfig[] = [
   { model: "TopicContentSnapshot", delegate: "topicContentSnapshot" },
   { model: "TopicIngestionRun", delegate: "topicIngestionRun" },
   { model: "UserInterestPreference", delegate: "userInterestPreference" },
-  { model: "UserFollowedTopic", delegate: "userFollowedTopic" },
   { model: "UserDiscoveryPreference", delegate: "userDiscoveryPreference" },
   { model: "Collection", delegate: "collection" },
   { model: "PushSubscription", delegate: "pushSubscription" },

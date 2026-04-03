@@ -11,9 +11,21 @@ interface StatsCardProps {
   className?: string;
   href?: string;
   variant?: "cyan" | "magenta" | "lime";
+  flat?: boolean;
+  compact?: boolean;
 }
 
-export function StatsCard({ title, value, subtitle, icon: Icon, className, href, variant = "cyan" }: StatsCardProps) {
+export function StatsCard({
+  title,
+  value,
+  subtitle,
+  icon: Icon,
+  className,
+  href,
+  variant = "cyan",
+  flat = false,
+  compact = false,
+}: StatsCardProps) {
   const variantStyles = {
     cyan: "shadow-neon-cyan/10 border-cyan-500/20 text-cyan-400",
     magenta: "shadow-neon-magenta/10 border-magenta-500/20 text-magenta-400",
@@ -22,25 +34,31 @@ export function StatsCard({ title, value, subtitle, icon: Icon, className, href,
 
   const content = (
     <div className={cn(
-      "relative overflow-hidden rounded-[2rem] border glass-elevated p-6 transition-all duration-300 hover:scale-[1.02] hover:bg-white/5 group",
+      "relative overflow-hidden border transition-all duration-300 group",
+      flat
+        ? "rounded-none bg-card border-border shadow-none"
+        : "rounded-[2rem] glass-elevated hover:scale-[1.02] hover:bg-white/5",
+      compact ? "p-4" : "p-6",
       variantStyles.split(' ')[0],
       variantStyles.split(' ')[1],
       href ? "cursor-pointer" : undefined,
       className
     )}>
-      <div className="flex flex-col gap-4">
+      <div className={cn("flex flex-col", compact ? "gap-3" : "gap-4")}>
         <div className="flex items-center justify-between">
           <div className={cn(
-            "flex h-10 w-10 items-center justify-center rounded-xl glass border border-white/5 transition-colors group-hover:border-white/20",
+            "flex items-center justify-center border transition-colors group-hover:border-white/20",
+            compact ? "h-8 w-8" : "h-10 w-10",
+            flat ? "rounded-none bg-muted/40 border-border" : "rounded-xl glass border-white/5",
             variantStyles.split(' ')[2]
           )}>
-            <Icon className="h-5 w-5" />
+            <Icon className={cn(compact ? "h-4 w-4" : "h-5 w-5")} />
           </div>
           <div className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground/60">{title}</div>
         </div>
 
         <div className="space-y-1">
-          <div className="text-3xl font-black tracking-tighter uppercase">{value}</div>
+          <div className={cn("font-black tracking-tighter uppercase", compact ? "text-2xl" : "text-3xl")}>{value}</div>
           {subtitle && (
             <p className="text-[10px] font-bold tracking-widest text-muted-foreground uppercase">{subtitle}</p>
           )}

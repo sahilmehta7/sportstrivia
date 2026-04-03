@@ -5,12 +5,11 @@ import Link from "next/link";
 import { BadgeCelebrationWrapper } from "@/components/quiz/results/BadgeCelebrationWrapper";
 
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { CheckCircle2, XCircle, Trophy } from "lucide-react";
 import Image from "next/image";
-import { ShowcaseThemeProvider } from "@/components/showcase/ShowcaseThemeProvider";
 import { ResultsShareButton } from "@/components/quiz/ResultsShareButton";
-import { ShowcaseButton } from "@/components/showcase/ui/buttons/Button";
 import { PointsReward } from "@/components/shared/PointsReward";
 import type { PointsBreakdown } from "@/components/shared/PointsReward.types";
 import { cn } from "@/lib/utils";
@@ -166,7 +165,7 @@ export default async function QuizResultsPage({
   };
 
   return (
-    <ShowcaseThemeProvider>
+    <>
       {resolvedSearchParams?.badges && <BadgeCelebrationWrapper />}
       <QuizResultsLayout>
         <EntranceAnimation className="space-y-10">
@@ -179,7 +178,7 @@ export default async function QuizResultsPage({
             />
 
             {isFresh && (
-              <div className="rounded-full border border-emerald-400/30 bg-emerald-400/10 px-6 py-2 text-sm font-medium text-emerald-700 dark:border-emerald-400/40 dark:bg-emerald-400/20 dark:text-emerald-200">
+              <div className="rounded-sm border border-emerald-500/40 bg-emerald-500/10 px-4 py-2 text-sm font-medium text-emerald-700 dark:text-emerald-300">
                 Quiz completed! Summary ready below.
               </div>
             )}
@@ -254,7 +253,7 @@ export default async function QuizResultsPage({
             <div className="grid w-full gap-8 lg:grid-cols-2">
               <QuizResultsSection
                 title="Points & Progress"
-                className="h-full rounded-[1.5rem] bg-white/40 p-6 shadow-sm backdrop-blur-md dark:bg-white/5"
+                className="h-full"
               >
                 <div className="space-y-8">
                   <div className="space-y-4">
@@ -269,7 +268,7 @@ export default async function QuizResultsPage({
                 </div>
               </QuizResultsSection>
 
-              <div className="flex h-full flex-col justify-center gap-6 rounded-[1.5rem] bg-white/40 p-6 shadow-sm backdrop-blur-md dark:bg-white/5">
+              <div className="flex h-full flex-col justify-center gap-6 rounded-md border border-border/60 bg-card p-6">
                 <h3 className="text-lg font-bold text-slate-900 dark:text-white">Next Steps</h3>
                 <QuizResultsActions
                   className="flex-col items-stretch gap-3"
@@ -289,9 +288,9 @@ export default async function QuizResultsPage({
                   }
                   secondaryAction={
                     <Link href="/quizzes" className="w-full">
-                      <ShowcaseButton variant="secondary" size="md" className="w-full">
+                      <Button variant="outline" size="default" className="w-full">
                         Browse Quizzes
-                      </ShowcaseButton>
+                      </Button>
                     </Link>
                   }
                   extraActions={
@@ -310,7 +309,7 @@ export default async function QuizResultsPage({
           </div>
 
           <Tabs defaultValue="leaderboard" className="space-y-4">
-            <TabsList className="mx-auto flex w-full max-w-xs justify-center gap-2 rounded-full border border-slate-200/60 bg-white/70 p-1 backdrop-blur-sm dark:border-white/20 dark:bg-white/10">
+            <TabsList className="mx-auto flex w-full max-w-xs justify-center gap-2 rounded-sm border border-border/60 bg-card p-1">
               <TabsTrigger value="leaderboard">Leaderboard</TabsTrigger>
               <TabsTrigger value="answers">Answers</TabsTrigger>
             </TabsList>
@@ -338,7 +337,7 @@ export default async function QuizResultsPage({
                     return (
                       <div
                         key={userAnswer.id}
-                        className="space-y-2 rounded-2xl border border-white/40 bg-white/60 p-4 backdrop-blur-sm dark:border-white/10 dark:bg-white/5"
+                        className="space-y-2 rounded-md border border-border/60 bg-card p-4"
                       >
                         <div className="flex items-start gap-3">
                           <div
@@ -400,7 +399,7 @@ export default async function QuizResultsPage({
                           </div>
 
                           {revealAnswers && correctAnswer && !isCorrect && !wasSkipped ? (
-                            <div className="rounded-lg bg-emerald-500/10 p-3">
+                            <div className="rounded-md bg-emerald-500/10 p-3">
                               <p className="mb-1 text-xs font-medium text-emerald-700 dark:text-emerald-400">
                                 Correct answer:
                               </p>
@@ -409,7 +408,7 @@ export default async function QuizResultsPage({
                           ) : null}
 
                           {revealAnswers && userAnswer.question.explanation ? (
-                            <div className="rounded-lg bg-slate-100/70 p-3 text-sm text-slate-700 dark:bg-white/10 dark:text-white/80">
+                            <div className="rounded-md bg-slate-100/70 p-3 text-sm text-slate-700 dark:bg-white/10 dark:text-white/80">
                               <p className="mb-1 text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-white/60">
                                 Explanation
                               </p>
@@ -432,6 +431,6 @@ export default async function QuizResultsPage({
           </Tabs>
         </EntranceAnimation>
       </QuizResultsLayout>
-    </ShowcaseThemeProvider>
+    </>
   );
 }

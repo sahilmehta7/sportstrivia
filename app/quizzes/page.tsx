@@ -24,16 +24,16 @@ export const dynamic = 'auto';
 export const revalidate = 3600; // Revalidate every hour
 
 export const metadata: Metadata = {
-  title: "Browse Sports Trivia Quizzes | Sports Trivia Platform",
+  title: "Sports Trivia Quiz Rails | Browse by Sport",
   description:
-    "Discover curated sports trivia quizzes by sport, difficulty, and topic. Filter, sort, and find the perfect challenge to test your sports knowledge.",
+    "Explore sports trivia in horizontal rails built by sport. Jump into deep quiz libraries, daily challenges, featured collections, and fresh releases.",
   alternates: {
     canonical: "/quizzes",
   },
   openGraph: {
-    title: "Browse Sports Trivia Quizzes",
+    title: "Sports Trivia Quiz Rails",
     description:
-      "Explore featured, top-rated, and trending sports trivia quizzes. Filter by sport, difficulty, and more to find your next challenge.",
+      "Browse quizzes by sport with horizontal rails, daily challenges, and featured collections to find your next trivia run.",
     url: "/quizzes",
     type: "website",
   },
@@ -53,6 +53,10 @@ export default async function QuizzesPage({
 
         <div className="mt-4 space-y-10 md:mt-12 md:space-y-16">
 
+          {/* Featured Quizzes */}
+          <Suspense fallback={<FeaturedSectionSkeleton />}>
+            <FeaturedSection />
+          </Suspense>
 
           <Suspense fallback={<AllSportsTopicsWidgetSectionSkeleton />}>
             <AllSportsTopicsWidgetSection />
@@ -67,12 +71,6 @@ export default async function QuizzesPage({
 
           <Suspense fallback={<FeaturedCollectionsSectionSkeleton />}>
             <FeaturedCollectionsSection />
-          </Suspense>
-
-          {/* Featured Quizzes (Only shown if no strict filters are applied, or we always show them?) */}
-          {/* In original design, they were always under "Featured" or "Trading Cards". Let's keep them always visible at top */}
-          <Suspense fallback={<FeaturedSectionSkeleton />}>
-            <FeaturedSection />
           </Suspense>
 
           {/* Daily Recurring Quizzes */}

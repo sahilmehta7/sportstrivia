@@ -34,7 +34,7 @@ describe("user-interest.service", () => {
     prismaMock.$transaction.mockImplementation(async (callback: any) => callback(prismaMock));
   });
 
-  it("replaces interests for a single source and upserts preferences", async () => {
+  it("replaces interests across all sources and upserts preferences", async () => {
     prismaMock.topic.findMany.mockResolvedValue([
       { id: "sport_cricket", schemaType: "SPORT", entityStatus: "READY" },
       { id: "team_india", schemaType: "SPORTS_TEAM", entityStatus: "READY" },
@@ -51,7 +51,7 @@ describe("user-interest.service", () => {
     });
 
     expect(prismaMock.userInterestPreference.deleteMany).toHaveBeenCalledWith({
-      where: { userId: "user_1", source: "PROFILE", topicId: { notIn: ["sport_cricket", "team_india"] } },
+      where: { userId: "user_1", topicId: { notIn: ["sport_cricket", "team_india"] } },
     });
     expect(prismaMock.userInterestPreference.upsert).toHaveBeenCalledTimes(2);
     expect(prismaMock.userDiscoveryPreference.upsert).toHaveBeenCalled();

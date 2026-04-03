@@ -5,7 +5,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev -p 3200",
-    "build": "next build --webpack",
+    "build": "NODE_ENV=production next build --webpack",
     "start": "next start -p 3200",
     "video:preview": "npx remotion studio video/entry.ts",
     "video:render": "tsx video/cli/render-video.ts",

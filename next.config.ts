@@ -12,19 +12,6 @@ const withPWA = require("@ducanh2912/next-pwa").default({
 });
 
 const nextConfig: NextConfig = {
-  transpilePackages: [
-    "recharts",
-    "victory-vendor",
-    "d3-array",
-    "d3-color",
-    "d3-format",
-    "d3-interpolate",
-    "d3-path",
-    "d3-scale",
-    "d3-shape",
-    "d3-time",
-    "d3-timer"
-  ],
   turbopack: {},
 
 
@@ -96,7 +83,7 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: "https",
-        hostname: "lh3.googleusercontent.com",
+        hostname: "**.googleusercontent.com",
       },
       {
         protocol: "https",
@@ -118,29 +105,6 @@ const nextConfig: NextConfig = {
       bodySizeLimit: "50mb",
     },
     optimizeCss: true,
-    optimizePackageImports: [
-      'lucide-react',
-      '@heroicons/react',
-      '@radix-ui/react-alert-dialog',
-      '@radix-ui/react-checkbox',
-      '@radix-ui/react-dialog',
-      '@radix-ui/react-dropdown-menu',
-      '@radix-ui/react-label',
-      '@radix-ui/react-popover',
-      '@radix-ui/react-progress',
-      '@radix-ui/react-scroll-area',
-      '@radix-ui/react-select',
-      '@radix-ui/react-separator',
-      '@radix-ui/react-slider',
-      '@radix-ui/react-slot',
-      '@radix-ui/react-switch',
-      '@radix-ui/react-tabs',
-      '@radix-ui/react-toast',
-      'recharts',
-      'framer-motion',
-      'class-variance-authority',
-      'next-seo',
-    ],
   },
   env: {
     NEXT_PUBLIC_GAMIFICATION_ENABLED:

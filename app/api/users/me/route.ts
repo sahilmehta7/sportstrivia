@@ -32,18 +32,6 @@ export async function GET() {
             },
           },
         },
-        followedTopics: {
-          include: {
-            topic: {
-              select: {
-                id: true,
-                name: true,
-                slug: true,
-                schemaType: true,
-              },
-            },
-          },
-        },
         discoveryPreference: true,
         _count: {
           select: {
