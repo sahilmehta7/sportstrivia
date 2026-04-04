@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "Sports Trivia Quiz Platform",
   "private": true,
+  "sideEffects": false,
   "scripts": {
     "dev": "next dev -p 3200",
     "build": "NODE_ENV=production next build --webpack",
@@ -39,6 +40,7 @@
     "lighthouse:audit": "node scripts/run-lighthouse-audits.js localhost",
     "lighthouse:audit:prod": "node scripts/run-lighthouse-audits.js production",
     "lighthouse:audit:all": "node scripts/run-lighthouse-audits.js all",
+    "analyze": "ANALYZE=true npm run build",
     "pwa:validate": "node scripts/validate-pwa-manifest.mjs",
     "play:assets:prepare": "node scripts/play-store/prepare-existing-assets.mjs",
     "play:assets:feature-graphic": "node scripts/play-store/generate-feature-graphic.mjs",
@@ -47,7 +49,8 @@
     "play:assets:qa": "node scripts/play-store/qa-screenshot-content.mjs",
     "play:assets:validate": "node scripts/play-store/validate-assets.mjs",
     "play:assets:capture:prod": "node scripts/play-store/capture-screenshots-prod.mjs",
-    "db:questions:long": "tsx scripts/export-long-questions.ts"
+    "db:questions:long": "tsx scripts/export-long-questions.ts",
+    "optimize:images": "tsx scripts/optimize-static-images.ts"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.7.4",
@@ -76,9 +79,6 @@
     "@radix-ui/react-switch": "^1.2.6",
     "@radix-ui/react-tabs": "^1.1.13",
     "@radix-ui/react-toast": "^1.2.15",
-    "@remotion/bundler": "4.0.443",
-    "@remotion/fonts": "4.0.443",
-    "@remotion/renderer": "4.0.443",
     "@supabase/supabase-js": "^2.75.0",
     "@tailwindcss/line-clamp": "^0.4.4",
     "@types/pg": "8.20.0",
@@ -88,7 +88,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
-    "critters": "file:vendor/critters",
+    "critters": "^0.0.23",
     "embla-carousel-react": "^8.6.0",
     "framer-motion": "^12.23.25",
     "lucide-react": "^0.545.0",
@@ -102,12 +102,10 @@
     "react-dom": "^19.2.1",
     "react-hook-form": "^7.65.0",
     "recharts": "^2.15.0",
-    "remotion": "4.0.443",
     "resend": "^6.4.0",
     "sharp": "^0.34.5",
     "tailwind-merge": "^2.6.0",
     "web-push": "^3.6.3",
-    "xlsx": "0.18.5",
     "zod": "^3.25.76"
   },
   "browserslist": [
@@ -117,9 +115,13 @@
     "maintained node versions"
   ],
   "devDependencies": {
+    "@next/bundle-analyzer": "16.2.2",
     "@next/eslint-plugin-next": "^16.0.10",
     "@playwright/test": "1.58.2",
+    "@remotion/bundler": "4.0.443",
     "@remotion/cli": "4.0.443",
+    "@remotion/fonts": "4.0.443",
+    "@remotion/renderer": "4.0.443",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.1.0",
     "@types/canvas-confetti": "^1.9.0",
@@ -141,6 +143,7 @@
     "playwright": "1.58.2",
     "postcss": "^8.4.49",
     "prisma": "7.6.0",
+    "remotion": "4.0.443",
     "supertest": "^7.0.0",
     "tailwindcss": "^3.4.17",
     "tailwindcss-animate": "^1.0.7",
@@ -148,7 +151,8 @@
     "tsconfig-paths": "^4.2.0",
     "tsx": "^4.19.2",
     "typescript": "^5.7.3",
-    "undici": "7.24.6"
+    "undici": "7.24.6",
+    "xlsx": "0.18.5"
   },
   "overrides": {
     "serialize-javascript": "^7.0.5"

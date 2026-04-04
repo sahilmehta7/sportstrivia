@@ -17,7 +17,7 @@ export const metadata: Metadata = {
 async function fetchLeaderboard(baseUrl: string, period: string): Promise<LeaderboardEntry[]> {
   try {
     const response = await fetch(`${baseUrl}/api/leaderboards/global?period=${period}&limit=10`, {
-      cache: "no-store",
+      next: { revalidate: 300 },
     });
 
     if (!response.ok) {

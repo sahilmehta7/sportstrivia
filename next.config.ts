@@ -1,5 +1,6 @@
 import type { NextConfig } from "next";
- 
+import withBundleAnalyzer from "@next/bundle-analyzer";
+
 const withPWA = require("@ducanh2912/next-pwa").default({
   dest: "public",
   disable: process.env.NODE_ENV === "development",
@@ -9,6 +10,10 @@ const withPWA = require("@ducanh2912/next-pwa").default({
   workboxOptions: {
     importScripts: ["/sw-push.js"],
   },
+});
+
+const analyzeBundles = withBundleAnalyzer({
+  enabled: process.env.ANALYZE === "true",
 });
 
 const nextConfig: NextConfig = {
@@ -75,7 +80,6 @@ const nextConfig: NextConfig = {
     ];
   },
   images: {
-    unoptimized: true,
     remotePatterns: [
       {
         protocol: "https",
@@ -98,6 +102,7 @@ const nextConfig: NextConfig = {
         hostname: "example.com",
       },
     ],
+    formats: ['image/avif', 'image/webp'],
   },
   experimental: {
     proxyClientMaxBodySize: "50mb",
@@ -112,4 +117,4 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default withPWA(nextConfig);
+export default analyzeBundles(withPWA(nextConfig));
