@@ -242,4 +242,107 @@ describe("personalized home payload integration", () => {
 
     expect(personalizedNonTrending.length).toBeGreaterThan(0);
   });
+
+  it("splits MORE_FROM_YOUR_TOP_SPORTS into sport-specific rails", async () => {
+    (getInterestProfileForUser as jest.Mock).mockResolvedValue(
+      makeProfile({
+        explicit: [
+          { topicId: "sport-cricket", slug: "sport-cricket", name: "Cricket", schemaType: "SPORT", source: "PROFILE", score: 95 },
+          { topicId: "sport-tennis", slug: "sport-tennis", name: "Tennis", schemaType: "SPORT", source: "PROFILE", score: 90 },
+        ],
+        summary: {
+          topEntities: ["Cricket", "Tennis"],
+          topSports: ["Cricket", "Tennis"],
+          preferredDifficulty: null,
+          preferredPlayModes: [],
+        },
+      })
+    );
+
+    (getDescendantTopicIdsForMultiple as jest.Mock).mockResolvedValue(new Map<string, string[]>());
+
+    const cricketRows = buildQuizRows([
+      { id: "c1", slug: "c1", title: "Cricket 1", topicIds: ["sport-cricket"], sport: "Cricket" },
+      { id: "c2", slug: "c2", title: "Cricket 2", topicIds: ["sport-cricket"], sport: "Cricket" },
+      { id: "c3", slug: "c3", title: "Cricket 3", topicIds: ["sport-cricket"], sport: "Cricket" },
+    ]);
+    const tennisRows = buildQuizRows([
+      { id: "t1", slug: "t1", title: "Tennis 1", topicIds: ["sport-tennis"], sport: "Tennis" },
+      { id: "t2", slug: "t2", title: "Tennis 2", topicIds: ["sport-tennis"], sport: "Tennis" },
+      { id: "t3", slug: "t3", title: "Tennis 3", topicIds: ["sport-tennis"], sport: "Tennis" },
+    ]);
+    const trendingRows = buildQuizRows([
+      { id: "tr1", slug: "tr1", title: "Trending 1", topicIds: ["sport-cricket"], sport: "Cricket" },
+      { id: "tr2", slug: "tr2", title: "Trending 2", topicIds: ["sport-tennis"], sport: "Tennis" },
+      { id: "tr3", slug: "tr3", title: "Trending 3", topicIds: ["sport-cricket"], sport: "Cricket" },
+    ]);
+
+    (prisma.quiz.findMany as jest.Mock).mockImplementation(async (args: {
+      where?: { sport?: { in?: string[] }; topicConfigs?: { some?: { topicId?: { in?: string[] } } } };
+    }) => {
+      const sports = args.where?.sport?.in ?? [];
+      if (sports.length === 1 && sports[0] === "Cricket") return cricketRows;
+      if (sports.length === 1 && sports[0] === "Tennis") return tennisRows;
+      if (sports.length >= 1) return trendingRows;
+      return [];
+    });
+
+    const payload = await getPersonalizedHomePayload(mockUserId, new Date("2026-04-04T00:00:00.000Z"));
+    const topSportRails = payload.rails.filter((rail) => rail.kind === "MORE_FROM_YOUR_TOP_SPORTS");
+
+    expect(topSportRails).toHaveLength(2);
+    expect(topSportRails.map((rail) => rail.title)).toEqual([
+      "More From Cricket",
+      "More From Tennis",
+    ]);
+    expect(topSportRails.map((rail) => rail.railId)).toEqual([
+      "MORE_FROM_YOUR_TOP_SPORTS:cricket",
+      "MORE_FROM_YOUR_TOP_SPORTS:tennis",
+    ]);
+  });
+
+  it("caps sport-specific top-sport rails at 2 and suppresses deduped-below-threshold rails", async () => {
+    (getInterestProfileForUser as jest.Mock).mockResolvedValue(
+      makeProfile({
+        explicit: [
+          { topicId: "sport-cricket", slug: "sport-cricket", name: "Cricket", schemaType: "SPORT", source: "PROFILE", score: 99 },
+          { topicId: "sport-tennis", slug: "sport-tennis", name: "Tennis", schemaType: "SPORT", source: "PROFILE", score: 98 },
+          { topicId: "sport-football", slug: "sport-football", name: "Football", schemaType: "SPORT", source: "PROFILE", score: 97 },
+        ],
+        summary: {
+          topEntities: ["Cricket", "Tennis", "Football"],
+          topSports: ["Cricket", "Tennis", "Football"],
+          preferredDifficulty: null,
+          preferredPlayModes: [],
+        },
+      })
+    );
+
+    (getDescendantTopicIdsForMultiple as jest.Mock).mockResolvedValue(new Map<string, string[]>());
+
+    const overlapRows = buildQuizRows([
+      { id: "same-1", slug: "same-1", title: "Same 1", topicIds: ["sport-cricket"], sport: "Cricket" },
+      { id: "same-2", slug: "same-2", title: "Same 2", topicIds: ["sport-tennis"], sport: "Tennis" },
+      { id: "same-3", slug: "same-3", title: "Same 3", topicIds: ["sport-football"], sport: "Football" },
+    ]);
+    const footballRows = buildQuizRows([
+      { id: "f1", slug: "f1", title: "Football 1", topicIds: ["sport-football"], sport: "Football" },
+      { id: "f2", slug: "f2", title: "Football 2", topicIds: ["sport-football"], sport: "Football" },
+      { id: "f3", slug: "f3", title: "Football 3", topicIds: ["sport-football"], sport: "Football" },
+    ]);
+
+    (prisma.quiz.findMany as jest.Mock).mockImplementation(async (args: {
+      where?: { sport?: { in?: string[] }; topicConfigs?: { some?: { topicId?: { in?: string[] } } } };
+    }) => {
+      const sports = args.where?.sport?.in ?? [];
+      if (sports.length === 1 && (sports[0] === "Cricket" || sports[0] === "Tennis")) return overlapRows;
+      if (sports.length === 1 && sports[0] === "Football") return footballRows;
+      if (sports.length >= 1) return overlapRows;
+      return [];
+    });
+
+    const payload = await getPersonalizedHomePayload(mockUserId, new Date("2026-04-04T00:00:00.000Z"));
+    const topSportRails = payload.rails.filter((rail) => rail.kind === "MORE_FROM_YOUR_TOP_SPORTS");
+    expect(topSportRails).toHaveLength(2);
+  });
 });

@@ -67,7 +67,7 @@ export function AuthenticatedPersonalizedHome({ payload, variant }: Authenticate
 
         <div className="space-y-10 motion-safe:animate-slide-up motion-reduce:animate-none">
           {payload.rails.map((rail) => (
-            <section key={rail.kind}>
+            <section key={rail.railId ?? `${rail.kind}:${rail.title}`}>
               <PersonalizedRailSectionHeader
                 eyebrow={getRailEyebrow(rail)}
                 title={getRailTitle(rail)}

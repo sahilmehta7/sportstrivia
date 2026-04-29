@@ -1,8 +1,8 @@
-import '@testing-library/jest-dom'
-import { TextEncoder, TextDecoder } from 'node:util'
-import { ReadableStream, WritableStream, TransformStream } from 'node:stream/web'
-import { MessageChannel, MessagePort } from 'node:worker_threads'
-import { Request, Response, Headers, fetch, Blob } from 'undici'
+/* global require */
+require("@testing-library/jest-dom")
+const { TextEncoder, TextDecoder } = require("node:util")
+const { ReadableStream, WritableStream, TransformStream } = require("node:stream/web")
+const { MessageChannel, MessagePort } = require("node:worker_threads")
 
 globalThis.TextEncoder = TextEncoder
 globalThis.TextDecoder = TextDecoder
@@ -12,6 +12,7 @@ globalThis.TransformStream = TransformStream
 globalThis.MessageChannel = MessageChannel
 globalThis.MessagePort = MessagePort
 
-if (typeof Request === 'undefined') {
+if (typeof globalThis.fetch === "undefined") {
+  const { Request, Response, Headers, fetch, Blob } = require("undici")
   Object.assign(globalThis, { Request, Response, Headers, fetch, Blob })
 }

@@ -162,4 +162,51 @@ describe("AuthenticatedPersonalizedHome", () => {
     expect(screen.getByRole("heading", { name: /Related to Your Follows/i })).toBeInTheDocument();
     expect(screen.getAllByText(/Network Adjacent/i).length).toBeGreaterThanOrEqual(1);
   });
+
+  it("renders duplicate top-sport rail kinds as separate sections", () => {
+    const payload = makePayload({
+      rails: [
+        {
+          kind: "MORE_FROM_YOUR_TOP_SPORTS",
+          railId: "MORE_FROM_YOUR_TOP_SPORTS:cricket",
+          title: "More From Cricket",
+          items: [
+            {
+              quizId: "quiz_cricket_1",
+              slug: "quiz-cricket-1",
+              title: "Cricket Quiz",
+              coverImageUrl: null,
+              difficulty: "MEDIUM",
+              estimatedDuration: 6,
+              reasonLabel: "More from Cricket",
+              sourceKind: "TOP_SPORTS",
+            },
+          ],
+        },
+        {
+          kind: "MORE_FROM_YOUR_TOP_SPORTS",
+          railId: "MORE_FROM_YOUR_TOP_SPORTS:tennis",
+          title: "More From Tennis",
+          items: [
+            {
+              quizId: "quiz_tennis_1",
+              slug: "quiz-tennis-1",
+              title: "Tennis Quiz",
+              coverImageUrl: null,
+              difficulty: "MEDIUM",
+              estimatedDuration: 6,
+              reasonLabel: "More from Tennis",
+              sourceKind: "TOP_SPORTS",
+            },
+          ],
+        },
+      ],
+      starterCollections: [],
+    });
+
+    render(<AuthenticatedPersonalizedHome payload={payload} variant="treatment" />);
+
+    expect(screen.getByRole("heading", { name: /More From Cricket/i })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /More From Tennis/i })).toBeInTheDocument();
+  });
 });

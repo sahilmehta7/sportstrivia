@@ -40,6 +40,7 @@ export interface PersonalizedHomeQuizItem {
 
 export interface PersonalizedHomeRail {
   kind: PersonalizedHomeRailKind;
+  railId?: string;
   title: string;
   trendScope?: PersonalizedHomeTrendScope;
   items: PersonalizedHomeQuizItem[];

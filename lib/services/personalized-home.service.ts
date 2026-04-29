@@ -19,6 +19,7 @@ import type {
 
 const MAX_VISIBLE_RAILS = 5;
 const MAX_RAIL_ITEMS = 8;
+const MAX_TOP_SPORT_RAILS = 2;
 const MIN_ITEMS_FOR_PERSONALIZED_RAIL = 3;
 const MIN_EFFECTIVE_SCORE = 60;
 const CONTINUE_LIMIT = 5;
@@ -336,34 +337,56 @@ function markRailSuppressed(
   railEligibility[kind] = { status: "HIDDEN", reason };
 }
 
-function buildTopicScopedItems(input: {
+type SeedAttribution = {
+  topicId: string;
+  name: string;
+};
+
+function buildExpandedSeedAttribution(input: {
+  seeds: SeedAttribution[];
+  descendantsByTopicId: Map<string, string[]>;
+}): {
+  expandedTopicIds: string[];
+  seedByExpandedTopicId: Map<string, SeedAttribution>;
+} {
+  const orderedExpandedIds = new Set<string>();
+  const seedByExpandedTopicId = new Map<string, SeedAttribution>();
+
+  for (const seed of input.seeds) {
+    const candidateTopicIds = [
+      seed.topicId,
+      ...(input.descendantsByTopicId.get(seed.topicId) ?? []),
+    ];
+
+    for (const topicId of candidateTopicIds) {
+      orderedExpandedIds.add(topicId);
+      if (!seedByExpandedTopicId.has(topicId)) {
+        seedByExpandedTopicId.set(topicId, seed);
+      }
+    }
+  }
+
+  return {
+    expandedTopicIds: Array.from(orderedExpandedIds),
+    seedByExpandedTopicId,
+  };
+}
+
+function buildSeedAttributedItems(input: {
   candidates: QuizCandidate[];
   sourceKind: PersonalizedHomeQuizItem["sourceKind"];
   reasonPrefix: string;
-  topicMap: Map<string, { name: string }>;
+  seedByExpandedTopicId: Map<string, SeedAttribution>;
 }): PersonalizedHomeQuizItem[] {
   const items: PersonalizedHomeQuizItem[] = [];
   for (const quiz of input.candidates) {
-    const topic = quiz.topicConfigs
-      .map((config) => input.topicMap.get(config.topic.id))
-      .find((entry): entry is NonNullable<typeof entry> => Boolean(entry));
-    if (!topic) continue;
-    items.push(toQuizItem(quiz, `${input.reasonPrefix}: ${topic.name}`, input.sourceKind));
+    const seed = quiz.topicConfigs
+      .map((config) => input.seedByExpandedTopicId.get(config.topic.id))
+      .find((entry): entry is SeedAttribution => Boolean(entry));
+    if (!seed) continue;
+    items.push(toQuizItem(quiz, `${input.reasonPrefix}: ${seed.name}`, input.sourceKind));
   }
   return items;
-}
-
-function collectTopicIdsBySchemaType(
-  profile: Awaited<ReturnType<typeof getInterestProfileForUser>>,
-  schemaType: string
-): string[] {
-  return Array.from(
-    new Set(
-      [...profile.follows, ...profile.explicit, ...profile.inferred]
-        .filter((entry) => entry.schemaType === schemaType)
-        .map((entry) => entry.topicId)
-    )
-  );
 }
 
 async function getContinuePlaying(userId: string) {
@@ -805,17 +828,23 @@ function toQuizItem(
   };
 }
 
+function toRailIdSegment(value: string): string {
+  return value.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+}
+
 function finalizeRail(
   kind: PersonalizedHomeRail["kind"],
   title: string,
   items: PersonalizedHomeQuizItem[],
   dedupeSet: Set<string>,
-  trendScope?: PersonalizedHomeTrendScope
+  trendScope?: PersonalizedHomeTrendScope,
+  railId?: string
 ): PersonalizedHomeRail | null {
   const uniqueItems = dedupeQuizItems(items, dedupeSet).slice(0, MAX_RAIL_ITEMS);
   if (uniqueItems.length === 0) return null;
   return {
     kind,
+    ...(railId ? { railId } : {}),
     title,
     ...(trendScope ? { trendScope } : {}),
     items: uniqueItems,
@@ -841,11 +870,26 @@ export function getTrendingRailPresentation(scope: PersonalizedHomeTrendScope): 
 
 export function buildRailOrder(
   railsByKind: Partial<Record<PersonalizedHomeRail["kind"], PersonalizedHomeRail>>,
-  maxVisibleRails = MAX_VISIBLE_RAILS
+  maybeMultiRailsOrMax:
+    | Partial<Record<PersonalizedHomeRail["kind"], PersonalizedHomeRail[]>>
+    | number
+    = {},
+  maybeMaxVisibleRails = MAX_VISIBLE_RAILS
 ): PersonalizedHomeRail[] {
-  const orderedRails = RAIL_PRIORITY_ORDER
-    .map((kind) => railsByKind[kind] ?? null)
-    .filter((rail): rail is PersonalizedHomeRail => rail !== null);
+  const multiRailsByKind = typeof maybeMultiRailsOrMax === "number" ? {} : maybeMultiRailsOrMax;
+  const maxVisibleRails = typeof maybeMultiRailsOrMax === "number" ? maybeMultiRailsOrMax : maybeMaxVisibleRails;
+  const orderedRails: PersonalizedHomeRail[] = [];
+  for (const kind of RAIL_PRIORITY_ORDER) {
+    const multiRails = multiRailsByKind[kind] ?? [];
+    if (multiRails.length > 0) {
+      orderedRails.push(...multiRails);
+      continue;
+    }
+    const singleRail = railsByKind[kind];
+    if (singleRail) {
+      orderedRails.push(singleRail);
+    }
+  }
 
   return orderedRails.slice(0, maxVisibleRails);
 }
@@ -874,14 +918,29 @@ export async function getPersonalizedHomePayload(userId: string, now = new Date(
   const dedupeSet = new Set<string>();
   const railEligibility = createInitialRailEligibility();
   const followsMap = new Map(profile.follows.map((entry) => [entry.topicId, entry]));
-  const effectiveTopics = [...profile.follows, ...profile.explicit, ...profile.inferred]
+  let effectiveTopics = [...profile.follows, ...profile.explicit, ...profile.inferred]
     .filter((entry) => entry.score >= MIN_EFFECTIVE_SCORE)
     .sort((a, b) => b.score - a.score);
+  if (effectiveTopics.length === 0) {
+    effectiveTopics = [...profile.inferred].sort((a, b) => b.score - a.score).slice(0, 8);
+  }
 
   const effectiveTopicIds = Array.from(new Set(effectiveTopics.map((entry) => entry.topicId))).slice(0, 8);
   const followTopicIds = profile.follows.map((entry) => entry.topicId);
-  const teamTopicIds = collectTopicIdsBySchemaType(profile, "SPORTS_TEAM");
-  const athleteTopicIds = collectTopicIdsBySchemaType(profile, "ATHLETE");
+  const teamTopicIds = Array.from(
+    new Set(
+      profile.follows
+        .filter((entry) => entry.schemaType === "SPORTS_TEAM")
+        .map((entry) => entry.topicId)
+    )
+  );
+  const athleteTopicIds = Array.from(
+    new Set(
+      profile.follows
+        .filter((entry) => entry.schemaType === "ATHLETE")
+        .map((entry) => entry.topicId)
+    )
+  );
   const onboardingSportTopicIds = profile.explicit
     .filter((entry) => entry.source === "ONBOARDING" && entry.schemaType === "SPORT")
     .map((entry) => entry.topicId);
@@ -925,21 +984,25 @@ export async function getPersonalizedHomePayload(userId: string, now = new Date(
     descendantsByTopicId,
     nearestSportAncestorByTopicId,
   }).slice(0, 80);
-  const followExpandedTopicIds = buildExpandedTopicSeedIds({
-    seedTopicIds: followTopicIds,
+  const followAttribution = buildExpandedSeedAttribution({
+    seeds: profile.follows.map((entry) => ({ topicId: entry.topicId, name: entry.name })),
     descendantsByTopicId,
-    nearestSportAncestorByTopicId,
-  }).slice(0, 80);
-  const teamExpandedTopicIds = buildExpandedTopicSeedIds({
-    seedTopicIds: teamTopicIds,
+  });
+  const teamAttribution = buildExpandedSeedAttribution({
+    seeds: profile.follows
+      .filter((entry) => entry.schemaType === "SPORTS_TEAM")
+      .map((entry) => ({ topicId: entry.topicId, name: entry.name })),
     descendantsByTopicId,
-    nearestSportAncestorByTopicId,
-  }).slice(0, 80);
-  const athleteExpandedTopicIds = buildExpandedTopicSeedIds({
-    seedTopicIds: athleteTopicIds,
+  });
+  const athleteAttribution = buildExpandedSeedAttribution({
+    seeds: profile.follows
+      .filter((entry) => entry.schemaType === "ATHLETE")
+      .map((entry) => ({ topicId: entry.topicId, name: entry.name })),
     descendantsByTopicId,
-    nearestSportAncestorByTopicId,
-  }).slice(0, 80);
+  });
+  const followExpandedTopicIds = followAttribution.expandedTopicIds.slice(0, 80);
+  const teamExpandedTopicIds = teamAttribution.expandedTopicIds.slice(0, 80);
+  const athleteExpandedTopicIds = athleteAttribution.expandedTopicIds.slice(0, 80);
   const topSportExpandedTopicIds = buildExpandedTopicSeedIds({
     seedTopicIds: topSportTopicIds,
     descendantsByTopicId,
@@ -952,6 +1015,7 @@ export async function getPersonalizedHomePayload(userId: string, now = new Date(
     : null;
 
   const railsByKind: Partial<Record<PersonalizedHomeRail["kind"], PersonalizedHomeRail>> = {};
+  const multiRailsByKind: Partial<Record<PersonalizedHomeRail["kind"], PersonalizedHomeRail[]>> = {};
   const primaryPersonalizedKinds: PersonalizedHomeRail["kind"][] = [
     "FROM_YOUR_FOLLOWS",
     "RELATED_TO_YOUR_FOLLOWS",
@@ -1020,7 +1084,6 @@ export async function getPersonalizedHomePayload(userId: string, now = new Date(
 
   if (followExpandedTopicIds.length > 0) {
     const directFollowSet = new Set(followTopicIds);
-    const relatedSeedTopicMap = new Map(profile.follows.map((entry) => [entry.topicId, entry]));
     let relatedCandidates = await getQuizCandidatesByTopicIds(userId, followExpandedTopicIds, 28);
     relatedCandidates = relatedCandidates.filter((quiz) =>
       !quiz.topicConfigs.some((config) => directFollowSet.has(config.topic.id))
@@ -1028,11 +1091,11 @@ export async function getPersonalizedHomePayload(userId: string, now = new Date(
     relatedCandidates = rankCandidatesWithPlayStyleBoost(relatedCandidates, playStyleProfile);
 
     if (relatedCandidates.length > 0) {
-      const relatedItems = buildTopicScopedItems({
+      const relatedItems = buildSeedAttributedItems({
         candidates: relatedCandidates,
         sourceKind: "RELATED_FOLLOWS",
         reasonPrefix: "Related to your follows",
-        topicMap: relatedSeedTopicMap,
+        seedByExpandedTopicId: followAttribution.seedByExpandedTopicId,
       });
       const relatedRail = finalizeRail(
         "RELATED_TO_YOUR_FOLLOWS",
@@ -1054,19 +1117,14 @@ export async function getPersonalizedHomePayload(userId: string, now = new Date(
   }
 
   if (teamExpandedTopicIds.length > 0) {
-    const teamTopicMap = new Map(
-      [...profile.follows, ...profile.explicit, ...profile.inferred]
-        .filter((entry) => entry.schemaType === "SPORTS_TEAM")
-        .map((entry) => [entry.topicId, entry])
-    );
     let teamCandidates = await getQuizCandidatesByTopicIds(userId, teamExpandedTopicIds, 28);
     teamCandidates = rankCandidatesWithPlayStyleBoost(teamCandidates, playStyleProfile);
     if (teamCandidates.length > 0) {
-      const teamItems = buildTopicScopedItems({
+      const teamItems = buildSeedAttributedItems({
         candidates: teamCandidates,
         sourceKind: "FAVORITE_TEAMS",
         reasonPrefix: "From teams you follow",
-        topicMap: teamTopicMap,
+        seedByExpandedTopicId: teamAttribution.seedByExpandedTopicId,
       });
       const teamRail = finalizeRail(
         "FROM_YOUR_FAVORITE_TEAMS",
@@ -1088,19 +1146,14 @@ export async function getPersonalizedHomePayload(userId: string, now = new Date(
   }
 
   if (athleteExpandedTopicIds.length > 0) {
-    const athleteTopicMap = new Map(
-      [...profile.follows, ...profile.explicit, ...profile.inferred]
-        .filter((entry) => entry.schemaType === "ATHLETE")
-        .map((entry) => [entry.topicId, entry])
-    );
     let athleteCandidates = await getQuizCandidatesByTopicIds(userId, athleteExpandedTopicIds, 28);
     athleteCandidates = rankCandidatesWithPlayStyleBoost(athleteCandidates, playStyleProfile);
     if (athleteCandidates.length > 0) {
-      const athleteItems = buildTopicScopedItems({
+      const athleteItems = buildSeedAttributedItems({
         candidates: athleteCandidates,
         sourceKind: "FAVORITE_ATHLETES",
         reasonPrefix: "From athletes you follow",
-        topicMap: athleteTopicMap,
+        seedByExpandedTopicId: athleteAttribution.seedByExpandedTopicId,
       });
       const athleteRail = finalizeRail(
         "FROM_YOUR_FAVORITE_ATHLETES",
@@ -1122,26 +1175,41 @@ export async function getPersonalizedHomePayload(userId: string, now = new Date(
   }
 
   if (topSports.length > 0) {
-    let sportCandidates = await getQuizCandidatesBySports(userId, topSports, 28);
-    sportCandidates = rankCandidatesWithPlayStyleBoost(sportCandidates, playStyleProfile);
-    if (sportCandidates.length > 0) {
+    const topSportRails: PersonalizedHomeRail[] = [];
+    let hadTopSportCandidates = false;
+    for (const sportName of topSports) {
+      if (topSportRails.length >= MAX_TOP_SPORT_RAILS) break;
+      let sportCandidates = await getQuizCandidatesBySports(userId, [sportName], 28);
+      sportCandidates = rankCandidatesWithPlayStyleBoost(sportCandidates, playStyleProfile);
+      if (sportCandidates.length === 0) {
+        continue;
+      }
+      hadTopSportCandidates = true;
       const sportItems = sportCandidates
         .filter((quiz): quiz is QuizCandidate & { sport: string } => Boolean(quiz.sport))
         .map((quiz) => toQuizItem(quiz, `More from ${quiz.sport}`, "TOP_SPORTS"));
       const sportRail = finalizeRail(
         "MORE_FROM_YOUR_TOP_SPORTS",
-        "More From Your Top Sports",
+        `More From ${sportName}`,
         sportItems,
-        dedupeSet
+        dedupeSet,
+        undefined,
+        `MORE_FROM_YOUR_TOP_SPORTS:${toRailIdSegment(sportName)}`
       );
       if (!sportRail || sportRail.items.length < MIN_ITEMS_FOR_PERSONALIZED_RAIL) {
-        markRailSuppressed(railEligibility, "MORE_FROM_YOUR_TOP_SPORTS", "DEDUPED_BELOW_THRESHOLD");
-      } else {
-        markRailShown(railEligibility, "MORE_FROM_YOUR_TOP_SPORTS");
-        railsByKind.MORE_FROM_YOUR_TOP_SPORTS = sportRail;
+        continue;
       }
+      topSportRails.push(sportRail);
+    }
+    if (topSportRails.length > 0) {
+      markRailShown(railEligibility, "MORE_FROM_YOUR_TOP_SPORTS");
+      multiRailsByKind.MORE_FROM_YOUR_TOP_SPORTS = topSportRails;
     } else {
-      markRailSuppressed(railEligibility, "MORE_FROM_YOUR_TOP_SPORTS", "NO_CANDIDATES");
+      markRailSuppressed(
+        railEligibility,
+        "MORE_FROM_YOUR_TOP_SPORTS",
+        hadTopSportCandidates ? "DEDUPED_BELOW_THRESHOLD" : "NO_CANDIDATES"
+      );
     }
   } else {
     markRailSuppressed(railEligibility, "MORE_FROM_YOUR_TOP_SPORTS", "NO_SEEDS");
@@ -1257,7 +1325,7 @@ export async function getPersonalizedHomePayload(userId: string, now = new Date(
     markRailSuppressed(railEligibility, "TRENDING_IN_YOUR_SPORTS", "DEDUPED_BELOW_THRESHOLD");
   }
 
-  const rails = buildRailOrder(railsByKind, MAX_VISIBLE_RAILS);
+  const rails = buildRailOrder(railsByKind, multiRailsByKind, MAX_VISIBLE_RAILS);
 
   const starterCollections = !hasPersonalizedRails
     ? await getStarterCollections()
