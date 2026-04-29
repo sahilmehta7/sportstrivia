@@ -40,6 +40,7 @@ export function QuizResultsLeaderboard({
                     alt={top3[1].userName || ""}
                     fill
                     className="object-cover"
+                    sizes="80px"
                     unoptimized={!top3[1].userImage.startsWith("https://lh3.googleusercontent.com") && !top3[1].userImage.includes("supabase")}
                   />
                 ) : (
@@ -72,6 +73,7 @@ export function QuizResultsLeaderboard({
                     alt={top3[0].userName || ""}
                     fill
                     className="object-cover"
+                    sizes="96px"
                     unoptimized={!top3[0].userImage.startsWith("https://lh3.googleusercontent.com") && !top3[0].userImage.includes("supabase")}
                   />
                 ) : (
@@ -104,6 +106,7 @@ export function QuizResultsLeaderboard({
                     alt={top3[2].userName || ""}
                     fill
                     className="object-cover"
+                    sizes="48px"
                     unoptimized={!top3[2].userImage.startsWith("https://lh3.googleusercontent.com") && !top3[2].userImage.includes("supabase")}
                   />
                 ) : (
@@ -144,6 +147,7 @@ export function QuizResultsLeaderboard({
                   alt={entry.userName || "User"}
                   fill
                   className="object-cover"
+                  sizes="32px"
                   unoptimized={!entry.userImage.startsWith("https://lh3.googleusercontent.com") && !entry.userImage.includes("supabase")}
                 />
               ) : (

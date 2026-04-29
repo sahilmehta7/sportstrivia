@@ -27,6 +27,7 @@ const allowedImageHosts = [
   "images.unsplash.com",
   "lh3.googleusercontent.com",
   "api.dicebear.com",
+  "upload.wikimedia.org",
 ];
 
 function getValidImageUrl(url?: string | null): string | null {
@@ -206,7 +207,7 @@ export default async function QuizDetailPage({ params }: QuizDetailPageProps) {
                 {heroImageUrl && (
                   <div className="relative mb-8 w-full aspect-video overflow-hidden rounded-lg border border-border/60 bg-card lg:hidden">
                     <div className="h-full w-full overflow-hidden relative">
-                      <Image src={heroImageUrl} alt={quiz.title} fill className="object-cover" priority />
+                      <Image src={heroImageUrl} alt={quiz.title} fill className="object-cover" priority sizes="100vw" />
                       <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
                     </div>
                   </div>
@@ -291,7 +292,7 @@ export default async function QuizDetailPage({ params }: QuizDetailPageProps) {
               {heroImageUrl && (
                 <div className="relative hidden lg:block aspect-square overflow-hidden rounded-lg border border-border/60 bg-card shadow-sm">
                   <div className="h-full w-full overflow-hidden relative">
-                    <Image src={heroImageUrl} alt={quiz.title} fill className="object-cover" />
+                    <Image src={heroImageUrl} alt={quiz.title} fill className="object-cover" sizes="(max-width: 1024px) 100vw, 400px" />
                     <div className="absolute inset-0 bg-gradient-to-t from-background/40 to-transparent" />
                   </div>
                 </div>

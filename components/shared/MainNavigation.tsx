@@ -125,6 +125,7 @@ export function MainNavigation() {
                 fill
                 className="object-contain dark:hidden"
                 priority
+                sizes="(max-width: 640px) 40px, 48px"
               />
               <Image
                 src="/logo-dark.png"
@@ -132,6 +133,7 @@ export function MainNavigation() {
                 fill
                 className="object-contain hidden dark:block"
                 priority
+                sizes="(max-width: 640px) 40px, 48px"
               />
             </div>
             <span className="truncate text-xl font-black italic tracking-tight uppercase font-['Barlow_Condensed',sans-serif] sm:text-2xl md:text-3xl">
@@ -177,6 +179,7 @@ export function MainNavigation() {
                 fill
                 className="object-contain dark:hidden"
                 priority
+                sizes="(max-width: 640px) 40px, 48px"
               />
               <Image
                 src="/logo-dark.png"
@@ -184,6 +187,7 @@ export function MainNavigation() {
                 fill
                 className="object-contain hidden dark:block"
                 priority
+                sizes="(max-width: 640px) 40px, 48px"
               />
             </div>
             <span className="text-2xl sm:text-3xl font-black italic tracking-tighter uppercase font-['Barlow_Condensed',sans-serif]">

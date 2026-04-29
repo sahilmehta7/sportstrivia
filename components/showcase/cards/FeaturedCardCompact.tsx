@@ -16,6 +16,7 @@ export function FeaturedCardCompact({ quiz }: FeaturedCardCompactProps) {
                     alt={quiz.title}
                     fill
                     className="object-cover transition-transform duration-500 group-hover:scale-110"
+                    sizes="128px"
                 />
                 <div className="absolute inset-0 bg-black/10" />
                 <div className="absolute inset-0 flex items-center justify-center opacity-0 transition-opacity group-hover:opacity-100 bg-black/30">

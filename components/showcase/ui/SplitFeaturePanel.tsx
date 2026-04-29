@@ -59,7 +59,7 @@ export function ShowcaseSplitFeaturePanel({
       </div>
       <div className="relative h-64 rounded-[2rem] bg-gradient-to-br from-cyan-500/20 to-purple-500/20">
         {imageUrl && (
-          <Image src={imageUrl} alt={title} fill className="rounded-[2rem] object-cover" />
+          <Image src={imageUrl} alt={title} fill className="rounded-[2rem] object-cover" sizes="(max-width: 768px) 100vw, 50vw" />
         )}
       </div>
     </div>

@@ -51,6 +51,7 @@ export function TopicHero({
               fill
               className="object-cover opacity-20 transition-transform duration-700 hover:scale-105"
               priority
+              sizes="100vw"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-background/35 to-transparent" />
           </div>

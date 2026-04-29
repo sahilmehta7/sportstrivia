@@ -71,6 +71,7 @@ export function ShowcaseDailyCarousel({
                       alt={quiz.title}
                       fill
                       className="object-cover grayscale transition-transform duration-700 group-hover/card:grayscale-0 group-hover/card:scale-110"
+                      sizes="(max-width: 640px) 100vw, 340px"
                     />
                   ) : (
                     <div className="h-full w-full bg-muted/30" />

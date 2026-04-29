@@ -18,6 +18,7 @@ export function FeaturedCardHero({ quiz }: FeaturedCardHeroProps) {
                     fill
                     className="object-cover transition-transform duration-700 group-hover:scale-105"
                     priority
+                    sizes="(max-width: 640px) 100vw, 384px"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent" />
             </div>

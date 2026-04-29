@@ -360,6 +360,7 @@ export default async function QuizResultsPage({
                                   alt="Question"
                                   fill
                                   className="object-contain"
+                                  sizes="(max-width: 768px) 100vw, 512px"
                                 />
                               </div>
                             ) : null}

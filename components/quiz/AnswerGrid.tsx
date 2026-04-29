@@ -129,6 +129,7 @@ export const AnswerGrid = memo(function AnswerGrid({
                                             alt=""
                                             fill
                                             className="object-cover"
+                                            sizes="(max-width: 640px) 40px, 56px"
                                         />
                                     ) : (
                                         <span className="flex h-full w-full items-center justify-center text-xl">

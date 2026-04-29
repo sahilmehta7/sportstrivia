@@ -200,6 +200,7 @@ function AvatarImage({ src, alt, fallback }: { src: string; alt: string; fallbac
       alt={alt}
       fill
       className="object-cover"
+      sizes="(max-width: 640px) 40px, 96px"
       onError={() => setHasError(true)}
     />
   );

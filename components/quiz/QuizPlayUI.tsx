@@ -172,7 +172,7 @@ export function QuizPlayUI({
                     <div className={cn("relative flex w-full flex-wrap justify-center gap-4 py-4 sm:py-8", styles.imageFrame)}>
                       {answerImageUrls.slice(0, 4).map((url, index) => (
                         <div key={index} className="relative h-16 w-16 sm:h-24 sm:w-24 overflow-hidden rounded-md border border-border/60 shadow-sm">
-                          <Image src={url} alt={`Option ${index + 1}`} fill className="object-cover" />
+                          <Image src={url} alt={`Option ${index + 1}`} fill className="object-cover" sizes="(max-width: 640px) 64px, 96px" />
                         </div>
                       ))}
                     </div>

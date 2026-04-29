@@ -191,7 +191,7 @@ export function BadgeShowcase({ badges }: BadgeShowcaseProps) {
                       styles.bg
                     )}>
                       {badge.imageUrl ? (
-                        <Image src={badge.imageUrl} alt={badge.name} fill className="object-cover" />
+                        <Image src={badge.imageUrl} alt={badge.name} fill className="object-cover" sizes="80px" />
                       ) : (
                         earned ? (
                           <Award className={cn("h-10 w-10 drop-shadow-lg", styles.text)} />

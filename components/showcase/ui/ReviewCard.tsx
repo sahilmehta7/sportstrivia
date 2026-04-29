@@ -31,7 +31,7 @@ export function ShowcaseReviewCard({ reviewer, rating, quote, dateLabel, classNa
         <div className="flex items-center gap-4">
           <div className="relative h-14 w-14 overflow-hidden rounded-2xl border-2 border-white/10 shadow-glass">
             {reviewer.avatarUrl ? (
-              <Image src={reviewer.avatarUrl} alt={reviewer.name} fill className="object-cover" />
+              <Image src={reviewer.avatarUrl} alt={reviewer.name} fill className="object-cover" sizes="56px" />
             ) : (
               <div className="flex h-full w-full items-center justify-center text-xl bg-white/5">👤</div>
             )}

@@ -31,7 +31,7 @@ export function ShowcaseQuickPreviewModal({ trigger, title, description, coverIm
       <DialogContent className="max-w-2xl overflow-hidden rounded-[2.5rem] border-0 bg-slate-950/90 p-0 text-white">
         <div className="relative h-56 w-full">
           {coverImageUrl ? (
-            <Image src={coverImageUrl} alt={title} fill className="object-cover" />
+            <Image src={coverImageUrl} alt={title} fill className="object-cover" sizes="(max-width: 640px) 100vw, 672px" />
           ) : (
             <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-orange-400/30 to-pink-500/30 text-4xl">🎮</div>
           )}

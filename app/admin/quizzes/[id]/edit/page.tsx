@@ -1002,6 +1002,7 @@ export default function EditQuizPage({ params }: EditQuizPageProps) {
                         alt="Quiz cover"
                         fill
                         className="object-cover"
+                        sizes="(max-width: 640px) 100vw, 384px"
                       />
                       <Button
                         type="button"
