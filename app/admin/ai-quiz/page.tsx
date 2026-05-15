@@ -186,15 +186,23 @@ export default function AIQuizGeneratorPage() {
       });
 
       const response = await responsePromise;
+      let result: any = null;
 
-      const result = await response.json();
+      try {
+        result = await response.json();
+      } catch (parseError) {
+        console.error("Failed to parse AI quiz generation response", parseError);
+      }
 
       if (!response.ok) {
+        const responseError = result?.error || `Failed with status ${response.status}`;
+
         // Check if it's an API key configuration error
-        if (result.error?.includes("OpenAI API key")) {
+        if (responseError.includes("OpenAI API key")) {
           setOpenAIConfigured(false);
         }
-        throw new Error(result.error || "Failed to generate quiz");
+
+        throw new Error(responseError);
       }
 
       setOpenAIConfigured(true);
@@ -224,6 +232,7 @@ export default function AIQuizGeneratorPage() {
         description: toastDescription,
       });
     } catch (error: any) {
+      console.error("AI quiz generation failed", error);
       toast({
         title: "Generation failed",
         description: error.message,
